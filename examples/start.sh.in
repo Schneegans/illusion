@@ -1,0 +1,24 @@
+#!/bin/bash
+
+#--------------------------------------------------------------------------------------------------#
+#                                                                                                  #
+#    _)  |  |            _)                 This software may be modified and distributed          #
+#     |  |  |  |  | (_-<  |   _ \    \      under the terms of the MIT license.                    #
+#    _| _| _| \_,_| ___/ _| \___/ _| _|     See the LICENSE file for details.                      #
+#                                                                                                  #
+#   Authors: Simon Schneegans (code@simonschneegans.de)                                            #
+#                                                                                                  #
+#--------------------------------------------------------------------------------------------------#
+
+# get the location of this script
+SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
+
+VULKAN_SDK=@VULKAN_SDK@
+
+export LD_LIBRARY_PATH=$VULKAN_SDK/lib:$LD_LIBRARY_PATH:.
+export VK_LAYER_PATH=$VULKAN_SDK/etc/explicit_layer.d
+
+cd $SCRIPT_DIR
+
+# gdb --args ./@EXAMPLE@ $@
+./@EXAMPLE@ $@

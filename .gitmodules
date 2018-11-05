@@ -1,0 +1,18 @@
+[submodule "externals/glfw"]
+	path = externals/glfw
+	url = ../glfw/glfw
+[submodule "externals/gli"]
+	path = externals/gli
+	url = ../g-truc/gli.git
+[submodule "externals/glm"]
+	path = externals/glm
+	url = ../g-truc/glm
+[submodule "externals/stb"]
+	path = externals/stb
+	url = ../nothings/stb.git
+[submodule "externals/spirv-cross"]
+	path = externals/spirv-cross
+	url = ../KhronosGroup/SPIRV-Cross.git
+[submodule "externals/glslang"]
+	path = externals/glslang
+	url = ../KhronosGroup/glslang.git
