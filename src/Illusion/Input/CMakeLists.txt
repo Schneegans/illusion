@@ -13,13 +13,14 @@ file(GLOB FILES_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
   "*.cpp"
 )
 
-add_library(illusion-core STATIC ${FILES_SRC})
+add_library(illusion-input STATIC ${FILES_SRC})
 
-target_link_libraries(illusion-core 
-    PUBLIC glm
+target_link_libraries(illusion-input 
+    PUBLIC illusion-core
+    PUBLIC glfw
 )
 
-target_include_directories(illusion-core
+target_include_directories(illusion-input
     PUBLIC ${CMAKE_SOURCE_DIR}/src
 )
 
@@ -28,7 +29,7 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} DESTINATION "include"
   FILES_MATCHING PATTERN "*.hpp"
   PATTERN "internal" EXCLUDE)
 
-install(TARGETS illusion-core
+install(TARGETS illusion-input
   RUNTIME DESTINATION "bin"
   LIBRARY DESTINATION "lib"
   ARCHIVE DESTINATION "lib"

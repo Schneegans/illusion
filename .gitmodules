@@ -10,9 +10,9 @@
 [submodule "externals/stb"]
 	path = externals/stb
 	url = ../../nothings/stb.git
-[submodule "externals/spirv-cross"]
-	path = externals/spirv-cross
-	url = ../../KhronosGroup/SPIRV-Cross.git
 [submodule "externals/glslang"]
 	path = externals/glslang
 	url = ../../KhronosGroup/glslang.git
+[submodule "externals/spirv-cross"]
+	path = externals/spirv-cross
+	url = ../../KhronosGroup/spirv-cross.git

@@ -54,7 +54,7 @@ class File {
   }
 
   // Returns the given file's content.
-  std::vector<T> const& getContent() const {
+  T const& getContent() const {
     if (mIsLoaded) { return mContent; }
 
     std::ifstream ifs(mFileName, std::ifstream::in | std::ios::binary);
@@ -67,7 +67,7 @@ class File {
     size_t filesize = ifs.tellg();
     ifs.seekg(0, std::ios::beg);
 
-    mContent.resize(filesize / sizeof(T));
+    mContent.resize(filesize / sizeof(typename T::value_type));
 
     ifs.read((char*)mContent.data(), filesize);
     ifs.close();
@@ -76,7 +76,7 @@ class File {
   }
 
   // Sets the given file's content.
-  void setContent(std::vector<T> const& content) {
+  void setContent(T const& content) {
     mContent  = content;
     mIsLoaded = true;
   }
@@ -95,7 +95,7 @@ class File {
       return false;
     }
 
-    ofs.write((char*)mContent.data(), mContent.size() * sizeof(T));
+    ofs.write((char*)mContent.data(), mContent.size() * sizeof(typename T::value_type));
     ofs.close();
 
     return true;
@@ -113,10 +113,10 @@ class File {
 
  private:
   // ------------------------------------------------------------------------------- private members
-  std::string            mFileName;
-  mutable std::vector<T> mContent;
-  mutable bool           mIsLoaded;
+  std::string  mFileName;
+  mutable T    mContent;
+  mutable bool mIsLoaded;
 };
-} // namespace Illusion
+} // namespace Illusion::Core
 
 #endif // ILLUSION_CORE_FILE_HPP

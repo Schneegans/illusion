@@ -9,12 +9,9 @@
 #--------------------------------------------------------------------------------------------------#
 
 # -------------------------------------------------------------------------- install other resources
-# install(DIRECTORY "resources/textures"
-#     DESTINATION "bin/data"
-# )
-
-# ------------------------------------------------------- generate spirv files and shader reflection
-# add_subdirectory("resources/shaders")
+install(DIRECTORY "data"
+    DESTINATION "bin"
+)
 
 # -------------------------------------------------------------------------------- make each example
 set(ENABLED_EXAMPLES
@@ -49,7 +46,7 @@ foreach(EXAMPLE ${ENABLED_EXAMPLES})
   # )
 
   target_link_libraries(${EXAMPLE} 
-    PRIVATE illusion-core
+    PRIVATE illusion-graphics
   )
 
   install(TARGETS ${EXAMPLE}

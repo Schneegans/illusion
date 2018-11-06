@@ -8,10 +8,11 @@
 #                                                                                                  #
 #--------------------------------------------------------------------------------------------------#
 
-file(GLOB SPIRV_SRC "${CMAKE_SOURCE_DIR}/externals/spirv-cross/*.cpp")
+file(GLOB FILES_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+  "externals/spirv-cross/*.cpp"
+)
 
-add_library(spirv-cross STATIC ${SPIRV_SRC})
-
+add_library(spirv-cross STATIC ${FILES_SRC})
 target_include_directories(spirv-cross
   PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/externals/spirv-cross
 )
