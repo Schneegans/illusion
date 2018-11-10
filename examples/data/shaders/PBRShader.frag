@@ -8,30 +8,27 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_FWD_HPP
-#define ILLUSION_GRAPHICS_FWD_HPP
+#version 450
 
-// ---------------------------------------------------------------------------------------- includes
-#include <vulkan/vulkan.hpp>
+// inputs ------------------------------------------------------------------------------------------
+layout(location = 0) in vec2 inTexcoords;
 
-namespace Illusion::Graphics {
+// uniforms ----------------------------------------------------------------------------------------
+layout(binding = 0, set = 1) uniform MaterialUniforms {
+    vec3 color; 
+} material;
 
-struct BackedBuffer;
-struct BackedImage;
+layout(push_constant, std430) uniform PushConstants {
+    mat4 modelView;
+} pushConstants;
 
-class Context;
-class DisplayPass;
-class Engine;
-class Framebuffer;
-class Material;
-class PhysicalDevice;
-class PipelineLayout;
-class RenderPass;
-class ShaderReflection;
-class Surface;
-class Texture;
-class Window;
+layout(binding = 1, set = 1) uniform sampler2D texAlbedo;
 
-} // namespace Illusion::Graphics
+// outputs -----------------------------------------------------------------------------------------
+layout(location = 0) out vec4 outColor;
 
-#endif // ILLUSION_GRAPHICS_FWD_HPP
+// methods -----------------------------------------------------------------------------------------
+void main() {
+    // outColor = vec4(material.color, 1.0);
+    outColor = texture(texAlbedo, inTexcoords);
+}

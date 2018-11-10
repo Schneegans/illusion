@@ -27,7 +27,7 @@ class DisplayPass : public RenderPass {
  public:
   // -------------------------------------------------------------------------------- public methods
   DisplayPass(
-    std::shared_ptr<Engine> const& engine, std::shared_ptr<vk::SurfaceKHR> const& surface);
+    std::shared_ptr<Context> const& context, std::shared_ptr<vk::SurfaceKHR> const& surface);
   virtual ~DisplayPass();
 
   void         setEnableVsync(bool enable);

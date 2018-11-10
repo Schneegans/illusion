@@ -12,7 +12,7 @@
 #include "Texture.hpp"
 
 #include "../Core/Logger.hpp"
-#include "Engine.hpp"
+#include "Context.hpp"
 
 #include <gli/gli.hpp>
 #include <iostream>
@@ -23,9 +23,9 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::shared_ptr<Texture> Texture::createFromFile(
-  std::shared_ptr<Engine> const& engine,
-  std::string const&             fileName,
-  vk::SamplerCreateInfo const&   sampler) {
+  std::shared_ptr<Context> const& context,
+  std::string const&              fileName,
+  vk::SamplerCreateInfo const&    sampler) {
 
   auto result = std::make_shared<Texture>();
 
@@ -52,7 +52,7 @@ std::shared_ptr<Texture> Texture::createFromFile(
     }
 
     result->initData(
-      engine,
+      context,
       levels,
       (vk::Format)texture.format(),
       vk::ImageUsageFlagBits::eSampled,
@@ -107,7 +107,7 @@ std::shared_ptr<Texture> Texture::createFromFile(
     }
 
     result->initData(
-      engine,
+      context,
       levels,
       format,
       vk::ImageUsageFlagBits::eSampled,
@@ -129,14 +129,14 @@ std::shared_ptr<Texture> Texture::createFromFile(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::shared_ptr<Texture> Texture::create2D(
-  std::shared_ptr<Engine> const& engine,
-  int32_t                        width,
-  int32_t                        height,
-  vk::Format                     format,
-  vk::ImageUsageFlags const&     usage,
-  vk::SamplerCreateInfo const&   sampler,
-  size_t                         size,
-  void*                          data) {
+  std::shared_ptr<Context> const& context,
+  int32_t                         width,
+  int32_t                         height,
+  vk::Format                      format,
+  vk::ImageUsageFlags const&      usage,
+  vk::SamplerCreateInfo const&    sampler,
+  size_t                          size,
+  void*                           data) {
 
   ILLUSION_TRACE << "Creating Texture." << std::endl;
 
@@ -146,40 +146,40 @@ std::shared_ptr<Texture> Texture::create2D(
   level.mSize   = size;
 
   auto result = std::make_shared<Texture>();
-  result->initData(engine, {level}, format, usage, vk::ImageViewType::e2D, sampler, size, data);
+  result->initData(context, {level}, format, usage, vk::ImageViewType::e2D, sampler, size, data);
   return result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::shared_ptr<Texture> Texture::create2DMipMap(
-  std::shared_ptr<Engine> const& engine,
-  std::vector<TextureLevel>      levels,
-  vk::Format                     format,
-  vk::ImageUsageFlags const&     usage,
-  vk::ImageViewType              type,
-  vk::SamplerCreateInfo const&   sampler,
-  size_t                         size,
-  void*                          data) {
+  std::shared_ptr<Context> const& context,
+  std::vector<TextureLevel>       levels,
+  vk::Format                      format,
+  vk::ImageUsageFlags const&      usage,
+  vk::ImageViewType               type,
+  vk::SamplerCreateInfo const&    sampler,
+  size_t                          size,
+  void*                           data) {
 
   ILLUSION_TRACE << "Creating Texture." << std::endl;
 
   auto result = std::make_shared<Texture>();
-  result->initData(engine, levels, format, usage, type, sampler, size, data);
+  result->initData(context, levels, format, usage, type, sampler, size, data);
   return result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::shared_ptr<Texture> Texture::createCubemap(
-  std::shared_ptr<Engine> const& engine,
-  int32_t                        width,
-  int32_t                        height,
-  vk::Format                     format,
-  vk::ImageUsageFlags const&     usage,
-  vk::SamplerCreateInfo const&   sampler,
-  size_t                         size,
-  void*                          data) {
+  std::shared_ptr<Context> const& context,
+  int32_t                         width,
+  int32_t                         height,
+  vk::Format                      format,
+  vk::ImageUsageFlags const&      usage,
+  vk::SamplerCreateInfo const&    sampler,
+  size_t                          size,
+  void*                           data) {
 
   ILLUSION_TRACE << "Creating Texture." << std::endl;
 
@@ -189,7 +189,7 @@ std::shared_ptr<Texture> Texture::createCubemap(
   level.mSize   = size;
 
   auto result = std::make_shared<Texture>();
-  result->initData(engine, {level}, format, usage, vk::ImageViewType::eCube, sampler, size, data);
+  result->initData(context, {level}, format, usage, vk::ImageViewType::eCube, sampler, size, data);
   return result;
 }
 
@@ -200,14 +200,14 @@ Texture::~Texture() { ILLUSION_TRACE << "Deleting Texture." << std::endl; }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Texture::initData(
-  std::shared_ptr<Engine> const& engine,
-  std::vector<TextureLevel>      levels,
-  vk::Format                     format,
-  vk::ImageUsageFlags            usage,
-  vk::ImageViewType              type,
-  vk::SamplerCreateInfo const&   sampler,
-  size_t                         size,
-  void*                          data) {
+  std::shared_ptr<Context> const& context,
+  std::vector<TextureLevel>       levels,
+  vk::Format                      format,
+  vk::ImageUsageFlags             usage,
+  vk::ImageViewType               type,
+  vk::SamplerCreateInfo const&    sampler,
+  size_t                          size,
+  void*                           data) {
 
   if (data) { usage |= vk::ImageUsageFlagBits::eTransferDst; }
 
@@ -219,7 +219,7 @@ void Texture::initData(
     flags      = vk::ImageCreateFlagBits::eCubeCompatible;
   }
 
-  auto image = engine->createBackedImage(
+  auto image = context->createBackedImage(
     levels[0].mWidth,
     levels[0].mHeight,
     1,
@@ -246,14 +246,14 @@ void Texture::initData(
     info.subresourceRange.baseArrayLayer = 0;
     info.subresourceRange.layerCount     = layerCount;
 
-    mImageView = engine->createImageView(info);
+    mImageView = context->createImageView(info);
   }
 
   {
     vk::SamplerCreateInfo info(sampler);
     info.maxLod = levels.size();
 
-    mSampler = engine->createSampler(info);
+    mSampler = context->createSampler(info);
   }
 
   vk::ImageSubresourceRange subresourceRange;
@@ -263,16 +263,16 @@ void Texture::initData(
   subresourceRange.layerCount   = layerCount;
 
   if (data) {
-    engine->transitionImageLayout(
+    context->transitionImageLayout(
       mImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, subresourceRange);
 
-    auto stagingBuffer = engine->createBackedBuffer(
+    auto stagingBuffer = context->createBackedBuffer(
       size,
       vk::BufferUsageFlagBits::eTransferSrc,
       vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
       data);
 
-    auto cmd = engine->beginSingleTimeGraphicsCommands();
+    auto cmd = context->beginSingleTimeGraphicsCommands();
     {
       std::vector<vk::BufferImageCopy> infos;
       uint64_t                         offset = 0;
@@ -298,9 +298,9 @@ void Texture::initData(
       cmd.copyBufferToImage(
         *stagingBuffer->mBuffer, *mImage, vk::ImageLayout::eTransferDstOptimal, infos);
     }
-    engine->endSingleTimeGraphicsCommands(cmd);
+    context->endSingleTimeGraphicsCommands(cmd);
 
-    engine->transitionImageLayout(
+    context->transitionImageLayout(
       mImage,
       vk::ImageLayout::eTransferDstOptimal,
       vk::ImageLayout::eShaderReadOnlyOptimal,

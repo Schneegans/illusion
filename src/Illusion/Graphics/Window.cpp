@@ -13,6 +13,7 @@
 
 #include "../Core/Logger.hpp"
 #include "DisplayPass.hpp"
+#include "Engine.hpp"
 
 #include <GLFW/glfw3.h>
 
@@ -22,8 +23,9 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Window::Window(std::shared_ptr<Engine> const& engine)
-  : mEngine(engine) {
+Window::Window(std::shared_ptr<Engine> const& engine, std::shared_ptr<Context> const& context)
+  : mEngine(engine)
+  , mContext(context) {
 
   ILLUSION_TRACE << "Creating Window." << std::endl;
 
@@ -109,7 +111,7 @@ Window::~Window() {
   if (mCursor) { glfwDestroyCursor(mCursor); }
   close();
 
-  mEngine->getDevice()->waitIdle();
+  mContext->getDevice()->waitIdle();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -128,7 +130,7 @@ void Window::open() {
     }
 
     mSurface     = mEngine->createSurface(mWindow);
-    mDisplayPass = std::make_shared<DisplayPass>(mEngine, mSurface);
+    mDisplayPass = std::make_shared<DisplayPass>(mContext, mSurface);
 
     pLockAspect.touch();
     pHideCursor.touch();

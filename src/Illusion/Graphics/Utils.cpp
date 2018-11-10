@@ -8,25 +8,32 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_VULKAN_PTR_HPP
-#define ILLUSION_GRAPHICS_VULKAN_PTR_HPP
-
 // ---------------------------------------------------------------------------------------- includes
-#include <functional>
-#include <memory>
+#include "Utils.hpp"
 
-namespace Illusion::Graphics {
+namespace Illusion::Graphics::Utils {
 
-template <typename T>
-struct Identity {
-  typedef T type;
-};
-
-template <typename T>
-static std::shared_ptr<T> makeVulkanPtr(
-  T const& vkObject, typename Identity<std::function<void(T* obj)>>::type deleter) {
-  return std::shared_ptr<T>(new T{vkObject}, deleter);
+bool isColorFormat(vk::Format format) {
+  return !isDepthStencilFormat(format) && !isDepthOnlyFormat(format);
 }
-} // namespace Illusion::Graphics
 
-#endif // ILLUSION_GRAPHICS_VULKAN_PTR_HPP
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool isDepthFormat(vk::Format format) {
+  return isDepthStencilFormat(format) || isDepthOnlyFormat(format);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool isDepthOnlyFormat(vk::Format format) {
+  return format == vk::Format::eD16Unorm || format == vk::Format::eD32Sfloat;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool isDepthStencilFormat(vk::Format format) {
+  return format == vk::Format::eD16UnormS8Uint || format == vk::Format::eD24UnormS8Uint ||
+         format == vk::Format::eD32SfloatS8Uint;
+}
+
+} // namespace Illusion::Graphics::Utils

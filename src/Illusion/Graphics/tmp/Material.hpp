@@ -42,7 +42,7 @@ class Material {
 
   // -------------------------------------------------------------------------------- public methods
   Material(
-    std::shared_ptr<Engine> const&  engine,
+    std::shared_ptr<Context> const& context,
     std::vector<std::string> const& shaderFiles,
     uint32_t                        materialCount);
   virtual ~Material();
@@ -67,7 +67,7 @@ class Material {
   std::shared_ptr<vk::Pipeline> createPipeline(PipelineCreateInfo const& info) const;
 
   // ------------------------------------------------------------------------------- private members
-  std::shared_ptr<Engine>         mEngine;
+  std::shared_ptr<Context>        mContext;
   std::shared_ptr<PipelineLayout> mPipelineLayout;
 
   static std::unordered_map<

@@ -8,38 +8,33 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_SHADERMODULE_HPP
-#define ILLUSION_GRAPHICS_SHADERMODULE_HPP
+#ifndef ILLUSION_GRAPHICS_SHADER_REFLECTION_HPP
+#define ILLUSION_GRAPHICS_SHADER_REFLECTION_HPP
 
 // ---------------------------------------------------------------------------------------- includes
 #include "PipelineResource.hpp"
-#include "fwd.hpp"
+
+#include <map>
 
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// -------------------------------------------------------------------------------------------------
-class ShaderModule {
+class ShaderReflection {
  public:
-  static std::vector<uint32_t> compileGlsl(std::string const& glsl, vk::ShaderStageFlagBits stage);
+  ShaderReflection();
+  virtual ~ShaderReflection();
 
-  ShaderModule(std::string const& glsl, vk::ShaderStageFlagBits stage);
-  ShaderModule(std::vector<uint32_t>&& spirv, vk::ShaderStageFlagBits stage);
+  void addResource(PipelineResource const& resource);
+  void addResources(std::vector<PipelineResource> const& resources);
 
-  virtual ~ShaderModule();
-
-  std::vector<uint32_t> const&         getSource() const;
-  std::vector<PipelineResource> const& getResources() const;
+  void printInfo() const;
 
  private:
-  void createReflection();
-
-  std::vector<uint32_t>         mSpirv;
-  vk::ShaderStageFlagBits       mStage;
-  std::vector<PipelineResource> mResources;
+  std::map<std::string, PipelineResource> mResources;
 };
+
 } // namespace Illusion::Graphics
 
-#endif // ILLUSION_GRAPHICS_SHADERMODULE_HPP
+#endif // ILLUSION_GRAPHICS_SHADER_REFLECTION_HPP

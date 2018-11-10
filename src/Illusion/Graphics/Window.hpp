@@ -15,7 +15,7 @@
 #include "../Core/Property.hpp"
 #include "../Input/KeyEvent.hpp"
 #include "../Input/MouseEvent.hpp"
-#include "Engine.hpp"
+#include "Context.hpp"
 
 struct GLFWwindow;
 struct GLFWcursor;
@@ -32,7 +32,7 @@ class Window {
   enum class Cursor { POINTER, IBEAM, CROSS, HAND, HRESIZE, VRESIZE };
 
   // ------------------------------------------------------------------------------------ properties
-  Core::String           pTitle      = std::string("Illusion Engine");
+  Core::String           pTitle      = std::string("Illusion Context");
   Core::UVec2            pSize       = glm::uvec2(640, 480);
   Core::IVec2            pPosition   = glm::ivec2(-1, -1);
   Core::Bool             pLockAspect = false;
@@ -51,7 +51,7 @@ class Window {
   Core::Signal<Input::JoystickId, Input::JoystickButtonId>      sOnJoystickButtonReleased;
 
   // -------------------------------------------------------------------------------- public methods
-  Window(std::shared_ptr<Engine> const& engine);
+  Window(std::shared_ptr<Engine> const& engine, std::shared_ptr<Context> const& context);
   virtual ~Window();
 
   void open();
@@ -72,9 +72,10 @@ class Window {
   void updateJoysticks();
 
   // ------------------------------------------------------------------------------- private members
-  std::shared_ptr<Engine> mEngine;
-  GLFWwindow*             mWindow = nullptr;
-  GLFWcursor*             mCursor = nullptr;
+  std::shared_ptr<Engine>  mEngine;
+  std::shared_ptr<Context> mContext;
+  GLFWwindow*              mWindow = nullptr;
+  GLFWcursor*              mCursor = nullptr;
 
   std::shared_ptr<vk::SurfaceKHR> mSurface;
   std::shared_ptr<DisplayPass>    mDisplayPass;

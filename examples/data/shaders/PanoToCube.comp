@@ -1,0 +1,36 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////
+//                                                                                                //
+//   _)  |  |            _)                 This software may be modified and distributed         //
+//    |  |  |  |  | (_-<  |   _ \    \      under the terms of the MIT license.                   //
+//   _| _| _| \_,_| ___/ _| \___/ _| _|     See the LICENSE file for details.                     //
+//                                                                                                //
+//  Authors: Simon Schneegans (code@simonschneegans.de)                                           //
+//                                                                                                //
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#version 450
+
+// inputs ------------------------------------------------------------------------------------------
+layout (local_size_x = 16, local_size_y = 16) in;
+
+// outputs -----------------------------------------------------------------------------------------
+layout (binding = 0)  uniform sampler2D inputImage;
+layout (rgba32f, binding = 1) writeonly uniform imageCube outputImage;
+
+// constants ---------------------------------------------------------------------------------------
+#define PI 3.14159265359
+
+// methods -----------------------------------------------------------------------------------------
+void main()
+{
+  uvec2 cubeFaceSize = imageSize(outputImage);
+  uint cubeFaceNumber = gl_GlobalInvocationID.x / cubeFaceSize.x;
+
+  ivec3 storePos = ivec3(gl_GlobalInvocationID.x % cubeFaceSize.x, 
+                         gl_GlobalInvocationID.y, 
+                         cubeFaceNumber);
+
+  vec2 uv = vec2(storePos.xy) / cubeFaceSize;
+
+  imageStore(outputImage, storePos, vec4(texture(inputImage, uv).rgb, 1.0) );
+}

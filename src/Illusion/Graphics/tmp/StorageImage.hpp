@@ -12,7 +12,7 @@
 #define ILLUSION_GRAPHICS_STORAGE_IMAGE_HPP
 
 // ---------------------------------------------------------------------------------------- includes
-#include "Engine.hpp"
+#include "Context.hpp"
 #include "Texture.hpp"
 
 namespace Illusion::Graphics {
@@ -29,8 +29,8 @@ class StorageImage : public T {
   std::shared_ptr<Texture> mTexture;
 
   // -------------------------------------------------------------------------------- public methods
-  StorageImage(std::shared_ptr<Engine> const& engine)
-    : mEngine(engine) {}
+  StorageImage(std::shared_ptr<Context> const& context)
+    : mContext(context) {}
 
   void bind(vk::DescriptorSet const& descriptorSet) const {
     vk::DescriptorImageInfo imageInfo;
@@ -46,12 +46,12 @@ class StorageImage : public T {
     info.descriptorCount = 1;
     info.pImageInfo      = &imageInfo;
 
-    mEngine->getDevice()->updateDescriptorSets(info, nullptr);
+    mContext->getDevice()->updateDescriptorSets(info, nullptr);
   }
 
  private:
   // ------------------------------------------------------------------------------- private members
-  std::shared_ptr<Engine> mEngine;
+  std::shared_ptr<Context> mContext;
 };
 } // namespace Illusion::Graphics
 

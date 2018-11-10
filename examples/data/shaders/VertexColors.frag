@@ -8,30 +8,15 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_FWD_HPP
-#define ILLUSION_GRAPHICS_FWD_HPP
+#version 450
 
-// ---------------------------------------------------------------------------------------- includes
-#include <vulkan/vulkan.hpp>
+// inputs ------------------------------------------------------------------------------------------
+layout(location = 0) in vec3 inColor;
 
-namespace Illusion::Graphics {
+// outputs -----------------------------------------------------------------------------------------
+layout(location = 0) out vec4 outColor;
 
-struct BackedBuffer;
-struct BackedImage;
-
-class Context;
-class DisplayPass;
-class Engine;
-class Framebuffer;
-class Material;
-class PhysicalDevice;
-class PipelineLayout;
-class RenderPass;
-class ShaderReflection;
-class Surface;
-class Texture;
-class Window;
-
-} // namespace Illusion::Graphics
-
-#endif // ILLUSION_GRAPHICS_FWD_HPP
+// methods -----------------------------------------------------------------------------------------
+void main() {
+    outColor = vec4(inColor, 1.0);
+}

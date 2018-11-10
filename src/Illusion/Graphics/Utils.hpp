@@ -8,30 +8,34 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_FWD_HPP
-#define ILLUSION_GRAPHICS_FWD_HPP
+#ifndef ILLUSION_GRAPHICS_VULKAN_PTR_HPP
+#define ILLUSION_GRAPHICS_VULKAN_PTR_HPP
 
 // ---------------------------------------------------------------------------------------- includes
-#include <vulkan/vulkan.hpp>
+#include "fwd.hpp"
 
-namespace Illusion::Graphics {
+#include <functional>
+#include <memory>
 
-struct BackedBuffer;
-struct BackedImage;
+namespace Illusion::Graphics::Utils {
 
-class Context;
-class DisplayPass;
-class Engine;
-class Framebuffer;
-class Material;
-class PhysicalDevice;
-class PipelineLayout;
-class RenderPass;
-class ShaderReflection;
-class Surface;
-class Texture;
-class Window;
+// --------------------------------------------------------------- some helpers regarding vk::Format
+bool isColorFormat(vk::Format format);
+bool isDepthFormat(vk::Format format);
+bool isDepthOnlyFormat(vk::Format format);
+bool isDepthStencilFormat(vk::Format format);
 
-} // namespace Illusion::Graphics
+// ------------------------------------------- shared_ptr based memory management for vulkan objects
+template <typename T>
+struct Identity {
+  typedef T type;
+};
 
-#endif // ILLUSION_GRAPHICS_FWD_HPP
+template <typename T>
+std::shared_ptr<T> makeVulkanPtr(
+  T const& vkObject, typename Identity<std::function<void(T* obj)>>::type deleter) {
+  return std::shared_ptr<T>(new T{vkObject}, deleter);
+}
+} // namespace Illusion::Graphics::Utils
+
+#endif // ILLUSION_GRAPHICS_VULKAN_PTR_HPP

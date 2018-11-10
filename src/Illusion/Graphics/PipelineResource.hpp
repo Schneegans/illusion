@@ -25,57 +25,48 @@ namespace Illusion::Graphics {
 
 struct PipelineResource {
 
-  enum class BaseType {
-    BOOL   = 0,
-    CHAR   = 1,
-    INT    = 2,
-    UINT   = 3,
-    UINT64 = 4,
-    HALF   = 5,
-    FLOAT  = 6,
-    DOUBLE = 7,
-    STRUCT = 8
-  };
+  enum class BaseType : int { BOOL, CHAR, INT, UINT, UINT64, HALF, FLOAT, DOUBLE, STRUCT, NONE };
 
-  enum class ResourceType {
-    INPUT                  = 0,
-    OUTPUT                 = 1,
-    SAMPLER                = 2,
-    COMBINED_IMAGE_SAMPLER = 3,
-    SAMPLED_IMAGE          = 4,
-    STORAGE_IMAGE          = 5,
-    UNIFORM_TEXEL_BUFFER   = 6,
-    STORAGE_TEXEL_BUFFER   = 7,
-    UNIFORM_BUFFER         = 8,
-    STORAGE_BUFFER         = 9,
-    INPUT_ATTACHMENT       = 10,
-    PUSH_CONSTANT_BUFFER   = 11
+  enum class ResourceType : int {
+    INPUT,
+    OUTPUT,
+    SAMPLER,
+    COMBINED_IMAGE_SAMPLER,
+    SAMPLED_IMAGE,
+    STORAGE_IMAGE,
+    UNIFORM_TEXEL_BUFFER,
+    STORAGE_TEXEL_BUFFER,
+    UNIFORM_BUFFER,
+    STORAGE_BUFFER,
+    INPUT_ATTACHMENT,
+    PUSH_CONSTANT_BUFFER,
+    NONE
   };
 
   struct Member {
-    BaseType            mBaseType;
-    uint32_t            mOffset;
-    uint32_t            mSize;
-    uint32_t            mVecSize;
-    uint32_t            mColumns;
-    uint32_t            mArraySize;
+    BaseType            mBaseType  = BaseType::NONE;
+    uint32_t            mOffset    = 0;
+    uint32_t            mSize      = 0;
+    uint32_t            mVecSize   = 0;
+    uint32_t            mColumns   = 0;
+    uint32_t            mArraySize = 0;
     std::string         mName;
     std::vector<Member> mMembers;
   };
 
   vk::ShaderStageFlags mStages;
-  ResourceType         mResourceType;
-  BaseType             mBaseType;
   vk::AccessFlags      mAccess;
-  uint32_t             mSet;
-  uint32_t             mBinding;
-  uint32_t             mLocation;
-  uint32_t             mInputAttachmentIndex;
-  uint32_t             mVecSize;
-  uint32_t             mColumns;
-  uint32_t             mArraySize;
-  uint32_t             mOffset;
-  uint32_t             mSize;
+  ResourceType         mResourceType         = ResourceType::NONE;
+  BaseType             mBaseType             = BaseType::NONE;
+  uint32_t             mSet                  = 0;
+  uint32_t             mBinding              = 0;
+  uint32_t             mLocation             = 0;
+  uint32_t             mInputAttachmentIndex = 0;
+  uint32_t             mVecSize              = 0;
+  uint32_t             mColumns              = 0;
+  uint32_t             mArraySize            = 0;
+  uint32_t             mOffset               = 0;
+  uint32_t             mSize                 = 0;
   std::string          mName;
   std::vector<Member>  mMembers;
 };

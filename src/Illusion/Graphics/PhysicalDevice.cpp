@@ -12,7 +12,6 @@
 #include "PhysicalDevice.hpp"
 
 #include "../Core/Logger.hpp"
-#include "VulkanPtr.hpp"
 
 #include <GLFW/glfw3.h>
 

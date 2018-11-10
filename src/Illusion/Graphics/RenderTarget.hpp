@@ -29,7 +29,7 @@ class RenderTarget {
 
   // -------------------------------------------------------------------------------- public methods
   RenderTarget(
-    std::shared_ptr<Engine> const&            engine,
+    std::shared_ptr<Context> const&           context,
     std::shared_ptr<vk::RenderPass> const&    renderPass,
     vk::Extent2D const&                       extent,
     std::vector<AttachmentDescription> const& attachmentDescriptions);
@@ -39,7 +39,7 @@ class RenderTarget {
   std::shared_ptr<vk::Framebuffer> const& getFramebuffer() const { return mFramebuffer; }
 
  private:
-  std::shared_ptr<Engine>         mEngine;
+  std::shared_ptr<Context>        mContext;
   std::shared_ptr<vk::RenderPass> mRenderPass;
   vk::Extent2D                    mExtent;
 

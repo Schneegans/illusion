@@ -12,7 +12,7 @@
 #include "Material.hpp"
 
 #include "../Core/Logger.hpp"
-#include "Engine.hpp"
+#include "Context.hpp"
 #include "PipelineLayout.hpp"
 #include "RenderPass.hpp"
 #include "ShaderReflection.hpp"
@@ -31,14 +31,14 @@ std::unordered_map<
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Material::Material(
-  std::shared_ptr<Engine> const&  engine,
+  std::shared_ptr<Context> const& context,
   std::vector<std::string> const& shaderFiles,
   uint32_t                        materialCount)
-  : mEngine(engine) {
+  : mContext(context) {
 
   ILLUSION_TRACE << "Creating Material." << std::endl;
 
-  mPipelineLayout = std::make_shared<PipelineLayout>(engine, shaderFiles, materialCount);
+  mPipelineLayout = std::make_shared<PipelineLayout>(context, shaderFiles, materialCount);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -170,7 +170,7 @@ std::shared_ptr<vk::Pipeline> Material::createPipeline(PipelineCreateInfo const&
     moduleInfo.codeSize = mPipelineLayout->getShaderCodes()[i].size() * 4;
     moduleInfo.pCode    = mPipelineLayout->getShaderCodes()[i].data();
 
-    auto module = mEngine->createShaderModule(moduleInfo);
+    auto module = mContext->createShaderModule(moduleInfo);
 
     vk::PipelineShaderStageCreateInfo stageInfo;
     stageInfo.stage = vk::ShaderStageFlagBits(

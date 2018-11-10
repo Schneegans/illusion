@@ -12,7 +12,7 @@
 #define ILLUSION_GRAPHICS_RENDER_PASS_HPP
 
 // ---------------------------------------------------------------------------------------- includes
-#include "Engine.hpp"
+#include "Context.hpp"
 #include "RenderTarget.hpp"
 
 #include <functional>
@@ -34,7 +34,7 @@ class RenderPass {
   };
 
   // -------------------------------------------------------------------------------- public methods
-  RenderPass(std::shared_ptr<Engine> const& engine);
+  RenderPass(std::shared_ptr<Context> const& context);
   virtual ~RenderPass();
 
   virtual void render();
@@ -64,7 +64,7 @@ class RenderPass {
   void setSwapchainInfo(std::vector<vk::Image> const& images, vk::Format format);
 
   // ----------------------------------------------------------------------------- protected members
-  std::shared_ptr<Engine> mEngine;
+  std::shared_ptr<Context> mContext;
 
   std::vector<std::weak_ptr<vk::Semaphore>> mWaitSemaphores;
   std::shared_ptr<vk::Semaphore>            mSignalSemaphore;

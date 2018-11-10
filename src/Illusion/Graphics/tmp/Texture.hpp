@@ -36,39 +36,39 @@ class Texture {
 
   // --------------------------------------------------------------------------------------- methods
   static std::shared_ptr<Texture> createFromFile(
-    std::shared_ptr<Engine> const& engine,
-    std::string const&             fileName,
-    vk::SamplerCreateInfo const&   sampler);
+    std::shared_ptr<Context> const& context,
+    std::string const&              fileName,
+    vk::SamplerCreateInfo const&    sampler);
 
   static std::shared_ptr<Texture> create2D(
-    std::shared_ptr<Engine> const& engine,
-    int32_t                        width,
-    int32_t                        height,
-    vk::Format                     format,
-    vk::ImageUsageFlags const&     usage,
-    vk::SamplerCreateInfo const&   sampler,
-    size_t                         size = 0,
-    void*                          data = nullptr);
+    std::shared_ptr<Context> const& context,
+    int32_t                         width,
+    int32_t                         height,
+    vk::Format                      format,
+    vk::ImageUsageFlags const&      usage,
+    vk::SamplerCreateInfo const&    sampler,
+    size_t                          size = 0,
+    void*                           data = nullptr);
 
   static std::shared_ptr<Texture> create2DMipMap(
-    std::shared_ptr<Engine> const& engine,
-    std::vector<TextureLevel>      levels,
-    vk::Format                     format,
-    vk::ImageUsageFlags const&     usage,
-    vk::ImageViewType              type,
-    vk::SamplerCreateInfo const&   sampler,
-    size_t                         size = 0,
-    void*                          data = nullptr);
+    std::shared_ptr<Context> const& context,
+    std::vector<TextureLevel>       levels,
+    vk::Format                      format,
+    vk::ImageUsageFlags const&      usage,
+    vk::ImageViewType               type,
+    vk::SamplerCreateInfo const&    sampler,
+    size_t                          size = 0,
+    void*                           data = nullptr);
 
   static std::shared_ptr<Texture> createCubemap(
-    std::shared_ptr<Engine> const& engine,
-    int32_t                        width,
-    int32_t                        height,
-    vk::Format                     format,
-    vk::ImageUsageFlags const&     usage,
-    vk::SamplerCreateInfo const&   sampler,
-    size_t                         size = 0,
-    void*                          data = nullptr);
+    std::shared_ptr<Context> const& context,
+    int32_t                         width,
+    int32_t                         height,
+    vk::Format                      format,
+    vk::ImageUsageFlags const&      usage,
+    vk::SamplerCreateInfo const&    sampler,
+    size_t                          size = 0,
+    void*                           data = nullptr);
 
   virtual ~Texture();
 
@@ -81,14 +81,14 @@ class Texture {
 
  protected:
   void initData(
-    std::shared_ptr<Engine> const& engine,
-    std::vector<TextureLevel>      levels,
-    vk::Format                     format,
-    vk::ImageUsageFlags            usage,
-    vk::ImageViewType              type,
-    vk::SamplerCreateInfo const&   sampler,
-    size_t                         size,
-    void*                          data);
+    std::shared_ptr<Context> const& context,
+    std::vector<TextureLevel>       levels,
+    vk::Format                      format,
+    vk::ImageUsageFlags             usage,
+    vk::ImageViewType               type,
+    vk::SamplerCreateInfo const&    sampler,
+    size_t                          size,
+    void*                           data);
 
   std::shared_ptr<vk::Image>        mImage;
   std::shared_ptr<vk::DeviceMemory> mMemory;

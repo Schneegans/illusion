@@ -13,6 +13,7 @@
 
 #include "../Core/Logger.hpp"
 #include "PhysicalDevice.hpp"
+#include "Utils.hpp"
 #include "Window.hpp"
 
 #include <iostream>
@@ -22,8 +23,8 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-RenderPass::RenderPass(std::shared_ptr<Engine> const& engine)
-  : mEngine(engine) {
+RenderPass::RenderPass(std::shared_ptr<Context> const& context)
+  : mContext(context) {
 
   ILLUSION_TRACE << "Creating RenderPass." << std::endl;
 
@@ -38,7 +39,7 @@ RenderPass::~RenderPass() { ILLUSION_TRACE << "Deleting RenderPass." << std::end
 
 void RenderPass::render() {
   if (mRingbufferSizeDirty) {
-    mEngine->getDevice()->waitIdle();
+    mContext->getDevice()->waitIdle();
 
     mFences.clear();
     mCommandBuffers.clear();
@@ -51,7 +52,7 @@ void RenderPass::render() {
   }
 
   if (mAttachmentsDirty) {
-    mEngine->getDevice()->waitIdle();
+    mContext->getDevice()->waitIdle();
 
     mRenderTargets.clear();
     mFrameBufferAttachments.clear();
@@ -70,10 +71,10 @@ void RenderPass::render() {
 
   vk::CommandBufferBeginInfo beginInfo;
   beginInfo.flags = vk::CommandBufferUsageFlagBits::eSimultaneousUse;
-  mEngine->getDevice()->waitForFences(*mFences[mCurrentRingBufferIndex], true, ~0);
+  mContext->getDevice()->waitForFences(*mFences[mCurrentRingBufferIndex], true, ~0);
 
   vk::CommandBuffer cmd = mCommandBuffers[mCurrentRingBufferIndex];
-  mEngine->getDevice()->resetFences(*mFences[mCurrentRingBufferIndex]);
+  mContext->getDevice()->resetFences(*mFences[mCurrentRingBufferIndex]);
 
   // record command buffer -------------------------------------------------------------------------
 
@@ -148,7 +149,7 @@ void RenderPass::render() {
   submitInfo.signalSemaphoreCount = 1;
   submitInfo.pSignalSemaphores    = signalSemaphores;
 
-  mEngine->getGraphicsQueue().submit(submitInfo, *mFences[mCurrentRingBufferIndex]);
+  mContext->getGraphicsQueue().submit(submitInfo, *mFences[mCurrentRingBufferIndex]);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -170,7 +171,7 @@ void RenderPass::setSubPasses(std::vector<SubPass> const& subPasses) {
 std::shared_ptr<vk::Pipeline> RenderPass::createPipeline(
   vk::GraphicsPipelineCreateInfo info) const {
   info.renderPass = *mRenderPass;
-  return mEngine->createPipeline(info);
+  return mContext->createPipeline(info);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -215,7 +216,7 @@ void RenderPass::executeBefore(std::shared_ptr<RenderPass> const& other) {
 
 bool RenderPass::hasDepthAttachment() const {
   for (auto format : mFrameBufferAttachmentFormats) {
-    if (Engine::isDepthFormat(format)) return true;
+    if (Utils::isDepthFormat(format)) return true;
   }
 
   return false;
@@ -233,7 +234,7 @@ void RenderPass::setSwapchainInfo(std::vector<vk::Image> const& images, vk::Form
 
 std::shared_ptr<vk::Semaphore> RenderPass::createSignalSemaphore() const {
   vk::SemaphoreCreateInfo info;
-  return mEngine->createSemaphore(info);
+  return mContext->createSemaphore(info);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -243,7 +244,7 @@ std::vector<std::shared_ptr<vk::Fence>> RenderPass::createFences() const {
   for (uint32_t i = 0; i < mRingbufferSize; ++i) {
     vk::FenceCreateInfo info;
     info.flags = vk::FenceCreateFlagBits::eSignaled;
-    fences.push_back(mEngine->createFence(info));
+    fences.push_back(mContext->createFence(info));
   }
   return fences;
 }
@@ -252,11 +253,11 @@ std::vector<std::shared_ptr<vk::Fence>> RenderPass::createFences() const {
 
 std::vector<vk::CommandBuffer> RenderPass::createCommandBuffers() const {
   vk::CommandBufferAllocateInfo allocInfo;
-  allocInfo.commandPool        = *mEngine->getGraphicsCommandPool();
+  allocInfo.commandPool        = *mContext->getGraphicsCommandPool();
   allocInfo.level              = vk::CommandBufferLevel::ePrimary;
   allocInfo.commandBufferCount = mRingbufferSize;
 
-  return mEngine->getDevice()->allocateCommandBuffers(allocInfo);
+  return mContext->getDevice()->allocateCommandBuffers(allocInfo);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -296,11 +297,11 @@ std::shared_ptr<vk::RenderPass> RenderPass::createRenderPass() const {
     attachment.loadOp        = vk::AttachmentLoadOp::eClear;
     attachment.storeOp       = vk::AttachmentStoreOp::eStore;
 
-    if (Engine::isColorFormat(attachment.format)) {
+    if (Utils::isColorFormat(attachment.format)) {
       attachment.stencilLoadOp  = vk::AttachmentLoadOp::eDontCare;
       attachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
       attachment.finalLayout    = vk::ImageLayout::eColorAttachmentOptimal;
-    } else if (Engine::isDepthOnlyFormat(attachment.format)) {
+    } else if (Utils::isDepthOnlyFormat(attachment.format)) {
       attachment.stencilLoadOp  = vk::AttachmentLoadOp::eDontCare;
       attachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
       attachment.finalLayout    = vk::ImageLayout::eDepthStencilAttachmentOptimal;
@@ -316,7 +317,7 @@ std::shared_ptr<vk::RenderPass> RenderPass::createRenderPass() const {
     attachments.emplace_back(attachment);
     attachmentRefs.emplace_back(attachmentRef);
 
-    if (Engine::isDepthFormat(attachment.format)) {
+    if (Utils::isDepthFormat(attachment.format)) {
       depthStencilAttachmentRef = attachmentRef.attachment;
     }
   }
@@ -343,7 +344,7 @@ std::shared_ptr<vk::RenderPass> RenderPass::createRenderPass() const {
     info.subpassCount    = 1;
     info.pSubpasses      = &subPass;
 
-    return mEngine->createRenderPass(info);
+    return mContext->createRenderPass(info);
   }
 
   std::vector<vk::SubpassDescription>               subPasses(mSubPasses.size());
@@ -394,7 +395,7 @@ std::shared_ptr<vk::RenderPass> RenderPass::createRenderPass() const {
   info.dependencyCount = dependencies.size();
   info.pDependencies   = dependencies.data();
 
-  return mEngine->createRenderPass(info);
+  return mContext->createRenderPass(info);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -406,11 +407,11 @@ std::vector<std::shared_ptr<BackedImage>> RenderPass::createFramebufferAttachmen
 
     vk::ImageUsageFlags usage = vk::ImageUsageFlagBits::eColorAttachment;
 
-    if (Engine::isDepthFormat(mFrameBufferAttachmentFormats[i])) {
+    if (Utils::isDepthFormat(mFrameBufferAttachmentFormats[i])) {
       usage = vk::ImageUsageFlagBits::eDepthStencilAttachment;
     }
 
-    attachments[i] = mEngine->createBackedImage(
+    attachments[i] = mContext->createBackedImage(
       mExtent.width,
       mExtent.height,
       1,
@@ -443,7 +444,7 @@ std::vector<std::shared_ptr<RenderTarget>> RenderPass::createRenderTargets() con
     }
 
     renderTargets.emplace_back(
-      std::make_shared<RenderTarget>(mEngine, mRenderPass, mExtent, attachments));
+      std::make_shared<RenderTarget>(mContext, mRenderPass, mExtent, attachments));
   }
 
   return renderTargets;

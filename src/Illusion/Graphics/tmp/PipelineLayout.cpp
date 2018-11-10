@@ -13,7 +13,7 @@
 
 #include "../Core/File.hpp"
 #include "../Core/Logger.hpp"
-#include "Engine.hpp"
+#include "Context.hpp"
 #include "RenderPass.hpp"
 #include "ShaderReflection.hpp"
 #include "Window.hpp"
@@ -25,10 +25,10 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 PipelineLayout::PipelineLayout(
-  std::shared_ptr<Engine> const&  engine,
+  std::shared_ptr<Context> const& context,
   std::vector<std::string> const& shaderFiles,
   uint32_t                        descriptorCount)
-  : mEngine(engine)
+  : mContext(context)
   , mShaderFiles(shaderFiles)
   , mDescriptorCount(descriptorCount) {
 
@@ -46,7 +46,7 @@ PipelineLayout::PipelineLayout(
 
 PipelineLayout::~PipelineLayout() {
   ILLUSION_TRACE << "Deleting PipelineLayout." << std::endl;
-  mEngine->getDevice()->waitIdle();
+  mContext->getDevice()->waitIdle();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -82,7 +82,7 @@ vk::DescriptorSet PipelineLayout::allocateDescriptorSet(int set) const {
   info.descriptorSetCount = 1;
   info.pSetLayouts        = descriptorSetLayouts;
 
-  return mEngine->getDevice()->allocateDescriptorSets(info)[0];
+  return mContext->getDevice()->allocateDescriptorSets(info)[0];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -92,7 +92,7 @@ void PipelineLayout::freeDescriptorSet(vk::DescriptorSet const& set) const {
     throw std::runtime_error{"Cannot free DescriptorSet: DescriptorSetLayout is empty!"};
   }
 
-  mEngine->getDevice()->freeDescriptorSets(*mDescriptorPool, set);
+  mContext->getDevice()->freeDescriptorSets(*mDescriptorPool, set);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -177,7 +177,7 @@ std::shared_ptr<vk::DescriptorPool> PipelineLayout::createDescriptorPool() const
     info.maxSets       = mDescriptorCount;
     info.flags         = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
 
-    return mEngine->createDescriptorPool(info);
+    return mContext->createDescriptorPool(info);
   }
 
   return nullptr;
@@ -220,7 +220,7 @@ std::vector<std::shared_ptr<vk::DescriptorSetLayout>> PipelineLayout::createDesc
     descriptorSetLayoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
     descriptorSetLayoutInfo.pBindings    = bindings.data();
 
-    descriptorSetLayouts.push_back(mEngine->createDescriptorSetLayout(descriptorSetLayoutInfo));
+    descriptorSetLayouts.push_back(mContext->createDescriptorSetLayout(descriptorSetLayoutInfo));
   }
 
   return descriptorSetLayouts;
@@ -247,7 +247,7 @@ std::shared_ptr<vk::PipelineLayout> PipelineLayout::createPipelineLayout() const
   pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(pushConstantRanges.size());
   pipelineLayoutInfo.pPushConstantRanges    = pushConstantRanges.data();
 
-  return mEngine->createPipelineLayout(pipelineLayoutInfo);
+  return mContext->createPipelineLayout(pipelineLayoutInfo);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -8,30 +8,18 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_FWD_HPP
-#define ILLUSION_GRAPHICS_FWD_HPP
+#version 450
 
-// ---------------------------------------------------------------------------------------- includes
-#include <vulkan/vulkan.hpp>
+// inputs ------------------------------------------------------------------------------------------
+layout(location = 0) in vec2 texcoords;
 
-namespace Illusion::Graphics {
+// uniforms ----------------------------------------------------------------------------------------
+layout(binding = 1) uniform sampler2D texSampler;
 
-struct BackedBuffer;
-struct BackedImage;
+// outputs -----------------------------------------------------------------------------------------
+layout(location = 0) out vec4 outColor;
 
-class Context;
-class DisplayPass;
-class Engine;
-class Framebuffer;
-class Material;
-class PhysicalDevice;
-class PipelineLayout;
-class RenderPass;
-class ShaderReflection;
-class Surface;
-class Texture;
-class Window;
-
-} // namespace Illusion::Graphics
-
-#endif // ILLUSION_GRAPHICS_FWD_HPP
+// methods -----------------------------------------------------------------------------------------
+void main() {
+    outColor = texture(texSampler, texcoords);
+}

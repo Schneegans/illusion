@@ -253,7 +253,7 @@ std::vector<uint32_t> ShaderModule::compileGlsl(
 ShaderModule::ShaderModule(std::vector<uint32_t>&& spirv, vk::ShaderStageFlagBits stage)
   : mSpirv(spirv)
   , mStage(stage)
-  , mReflection() {
+  , mResources() {
   createReflection();
 }
 
@@ -262,7 +262,7 @@ ShaderModule::ShaderModule(std::vector<uint32_t>&& spirv, vk::ShaderStageFlagBit
 ShaderModule::ShaderModule(std::string const& glsl, vk::ShaderStageFlagBits stage)
   : mSpirv(compileGlsl(glsl, stage))
   , mStage(stage)
-  , mReflection() {
+  , mResources() {
   createReflection();
 }
 
@@ -276,7 +276,7 @@ std::vector<uint32_t> const& ShaderModule::getSource() const { return mSpirv; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<PipelineResource> const& ShaderModule::getReflection() const { return mReflection; }
+std::vector<PipelineResource> const& ShaderModule::getResources() const { return mResources; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -308,7 +308,7 @@ void ShaderModule::createReflection() {
 
     pipelineResource.mBaseType = it->second;
     pipelineResource.mName     = resource.name;
-    mReflection.push_back(pipelineResource);
+    mResources.push_back(pipelineResource);
   }
 
   // Extract per stage outputs.
@@ -329,7 +329,7 @@ void ShaderModule::createReflection() {
 
     pipelineResource.mBaseType = it->second;
     pipelineResource.mName     = resource.name;
-    mReflection.push_back(pipelineResource);
+    mResources.push_back(pipelineResource);
   }
 
   // Extract uniform buffers.
@@ -346,7 +346,7 @@ void ShaderModule::createReflection() {
     pipelineResource.mSize      = compiler.get_declared_struct_size(spirType);
     pipelineResource.mName      = resource.name;
     pipelineResource.mMembers   = ParseMembers(compiler, spirType);
-    mReflection.push_back(pipelineResource);
+    mResources.push_back(pipelineResource);
   }
 
   // Extract storage buffers.
@@ -363,7 +363,7 @@ void ShaderModule::createReflection() {
     pipelineResource.mSize      = compiler.get_declared_struct_size(spirType);
     pipelineResource.mName      = resource.name;
     pipelineResource.mMembers   = ParseMembers(compiler, spirType);
-    mReflection.push_back(pipelineResource);
+    mResources.push_back(pipelineResource);
   }
 
   // Extract separate samplers.
@@ -378,7 +378,7 @@ void ShaderModule::createReflection() {
     pipelineResource.mBinding = compiler.get_decoration(resource.id, spv::DecorationBinding);
     pipelineResource.mArraySize = (spirType.array.size() == 0) ? 1 : spirType.array[0];
     pipelineResource.mName      = resource.name;
-    mReflection.push_back(pipelineResource);
+    mResources.push_back(pipelineResource);
   }
 
   // Extract sampled images (combined sampler + image or texture buffers).
@@ -395,7 +395,7 @@ void ShaderModule::createReflection() {
     pipelineResource.mBinding = compiler.get_decoration(resource.id, spv::DecorationBinding);
     pipelineResource.mArraySize = (spirType.array.size() == 0) ? 1 : spirType.array[0];
     pipelineResource.mName      = resource.name;
-    mReflection.push_back(pipelineResource);
+    mResources.push_back(pipelineResource);
   }
 
   // Extract seperate images ('sampled' in vulkan terminology or no sampler attached).
@@ -410,7 +410,7 @@ void ShaderModule::createReflection() {
     pipelineResource.mBinding = compiler.get_decoration(resource.id, spv::DecorationBinding);
     pipelineResource.mArraySize = (spirType.array.size() == 0) ? 1 : spirType.array[0];
     pipelineResource.mName      = resource.name;
-    mReflection.push_back(pipelineResource);
+    mResources.push_back(pipelineResource);
   }
 
   // Extract storage images.
@@ -435,7 +435,7 @@ void ShaderModule::createReflection() {
     pipelineResource.mBinding = compiler.get_decoration(resource.id, spv::DecorationBinding);
     pipelineResource.mArraySize = (spirType.array.size() == 0) ? 1 : spirType.array[0];
     pipelineResource.mName      = resource.name;
-    mReflection.push_back(pipelineResource);
+    mResources.push_back(pipelineResource);
   }
 
   // Extract subpass inputs.
@@ -450,7 +450,7 @@ void ShaderModule::createReflection() {
     pipelineResource.mBinding = compiler.get_decoration(resource.id, spv::DecorationBinding);
     pipelineResource.mArraySize = 1;
     pipelineResource.mName      = resource.name;
-    mReflection.push_back(pipelineResource);
+    mResources.push_back(pipelineResource);
   }
 
   // Extract push constants.
@@ -474,7 +474,7 @@ void ShaderModule::createReflection() {
     pipelineResource.mSize         = compiler.get_declared_struct_size(spirType);
     pipelineResource.mName         = resource.name;
     pipelineResource.mMembers      = ParseMembers(compiler, spirType);
-    mReflection.push_back(pipelineResource);
+    mResources.push_back(pipelineResource);
   }
 }
 

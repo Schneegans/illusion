@@ -25,10 +25,10 @@ class UniformBuffer : public T {
 
  public:
   // -------------------------------------------------------------------------------- public methods
-  UniformBuffer(std::shared_ptr<Engine> const& engine)
-    : mEngine(engine) {
+  UniformBuffer(std::shared_ptr<Context> const& context)
+    : mContext(context) {
 
-    mBuffer = engine->createBackedBuffer(
+    mBuffer = context->createBackedBuffer(
       sizeof(T),
       vk::BufferUsageFlagBits::eUniformBuffer | vk::BufferUsageFlagBits::eTransferDst,
       vk::MemoryPropertyFlagBits::eDeviceLocal);
@@ -52,12 +52,12 @@ class UniformBuffer : public T {
     info.descriptorCount = 1;
     info.pBufferInfo     = &bufferInfo;
 
-    mEngine->getDevice()->updateDescriptorSets(info, nullptr);
+    mContext->getDevice()->updateDescriptorSets(info, nullptr);
   }
 
  private:
   // ------------------------------------------------------------------------------- private members
-  std::shared_ptr<Engine>       mEngine;
+  std::shared_ptr<Context>      mContext;
   std::shared_ptr<BackedBuffer> mBuffer;
 };
 } // namespace Illusion::Graphics

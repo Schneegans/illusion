@@ -12,7 +12,8 @@
 #include "RenderTarget.hpp"
 
 #include "../Core/Logger.hpp"
-#include "Engine.hpp"
+#include "Context.hpp"
+#include "Utils.hpp"
 
 #include <iostream>
 
@@ -20,11 +21,11 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 RenderTarget::RenderTarget(
-  std::shared_ptr<Engine> const&            engine,
+  std::shared_ptr<Context> const&           context,
   std::shared_ptr<vk::RenderPass> const&    renderPass,
   vk::Extent2D const&                       extent,
   std::vector<AttachmentDescription> const& attachmentDescriptions)
-  : mEngine(engine)
+  : mContext(context)
   , mRenderPass(renderPass)
   , mExtent(extent) {
 
@@ -33,9 +34,9 @@ RenderTarget::RenderTarget(
   for (auto attachment : attachmentDescriptions) {
     vk::ImageAspectFlags aspect;
 
-    if (Engine::isDepthOnlyFormat(attachment.mFormat)) {
+    if (Utils::isDepthOnlyFormat(attachment.mFormat)) {
       aspect |= vk::ImageAspectFlagBits::eDepth;
-    } else if (Engine::isDepthStencilFormat(attachment.mFormat)) {
+    } else if (Utils::isDepthStencilFormat(attachment.mFormat)) {
       aspect |= vk::ImageAspectFlagBits::eDepth;
       aspect |= vk::ImageAspectFlagBits::eStencil;
     } else {
@@ -57,7 +58,7 @@ RenderTarget::RenderTarget(
     info.subresourceRange.layerCount     = 1;
 
     mImageStore.push_back(attachment.mImage);
-    mImageViewStore.push_back(mEngine->createImageView(info));
+    mImageViewStore.push_back(mContext->createImageView(info));
   }
 
   std::vector<vk::ImageView> attachments(mImageViewStore.size());
@@ -74,7 +75,7 @@ RenderTarget::RenderTarget(
   info.height          = mExtent.height;
   info.layers          = 1;
 
-  mFramebuffer = mEngine->createFramebuffer(info);
+  mFramebuffer = mContext->createFramebuffer(info);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

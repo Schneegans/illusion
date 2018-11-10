@@ -22,8 +22,8 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 DisplayPass::DisplayPass(
-  std::shared_ptr<Engine> const& engine, std::shared_ptr<vk::SurfaceKHR> const& surface)
-  : RenderPass(engine)
+  std::shared_ptr<Context> const& context, std::shared_ptr<vk::SurfaceKHR> const& surface)
+  : RenderPass(context)
   , mSurface(surface) {
 
   mSwapchainSemaphore = createSwapchainSemaphore();
@@ -54,7 +54,7 @@ void DisplayPass::setEnableVsync(bool enable) {
 
 void DisplayPass::render() {
   if (mSwapchainDirty) {
-    mEngine->getDevice()->waitIdle();
+    mContext->getDevice()->waitIdle();
 
     // delete old one first
     mSwapchain.reset();
@@ -66,7 +66,7 @@ void DisplayPass::render() {
     mSwapchainFormat = chooseSwapchainFormat();
     mSwapchain       = createSwapChain();
 
-    auto                   tmp = mEngine->getDevice()->getSwapchainImagesKHR(*mSwapchain);
+    auto                   tmp = mContext->getDevice()->getSwapchainImagesKHR(*mSwapchain);
     std::vector<vk::Image> swapchainImages;
 
     for (uint32_t i{0}; i < getRingBufferSize(); ++i) {
@@ -78,7 +78,7 @@ void DisplayPass::render() {
     mSwapchainDirty = false;
   }
 
-  auto result = mEngine->getDevice()->acquireNextImageKHR(
+  auto result = mContext->getDevice()->acquireNextImageKHR(
     *mSwapchain,
     std::numeric_limits<uint64_t>::max(),
     *mSwapchainSemaphore,
@@ -110,7 +110,7 @@ void DisplayPass::render() {
   presentInfo.pSwapchains        = swapChains;
   presentInfo.pImageIndices      = &mCurrentRingBufferIndex;
 
-  result = mEngine->getPresentQueue().presentKHR(presentInfo);
+  result = mContext->getPresentQueue().presentKHR(presentInfo);
   if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) {
     // when does this happen?
     ILLUSION_ERROR << "out of date 3!" << std::endl;
@@ -124,13 +124,13 @@ void DisplayPass::render() {
 
 std::shared_ptr<vk::Semaphore> DisplayPass::createSwapchainSemaphore() const {
   vk::SemaphoreCreateInfo info;
-  return mEngine->createSemaphore(info);
+  return mContext->createSemaphore(info);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 vk::Extent2D DisplayPass::chooseExtent() const {
-  auto capabilities = mEngine->getPhysicalDevice()->getSurfaceCapabilitiesKHR(*mSurface);
+  auto capabilities = mContext->getPhysicalDevice()->getSurfaceCapabilitiesKHR(*mSurface);
 
   if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
     return capabilities.currentExtent;
@@ -154,7 +154,7 @@ vk::Extent2D DisplayPass::chooseExtent() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 vk::SurfaceFormatKHR DisplayPass::chooseSwapchainFormat() const {
-  auto formats = mEngine->getPhysicalDevice()->getSurfaceFormatsKHR(*mSurface);
+  auto formats = mContext->getPhysicalDevice()->getSurfaceFormatsKHR(*mSurface);
 
   if (formats.size() == 1 && formats[0].format == vk::Format::eUndefined) {
     return {vk::Format::eB8G8R8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear};
@@ -174,7 +174,7 @@ vk::SurfaceFormatKHR DisplayPass::chooseSwapchainFormat() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 uint32_t DisplayPass::chooseSwapchainImageCount() const {
-  auto capabilities = mEngine->getPhysicalDevice()->getSurfaceCapabilitiesKHR(*mSurface);
+  auto capabilities = mContext->getPhysicalDevice()->getSurfaceCapabilitiesKHR(*mSurface);
 
   uint32_t imageCount = capabilities.minImageCount + 1;
   if (capabilities.maxImageCount > 0 && imageCount > capabilities.maxImageCount) {
@@ -188,9 +188,9 @@ uint32_t DisplayPass::chooseSwapchainImageCount() const {
 
 std::shared_ptr<vk::SwapchainKHR> DisplayPass::createSwapChain() const {
 
-  auto capabilities = mEngine->getPhysicalDevice()->getSurfaceCapabilitiesKHR(*mSurface);
-  auto formats      = mEngine->getPhysicalDevice()->getSurfaceFormatsKHR(*mSurface);
-  auto presentModes = mEngine->getPhysicalDevice()->getSurfacePresentModesKHR(*mSurface);
+  auto capabilities = mContext->getPhysicalDevice()->getSurfaceCapabilitiesKHR(*mSurface);
+  auto formats      = mContext->getPhysicalDevice()->getSurfaceFormatsKHR(*mSurface);
+  auto presentModes = mContext->getPhysicalDevice()->getSurfacePresentModesKHR(*mSurface);
 
   // Fifo is actually required to be supported and is a decent choice for V-Sync
   vk::PresentModeKHR presentMode{vk::PresentModeKHR::eFifo};
@@ -227,13 +227,13 @@ std::shared_ptr<vk::SwapchainKHR> DisplayPass::createSwapChain() const {
   info.clipped          = true;
   info.oldSwapchain     = nullptr; // this could be optimized
 
-  uint32_t graphicsFamily = mEngine->getPhysicalDevice()->getGraphicsFamily();
-  uint32_t presentFamily  = mEngine->getPhysicalDevice()->getPresentFamily();
+  uint32_t graphicsFamily = mContext->getPhysicalDevice()->getGraphicsFamily();
+  uint32_t presentFamily  = mContext->getPhysicalDevice()->getPresentFamily();
 
   // this check should not be neccessary, but the validation layers complain
   // when only glfwGetPhysicalDevicePresentationSupport was used to check for
   // presentation support
-  if (!mEngine->getPhysicalDevice()->getSurfaceSupportKHR(presentFamily, *mSurface)) {
+  if (!mContext->getPhysicalDevice()->getSurfaceSupportKHR(presentFamily, *mSurface)) {
     ILLUSION_ERROR << "The selected queue family does not "
                    << "support presentation!" << std::endl;
   }
@@ -249,7 +249,7 @@ std::shared_ptr<vk::SwapchainKHR> DisplayPass::createSwapChain() const {
     info.pQueueFamilyIndices   = nullptr; // Optional
   }
 
-  return mEngine->createSwapChainKhr(info);
+  return mContext->createSwapChainKhr(info);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

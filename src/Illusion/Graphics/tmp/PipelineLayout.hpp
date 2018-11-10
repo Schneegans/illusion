@@ -25,7 +25,7 @@ class PipelineLayout {
  public:
   // -------------------------------------------------------------------------------- public methods
   PipelineLayout(
-    std::shared_ptr<Engine> const&  engine,
+    std::shared_ptr<Context> const& context,
     std::vector<std::string> const& shaderFiles,
     uint32_t                        descriptorCount);
   virtual ~PipelineLayout();
@@ -76,7 +76,7 @@ class PipelineLayout {
   std::shared_ptr<vk::PipelineLayout>                   createPipelineLayout() const;
 
   // ------------------------------------------------------------------------------- private members
-  std::shared_ptr<Engine>  mEngine;
+  std::shared_ptr<Context> mContext;
   std::vector<std::string> mShaderFiles;
   uint32_t                 mDescriptorCount;
 
