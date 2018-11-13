@@ -104,14 +104,14 @@ void SetMessageOptions(int options, EShMessages& messages) {
 
 static std::unordered_map<spirv_cross::SPIRType::BaseType, PipelineResource::BaseType>
   spirvTypeToBaseType = {
-    {spirv_cross::SPIRType::Boolean, PipelineResource::BaseType::BOOL},
-    {spirv_cross::SPIRType::Char, PipelineResource::BaseType::CHAR},
-    {spirv_cross::SPIRType::Int, PipelineResource::BaseType::INT},
-    {spirv_cross::SPIRType::UInt, PipelineResource::BaseType::UINT},
-    {spirv_cross::SPIRType::Half, PipelineResource::BaseType::HALF},
-    {spirv_cross::SPIRType::Float, PipelineResource::BaseType::FLOAT},
-    {spirv_cross::SPIRType::Double, PipelineResource::BaseType::DOUBLE},
-    {spirv_cross::SPIRType::Struct, PipelineResource::BaseType::STRUCT},
+    {spirv_cross::SPIRType::Boolean, PipelineResource::BaseType::eBool},
+    {spirv_cross::SPIRType::Char, PipelineResource::BaseType::eChar},
+    {spirv_cross::SPIRType::Int, PipelineResource::BaseType::eInt},
+    {spirv_cross::SPIRType::UInt, PipelineResource::BaseType::eUint},
+    {spirv_cross::SPIRType::Half, PipelineResource::BaseType::eHalf},
+    {spirv_cross::SPIRType::Float, PipelineResource::BaseType::eFloat},
+    {spirv_cross::SPIRType::Double, PipelineResource::BaseType::eDouble},
+    {spirv_cross::SPIRType::Struct, PipelineResource::BaseType::eStruct},
 };
 
 static std::vector<PipelineResource::Member> ParseMembers(
@@ -296,7 +296,7 @@ void ShaderModule::createReflection() {
 
     PipelineResource pipelineResource;
     pipelineResource.mStages       = mStage;
-    pipelineResource.mResourceType = PipelineResource::ResourceType::INPUT;
+    pipelineResource.mResourceType = PipelineResource::ResourceType::eInput;
     pipelineResource.mAccess       = vk::AccessFlagBits::eShaderRead;
     pipelineResource.mLocation     = compiler.get_decoration(resource.id, spv::DecorationLocation);
     pipelineResource.mVecSize      = spirType.vecsize;
@@ -317,7 +317,7 @@ void ShaderModule::createReflection() {
 
     PipelineResource pipelineResource;
     pipelineResource.mStages       = mStage;
-    pipelineResource.mResourceType = PipelineResource::ResourceType::OUTPUT;
+    pipelineResource.mResourceType = PipelineResource::ResourceType::eOutput;
     pipelineResource.mAccess       = vk::AccessFlagBits::eShaderWrite;
     pipelineResource.mLocation     = compiler.get_decoration(resource.id, spv::DecorationLocation);
     pipelineResource.mVecSize      = spirType.vecsize;
@@ -338,7 +338,7 @@ void ShaderModule::createReflection() {
 
     PipelineResource pipelineResource;
     pipelineResource.mStages       = mStage;
-    pipelineResource.mResourceType = PipelineResource::ResourceType::UNIFORM_BUFFER;
+    pipelineResource.mResourceType = PipelineResource::ResourceType::eUniformBuffer;
     pipelineResource.mAccess       = vk::AccessFlagBits::eUniformRead;
     pipelineResource.mSet     = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
     pipelineResource.mBinding = compiler.get_decoration(resource.id, spv::DecorationBinding);
@@ -355,7 +355,7 @@ void ShaderModule::createReflection() {
 
     PipelineResource pipelineResource;
     pipelineResource.mStages       = mStage;
-    pipelineResource.mResourceType = PipelineResource::ResourceType::STORAGE_BUFFER;
+    pipelineResource.mResourceType = PipelineResource::ResourceType::eStorageBuffer;
     pipelineResource.mAccess       = compiler.GetAccessFlags(spirType);
     pipelineResource.mSet     = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
     pipelineResource.mBinding = compiler.get_decoration(resource.id, spv::DecorationBinding);
@@ -372,7 +372,7 @@ void ShaderModule::createReflection() {
 
     PipelineResource pipelineResource;
     pipelineResource.mStages       = mStage;
-    pipelineResource.mResourceType = PipelineResource::ResourceType::SAMPLER;
+    pipelineResource.mResourceType = PipelineResource::ResourceType::eSampler;
     pipelineResource.mAccess       = vk::AccessFlagBits::eShaderRead;
     pipelineResource.mSet     = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
     pipelineResource.mBinding = compiler.get_decoration(resource.id, spv::DecorationBinding);
@@ -388,8 +388,8 @@ void ShaderModule::createReflection() {
     PipelineResource pipelineResource;
     pipelineResource.mStages       = mStage;
     pipelineResource.mResourceType = (spirType.image.dim == spv::Dim::DimBuffer)
-                                       ? PipelineResource::ResourceType::UNIFORM_TEXEL_BUFFER
-                                       : PipelineResource::ResourceType::COMBINED_IMAGE_SAMPLER;
+                                       ? PipelineResource::ResourceType::eUniformTexelBuffer
+                                       : PipelineResource::ResourceType::eCombinedImageSampler;
     pipelineResource.mAccess  = vk::AccessFlagBits::eShaderRead;
     pipelineResource.mSet     = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
     pipelineResource.mBinding = compiler.get_decoration(resource.id, spv::DecorationBinding);
@@ -404,7 +404,7 @@ void ShaderModule::createReflection() {
 
     PipelineResource pipelineResource;
     pipelineResource.mStages       = mStage;
-    pipelineResource.mResourceType = PipelineResource::ResourceType::SAMPLED_IMAGE;
+    pipelineResource.mResourceType = PipelineResource::ResourceType::eSampledImage;
     pipelineResource.mAccess       = vk::AccessFlagBits::eShaderRead;
     pipelineResource.mSet     = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
     pipelineResource.mBinding = compiler.get_decoration(resource.id, spv::DecorationBinding);
@@ -428,8 +428,8 @@ void ShaderModule::createReflection() {
     PipelineResource pipelineResource;
     pipelineResource.mStages       = mStage;
     pipelineResource.mResourceType = (spirType.image.dim == spv::Dim::DimBuffer)
-                                       ? PipelineResource::ResourceType::STORAGE_TEXEL_BUFFER
-                                       : PipelineResource::ResourceType::STORAGE_IMAGE;
+                                       ? PipelineResource::ResourceType::eStorageTexelBuffer
+                                       : PipelineResource::ResourceType::eStorageImage;
     pipelineResource.mAccess  = access;
     pipelineResource.mSet     = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
     pipelineResource.mBinding = compiler.get_decoration(resource.id, spv::DecorationBinding);
@@ -441,7 +441,7 @@ void ShaderModule::createReflection() {
   // Extract subpass inputs.
   for (auto& resource : resources.subpass_inputs) {
     PipelineResource pipelineResource;
-    pipelineResource.mResourceType = PipelineResource::ResourceType::INPUT_ATTACHMENT;
+    pipelineResource.mResourceType = PipelineResource::ResourceType::eInputAttachment;
     pipelineResource.mStages       = vk::ShaderStageFlagBits::eFragment;
     pipelineResource.mAccess       = vk::AccessFlagBits::eShaderRead;
     pipelineResource.mInputAttachmentIndex =
@@ -468,7 +468,7 @@ void ShaderModule::createReflection() {
 
     PipelineResource pipelineResource;
     pipelineResource.mStages       = mStage;
-    pipelineResource.mResourceType = PipelineResource::ResourceType::PUSH_CONSTANT_BUFFER;
+    pipelineResource.mResourceType = PipelineResource::ResourceType::ePushConstantBuffer;
     pipelineResource.mAccess       = vk::AccessFlagBits::eShaderRead;
     pipelineResource.mOffset       = offset;
     pipelineResource.mSize         = compiler.get_declared_struct_size(spirType);

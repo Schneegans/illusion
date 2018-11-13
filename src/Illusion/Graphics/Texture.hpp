@@ -38,7 +38,7 @@ class Texture {
   static std::shared_ptr<Texture> createFromFile(
     std::shared_ptr<Context> const& context,
     std::string const&              fileName,
-    vk::SamplerCreateInfo const&    sampler);
+    vk::SamplerCreateInfo const&    sampler = vk::SamplerCreateInfo());
 
   static std::shared_ptr<Texture> create2D(
     std::shared_ptr<Context> const& context,
@@ -47,8 +47,8 @@ class Texture {
     vk::Format                      format,
     vk::ImageUsageFlags const&      usage,
     vk::SamplerCreateInfo const&    sampler,
-    size_t                          size = 0,
-    void*                           data = nullptr);
+    size_t                          dataSize = 0,
+    void*                           data     = nullptr);
 
   static std::shared_ptr<Texture> create2DMipMap(
     std::shared_ptr<Context> const& context,
@@ -57,18 +57,17 @@ class Texture {
     vk::ImageUsageFlags const&      usage,
     vk::ImageViewType               type,
     vk::SamplerCreateInfo const&    sampler,
-    size_t                          size = 0,
-    void*                           data = nullptr);
+    size_t                          dataSize = 0,
+    void*                           data     = nullptr);
 
   static std::shared_ptr<Texture> createCubemap(
     std::shared_ptr<Context> const& context,
-    int32_t                         width,
-    int32_t                         height,
+    int32_t                         size,
     vk::Format                      format,
     vk::ImageUsageFlags const&      usage,
     vk::SamplerCreateInfo const&    sampler,
-    size_t                          size = 0,
-    void*                           data = nullptr);
+    size_t                          dataSize = 0,
+    void*                           data     = nullptr);
 
   virtual ~Texture();
 

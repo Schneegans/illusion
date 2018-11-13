@@ -25,26 +25,37 @@ namespace Illusion::Graphics {
 
 struct PipelineResource {
 
-  enum class BaseType : int { BOOL, CHAR, INT, UINT, UINT64, HALF, FLOAT, DOUBLE, STRUCT, NONE };
+  enum class BaseType : int {
+    eBool,
+    eChar,
+    eInt,
+    eUint,
+    eUint64,
+    eHalf,
+    eFloat,
+    eDouble,
+    eStruct,
+    eNone
+  };
 
   enum class ResourceType : int {
-    INPUT,
-    OUTPUT,
-    SAMPLER,
-    COMBINED_IMAGE_SAMPLER,
-    SAMPLED_IMAGE,
-    STORAGE_IMAGE,
-    UNIFORM_TEXEL_BUFFER,
-    STORAGE_TEXEL_BUFFER,
-    UNIFORM_BUFFER,
-    STORAGE_BUFFER,
-    INPUT_ATTACHMENT,
-    PUSH_CONSTANT_BUFFER,
-    NONE
+    eInput,
+    eOutput,
+    eSampler,
+    eCombinedImageSampler,
+    eSampledImage,
+    eStorageImage,
+    eUniformTexelBuffer,
+    eStorageTexelBuffer,
+    eUniformBuffer,
+    eStorageBuffer,
+    eInputAttachment,
+    ePushConstantBuffer,
+    eNone
   };
 
   struct Member {
-    BaseType            mBaseType  = BaseType::NONE;
+    BaseType            mBaseType  = BaseType::eNone;
     uint32_t            mOffset    = 0;
     uint32_t            mSize      = 0;
     uint32_t            mVecSize   = 0;
@@ -56,8 +67,8 @@ struct PipelineResource {
 
   vk::ShaderStageFlags mStages;
   vk::AccessFlags      mAccess;
-  ResourceType         mResourceType         = ResourceType::NONE;
-  BaseType             mBaseType             = BaseType::NONE;
+  ResourceType         mResourceType         = ResourceType::eNone;
+  BaseType             mBaseType             = BaseType::eNone;
   uint32_t             mSet                  = 0;
   uint32_t             mBinding              = 0;
   uint32_t             mLocation             = 0;

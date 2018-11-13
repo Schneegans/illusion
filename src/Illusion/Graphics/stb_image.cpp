@@ -8,31 +8,5 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_FWD_HPP
-#define ILLUSION_GRAPHICS_FWD_HPP
-
-// ---------------------------------------------------------------------------------------- includes
-#include <vulkan/vulkan.hpp>
-
-namespace Illusion::Graphics {
-
-struct BackedBuffer;
-struct BackedImage;
-
-class Context;
-class DisplayPass;
-class Engine;
-class Framebuffer;
-class Material;
-class PhysicalDevice;
-class Pipeline;
-class RenderPass;
-class ShaderModule;
-class ShaderReflection;
-class Surface;
-class Texture;
-class Window;
-
-} // namespace Illusion::Graphics
-
-#endif // ILLUSION_GRAPHICS_FWD_HPP
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>

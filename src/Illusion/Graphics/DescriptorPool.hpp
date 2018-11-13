@@ -8,14 +8,13 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_SHADER_REFLECTION_HPP
-#define ILLUSION_GRAPHICS_SHADER_REFLECTION_HPP
+#ifndef ILLUSION_GRAPHICS_DESCRIPTOR_POOL_HPP
+#define ILLUSION_GRAPHICS_DESCRIPTOR_POOL_HPP
 
 // ---------------------------------------------------------------------------------------- includes
 #include "PipelineResource.hpp"
 
-#include <map>
-#include <set>
+#include <list>
 #include <unordered_map>
 
 namespace Illusion::Graphics {
@@ -23,27 +22,32 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class ShaderReflection {
+class DescriptorPool {
  public:
-  ShaderReflection();
-  virtual ~ShaderReflection();
+  DescriptorPool(
+    std::shared_ptr<Context> const& context, std::vector<PipelineResource> const& setResources);
+  virtual ~DescriptorPool();
 
-  void addResource(PipelineResource const& resource);
-  void addResources(std::vector<PipelineResource> const& resources);
+  std::shared_ptr<vk::DescriptorSet> allocateDescriptorSet();
 
-  std::map<std::string, PipelineResource> const& getResources() const;
-
-  std::vector<PipelineResource> getResources(PipelineResource::ResourceType type) const;
-  std::vector<PipelineResource> getResources(uint32_t set) const;
-  std::set<uint32_t> const&     getActiveSets() const;
-
-  void printInfo() const;
+  std::shared_ptr<vk::DescriptorSetLayout> const& getLayout() const;
 
  private:
-  std::map<std::string, PipelineResource> mResources;
-  std::set<uint32_t>                      mActiveSets;
+  const uint32_t                           mMaxSetsPerPool = 64;
+  std::shared_ptr<Context>                 mContext;
+  std::shared_ptr<vk::DescriptorSetLayout> mDescriptorSetLayout;
+  std::vector<vk::DescriptorPoolSize>      mPoolSizes;
+
+  // stores all descriptor pools and the number of descriptor sets
+  // which have been allocated from those pools
+  struct PoolInfo {
+    std::shared_ptr<vk::DescriptorPool> mPool;
+    uint32_t                            mAllocationCount = 0;
+  };
+
+  std::vector<std::shared_ptr<PoolInfo>> mDescriptorPools;
 };
 
 } // namespace Illusion::Graphics
 
-#endif // ILLUSION_GRAPHICS_SHADER_REFLECTION_HPP
+#endif // ILLUSION_GRAPHICS_DESCRIPTOR_POOL_HPP

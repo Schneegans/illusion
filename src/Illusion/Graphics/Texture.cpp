@@ -135,7 +135,7 @@ std::shared_ptr<Texture> Texture::create2D(
   vk::Format                      format,
   vk::ImageUsageFlags const&      usage,
   vk::SamplerCreateInfo const&    sampler,
-  size_t                          size,
+  size_t                          dataSize,
   void*                           data) {
 
   ILLUSION_TRACE << "Creating Texture." << std::endl;
@@ -143,10 +143,11 @@ std::shared_ptr<Texture> Texture::create2D(
   TextureLevel level;
   level.mWidth  = width;
   level.mHeight = height;
-  level.mSize   = size;
+  level.mSize   = dataSize;
 
   auto result = std::make_shared<Texture>();
-  result->initData(context, {level}, format, usage, vk::ImageViewType::e2D, sampler, size, data);
+  result->initData(
+    context, {level}, format, usage, vk::ImageViewType::e2D, sampler, dataSize, data);
   return result;
 }
 
@@ -159,13 +160,13 @@ std::shared_ptr<Texture> Texture::create2DMipMap(
   vk::ImageUsageFlags const&      usage,
   vk::ImageViewType               type,
   vk::SamplerCreateInfo const&    sampler,
-  size_t                          size,
+  size_t                          dataSize,
   void*                           data) {
 
   ILLUSION_TRACE << "Creating Texture." << std::endl;
 
   auto result = std::make_shared<Texture>();
-  result->initData(context, levels, format, usage, type, sampler, size, data);
+  result->initData(context, levels, format, usage, type, sampler, dataSize, data);
   return result;
 }
 
@@ -173,23 +174,23 @@ std::shared_ptr<Texture> Texture::create2DMipMap(
 
 std::shared_ptr<Texture> Texture::createCubemap(
   std::shared_ptr<Context> const& context,
-  int32_t                         width,
-  int32_t                         height,
+  int32_t                         size,
   vk::Format                      format,
   vk::ImageUsageFlags const&      usage,
   vk::SamplerCreateInfo const&    sampler,
-  size_t                          size,
+  size_t                          dataSize,
   void*                           data) {
 
   ILLUSION_TRACE << "Creating Texture." << std::endl;
 
   TextureLevel level;
-  level.mWidth  = width;
-  level.mHeight = height;
-  level.mSize   = size;
+  level.mWidth  = size;
+  level.mHeight = size;
+  level.mSize   = dataSize;
 
   auto result = std::make_shared<Texture>();
-  result->initData(context, {level}, format, usage, vk::ImageViewType::eCube, sampler, size, data);
+  result->initData(
+    context, {level}, format, usage, vk::ImageViewType::eCube, sampler, dataSize, data);
   return result;
 }
 

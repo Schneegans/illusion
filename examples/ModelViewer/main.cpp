@@ -15,8 +15,10 @@
 #include <Illusion/Graphics/DisplayPass.hpp>
 #include <Illusion/Graphics/Engine.hpp>
 #include <Illusion/Graphics/PhysicalDevice.hpp>
+#include <Illusion/Graphics/Pipeline.hpp>
 #include <Illusion/Graphics/ShaderModule.hpp>
 #include <Illusion/Graphics/ShaderReflection.hpp>
+#include <Illusion/Graphics/Texture.hpp>
 #include <Illusion/Graphics/Window.hpp>
 
 #include <iostream>
@@ -43,18 +45,22 @@ int main(int argc, char* argv[]) {
   window->pVsync      = false;
   window->open();
 
+  std::vector<std::shared_ptr<Illusion::Graphics::ShaderModule>> modules;
   auto glsl = Illusion::Core::File<std::string>("data/shaders/PBRShader.frag").getContent();
-  auto frag =
-    std::make_shared<Illusion::Graphics::ShaderModule>(glsl, vk::ShaderStageFlagBits::eFragment);
+  modules.push_back(
+    std::make_shared<Illusion::Graphics::ShaderModule>(glsl, vk::ShaderStageFlagBits::eFragment));
 
   glsl = Illusion::Core::File<std::string>("data/shaders/PBRShader.vert").getContent();
-  auto vert =
-    std::make_shared<Illusion::Graphics::ShaderModule>(glsl, vk::ShaderStageFlagBits::eVertex);
+  modules.push_back(
+    std::make_shared<Illusion::Graphics::ShaderModule>(glsl, vk::ShaderStageFlagBits::eVertex));
 
-  auto reflection = std::make_shared<Illusion::Graphics::ShaderReflection>();
-  reflection->addResources(frag->getResources());
-  reflection->addResources(vert->getResources());
-  reflection->printInfo();
+  auto pipeline = std::make_shared<Illusion::Graphics::Pipeline>(context, modules);
+  pipeline->getReflection()->printInfo();
+
+  auto set0 = pipeline->allocateDescriptorSet(0);
+  auto set1 = pipeline->allocateDescriptorSet(1);
+
+  auto texture = Illusion::Graphics::Texture::createFromFile(context, "data/textures/box.dds");
 
   Illusion::Core::FPSCounter fpsCounter;
   fpsCounter.pFPS.onChange().connect([window](float fps) {
