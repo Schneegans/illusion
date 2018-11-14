@@ -60,6 +60,12 @@ int main(int argc, char* argv[]) {
   auto set0 = pipeline->allocateDescriptorSet(0);
   auto set1 = pipeline->allocateDescriptorSet(1);
 
+  auto renderPass = window->getDisplayPass();
+  renderPass->addAttachment(vk::Format::eD32Sfloat);
+
+  renderPass->beforeFunc = [](vk::CommandBuffer const& cmd) {};
+  renderPass->drawFunc   = [](vk::CommandBuffer const& cmd, uint32_t subPass) {};
+
   auto texture = Illusion::Graphics::Texture::createFromFile(context, "data/textures/box.dds");
 
   Illusion::Core::FPSCounter fpsCounter;
@@ -72,7 +78,7 @@ int main(int argc, char* argv[]) {
 
   while (!window->shouldClose()) {
     window->processInput();
-    window->getDisplayPass()->render();
+    renderPass->render();
     fpsCounter.step();
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
