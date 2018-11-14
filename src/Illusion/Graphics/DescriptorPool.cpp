@@ -92,9 +92,9 @@ std::shared_ptr<vk::DescriptorSet> DescriptorPool::allocateDescriptorSet() {
   std::shared_ptr<PoolInfo> pool;
 
   for (auto& p : mDescriptorPools) {
-    if (p->mAllocationCount < mMaxSetsPerPool) {
+    if (p->mAllocationCount + 1 < mMaxSetsPerPool) {
       pool = p;
-      ++p->mAllocationCount;
+      p->mAllocationCount += 1;
       break;
     }
   }
