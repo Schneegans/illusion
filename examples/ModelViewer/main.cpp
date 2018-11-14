@@ -40,9 +40,11 @@ int main(int argc, char* argv[]) {
 #endif
 
   auto physicalDevice = engine->getPhysicalDevice();
-  auto context        = std::make_shared<Illusion::Graphics::Context>(physicalDevice);
-  auto window         = std::make_shared<Illusion::Graphics::Window>(engine, context);
-  window->pVsync      = false;
+  physicalDevice->printInfo();
+
+  auto context   = std::make_shared<Illusion::Graphics::Context>(physicalDevice);
+  auto window    = std::make_shared<Illusion::Graphics::Window>(engine, context);
+  window->pVsync = false;
   window->open();
 
   std::vector<std::shared_ptr<Illusion::Graphics::ShaderModule>> modules;

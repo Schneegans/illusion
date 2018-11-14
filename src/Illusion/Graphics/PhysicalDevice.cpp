@@ -224,6 +224,43 @@ void PhysicalDevice::printInfo() {
   printCap("variableMultisampleRate",                 features.variableMultisampleRate);
   printCap("inheritedQueries",                        features.inheritedQueries);
 
+  // format properties
+  ILLUSION_MESSAGE << Core::Logger::PRINT_BOLD << "Format Properties " << Core::Logger::PRINT_RESET << std::endl;
+  for (int i(VK_FORMAT_BEGIN_RANGE+1); i<=VK_FORMAT_END_RANGE; ++i)
+  {
+    vk::FormatProperties props = getFormatProperties(vk::Format(i));
+    std::stringstream sstr;
+
+    if (props.optimalTilingFeatures || props.linearTilingFeatures || props.bufferFeatures) {
+      sstr << Core::Logger::PRINT_GREEN + "yes" << Core::Logger::PRINT_RESET;
+    } else {
+      sstr << Core::Logger::PRINT_RED + "no" << Core::Logger::PRINT_RESET;
+    }
+
+    ILLUSION_MESSAGE << std::left << std::setw(50) << std::setfill('.') 
+                     << (vk::to_string(vk::Format(i)) + " ") << " "
+                     << sstr.str() << std::endl;
+
+    if (props.optimalTilingFeatures) {
+      ILLUSION_MESSAGE << std::right << std::setw(50) << std::setfill(' ') 
+                       << "Optimal Tiling:" << " " << vk::to_string(props.optimalTilingFeatures) 
+                       << std::endl;
+    }
+
+    if (props.linearTilingFeatures) {
+      ILLUSION_MESSAGE << std::right << std::setw(50) << std::setfill(' ') 
+                       << "Linear Tiling:" << " " << vk::to_string(props.linearTilingFeatures) 
+                       << std::endl;
+    }
+
+    if (props.bufferFeatures) {
+      ILLUSION_MESSAGE << std::right << std::setw(50) << std::setfill(' ') 
+                       << "Buffer Features:" << " " << vk::to_string(props.bufferFeatures) 
+                       << std::endl;
+    }
+
+  }
+
   // limits
   vk::PhysicalDeviceLimits limits = properties.limits;
   ILLUSION_MESSAGE << Core::Logger::PRINT_BOLD << "Limits " << Core::Logger::PRINT_RESET << std::endl;
