@@ -8,12 +8,14 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#include <Illusion/Core/BitHash.hpp>
 #include <Illusion/Core/FPSCounter.hpp>
 #include <Illusion/Core/File.hpp>
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Graphics/Context.hpp>
 #include <Illusion/Graphics/DisplayPass.hpp>
 #include <Illusion/Graphics/Engine.hpp>
+#include <Illusion/Graphics/GraphicsState.hpp>
 #include <Illusion/Graphics/PhysicalDevice.hpp>
 #include <Illusion/Graphics/Pipeline.hpp>
 #include <Illusion/Graphics/ShaderModule.hpp>
@@ -69,6 +71,17 @@ int main(int argc, char* argv[]) {
   renderPass->drawFunc   = [](vk::CommandBuffer const& cmd, uint32_t subPass) {};
 
   auto texture = Illusion::Graphics::Texture::createFromFile(context, "data/textures/box.dds");
+
+  Illusion::Graphics::GraphicsState state;
+
+  // std::unordered_map<Illusion::Graphics::GraphicsState, int> cache;
+
+  auto hash = state.getHash();
+  std::cout << hash.size() / 8 << std::endl;
+  for (auto b : hash) {
+    std::cout << (int)b << " ";
+  }
+  std::cout << std::endl;
 
   Illusion::Core::FPSCounter fpsCounter;
   fpsCounter.pFPS.onChange().connect([window](float fps) {

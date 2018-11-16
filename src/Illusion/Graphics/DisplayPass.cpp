@@ -34,12 +34,7 @@ DisplayPass::DisplayPass(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-DisplayPass::~DisplayPass() {
-  // mSwapchainSemaphore.reset();
-  // mSwapchain.reset();
-  // mSurface.reset();
-  ILLUSION_TRACE << "Deleting DisplayPass." << std::endl;
-}
+DisplayPass::~DisplayPass() { ILLUSION_TRACE << "Deleting DisplayPass." << std::endl; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -57,9 +57,6 @@ void RenderPass::render() {
     mRenderTargets.clear();
     mFrameBufferAttachments.clear();
 
-    // delete all pipelines
-    // FIXME: Material::clearPipelineCache(this);
-
     mRenderPass.reset();
 
     mRenderPass             = createRenderPass();
