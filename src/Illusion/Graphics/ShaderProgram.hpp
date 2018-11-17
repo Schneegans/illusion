@@ -35,7 +35,7 @@ class ShaderProgram {
   std::shared_ptr<ShaderReflection> const&   getReflection() const { return mReflection; }
   std::vector<std::shared_ptr<ShaderModule>> const& getModules() const { return mModules; }
 
-  std::shared_ptr<vk::DescriptorSet> allocateDescriptorSet(uint32_t setNum = 0);
+  std::shared_ptr<DescriptorSet> allocateDescriptorSet(uint32_t setNum = 0);
 
  private:
   // ------------------------------------------------------------------------------- private methods

@@ -12,6 +12,7 @@
 #include "RenderPass.hpp"
 
 #include "../Core/Logger.hpp"
+#include "CommandBuffer.hpp"
 #include "PhysicalDevice.hpp"
 #include "Utils.hpp"
 #include "Window.hpp"
@@ -43,12 +44,7 @@ void RenderPass::init() {
     mContext->getDevice()->waitIdle();
 
     mFences.clear();
-
-    if (mCommandBuffers.size() > 0) {
-      mContext->getDevice()->freeCommandBuffers(
-        *mContext->getGraphicsCommandPool(), mCommandBuffers);
-      mCommandBuffers.clear();
-    }
+    mCommandBuffers.clear();
 
     mFences         = createFences();
     mCommandBuffers = createCommandBuffers();
@@ -81,16 +77,16 @@ void RenderPass::render() {
 
   mContext->getDevice()->waitForFences(*mFences[mCurrentRingBufferIndex], true, ~0);
 
-  vk::CommandBuffer cmd = mCommandBuffers[mCurrentRingBufferIndex];
+  auto cmd = mCommandBuffers[mCurrentRingBufferIndex];
   mContext->getDevice()->resetFences(*mFences[mCurrentRingBufferIndex]);
 
   // record command buffer -------------------------------------------------------------------------
 
-  cmd.reset(vk::CommandBufferResetFlags());
+  cmd->reset(vk::CommandBufferResetFlags());
 
   vk::CommandBufferBeginInfo beginInfo;
   beginInfo.flags = vk::CommandBufferUsageFlagBits::eSimultaneousUse;
-  cmd.begin(beginInfo);
+  cmd->begin(beginInfo);
 
   // record render pass ----------------------------------------------------------------------------
   if (beforeFunc) { beforeFunc(cmd, *this); }
@@ -109,22 +105,22 @@ void RenderPass::render() {
   passInfo.clearValueCount = clearValues.size();
   passInfo.pClearValues    = clearValues.data();
 
-  cmd.beginRenderPass(passInfo, vk::SubpassContents::eInline);
+  cmd->beginRenderPass(passInfo, vk::SubpassContents::eInline);
 
   if (drawFunc) { drawFunc(cmd, *this, 0); }
 
   if (mSubPasses.size() > 0) {
     for (size_t i{1}; i < mSubPasses.size(); ++i) {
-      cmd.nextSubpass(vk::SubpassContents::eInline);
+      cmd->nextSubpass(vk::SubpassContents::eInline);
       drawFunc(cmd, *this, i);
     }
   }
 
-  cmd.endRenderPass();
+  cmd->endRenderPass();
 
   // submit to queue -------------------------------------------------------------------------------
 
-  cmd.end();
+  cmd->end();
 
   vk::PipelineStageFlags waitStages[] = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
 
@@ -140,7 +136,7 @@ void RenderPass::render() {
   submitInfo.pWaitSemaphores      = waitSemaphores.data();
   submitInfo.pWaitDstStageMask    = waitStages;
   submitInfo.commandBufferCount   = 1;
-  submitInfo.pCommandBuffers      = &cmd;
+  submitInfo.pCommandBuffers      = cmd.get();
   submitInfo.signalSemaphoreCount = 1;
   submitInfo.pSignalSemaphores    = signalSemaphores;
 
@@ -249,13 +245,14 @@ std::vector<std::shared_ptr<vk::Fence>> RenderPass::createFences() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<vk::CommandBuffer> RenderPass::createCommandBuffers() const {
-  vk::CommandBufferAllocateInfo allocInfo;
-  allocInfo.commandPool        = *mContext->getGraphicsCommandPool();
-  allocInfo.level              = vk::CommandBufferLevel::ePrimary;
-  allocInfo.commandBufferCount = mRingbufferSize;
+std::vector<std::shared_ptr<CommandBuffer>> RenderPass::createCommandBuffers() const {
+  std::vector<std::shared_ptr<CommandBuffer>> commandBuffers(mRingbufferSize);
 
-  return mContext->getDevice()->allocateCommandBuffers(allocInfo);
+  for (int i(0); i < mRingbufferSize; ++i) {
+    commandBuffers[i] = mContext->allocateGraphicsCommandBuffer();
+  }
+
+  return commandBuffers;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

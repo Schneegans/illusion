@@ -25,10 +25,12 @@ namespace Illusion::Graphics {
 class DescriptorPool {
  public:
   DescriptorPool(
-    std::shared_ptr<Context> const& context, std::vector<PipelineResource> const& setResources);
+    std::shared_ptr<Context> const&      context,
+    std::vector<PipelineResource> const& setResources,
+    uint32_t                             set);
   virtual ~DescriptorPool();
 
-  std::shared_ptr<vk::DescriptorSet> allocateDescriptorSet();
+  std::shared_ptr<DescriptorSet> allocateDescriptorSet();
 
   std::shared_ptr<vk::DescriptorSetLayout> const& getLayout() const;
 
@@ -37,6 +39,7 @@ class DescriptorPool {
   std::shared_ptr<Context>                 mContext;
   std::shared_ptr<vk::DescriptorSetLayout> mDescriptorSetLayout;
   std::vector<vk::DescriptorPoolSize>      mPoolSizes;
+  uint32_t                                 mSet;
 
   // stores all descriptor pools and the number of descriptor sets
   // which have been allocated from those pools

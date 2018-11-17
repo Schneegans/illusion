@@ -62,6 +62,9 @@ class Context {
   std::shared_ptr<BackedBuffer> createVertexBuffer(vk::DeviceSize size, void* data) const;
   std::shared_ptr<BackedBuffer> createIndexBuffer(vk::DeviceSize size, void* data) const;
 
+  std::shared_ptr<CommandBuffer> allocateGraphicsCommandBuffer() const;
+  std::shared_ptr<CommandBuffer> allocateComputeCommandBuffer() const;
+
   // ---------------------------------------------------------------------- low-level create methods
   // clang-format off
   std::shared_ptr<vk::Buffer>              createBuffer(vk::BufferCreateInfo const&) const;
@@ -81,14 +84,15 @@ class Context {
   std::shared_ptr<vk::Semaphore>           createSemaphore(vk::SemaphoreCreateInfo const&) const;
   std::shared_ptr<vk::ShaderModule>        createShaderModule(vk::ShaderModuleCreateInfo const&) const;
   std::shared_ptr<vk::SwapchainKHR>        createSwapChainKhr(vk::SwapchainCreateInfoKHR const&) const;
+
   // clang-format on
 
   // ------------------------------------------------------------------------- vulkan helper methods
-  vk::CommandBuffer beginSingleTimeGraphicsCommands() const;
-  void              endSingleTimeGraphicsCommands(vk::CommandBuffer commandBuffer) const;
+  std::shared_ptr<CommandBuffer> beginSingleTimeGraphicsCommands() const;
+  void endSingleTimeGraphicsCommands(std::shared_ptr<CommandBuffer> commandBuffer) const;
 
-  vk::CommandBuffer beginSingleTimeComputeCommands() const;
-  void              endSingleTimeComputeCommands(vk::CommandBuffer commandBuffer) const;
+  std::shared_ptr<CommandBuffer> beginSingleTimeComputeCommands() const;
+  void endSingleTimeComputeCommands(std::shared_ptr<CommandBuffer> commandBuffer) const;
 
   void transitionImageLayout(
     std::shared_ptr<vk::Image>& image,

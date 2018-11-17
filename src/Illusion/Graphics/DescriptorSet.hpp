@@ -8,35 +8,31 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_FWD_HPP
-#define ILLUSION_GRAPHICS_FWD_HPP
+#ifndef ILLUSION_GRAPHICS_DESCRIPTOR_SET_HPP
+#define ILLUSION_GRAPHICS_DESCRIPTOR_SET_HPP
 
 // ---------------------------------------------------------------------------------------- includes
-#include <vulkan/vulkan.hpp>
+#include "fwd.hpp"
 
 namespace Illusion::Graphics {
 
-struct BackedBuffer;
-struct BackedImage;
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class CommandBuffer;
-class Context;
-class DescriptorSet;
-class DisplayPass;
-class Engine;
-class Framebuffer;
-class GraphicsState;
-class Material;
-class PhysicalDevice;
-class PipelineFactory;
-class RenderPass;
-class ShaderModule;
-class ShaderProgram;
-class ShaderReflection;
-class Surface;
-class Texture;
-class Window;
+// -------------------------------------------------------------------------------------------------
+class DescriptorSet : public vk::DescriptorSet {
+ public:
+  DescriptorSet(
+    std::shared_ptr<Context> const& context, vk::DescriptorSet const& base, uint32_t set);
 
+  uint32_t getSet() const { return mSet; }
+
+  void bindCombinedImageSampler(std::shared_ptr<Texture> const& texture, uint32_t binding);
+
+ private:
+  std::shared_ptr<Context> mContext;
+  uint32_t                 mSet;
+};
 } // namespace Illusion::Graphics
 
-#endif // ILLUSION_GRAPHICS_FWD_HPP
+#endif // ILLUSION_GRAPHICS_DESCRIPTOR_SET_HPP

@@ -12,6 +12,7 @@
 #include "Texture.hpp"
 
 #include "../Core/Logger.hpp"
+#include "CommandBuffer.hpp"
 #include "Context.hpp"
 
 #include <gli/gli.hpp>
@@ -296,7 +297,7 @@ void Texture::initData(
 
       ILLUSION_TRACE << "Copying vk::Buffer to vk::Image." << std::endl;
 
-      cmd.copyBufferToImage(
+      cmd->copyBufferToImage(
         *stagingBuffer->mBuffer, *mImage, vk::ImageLayout::eTransferDstOptimal, infos);
     }
     context->endSingleTimeGraphicsCommands(cmd);

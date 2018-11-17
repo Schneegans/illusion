@@ -8,35 +8,12 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_FWD_HPP
-#define ILLUSION_GRAPHICS_FWD_HPP
-
 // ---------------------------------------------------------------------------------------- includes
-#include <vulkan/vulkan.hpp>
+#include "CommandBuffer.hpp"
 
 namespace Illusion::Graphics {
 
-struct BackedBuffer;
-struct BackedImage;
-
-class CommandBuffer;
-class Context;
-class DescriptorSet;
-class DisplayPass;
-class Engine;
-class Framebuffer;
-class GraphicsState;
-class Material;
-class PhysicalDevice;
-class PipelineFactory;
-class RenderPass;
-class ShaderModule;
-class ShaderProgram;
-class ShaderReflection;
-class Surface;
-class Texture;
-class Window;
+CommandBuffer::CommandBuffer(vk::CommandBuffer const& base)
+  : vk::CommandBuffer(base) {}
 
 } // namespace Illusion::Graphics
-
-#endif // ILLUSION_GRAPHICS_FWD_HPP

@@ -11,7 +11,9 @@
 #include <Illusion/Core/FPSCounter.hpp>
 #include <Illusion/Core/File.hpp>
 #include <Illusion/Core/Logger.hpp>
+#include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/Context.hpp>
+#include <Illusion/Graphics/DescriptorSet.hpp>
 #include <Illusion/Graphics/DisplayPass.hpp>
 #include <Illusion/Graphics/Engine.hpp>
 #include <Illusion/Graphics/GraphicsState.hpp>
@@ -60,13 +62,13 @@ int main(int argc, char* argv[]) {
   auto shader = std::make_shared<Illusion::Graphics::ShaderProgram>(context, modules);
   shader->getReflection()->printInfo();
 
-  // auto set0 = shader->allocateDescriptorSet(0);
-
   auto renderPass = window->getDisplayPass();
-  // renderPass->addAttachment(vk::Format::eD32Sfloat);
   renderPass->init();
 
   auto texture = Illusion::Graphics::Texture::createFromFile(context, "data/textures/box.dds");
+
+  auto set = shader->allocateDescriptorSet();
+  set->bindCombinedImageSampler(texture, 0);
 
   Illusion::Graphics::GraphicsState state;
   state.setShaderProgram(shader);
@@ -95,20 +97,25 @@ int main(int argc, char* argv[]) {
     float     time = 0;
   } pushConstants;
 
-  renderPass->drawFunc =
-    [&state, &pushConstants](
-      vk::CommandBuffer& cmd, Illusion::Graphics::RenderPass const& pass, uint32_t subPass) {
-      auto pipeline = pass.createPipeline(state, subPass);
-      pushConstants.time += 0.001;
-      cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline);
-      cmd.pushConstants(
-        *state.getShaderProgram()->getPipelineLayout(),
-        vk::ShaderStageFlagBits::eVertex,
-        0,
-        sizeof(PushConstants),
-        &pushConstants);
-      cmd.draw(4, 1, 0, 0);
-    };
+  renderPass->drawFunc = [&state, &pushConstants, &set](
+                           std::shared_ptr<Illusion::Graphics::CommandBuffer> cmd,
+                           Illusion::Graphics::RenderPass const&              pass,
+                           uint32_t                                           subPass) {
+    auto pipeline = pass.createPipeline(state, subPass);
+    pushConstants.time += 0.001;
+    cmd->bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline);
+    cmd->bindDescriptorSets(
+      vk::PipelineBindPoint::eGraphics,
+      *state.getShaderProgram()->getPipelineLayout(),
+      set->getSet(),
+      *set,
+      nullptr);
+    cmd->pushConstants(
+      *state.getShaderProgram()->getPipelineLayout(),
+      vk::ShaderStageFlagBits::eVertex,
+      pushConstants);
+    cmd->draw(4, 1, 0, 0);
+  };
 
   Illusion::Core::FPSCounter fpsCounter;
   fpsCounter.pFPS.onChange().connect([window](float fps) {

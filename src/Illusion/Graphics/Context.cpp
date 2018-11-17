@@ -12,6 +12,7 @@
 #include "Context.hpp"
 
 #include "../Core/Logger.hpp"
+#include "CommandBuffer.hpp"
 #include "PhysicalDevice.hpp"
 #include "Utils.hpp"
 
@@ -186,12 +187,59 @@ std::shared_ptr<BackedBuffer> Context::createIndexBuffer(vk::DeviceSize size, vo
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+std::shared_ptr<CommandBuffer> Context::allocateGraphicsCommandBuffer() const {
+  vk::CommandBufferAllocateInfo info;
+  info.level              = vk::CommandBufferLevel::ePrimary;
+  info.commandPool        = *mGraphicsCommandPool;
+  info.commandBufferCount = 1;
+
+  ILLUSION_TRACE << "Allocating Graphics CommandBuffer." << std::endl;
+
+  auto device{mDevice};
+  auto pool{mGraphicsCommandPool};
+  auto commandBuffer = std::shared_ptr<CommandBuffer>(
+    new CommandBuffer(mDevice->allocateCommandBuffers(info)[0]),
+    [device, pool](CommandBuffer* obj) {
+      ILLUSION_TRACE << "Freeing Graphics CommandBuffer." << std::endl;
+      device->freeCommandBuffers(*pool, *obj);
+      delete obj;
+    });
+
+  return commandBuffer;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::shared_ptr<CommandBuffer> Context::allocateComputeCommandBuffer() const {
+  vk::CommandBufferAllocateInfo info;
+  info.level              = vk::CommandBufferLevel::ePrimary;
+  info.commandPool        = *mComputeCommandPool;
+  info.commandBufferCount = 1;
+
+  ILLUSION_TRACE << "Allocating Compute CommandBuffer." << std::endl;
+
+  auto device{mDevice};
+  auto pool{mComputeCommandPool};
+  auto commandBuffer = std::shared_ptr<CommandBuffer>(
+    new CommandBuffer(mDevice->allocateCommandBuffers(info)[0]),
+    [device, pool](CommandBuffer* obj) {
+      ILLUSION_TRACE << "Freeing Compute CommandBuffer." << std::endl;
+      device->freeCommandBuffers(*pool, *obj);
+      delete obj;
+    });
+
+  return commandBuffer;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::shared_ptr<vk::Buffer> Context::createBuffer(vk::BufferCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::Buffer." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(device->createBuffer(info), [device](vk::Buffer* obj) {
     ILLUSION_TRACE << "Deleting vk::Buffer." << std::endl;
     device->destroyBuffer(*obj);
+    delete obj;
   });
 }
 
@@ -204,6 +252,7 @@ std::shared_ptr<vk::CommandPool> Context::createCommandPool(
   return Utils::makeVulkanPtr(device->createCommandPool(info), [device](vk::CommandPool* obj) {
     ILLUSION_TRACE << "Deleting vk::CommandPool." << std::endl;
     device->destroyCommandPool(*obj);
+    delete obj;
   });
 }
 
@@ -217,6 +266,7 @@ std::shared_ptr<vk::DescriptorPool> Context::createDescriptorPool(
     device->createDescriptorPool(info), [device](vk::DescriptorPool* obj) {
       ILLUSION_TRACE << "Deleting vk::DescriptorPool." << std::endl;
       device->destroyDescriptorPool(*obj);
+      delete obj;
     });
 }
 
@@ -230,6 +280,7 @@ std::shared_ptr<vk::DescriptorSetLayout> Context::createDescriptorSetLayout(
     device->createDescriptorSetLayout(info), [device](vk::DescriptorSetLayout* obj) {
       ILLUSION_TRACE << "Deleting vk::DescriptorSetLayout." << std::endl;
       device->destroyDescriptorSetLayout(*obj);
+      delete obj;
     });
 }
 
@@ -241,6 +292,7 @@ std::shared_ptr<vk::DeviceMemory> Context::createMemory(vk::MemoryAllocateInfo c
   return Utils::makeVulkanPtr(device->allocateMemory(info), [device](vk::DeviceMemory* obj) {
     ILLUSION_TRACE << "Freeing vk::DeviceMemory." << std::endl;
     device->freeMemory(*obj);
+    delete obj;
   });
 }
 
@@ -252,6 +304,7 @@ std::shared_ptr<vk::Fence> Context::createFence(vk::FenceCreateInfo const& info)
   return Utils::makeVulkanPtr(device->createFence(info), [device](vk::Fence* obj) {
     ILLUSION_TRACE << "Deleting vk::Fence." << std::endl;
     device->destroyFence(*obj);
+    delete obj;
   });
 }
 
@@ -264,6 +317,7 @@ std::shared_ptr<vk::Framebuffer> Context::createFramebuffer(
   return Utils::makeVulkanPtr(device->createFramebuffer(info), [device](vk::Framebuffer* obj) {
     ILLUSION_TRACE << "Deleting vk::Framebuffer." << std::endl;
     device->destroyFramebuffer(*obj);
+    delete obj;
   });
 }
 
@@ -275,6 +329,7 @@ std::shared_ptr<vk::Image> Context::createImage(vk::ImageCreateInfo const& info)
   return Utils::makeVulkanPtr(device->createImage(info), [device](vk::Image* obj) {
     ILLUSION_TRACE << "Deleting vk::Image." << std::endl;
     device->destroyImage(*obj);
+    delete obj;
   });
 }
 
@@ -286,6 +341,7 @@ std::shared_ptr<vk::ImageView> Context::createImageView(vk::ImageViewCreateInfo 
   return Utils::makeVulkanPtr(device->createImageView(info), [device](vk::ImageView* obj) {
     ILLUSION_TRACE << "Deleting vk::ImageView." << std::endl;
     device->destroyImageView(*obj);
+    delete obj;
   });
 }
 
@@ -299,6 +355,7 @@ std::shared_ptr<vk::Pipeline> Context::createComputePipeline(
     device->createComputePipeline(nullptr, info), [device](vk::Pipeline* obj) {
       ILLUSION_TRACE << "Deleting vk::ComputePipeline." << std::endl;
       device->destroyPipeline(*obj);
+      delete obj;
     });
 }
 
@@ -312,6 +369,7 @@ std::shared_ptr<vk::Pipeline> Context::createPipeline(
     device->createGraphicsPipeline(nullptr, info), [device](vk::Pipeline* obj) {
       ILLUSION_TRACE << "Deleting vk::Pipeline." << std::endl;
       device->destroyPipeline(*obj);
+      delete obj;
     });
 }
 
@@ -325,6 +383,7 @@ std::shared_ptr<vk::PipelineLayout> Context::createPipelineLayout(
     device->createPipelineLayout(info), [device](vk::PipelineLayout* obj) {
       ILLUSION_TRACE << "Deleting vk::PipelineLayout." << std::endl;
       device->destroyPipelineLayout(*obj);
+      delete obj;
     });
 }
 
@@ -337,6 +396,7 @@ std::shared_ptr<vk::RenderPass> Context::createRenderPass(
   return Utils::makeVulkanPtr(device->createRenderPass(info), [device](vk::RenderPass* obj) {
     ILLUSION_TRACE << "Deleting vk::RenderPass." << std::endl;
     device->destroyRenderPass(*obj);
+    delete obj;
   });
 }
 
@@ -348,6 +408,7 @@ std::shared_ptr<vk::Sampler> Context::createSampler(vk::SamplerCreateInfo const&
   return Utils::makeVulkanPtr(device->createSampler(info), [device](vk::Sampler* obj) {
     ILLUSION_TRACE << "Deleting vk::Sampler." << std::endl;
     device->destroySampler(*obj);
+    delete obj;
   });
 }
 
@@ -359,6 +420,7 @@ std::shared_ptr<vk::Semaphore> Context::createSemaphore(vk::SemaphoreCreateInfo 
   return Utils::makeVulkanPtr(device->createSemaphore(info), [device](vk::Semaphore* obj) {
     ILLUSION_TRACE << "Deleting vk::Semaphore." << std::endl;
     device->destroySemaphore(*obj);
+    delete obj;
   });
 }
 
@@ -371,6 +433,7 @@ std::shared_ptr<vk::ShaderModule> Context::createShaderModule(
   return Utils::makeVulkanPtr(device->createShaderModule(info), [device](vk::ShaderModule* obj) {
     ILLUSION_TRACE << "Deleting vk::ShaderModule." << std::endl;
     device->destroyShaderModule(*obj);
+    delete obj;
   });
 }
 
@@ -383,73 +446,59 @@ std::shared_ptr<vk::SwapchainKHR> Context::createSwapChainKhr(
   return Utils::makeVulkanPtr(device->createSwapchainKHR(info), [device](vk::SwapchainKHR* obj) {
     ILLUSION_TRACE << "Deleting vk::SwapchainKHR." << std::endl;
     device->destroySwapchainKHR(*obj);
+    delete obj;
   });
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::CommandBuffer Context::beginSingleTimeGraphicsCommands() const {
-  vk::CommandBufferAllocateInfo info;
-  info.level              = vk::CommandBufferLevel::ePrimary;
-  info.commandPool        = *mGraphicsCommandPool;
-  info.commandBufferCount = 1;
-
-  vk::CommandBuffer commandBuffer{mDevice->allocateCommandBuffers(info)[0]};
+std::shared_ptr<CommandBuffer> Context::beginSingleTimeGraphicsCommands() const {
+  auto commandBuffer = allocateGraphicsCommandBuffer();
 
   vk::CommandBufferBeginInfo beginInfo;
   beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
-
-  commandBuffer.begin(beginInfo);
+  commandBuffer->begin(beginInfo);
 
   return commandBuffer;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Context::endSingleTimeGraphicsCommands(vk::CommandBuffer commandBuffer) const {
-  commandBuffer.end();
+void Context::endSingleTimeGraphicsCommands(std::shared_ptr<CommandBuffer> commandBuffer) const {
+  commandBuffer->end();
 
   vk::SubmitInfo info;
   info.commandBufferCount = 1;
-  info.pCommandBuffers    = &commandBuffer;
+  info.pCommandBuffers    = commandBuffer.get();
 
   mGraphicsQueue.submit(info, nullptr);
   mGraphicsQueue.waitIdle();
-
-  mDevice->freeCommandBuffers(*mGraphicsCommandPool, commandBuffer);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::CommandBuffer Context::beginSingleTimeComputeCommands() const {
-  vk::CommandBufferAllocateInfo info;
-  info.level              = vk::CommandBufferLevel::ePrimary;
-  info.commandPool        = *mComputeCommandPool;
-  info.commandBufferCount = 1;
-
-  vk::CommandBuffer commandBuffer{mDevice->allocateCommandBuffers(info)[0]};
+std::shared_ptr<CommandBuffer> Context::beginSingleTimeComputeCommands() const {
+  auto commandBuffer = allocateComputeCommandBuffer();
 
   vk::CommandBufferBeginInfo beginInfo;
   beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
 
-  commandBuffer.begin(beginInfo);
+  commandBuffer->begin(beginInfo);
 
   return commandBuffer;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Context::endSingleTimeComputeCommands(vk::CommandBuffer commandBuffer) const {
-  commandBuffer.end();
+void Context::endSingleTimeComputeCommands(std::shared_ptr<CommandBuffer> commandBuffer) const {
+  commandBuffer->end();
 
   vk::SubmitInfo info;
   info.commandBufferCount = 1;
-  info.pCommandBuffers    = &commandBuffer;
+  info.pCommandBuffers    = commandBuffer.get();
 
   mComputeQueue.submit(info, nullptr);
   mComputeQueue.waitIdle();
-
-  mDevice->freeCommandBuffers(*mComputeCommandPool, commandBuffer);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -460,7 +509,7 @@ void Context::transitionImageLayout(
   vk::ImageLayout             newLayout,
   vk::ImageSubresourceRange   subresourceRange) const {
 
-  vk::CommandBuffer commandBuffer = beginSingleTimeGraphicsCommands();
+  auto commandBuffer = beginSingleTimeGraphicsCommands();
 
   vk::ImageMemoryBarrier barrier;
   barrier.oldLayout           = oldLayout;
@@ -489,7 +538,7 @@ void Context::transitionImageLayout(
     ILLUSION_ERROR << "Requested an unsupported layout transition!" << std::endl;
   }
 
-  commandBuffer.pipelineBarrier(
+  commandBuffer->pipelineBarrier(
     sourceStage, destinationStage, vk::DependencyFlagBits(), nullptr, nullptr, barrier);
 
   endSingleTimeGraphicsCommands(commandBuffer);
@@ -505,7 +554,7 @@ void Context::copyImage(
 
   ILLUSION_TRACE << "Copying vk::Image." << std::endl;
 
-  vk::CommandBuffer commandBuffer = beginSingleTimeGraphicsCommands();
+  auto commandBuffer = beginSingleTimeGraphicsCommands();
 
   vk::ImageSubresourceLayers subResource;
   subResource.aspectMask     = vk::ImageAspectFlagBits::eColor;
@@ -522,7 +571,7 @@ void Context::copyImage(
   region.extent.height  = height;
   region.extent.depth   = 1;
 
-  commandBuffer.copyImage(
+  commandBuffer->copyImage(
     *src, vk::ImageLayout::eTransferSrcOptimal, *dst, vk::ImageLayout::eTransferDstOptimal, region);
 
   endSingleTimeGraphicsCommands(commandBuffer);
@@ -535,12 +584,12 @@ void Context::copyBuffer(
 
   ILLUSION_TRACE << "Copying vk::Buffer." << std::endl;
 
-  vk::CommandBuffer commandBuffer = beginSingleTimeGraphicsCommands();
+  auto commandBuffer = beginSingleTimeGraphicsCommands();
 
   vk::BufferCopy region;
   region.size = size;
 
-  commandBuffer.copyBuffer(*src, *dst, 1, &region);
+  commandBuffer->copyBuffer(*src, *dst, 1, &region);
 
   endSingleTimeGraphicsCommands(commandBuffer);
 }

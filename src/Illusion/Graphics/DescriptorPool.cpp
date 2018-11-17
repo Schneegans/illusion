@@ -13,6 +13,7 @@
 
 #include "../Core/Logger.hpp"
 #include "Context.hpp"
+#include "DescriptorSet.hpp"
 #include "Utils.hpp"
 
 #include <iostream>
@@ -36,8 +37,11 @@ const std::unordered_map<PipelineResource::ResourceType, vk::DescriptorType> res
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 DescriptorPool::DescriptorPool(
-  std::shared_ptr<Context> const& context, std::vector<PipelineResource> const& setResources)
-  : mContext(context) {
+  std::shared_ptr<Context> const&      context,
+  std::vector<PipelineResource> const& setResources,
+  uint32_t                             set)
+  : mContext(context)
+  , mSet(set) {
 
   ILLUSION_TRACE << "Creating DescriptorPool." << std::endl;
 
@@ -86,7 +90,7 @@ DescriptorPool::~DescriptorPool() { ILLUSION_TRACE << "Deleting DescriptorPool."
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::DescriptorSet> DescriptorPool::allocateDescriptorSet() {
+std::shared_ptr<DescriptorSet> DescriptorPool::allocateDescriptorSet() {
 
   if (mPoolSizes.size() == 0) {
     throw std::runtime_error(
@@ -126,14 +130,17 @@ std::shared_ptr<vk::DescriptorSet> DescriptorPool::allocateDescriptorSet() {
   info.descriptorSetCount = 1;
   info.pSetLayouts        = descriptorSetLayouts;
 
-  ILLUSION_TRACE << "Creating vk::DescriptorSet." << std::endl;
+  ILLUSION_TRACE << "Allocating DescriptorSet." << std::endl;
 
   auto device{mContext->getDevice()};
-  return Utils::makeVulkanPtr(
-    device->allocateDescriptorSets(info)[0], [device, pool](vk::DescriptorSet* obj) {
-      ILLUSION_TRACE << "Deleting vk::DescriptorSet." << std::endl;
+  return std::shared_ptr<DescriptorSet>(
+    new DescriptorSet(mContext, device->allocateDescriptorSets(info)[0], mSet),
+    [device, pool](DescriptorSet* obj) {
+      ILLUSION_TRACE << "Freeing DescriptorSet." << std::endl;
       --pool->mAllocationCount;
+      device->waitIdle();
       device->freeDescriptorSets(*pool->mPool, *obj);
+      delete obj;
     });
 }
 

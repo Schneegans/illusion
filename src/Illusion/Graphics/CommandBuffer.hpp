@@ -8,12 +8,11 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_COMBINED_IMAGE_SAMPLER_HPP
-#define ILLUSION_GRAPHICS_COMBINED_IMAGE_SAMPLER_HPP
+#ifndef ILLUSION_GRAPHICS_COMMAND_BUFFER_HPP
+#define ILLUSION_GRAPHICS_COMMAND_BUFFER_HPP
 
 // ---------------------------------------------------------------------------------------- includes
-#include "Context.hpp"
-#include "Texture.hpp"
+#include "fwd.hpp"
 
 namespace Illusion::Graphics {
 
@@ -21,38 +20,22 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // -------------------------------------------------------------------------------------------------
-template <typename T>
-class CombinedImageSampler : public T {
-
+class CommandBuffer : public vk::CommandBuffer {
  public:
-  // -------------------------------------------------------------------------------- public members
-  std::shared_ptr<Texture> mTexture;
+  CommandBuffer(vk::CommandBuffer const& base);
 
-  // -------------------------------------------------------------------------------- public methods
-  CombinedImageSampler(std::shared_ptr<Context> const& context)
-    : mContext(context) {}
+  template <typename T>
+  void pushConstants(
+    vk::PipelineLayout const& layout,
+    vk::ShaderStageFlags      stages,
+    T const&                  data,
+    uint32_t                  offset = 0) {
 
-  void bind(vk::DescriptorSet const& descriptorSet) const {
-    vk::DescriptorImageInfo imageInfo;
-    imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-    imageInfo.imageView   = *mTexture->getImageView();
-    imageInfo.sampler     = *mTexture->getSampler();
-
-    vk::WriteDescriptorSet info;
-    info.dstSet          = descriptorSet;
-    info.dstBinding      = T::getBindingPoint();
-    info.dstArrayElement = 0;
-    info.descriptorType  = vk::DescriptorType::eCombinedImageSampler;
-    info.descriptorCount = 1;
-    info.pImageInfo      = &imageInfo;
-
-    mContext->getDevice()->updateDescriptorSets(info, nullptr);
+    vk::CommandBuffer::pushConstants(layout, stages, offset, sizeof(T), &data);
   }
 
  private:
-  // ------------------------------------------------------------------------------- private members
-  std::shared_ptr<Context> mContext;
 };
 } // namespace Illusion::Graphics
 
-#endif // ILLUSION_GRAPHICS_COMBINED_IMAGE_SAMPLER_HPP
+#endif // ILLUSION_GRAPHICS_COMMAND_BUFFER_HPP

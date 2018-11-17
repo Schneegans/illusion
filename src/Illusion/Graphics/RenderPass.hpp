@@ -57,8 +57,8 @@ class RenderPass {
   void executeAfter(std::shared_ptr<RenderPass> const& other);
   void executeBefore(std::shared_ptr<RenderPass> const& other);
 
-  std::function<void(vk::CommandBuffer&, RenderPass const&)>           beforeFunc;
-  std::function<void(vk::CommandBuffer&, RenderPass const&, uint32_t)> drawFunc;
+  std::function<void(std::shared_ptr<CommandBuffer>, RenderPass const&)>           beforeFunc;
+  std::function<void(std::shared_ptr<CommandBuffer>, RenderPass const&, uint32_t)> drawFunc;
 
   bool hasDepthAttachment() const;
 
@@ -78,17 +78,17 @@ class RenderPass {
 
  protected:
   // ------------------------------------------------------------------------------- private methods
-  std::shared_ptr<vk::Semaphore>             createSignalSemaphore() const;
-  std::vector<std::shared_ptr<vk::Fence>>    createFences() const;
-  std::vector<vk::CommandBuffer>             createCommandBuffers() const;
-  std::shared_ptr<vk::RenderPass>            createRenderPass() const;
-  std::vector<std::shared_ptr<BackedImage>>  createFramebufferAttachments() const;
-  std::vector<std::shared_ptr<RenderTarget>> createRenderTargets() const;
+  std::shared_ptr<vk::Semaphore>              createSignalSemaphore() const;
+  std::vector<std::shared_ptr<vk::Fence>>     createFences() const;
+  std::vector<std::shared_ptr<CommandBuffer>> createCommandBuffers() const;
+  std::shared_ptr<vk::RenderPass>             createRenderPass() const;
+  std::vector<std::shared_ptr<BackedImage>>   createFramebufferAttachments() const;
+  std::vector<std::shared_ptr<RenderTarget>>  createRenderTargets() const;
 
   // ------------------------------------------------------------------------------- private members
-  std::vector<std::shared_ptr<vk::Fence>>    mFences;
-  std::vector<vk::CommandBuffer>             mCommandBuffers;
-  std::vector<std::shared_ptr<RenderTarget>> mRenderTargets;
+  std::vector<std::shared_ptr<vk::Fence>>     mFences;
+  std::vector<std::shared_ptr<CommandBuffer>> mCommandBuffers;
+  std::vector<std::shared_ptr<RenderTarget>>  mRenderTargets;
 
   // when this RenderPass is used for presentation on a Swapchain, these members will define the
   // first framebuffer attachment for each ringbuffer element

@@ -46,27 +46,7 @@ ShaderProgram::~ShaderProgram() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// void ShaderProgram::useDescriptorSet(
-//   vk::CommandBuffer const& cmd, vk::DescriptorSet const& descriptorSet, uint32_t set) const {
-//   cmd.bindDescriptorSets(
-//     vk::PipelineBindPoint::eGraphics, *mPipelineLayout, set, descriptorSet, nullptr);
-// }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// void ShaderProgram::setPushConstant(
-//   vk::CommandBuffer const& cmd,
-//   vk::ShaderStageFlags     stages,
-//   uint32_t                 size,
-//   uint8_t*                 data,
-//   uint32_t                 offset) const {
-
-//   cmd.pushConstants(*mPipelineLayout, stages, offset, size, data);
-// }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-std::shared_ptr<vk::DescriptorSet> ShaderProgram::allocateDescriptorSet(uint32_t setNum) {
+std::shared_ptr<DescriptorSet> ShaderProgram::allocateDescriptorSet(uint32_t setNum) {
   if (mDescriptorPools.size() <= setNum) {
     throw std::runtime_error(
       "Cannot allocated DescriptorSet: No set number " + std::to_string(setNum) +
@@ -91,7 +71,7 @@ void ShaderProgram::createReflection() {
 void ShaderProgram::createDescriptorPools() {
   for (uint32_t set : mReflection->getActiveSets()) {
     mDescriptorPools.push_back(
-      std::make_shared<DescriptorPool>(mContext, mReflection->getResources(set)));
+      std::make_shared<DescriptorPool>(mContext, mReflection->getResources(set), set));
   }
 }
 

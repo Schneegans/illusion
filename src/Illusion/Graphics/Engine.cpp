@@ -166,6 +166,7 @@ std::shared_ptr<vk::SurfaceKHR> Engine::createSurface(GLFWwindow* window) const 
   return Utils::makeVulkanPtr(vk::SurfaceKHR(tmp), [instance](vk::SurfaceKHR* obj) {
     ILLUSION_TRACE << "Deleting vk::SurfaceKHR." << std::endl;
     instance->destroySurfaceKHR(*obj);
+    delete obj;
   });
 }
 
@@ -216,6 +217,7 @@ std::shared_ptr<vk::Instance> Engine::createInstance(
   return Utils::makeVulkanPtr(vk::createInstance(info), [](vk::Instance* obj) {
     ILLUSION_TRACE << "Deleting vk::Instance." << std::endl;
     obj->destroy();
+    delete obj;
   });
 } // namespace Illusion::Graphics
 
@@ -246,6 +248,7 @@ std::shared_ptr<vk::DebugReportCallbackEXT> Engine::createDebugCallback() const 
         "vkDestroyDebugReportCallbackEXT");
       ILLUSION_TRACE << "Deleting vk::DebugReportCallbackEXT." << std::endl;
       destroyCallback(*instance, *obj, nullptr);
+      delete obj;
     });
 } // namespace Illusion::Graphics
 
