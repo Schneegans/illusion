@@ -24,7 +24,8 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 RenderPass::RenderPass(std::shared_ptr<Context> const& context)
-  : mContext(context) {
+  : mContext(context)
+  , mPipelineFactory(context) {
 
   ILLUSION_TRACE << "Creating RenderPass." << std::endl;
 
@@ -37,12 +38,17 @@ RenderPass::~RenderPass() { ILLUSION_TRACE << "Deleting RenderPass." << std::end
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void RenderPass::render() {
+void RenderPass::init() {
   if (mRingbufferSizeDirty) {
     mContext->getDevice()->waitIdle();
 
     mFences.clear();
-    mCommandBuffers.clear();
+
+    if (mCommandBuffers.size() > 0) {
+      mContext->getDevice()->freeCommandBuffers(
+        *mContext->getGraphicsCommandPool(), mCommandBuffers);
+      mCommandBuffers.clear();
+    }
 
     mFences         = createFences();
     mCommandBuffers = createCommandBuffers();
@@ -58,6 +64,7 @@ void RenderPass::render() {
     mFrameBufferAttachments.clear();
 
     mRenderPass.reset();
+    mPipelineFactory.clearCache();
 
     mRenderPass             = createRenderPass();
     mFrameBufferAttachments = createFramebufferAttachments();
@@ -65,9 +72,13 @@ void RenderPass::render() {
 
     mAttachmentsDirty = false;
   }
+}
 
-  vk::CommandBufferBeginInfo beginInfo;
-  beginInfo.flags = vk::CommandBufferUsageFlagBits::eSimultaneousUse;
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void RenderPass::render() {
+  init();
+
   mContext->getDevice()->waitForFences(*mFences[mCurrentRingBufferIndex], true, ~0);
 
   vk::CommandBuffer cmd = mCommandBuffers[mCurrentRingBufferIndex];
@@ -76,23 +87,13 @@ void RenderPass::render() {
   // record command buffer -------------------------------------------------------------------------
 
   cmd.reset(vk::CommandBufferResetFlags());
+
+  vk::CommandBufferBeginInfo beginInfo;
+  beginInfo.flags = vk::CommandBufferUsageFlagBits::eSimultaneousUse;
   cmd.begin(beginInfo);
 
-  // Update dynamic viewport state
-  vk::Viewport viewport;
-  viewport.height   = (float)mExtent.height;
-  viewport.width    = (float)mExtent.width;
-  viewport.minDepth = 0.0f;
-  viewport.maxDepth = 1.0f;
-  cmd.setViewport(0, 1, &viewport);
-
-  // Update dynamic scissor state
-  vk::Rect2D scissor;
-  scissor.extent.width  = mExtent.width;
-  scissor.extent.height = mExtent.height;
-  scissor.offset.x      = 0;
-  scissor.offset.y      = 0;
-  cmd.setScissor(0, 1, &scissor);
+  // record render pass ----------------------------------------------------------------------------
+  if (beforeFunc) { beforeFunc(cmd, *this); }
 
   vk::RenderPassBeginInfo passInfo;
   passInfo.renderPass        = *mRenderPass;
@@ -108,17 +109,14 @@ void RenderPass::render() {
   passInfo.clearValueCount = clearValues.size();
   passInfo.pClearValues    = clearValues.data();
 
-  // record render pass ----------------------------------------------------------------------------
-  if (beforeFunc) { beforeFunc(cmd); }
-
   cmd.beginRenderPass(passInfo, vk::SubpassContents::eInline);
 
-  if (drawFunc) { drawFunc(cmd, 0); }
+  if (drawFunc) { drawFunc(cmd, *this, 0); }
 
   if (mSubPasses.size() > 0) {
     for (size_t i{1}; i < mSubPasses.size(); ++i) {
       cmd.nextSubpass(vk::SubpassContents::eInline);
-      drawFunc(cmd, i);
+      drawFunc(cmd, *this, i);
     }
   }
 
@@ -166,9 +164,12 @@ void RenderPass::setSubPasses(std::vector<SubPass> const& subPasses) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::shared_ptr<vk::Pipeline> RenderPass::createPipeline(
-  vk::GraphicsPipelineCreateInfo info) const {
-  info.renderPass = *mRenderPass;
-  return mContext->createPipeline(info);
+  GraphicsState const& graphicsState, uint32_t subPass) const {
+  if (!mRenderPass) {
+    throw std::runtime_error("Cannot create pipeline: Please initialize the RenderPass first!");
+  }
+
+  return mPipelineFactory.createPipeline(graphicsState, *mRenderPass, subPass);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

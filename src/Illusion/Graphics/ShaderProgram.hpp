@@ -8,8 +8,8 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_PIPELINE_HPP
-#define ILLUSION_GRAPHICS_PIPELINE_HPP
+#ifndef ILLUSION_GRAPHICS_SHADER_PROGRAM_HPP
+#define ILLUSION_GRAPHICS_SHADER_PROGRAM_HPP
 
 // ---------------------------------------------------------------------------------------- includes
 #include "DescriptorPool.hpp"
@@ -22,62 +22,34 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // -------------------------------------------------------------------------------------------------
-class Pipeline {
+class ShaderProgram {
 
  public:
   // -------------------------------------------------------------------------------- public methods
-  Pipeline(
+  ShaderProgram(
     std::shared_ptr<Context> const&                   context,
     std::vector<std::shared_ptr<ShaderModule>> const& modules);
-  virtual ~Pipeline();
+  virtual ~ShaderProgram();
 
-  std::shared_ptr<vk::PipelineLayout> const&        getLayout() const { return mLayout; }
-  std::shared_ptr<ShaderReflection> const&          getReflection() const { return mReflection; }
+  std::shared_ptr<vk::PipelineLayout> const& getPipelineLayout() const { return mPipelineLayout; }
+  std::shared_ptr<ShaderReflection> const&   getReflection() const { return mReflection; }
   std::vector<std::shared_ptr<ShaderModule>> const& getModules() const { return mModules; }
 
-  // descriptor sets -------------------------------------------------------------------------------
-
-  // void useDescriptorSet(
-  //   vk::CommandBuffer const& cmd, vk::DescriptorSet const& descriptorSet, uint32_t set = 0)
-  //   const;
-
   std::shared_ptr<vk::DescriptorSet> allocateDescriptorSet(uint32_t setNum = 0);
-
-  // push constants --------------------------------------------------------------------------------
-
-  // void setPushConstant(
-  //   vk::CommandBuffer const& cmd,
-  //   vk::ShaderStageFlags     stages,
-  //   uint32_t                 size,
-  //   uint8_t*                 data,
-  //   uint32_t                 offset = 0) const;
-
-  // template <typename T>
-  // void setPushConstant(
-  //   vk::CommandBuffer const& cmd, vk::ShaderStageFlags stages, T data, uint32_t offset = 0) const
-  //   {
-
-  //   setPushConstant(cmd, stages, sizeof(T), reinterpret_cast<uint8_t*>(&data), offset);
-  // }
-
-  // template <typename T>
-  // void setPushConstant(vk::CommandBuffer const& cmd, T data) const {
-  //   setPushConstant(cmd, T::getActiveStages(), sizeof(T), reinterpret_cast<uint8_t*>(&data));
-  // }
 
  private:
   // ------------------------------------------------------------------------------- private methods
   void createReflection();
   void createDescriptorPools();
-  void createLayout();
+  void createPipelineLayout();
 
   // ------------------------------------------------------------------------------- private members
   std::shared_ptr<Context>                     mContext;
   std::vector<std::shared_ptr<ShaderModule>>   mModules;
   std::shared_ptr<ShaderReflection>            mReflection;
   std::vector<std::shared_ptr<DescriptorPool>> mDescriptorPools;
-  std::shared_ptr<vk::PipelineLayout>          mLayout;
+  std::shared_ptr<vk::PipelineLayout>          mPipelineLayout;
 };
 } // namespace Illusion::Graphics
 
-#endif // ILLUSION_GRAPHICS_PIPELINE_HPP
+#endif // ILLUSION_GRAPHICS_SHADER_PROGRAM_HPP

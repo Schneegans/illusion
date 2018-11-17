@@ -47,7 +47,7 @@ void DisplayPass::setEnableVsync(bool enable) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DisplayPass::render() {
+void DisplayPass::init() {
   if (mSwapchainDirty) {
     mContext->getDevice()->waitIdle();
 
@@ -72,6 +72,15 @@ void DisplayPass::render() {
 
     mSwapchainDirty = false;
   }
+
+  RenderPass::init();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void DisplayPass::render() {
+
+  init();
 
   auto result = mContext->getDevice()->acquireNextImageKHR(
     *mSwapchain,

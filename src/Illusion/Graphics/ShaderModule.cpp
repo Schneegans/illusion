@@ -12,6 +12,7 @@
 #include "ShaderModule.hpp"
 
 #include "../Core/Logger.hpp"
+#include "Context.hpp"
 
 #include <SPIRV/GLSL.std.450.h>
 #include <SPIRV/GlslangToSpv.h>
@@ -230,16 +231,11 @@ std::vector<uint32_t> ShaderModule::compileGlsl(
     throw std::runtime_error(infoLog);
   }
 
-  // if (shader.getInfoLog()) ILLUSION_MESSAGE << shader.getInfoLog() << std::endl;
-
-  // if (program.getInfoLog()) ILLUSION_MESSAGE << program.getInfoLog() << std::endl;
-
   // Translate to SPIRV.
   if (program.getIntermediate(stage)) {
     std::string         warningsErrors;
     spv::SpvBuildLogger logger;
     glslang::GlslangToSpv(*program.getIntermediate(stage), spirv, &logger);
-    // ILLUSION_MESSAGE << logger.getAllMessages() << std::endl;
   }
 
   // Shutdown glslang library.
@@ -250,20 +246,34 @@ std::vector<uint32_t> ShaderModule::compileGlsl(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ShaderModule::ShaderModule(std::vector<uint32_t>&& spirv, vk::ShaderStageFlagBits stage)
+ShaderModule::ShaderModule(
+  std::shared_ptr<Context> const& context,
+  std::vector<uint32_t>&&         spirv,
+  vk::ShaderStageFlagBits         stage)
   : mSpirv(spirv)
   , mStage(stage)
   , mResources() {
   createReflection();
+
+  vk::ShaderModuleCreateInfo info;
+  info.codeSize = mSpirv.size() * 4;
+  info.pCode    = mSpirv.data();
+  mModule       = context->createShaderModule(info);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ShaderModule::ShaderModule(std::string const& glsl, vk::ShaderStageFlagBits stage)
+ShaderModule::ShaderModule(
+  std::shared_ptr<Context> const& context, std::string const& glsl, vk::ShaderStageFlagBits stage)
   : mSpirv(compileGlsl(glsl, stage))
   , mStage(stage)
   , mResources() {
   createReflection();
+
+  vk::ShaderModuleCreateInfo info;
+  info.codeSize = mSpirv.size() * 4;
+  info.pCode    = mSpirv.data();
+  mModule       = context->createShaderModule(info);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -272,7 +282,11 @@ ShaderModule::~ShaderModule() {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<uint32_t> const& ShaderModule::getSource() const { return mSpirv; }
+vk::ShaderStageFlagBits ShaderModule::getStage() const { return mStage; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::shared_ptr<vk::ShaderModule> ShaderModule::getModule() const { return mModule; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

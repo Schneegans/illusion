@@ -18,38 +18,23 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void GraphicsState::setPipeline(std::shared_ptr<Pipeline> const& pipeline) {
-  mPipeline = pipeline;
-  mDirty    = true;
+void GraphicsState::setColorBlendState(ColorBlendState const& colorBlendState) {
+  mColorBlendState = colorBlendState;
+  mDirty           = true;
 }
 
-void GraphicsState::setDynamicState(std::vector<vk::DynamicState> const& dynamicState) {
+void GraphicsState::setDepthStencilState(DepthStencilState const& depthStencilState) {
+  mDepthStencilState = depthStencilState;
+  mDirty             = true;
+}
+
+void GraphicsState::setDynamicState(std::set<vk::DynamicState> const& dynamicState) {
   mDynamicState = dynamicState;
   mDirty        = true;
 }
 
-void GraphicsState::setVertexInputState(VertexInputState const& vertexInputState) {
-  mVertexInputState = vertexInputState;
-  mDirty            = true;
-}
-
 void GraphicsState::setInputAssemblyState(InputAssemblyState const& inputAssemblyState) {
   mInputAssemblyState = inputAssemblyState;
-  mDirty              = true;
-}
-
-void GraphicsState::setTessellationState(TessellationState const& tessellationState) {
-  mTessellationState = tessellationState;
-  mDirty             = true;
-}
-
-void GraphicsState::setViewportState(ViewportState const& viewportState) {
-  mViewportState = viewportState;
-  mDirty         = true;
-}
-
-void GraphicsState::setRasterizationState(RasterizationState const& rasterizationState) {
-  mRasterizationState = rasterizationState;
   mDirty              = true;
 }
 
@@ -58,97 +43,76 @@ void GraphicsState::setMultisampleState(MultisampleState const& multisampleState
   mDirty            = true;
 }
 
-void GraphicsState::setDepthStencilState(DepthStencilState const& depthStencilState) {
-  mDepthStencilState = depthStencilState;
+void GraphicsState::setShaderProgram(std::shared_ptr<ShaderProgram> const& shaderProgram) {
+  mShaderProgram = shaderProgram;
+  mDirty         = true;
+}
+
+void GraphicsState::setRasterizationState(RasterizationState const& rasterizationState) {
+  mRasterizationState = rasterizationState;
+  mDirty              = true;
+}
+
+void GraphicsState::setTessellationState(TessellationState const& tessellationState) {
+  mTessellationState = tessellationState;
   mDirty             = true;
 }
-
-void GraphicsState::setColorBlendState(ColorBlendState const& colorBlendState) {
-  mColorBlendState = colorBlendState;
-  mDirty           = true;
+void GraphicsState::setVertexInputState(VertexInputState const& vertexInputState) {
+  mVertexInputState = vertexInputState;
+  mDirty            = true;
 }
 
-std::shared_ptr<Pipeline> const& GraphicsState::getPipeline() const { return mPipeline; }
-
-std::vector<vk::DynamicState> const& GraphicsState::getDynamicState() const {
-  return mDynamicState;
+void GraphicsState::setViewportState(ViewportState const& viewportState) {
+  mViewportState = viewportState;
+  mDirty         = true;
 }
 
-GraphicsState::VertexInputState const& GraphicsState::getVertexInputState() const {
-  return mVertexInputState;
-}
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-GraphicsState::InputAssemblyState const& GraphicsState::getInputAssemblyState() const {
-  return mInputAssemblyState;
-}
-
-GraphicsState::TessellationState const& GraphicsState::getTessellationState() const {
-  return mTessellationState;
-}
-
-GraphicsState::ViewportState const& GraphicsState::getViewportState() const {
-  return mViewportState;
-}
-
-GraphicsState::RasterizationState const& GraphicsState::getRasterizationState() const {
-  return mRasterizationState;
-}
-
-GraphicsState::MultisampleState const& GraphicsState::getMultisampleState() const {
-  return mMultisampleState;
+GraphicsState::ColorBlendState const& GraphicsState::getColorBlendState() const {
+  return mColorBlendState;
 }
 
 GraphicsState::DepthStencilState const& GraphicsState::getDepthStencilState() const {
   return mDepthStencilState;
 }
 
-GraphicsState::ColorBlendState const& GraphicsState::getColorBlendState() const {
-  return mColorBlendState;
+std::set<vk::DynamicState> const& GraphicsState::getDynamicState() const { return mDynamicState; }
+
+GraphicsState::InputAssemblyState const& GraphicsState::getInputAssemblyState() const {
+  return mInputAssemblyState;
 }
+
+GraphicsState::MultisampleState const& GraphicsState::getMultisampleState() const {
+  return mMultisampleState;
+}
+
+std::shared_ptr<ShaderProgram> const& GraphicsState::getShaderProgram() const {
+  return mShaderProgram;
+}
+
+GraphicsState::RasterizationState const& GraphicsState::getRasterizationState() const {
+  return mRasterizationState;
+}
+
+GraphicsState::TessellationState const& GraphicsState::getTessellationState() const {
+  return mTessellationState;
+}
+
+GraphicsState::VertexInputState const& GraphicsState::getVertexInputState() const {
+  return mVertexInputState;
+}
+
+GraphicsState::ViewportState const& GraphicsState::getViewportState() const {
+  return mViewportState;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Core::BitHash const& GraphicsState::getHash() const {
   if (mDirty) {
 
     mHash.clear();
-
-    mHash.push<64>(mPipeline.get());
-
-    for (auto const& dynamicState : mDynamicState) {
-      mHash.push<32>(dynamicState);
-    }
-
-    mHash.push<1>(mRasterizationState.mDepthClampEnable);
-    mHash.push<1>(mRasterizationState.mRasterizerDiscardEnable);
-    mHash.push<2>(mRasterizationState.mPolygonMode);
-    mHash.push<2>(mRasterizationState.mCullMode);
-    mHash.push<1>(mRasterizationState.mFrontFace);
-    mHash.push<1>(mRasterizationState.mDepthBiasEnable);
-    mHash.push<32>(mRasterizationState.mDepthBiasConstantFactor);
-    mHash.push<32>(mRasterizationState.mDepthBiasClamp);
-    mHash.push<32>(mRasterizationState.mDepthBiasSlopeFactor);
-    mHash.push<32>(mRasterizationState.mLineWidth);
-
-    mHash.push<1>(mDepthStencilState.mDepthTestEnable);
-    mHash.push<1>(mDepthStencilState.mDepthWriteEnable);
-    mHash.push<3>(mDepthStencilState.mDepthCompareOp);
-    mHash.push<1>(mDepthStencilState.mDepthBoundsTestEnable);
-    mHash.push<1>(mDepthStencilState.mStencilTestEnable);
-    mHash.push<3>(mDepthStencilState.mFront.mFailOp);
-    mHash.push<3>(mDepthStencilState.mFront.mPassOp);
-    mHash.push<3>(mDepthStencilState.mFront.mDepthFailOp);
-    mHash.push<3>(mDepthStencilState.mFront.mCompareOp);
-    mHash.push<32>(mDepthStencilState.mFront.mCompareMask);
-    mHash.push<32>(mDepthStencilState.mFront.mWriteMask);
-    mHash.push<32>(mDepthStencilState.mFront.mReference);
-    mHash.push<3>(mDepthStencilState.mBack.mFailOp);
-    mHash.push<3>(mDepthStencilState.mBack.mPassOp);
-    mHash.push<3>(mDepthStencilState.mBack.mDepthFailOp);
-    mHash.push<3>(mDepthStencilState.mBack.mCompareOp);
-    mHash.push<32>(mDepthStencilState.mBack.mCompareMask);
-    mHash.push<32>(mDepthStencilState.mBack.mWriteMask);
-    mHash.push<32>(mDepthStencilState.mBack.mReference);
-    mHash.push<32>(mDepthStencilState.mMinDepthBounds);
-    mHash.push<32>(mDepthStencilState.mMaxDepthBounds);
 
     mHash.push<1>(mColorBlendState.mLogicOpEnable);
     mHash.push<4>(mColorBlendState.mLogicOp);
@@ -162,10 +126,55 @@ Core::BitHash const& GraphicsState::getHash() const {
       mHash.push<3>(attachmentState.mAlphaBlendOp);
       mHash.push<4>(attachmentState.mColorWriteMask);
     }
-    mHash.push<32>(mColorBlendState.mBlendConstants[0]);
-    mHash.push<32>(mColorBlendState.mBlendConstants[1]);
-    mHash.push<32>(mColorBlendState.mBlendConstants[2]);
-    mHash.push<32>(mColorBlendState.mBlendConstants[3]);
+    if (!getDynamicState().count(vk::DynamicState::eBlendConstants)) {
+      mHash.push<32>(mColorBlendState.mBlendConstants[0]);
+      mHash.push<32>(mColorBlendState.mBlendConstants[1]);
+      mHash.push<32>(mColorBlendState.mBlendConstants[2]);
+      mHash.push<32>(mColorBlendState.mBlendConstants[3]);
+    }
+
+    mHash.push<1>(mDepthStencilState.mDepthTestEnable);
+    mHash.push<1>(mDepthStencilState.mDepthWriteEnable);
+    mHash.push<3>(mDepthStencilState.mDepthCompareOp);
+    mHash.push<1>(mDepthStencilState.mDepthBoundsTestEnable);
+    mHash.push<1>(mDepthStencilState.mStencilTestEnable);
+    mHash.push<3>(mDepthStencilState.mFront.mFailOp);
+    mHash.push<3>(mDepthStencilState.mFront.mPassOp);
+    mHash.push<3>(mDepthStencilState.mFront.mDepthFailOp);
+    mHash.push<3>(mDepthStencilState.mFront.mCompareOp);
+    if (!getDynamicState().count(vk::DynamicState::eStencilCompareMask)) {
+      mHash.push<32>(mDepthStencilState.mFront.mCompareMask);
+    }
+    if (!getDynamicState().count(vk::DynamicState::eStencilWriteMask)) {
+      mHash.push<32>(mDepthStencilState.mFront.mWriteMask);
+    }
+    if (!getDynamicState().count(vk::DynamicState::eStencilReference)) {
+      mHash.push<32>(mDepthStencilState.mFront.mReference);
+    }
+    mHash.push<3>(mDepthStencilState.mBack.mFailOp);
+    mHash.push<3>(mDepthStencilState.mBack.mPassOp);
+    mHash.push<3>(mDepthStencilState.mBack.mDepthFailOp);
+    mHash.push<3>(mDepthStencilState.mBack.mCompareOp);
+    if (!getDynamicState().count(vk::DynamicState::eStencilCompareMask)) {
+      mHash.push<32>(mDepthStencilState.mBack.mCompareMask);
+    }
+    if (!getDynamicState().count(vk::DynamicState::eStencilWriteMask)) {
+      mHash.push<32>(mDepthStencilState.mBack.mWriteMask);
+    }
+    if (!getDynamicState().count(vk::DynamicState::eStencilReference)) {
+      mHash.push<32>(mDepthStencilState.mBack.mReference);
+    }
+    if (!getDynamicState().count(vk::DynamicState::eDepthBounds)) {
+      mHash.push<32>(mDepthStencilState.mMinDepthBounds);
+      mHash.push<32>(mDepthStencilState.mMaxDepthBounds);
+    }
+
+    for (auto const& dynamicState : mDynamicState) {
+      mHash.push<32>(dynamicState);
+    }
+
+    mHash.push<4>(mInputAssemblyState.mTopology);
+    mHash.push<1>(mInputAssemblyState.mPrimitiveRestartEnable);
 
     mHash.push<3>(mMultisampleState.mRasterizationSamples);
     mHash.push<1>(mMultisampleState.mSampleShadingEnable);
@@ -176,10 +185,24 @@ Core::BitHash const& GraphicsState::getHash() const {
     mHash.push<1>(mMultisampleState.mAlphaToCoverageEnable);
     mHash.push<1>(mMultisampleState.mAlphaToOneEnable);
 
-    mHash.push<32>(mTessellationState.mPatchControlPoints);
+    mHash.push<64>(mShaderProgram.get());
 
-    mHash.push<4>(mInputAssemblyState.mTopology);
-    mHash.push<1>(mInputAssemblyState.mPrimitiveRestartEnable);
+    mHash.push<1>(mRasterizationState.mDepthClampEnable);
+    mHash.push<1>(mRasterizationState.mRasterizerDiscardEnable);
+    mHash.push<2>(mRasterizationState.mPolygonMode);
+    mHash.push<2>(mRasterizationState.mCullMode);
+    mHash.push<1>(mRasterizationState.mFrontFace);
+    mHash.push<1>(mRasterizationState.mDepthBiasEnable);
+    if (!getDynamicState().count(vk::DynamicState::eDepthBias)) {
+      mHash.push<32>(mRasterizationState.mDepthBiasConstantFactor);
+      mHash.push<32>(mRasterizationState.mDepthBiasClamp);
+      mHash.push<32>(mRasterizationState.mDepthBiasSlopeFactor);
+    }
+    if (!getDynamicState().count(vk::DynamicState::eLineWidth)) {
+      mHash.push<32>(mRasterizationState.mLineWidth);
+    }
+
+    mHash.push<32>(mTessellationState.mPatchControlPoints);
 
     for (auto const& binding : mVertexInputState.mBindings) {
       mHash.push<32>(binding.mBinding);
@@ -193,24 +216,34 @@ Core::BitHash const& GraphicsState::getHash() const {
       mHash.push<32>(attribute.mOffset);
     }
 
-    for (auto const& viewport : mViewportState.mViewports) {
-      mHash.push<32>(viewport.mOffset[0]);
-      mHash.push<32>(viewport.mOffset[1]);
-      mHash.push<32>(viewport.mExtend[0]);
-      mHash.push<32>(viewport.mExtend[1]);
-      mHash.push<32>(viewport.mMinDepth);
-      mHash.push<32>(viewport.mMaxDepth);
+    if (getDynamicState().count(vk::DynamicState::eViewport)) {
+      mHash.push<32>(mViewportState.mViewports.size());
+    } else {
+      for (auto const& viewport : mViewportState.mViewports) {
+        mHash.push<32>(viewport.mOffset[0]);
+        mHash.push<32>(viewport.mOffset[1]);
+        mHash.push<32>(viewport.mExtend[0]);
+        mHash.push<32>(viewport.mExtend[1]);
+        mHash.push<32>(viewport.mMinDepth);
+        mHash.push<32>(viewport.mMaxDepth);
+      }
     }
-    for (auto const& scissor : mViewportState.mScissors) {
-      mHash.push<32>(scissor.mOffset[0]);
-      mHash.push<32>(scissor.mOffset[1]);
-      mHash.push<32>(scissor.mExtend[0]);
-      mHash.push<32>(scissor.mExtend[1]);
+    if (getDynamicState().count(vk::DynamicState::eScissor)) {
+      mHash.push<32>(mViewportState.mScissors.size());
+    } else {
+      for (auto const& scissor : mViewportState.mScissors) {
+        mHash.push<32>(scissor.mOffset[0]);
+        mHash.push<32>(scissor.mOffset[1]);
+        mHash.push<32>(scissor.mExtend[0]);
+        mHash.push<32>(scissor.mExtend[1]);
+      }
     }
 
     mDirty = false;
   }
   return mHash;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 } // namespace Illusion::Graphics

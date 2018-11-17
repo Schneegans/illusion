@@ -88,6 +88,11 @@ DescriptorPool::~DescriptorPool() { ILLUSION_TRACE << "Deleting DescriptorPool."
 
 std::shared_ptr<vk::DescriptorSet> DescriptorPool::allocateDescriptorSet() {
 
+  if (mPoolSizes.size() == 0) {
+    throw std::runtime_error(
+      "Cannot allocated DescriptorSet: Set does not contain any active resources!");
+  }
+
   // find a free pool
   std::shared_ptr<PoolInfo> pool;
 

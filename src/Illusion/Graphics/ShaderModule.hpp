@@ -25,20 +25,29 @@ class ShaderModule {
  public:
   static std::vector<uint32_t> compileGlsl(std::string const& glsl, vk::ShaderStageFlagBits stage);
 
-  ShaderModule(std::string const& glsl, vk::ShaderStageFlagBits stage);
-  ShaderModule(std::vector<uint32_t>&& spirv, vk::ShaderStageFlagBits stage);
+  ShaderModule(
+    std::shared_ptr<Context> const& context,
+    std::string const&              glsl,
+    vk::ShaderStageFlagBits         stage);
+
+  ShaderModule(
+    std::shared_ptr<Context> const& context,
+    std::vector<uint32_t>&&         spirv,
+    vk::ShaderStageFlagBits         stage);
 
   virtual ~ShaderModule();
 
-  std::vector<uint32_t> const&         getSource() const;
+  vk::ShaderStageFlagBits              getStage() const;
+  std::shared_ptr<vk::ShaderModule>    getModule() const;
   std::vector<PipelineResource> const& getResources() const;
 
  private:
   void createReflection();
 
-  std::vector<uint32_t>         mSpirv;
-  vk::ShaderStageFlagBits       mStage;
-  std::vector<PipelineResource> mResources;
+  std::vector<uint32_t>             mSpirv;
+  vk::ShaderStageFlagBits           mStage;
+  std::shared_ptr<vk::ShaderModule> mModule;
+  std::vector<PipelineResource>     mResources;
 };
 } // namespace Illusion::Graphics
 

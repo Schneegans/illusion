@@ -13,6 +13,7 @@
 
 // ---------------------------------------------------------------------------------------- includes
 #include "Context.hpp"
+#include "PipelineFactory.hpp"
 #include "RenderTarget.hpp"
 
 #include <functional>
@@ -37,13 +38,15 @@ class RenderPass {
   RenderPass(std::shared_ptr<Context> const& context);
   virtual ~RenderPass();
 
+  virtual void init();
   virtual void render();
 
   virtual void addAttachment(vk::Format format);
 
   void setSubPasses(std::vector<SubPass> const& subPasses);
 
-  std::shared_ptr<vk::Pipeline> createPipeline(vk::GraphicsPipelineCreateInfo info) const;
+  std::shared_ptr<vk::Pipeline> createPipeline(
+    GraphicsState const& graphicsState, uint32_t subPass = 0) const;
 
   void                setExtent(vk::Extent2D const& extent);
   vk::Extent2D const& getExtent() const;
@@ -54,8 +57,8 @@ class RenderPass {
   void executeAfter(std::shared_ptr<RenderPass> const& other);
   void executeBefore(std::shared_ptr<RenderPass> const& other);
 
-  std::function<void(vk::CommandBuffer&)>           beforeFunc;
-  std::function<void(vk::CommandBuffer&, uint32_t)> drawFunc;
+  std::function<void(vk::CommandBuffer&, RenderPass const&)>           beforeFunc;
+  std::function<void(vk::CommandBuffer&, RenderPass const&, uint32_t)> drawFunc;
 
   bool hasDepthAttachment() const;
 
@@ -101,8 +104,10 @@ class RenderPass {
   bool mAttachmentsDirty    = true;
   bool mRingbufferSizeDirty = true;
 
-  vk::Extent2D mExtent;
-  uint32_t     mRingbufferSize = 0;
+  vk::Extent2D mExtent         = {100, 100};
+  uint32_t     mRingbufferSize = 1;
+
+  mutable PipelineFactory mPipelineFactory;
 };
 
 } // namespace Illusion::Graphics

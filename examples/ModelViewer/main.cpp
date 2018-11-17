@@ -8,7 +8,6 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <Illusion/Core/BitHash.hpp>
 #include <Illusion/Core/FPSCounter.hpp>
 #include <Illusion/Core/File.hpp>
 #include <Illusion/Core/Logger.hpp>
@@ -17,8 +16,8 @@
 #include <Illusion/Graphics/Engine.hpp>
 #include <Illusion/Graphics/GraphicsState.hpp>
 #include <Illusion/Graphics/PhysicalDevice.hpp>
-#include <Illusion/Graphics/Pipeline.hpp>
 #include <Illusion/Graphics/ShaderModule.hpp>
+#include <Illusion/Graphics/ShaderProgram.hpp>
 #include <Illusion/Graphics/ShaderReflection.hpp>
 #include <Illusion/Graphics/Texture.hpp>
 #include <Illusion/Graphics/Window.hpp>
@@ -50,38 +49,66 @@ int main(int argc, char* argv[]) {
   window->open();
 
   std::vector<std::shared_ptr<Illusion::Graphics::ShaderModule>> modules;
-  auto glsl = Illusion::Core::File<std::string>("data/shaders/PBRShader.frag").getContent();
-  modules.push_back(
-    std::make_shared<Illusion::Graphics::ShaderModule>(glsl, vk::ShaderStageFlagBits::eFragment));
+  auto glsl = Illusion::Core::File<std::string>("data/shaders/TexturedQuad.frag").getContent();
+  modules.push_back(std::make_shared<Illusion::Graphics::ShaderModule>(
+    context, glsl, vk::ShaderStageFlagBits::eFragment));
 
-  glsl = Illusion::Core::File<std::string>("data/shaders/PBRShader.vert").getContent();
-  modules.push_back(
-    std::make_shared<Illusion::Graphics::ShaderModule>(glsl, vk::ShaderStageFlagBits::eVertex));
+  glsl = Illusion::Core::File<std::string>("data/shaders/TexturedQuad.vert").getContent();
+  modules.push_back(std::make_shared<Illusion::Graphics::ShaderModule>(
+    context, glsl, vk::ShaderStageFlagBits::eVertex));
 
-  auto pipeline = std::make_shared<Illusion::Graphics::Pipeline>(context, modules);
-  pipeline->getReflection()->printInfo();
+  auto shader = std::make_shared<Illusion::Graphics::ShaderProgram>(context, modules);
+  shader->getReflection()->printInfo();
 
-  auto set0 = pipeline->allocateDescriptorSet(0);
-  auto set1 = pipeline->allocateDescriptorSet(1);
+  // auto set0 = shader->allocateDescriptorSet(0);
 
   auto renderPass = window->getDisplayPass();
-  renderPass->addAttachment(vk::Format::eD32Sfloat);
-
-  renderPass->beforeFunc = [](vk::CommandBuffer const& cmd) {};
-  renderPass->drawFunc   = [](vk::CommandBuffer const& cmd, uint32_t subPass) {};
+  // renderPass->addAttachment(vk::Format::eD32Sfloat);
+  renderPass->init();
 
   auto texture = Illusion::Graphics::Texture::createFromFile(context, "data/textures/box.dds");
 
   Illusion::Graphics::GraphicsState state;
+  state.setShaderProgram(shader);
 
-  // std::unordered_map<Illusion::Graphics::GraphicsState, int> cache;
+  Illusion::Graphics::GraphicsState::DepthStencilState depthStencilState;
+  depthStencilState.mDepthTestEnable  = false;
+  depthStencilState.mDepthWriteEnable = false;
+  state.setDepthStencilState(depthStencilState);
 
-  auto hash = state.getHash();
-  std::cout << hash.size() / 8 << std::endl;
-  for (auto b : hash) {
-    std::cout << (int)b << " ";
-  }
-  std::cout << std::endl;
+  Illusion::Graphics::GraphicsState::ColorBlendState colorBlendState;
+  colorBlendState.mAttachments.push_back(
+    Illusion::Graphics::GraphicsState::ColorBlendState::AttachmentState());
+  state.setColorBlendState(colorBlendState);
+
+  window->pSize.onChange().connect([&state](glm::uvec2 const& size) {
+    Illusion::Graphics::GraphicsState::ViewportState viewportState;
+    viewportState.mViewports.push_back({glm::vec2(0), glm::vec2(size), 0.f, 1.f});
+    viewportState.mScissors.push_back({glm::ivec2(0), size});
+    state.setViewportState(viewportState);
+    return true;
+  });
+  window->pSize.touch();
+
+  struct PushConstants {
+    glm::vec2 pos  = glm::vec2(0.2, 0.0);
+    float     time = 0;
+  } pushConstants;
+
+  renderPass->drawFunc =
+    [&state, &pushConstants](
+      vk::CommandBuffer& cmd, Illusion::Graphics::RenderPass const& pass, uint32_t subPass) {
+      auto pipeline = pass.createPipeline(state, subPass);
+      pushConstants.time += 0.001;
+      cmd.bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline);
+      cmd.pushConstants(
+        *state.getShaderProgram()->getPipelineLayout(),
+        vk::ShaderStageFlagBits::eVertex,
+        0,
+        sizeof(PushConstants),
+        &pushConstants);
+      cmd.draw(4, 1, 0, 0);
+    };
 
   Illusion::Core::FPSCounter fpsCounter;
   fpsCounter.pFPS.onChange().connect([window](float fps) {

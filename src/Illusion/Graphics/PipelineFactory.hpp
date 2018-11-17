@@ -8,13 +8,15 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_DISPLAY_PASS_HPP
-#define ILLUSION_GRAPHICS_DISPLAY_PASS_HPP
+#ifndef ILLUSION_GRAPHICS_PIPELINE_FACTORY_HPP
+#define ILLUSION_GRAPHICS_PIPELINE_FACTORY_HPP
 
 // ---------------------------------------------------------------------------------------- includes
-#include "RenderPass.hpp"
+#include "fwd.hpp"
 
-#include <functional>
+#include "../Core/BitHash.hpp"
+
+#include <map>
 
 namespace Illusion::Graphics {
 
@@ -22,38 +24,23 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // -------------------------------------------------------------------------------------------------
-class DisplayPass : public RenderPass {
+class PipelineFactory {
 
  public:
   // -------------------------------------------------------------------------------- public methods
-  DisplayPass(
-    std::shared_ptr<Context> const& context, std::shared_ptr<vk::SurfaceKHR> const& surface);
-  virtual ~DisplayPass();
+  PipelineFactory(std::shared_ptr<Context> const& context);
+  virtual ~PipelineFactory();
 
-  void         setEnableVsync(bool enable);
-  void         markSwapChainDirty() { mSwapchainDirty = true; }
-  virtual void init() override;
-  virtual void render() override;
+  std::shared_ptr<vk::Pipeline> createPipeline(
+    GraphicsState const& graphicsState, vk::RenderPass const& renderpass, uint32_t subPass);
+
+  void clearCache();
 
  private:
-  // ------------------------------------------------------------------------------- private methods
-  std::shared_ptr<vk::Semaphore>    createSwapchainSemaphore() const;
-  vk::Extent2D                      chooseExtent() const;
-  vk::SurfaceFormatKHR              chooseSwapchainFormat() const;
-  uint32_t                          chooseSwapchainImageCount() const;
-  std::shared_ptr<vk::SwapchainKHR> createSwapChain() const;
-
   // ------------------------------------------------------------------------------- private members
-  std::shared_ptr<vk::SurfaceKHR> mSurface;
-
-  std::shared_ptr<vk::Semaphore>    mSwapchainSemaphore;
-  vk::SurfaceFormatKHR              mSwapchainFormat;
-  std::shared_ptr<vk::SwapchainKHR> mSwapchain;
-
-  bool mEnableVsync    = true;
-  bool mSwapchainDirty = true;
+  std::shared_ptr<Context>                               mContext;
+  std::map<Core::BitHash, std::shared_ptr<vk::Pipeline>> mCache;
 };
-
 } // namespace Illusion::Graphics
 
-#endif // ILLUSION_GRAPHICS_DISPLAY_PASS_HPP
+#endif // ILLUSION_GRAPHICS_PIPELINE_FACTORY_HPP

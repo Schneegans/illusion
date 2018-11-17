@@ -148,6 +148,7 @@ void Window::open() {
       auto window(static_cast<Window*>(glfwGetWindowUserPointer(w)));
       // issuing this here reduces flickering during resize but may result in more swapchain
       // recreations than abolutely neccessary
+      window->pSize = glm::uvec2(width, height);
       window->mDisplayPass->markSwapChainDirty();
     });
 

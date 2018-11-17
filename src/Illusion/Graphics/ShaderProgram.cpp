@@ -9,7 +9,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ---------------------------------------------------------------------------------------- includes
-#include "Pipeline.hpp"
+#include "ShaderProgram.hpp"
 
 #include "../Core/File.hpp"
 #include "../Core/Logger.hpp"
@@ -24,29 +24,29 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Pipeline::Pipeline(
+ShaderProgram::ShaderProgram(
   std::shared_ptr<Context> const&                   context,
   std::vector<std::shared_ptr<ShaderModule>> const& modules)
   : mContext(context)
   , mModules(modules) {
 
-  ILLUSION_TRACE << "Creating Pipeline." << std::endl;
+  ILLUSION_TRACE << "Creating ShaderProgram." << std::endl;
 
   createReflection();
   createDescriptorPools();
-  createLayout();
+  createPipelineLayout();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Pipeline::~Pipeline() {
-  ILLUSION_TRACE << "Deleting Pipeline." << std::endl;
+ShaderProgram::~ShaderProgram() {
+  ILLUSION_TRACE << "Deleting ShaderProgram." << std::endl;
   mContext->getDevice()->waitIdle();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// void Pipeline::useDescriptorSet(
+// void ShaderProgram::useDescriptorSet(
 //   vk::CommandBuffer const& cmd, vk::DescriptorSet const& descriptorSet, uint32_t set) const {
 //   cmd.bindDescriptorSets(
 //     vk::PipelineBindPoint::eGraphics, *mPipelineLayout, set, descriptorSet, nullptr);
@@ -54,7 +54,7 @@ Pipeline::~Pipeline() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// void Pipeline::setPushConstant(
+// void ShaderProgram::setPushConstant(
 //   vk::CommandBuffer const& cmd,
 //   vk::ShaderStageFlags     stages,
 //   uint32_t                 size,
@@ -66,7 +66,7 @@ Pipeline::~Pipeline() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::DescriptorSet> Pipeline::allocateDescriptorSet(uint32_t setNum) {
+std::shared_ptr<vk::DescriptorSet> ShaderProgram::allocateDescriptorSet(uint32_t setNum) {
   if (mDescriptorPools.size() <= setNum) {
     throw std::runtime_error(
       "Cannot allocated DescriptorSet: No set number " + std::to_string(setNum) +
@@ -78,7 +78,7 @@ std::shared_ptr<vk::DescriptorSet> Pipeline::allocateDescriptorSet(uint32_t setN
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Pipeline::createReflection() {
+void ShaderProgram::createReflection() {
   mReflection = std::make_shared<Illusion::Graphics::ShaderReflection>();
 
   for (auto module : mModules) {
@@ -88,7 +88,7 @@ void Pipeline::createReflection() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Pipeline::createDescriptorPools() {
+void ShaderProgram::createDescriptorPools() {
   for (uint32_t set : mReflection->getActiveSets()) {
     mDescriptorPools.push_back(
       std::make_shared<DescriptorPool>(mContext, mReflection->getResources(set)));
@@ -97,7 +97,7 @@ void Pipeline::createDescriptorPools() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Pipeline::createLayout() {
+void ShaderProgram::createPipelineLayout() {
   std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
   for (auto const& descriptorPool : mDescriptorPools) {
     descriptorSetLayouts.push_back(*descriptorPool->getLayout().get());
@@ -115,7 +115,7 @@ void Pipeline::createLayout() {
   pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(pushConstantRanges.size());
   pipelineLayoutInfo.pPushConstantRanges    = pushConstantRanges.data();
 
-  mLayout = mContext->createPipelineLayout(pipelineLayoutInfo);
+  mPipelineLayout = mContext->createPipelineLayout(pipelineLayoutInfo);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
