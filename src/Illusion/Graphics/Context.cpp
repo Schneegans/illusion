@@ -100,6 +100,7 @@ std::shared_ptr<BackedImage> Context::createBackedImage(
     mPhysicalDevice->findMemoryType(requirements.memoryTypeBits, properties);
 
   result->mMemory = createMemory(allocInfo);
+  result->mSize   = requirements.size;
 
   mDevice->bindImageMemory(*result->mImage, *result->mMemory, 0);
 
@@ -114,7 +115,8 @@ std::shared_ptr<BackedBuffer> Context::createBackedBuffer(
   vk::MemoryPropertyFlags properties,
   void*                   data) const {
 
-  auto result = std::make_shared<BackedBuffer>();
+  auto result   = std::make_shared<BackedBuffer>();
+  result->mSize = size;
 
   {
     vk::BufferCreateInfo info;

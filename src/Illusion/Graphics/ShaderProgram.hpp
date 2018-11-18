@@ -25,6 +25,11 @@ namespace Illusion::Graphics {
 class ShaderProgram {
 
  public:
+  // -------------------------------------------------------------- helper methods for easy creation
+  static std::shared_ptr<ShaderProgram> createFromGlslFiles(
+    std::shared_ptr<Context> const&                                 context,
+    std::unordered_map<vk::ShaderStageFlagBits, std::string> const& files);
+
   // -------------------------------------------------------------------------------- public methods
   ShaderProgram(
     std::shared_ptr<Context> const&                   context,

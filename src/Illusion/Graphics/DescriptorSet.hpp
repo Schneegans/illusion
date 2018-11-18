@@ -28,6 +28,8 @@ class DescriptorSet : public vk::DescriptorSet {
   uint32_t getSet() const { return mSet; }
 
   void bindCombinedImageSampler(std::shared_ptr<Texture> const& texture, uint32_t binding);
+  void bindStorageImage(std::shared_ptr<Texture> const& texture, uint32_t binding);
+  void bindUniformBuffer(std::shared_ptr<BackedBuffer> const& buffer, uint32_t binding);
 
  private:
   std::shared_ptr<Context> mContext;

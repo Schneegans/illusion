@@ -31,7 +31,7 @@ class PipelineFactory {
   PipelineFactory(std::shared_ptr<Context> const& context);
   virtual ~PipelineFactory();
 
-  std::shared_ptr<vk::Pipeline> createPipeline(
+  vk::Pipeline const& getPipelineHandle(
     GraphicsState const& graphicsState, vk::RenderPass const& renderpass, uint32_t subPass);
 
   void clearCache();

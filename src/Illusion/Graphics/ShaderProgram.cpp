@@ -24,6 +24,23 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+std::shared_ptr<ShaderProgram> ShaderProgram::createFromGlslFiles(
+  std::shared_ptr<Context> const&                                 context,
+  std::unordered_map<vk::ShaderStageFlagBits, std::string> const& files) {
+
+  std::vector<std::shared_ptr<Illusion::Graphics::ShaderModule>> modules;
+
+  for (auto const& file : files) {
+    auto glsl = Illusion::Core::File<std::string>(file.second).getContent();
+    modules.push_back(
+      std::make_shared<Illusion::Graphics::ShaderModule>(context, glsl, file.first));
+  }
+
+  return std::make_shared<Illusion::Graphics::ShaderProgram>(context, modules);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 ShaderProgram::ShaderProgram(
   std::shared_ptr<Context> const&                   context,
   std::vector<std::shared_ptr<ShaderModule>> const& modules)

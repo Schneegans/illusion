@@ -43,4 +43,39 @@ void DescriptorSet::bindCombinedImageSampler(
   mContext->getDevice()->updateDescriptorSets(info, nullptr);
 }
 
+void DescriptorSet::bindStorageImage(std::shared_ptr<Texture> const& texture, uint32_t binding) {
+  vk::DescriptorImageInfo imageInfo;
+  imageInfo.imageLayout = vk::ImageLayout::eGeneral;
+  imageInfo.imageView   = *texture->getImageView();
+  imageInfo.sampler     = *texture->getSampler();
+
+  vk::WriteDescriptorSet info;
+  info.dstSet          = *this;
+  info.dstBinding      = binding;
+  info.dstArrayElement = 0;
+  info.descriptorType  = vk::DescriptorType::eStorageImage;
+  info.descriptorCount = 1;
+  info.pImageInfo      = &imageInfo;
+
+  mContext->getDevice()->updateDescriptorSets(info, nullptr);
+}
+
+void DescriptorSet::bindUniformBuffer(
+  std::shared_ptr<BackedBuffer> const& buffer, uint32_t binding) {
+  vk::DescriptorBufferInfo bufferInfo;
+  bufferInfo.buffer = *buffer->mBuffer;
+  bufferInfo.offset = 0;
+  bufferInfo.range  = buffer->mSize;
+
+  vk::WriteDescriptorSet info;
+  info.dstSet          = *this;
+  info.dstBinding      = binding;
+  info.dstArrayElement = 0;
+  info.descriptorType  = vk::DescriptorType::eUniformBuffer;
+  info.descriptorCount = 1;
+  info.pBufferInfo     = &bufferInfo;
+
+  mContext->getDevice()->updateDescriptorSets(info, nullptr);
+}
+
 } // namespace Illusion::Graphics

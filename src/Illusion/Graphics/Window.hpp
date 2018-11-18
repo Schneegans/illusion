@@ -32,11 +32,11 @@ class Window {
   enum class Cursor { POINTER, IBEAM, CROSS, HAND, HRESIZE, VRESIZE };
 
   // ------------------------------------------------------------------------------------ properties
-  Core::String           pTitle      = std::string("Illusion Context");
+  Core::String           pTitle      = std::string("Illusion3D");
   Core::UVec2            pSize       = glm::uvec2(640, 480);
   Core::IVec2            pPosition   = glm::ivec2(-1, -1);
   Core::Bool             pLockAspect = false;
-  Core::Bool             pVsync      = true;
+  Core::Bool             pVsync      = false;
   Core::Bool             pHideCursor = false;
   Core::Bool             pFullscreen = false;
   Core::Property<Cursor> pCursor     = Cursor::POINTER;

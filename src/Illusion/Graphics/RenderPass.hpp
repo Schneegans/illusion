@@ -45,7 +45,7 @@ class RenderPass {
 
   void setSubPasses(std::vector<SubPass> const& subPasses);
 
-  std::shared_ptr<vk::Pipeline> createPipeline(
+  vk::Pipeline const& getPipelineHandle(
     GraphicsState const& graphicsState, uint32_t subPass = 0) const;
 
   void                setExtent(vk::Extent2D const& extent);

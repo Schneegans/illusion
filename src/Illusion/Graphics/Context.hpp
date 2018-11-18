@@ -24,11 +24,13 @@ namespace Illusion::Graphics {
 struct BackedImage {
   std::shared_ptr<vk::Image>        mImage;
   std::shared_ptr<vk::DeviceMemory> mMemory;
+  vk::DeviceSize                    mSize;
 };
 
 struct BackedBuffer {
   std::shared_ptr<vk::Buffer>       mBuffer;
   std::shared_ptr<vk::DeviceMemory> mMemory;
+  vk::DeviceSize                    mSize;
 };
 
 // -------------------------------------------------------------------------------------------------

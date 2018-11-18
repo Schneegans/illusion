@@ -159,13 +159,13 @@ void RenderPass::setSubPasses(std::vector<SubPass> const& subPasses) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::Pipeline> RenderPass::createPipeline(
+vk::Pipeline const& RenderPass::getPipelineHandle(
   GraphicsState const& graphicsState, uint32_t subPass) const {
   if (!mRenderPass) {
     throw std::runtime_error("Cannot create pipeline: Please initialize the RenderPass first!");
   }
 
-  return mPipelineFactory.createPipeline(graphicsState, *mRenderPass, subPass);
+  return mPipelineFactory.getPipelineHandle(graphicsState, *mRenderPass, subPass);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

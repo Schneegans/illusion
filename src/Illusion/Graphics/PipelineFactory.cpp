@@ -26,14 +26,14 @@ PipelineFactory::PipelineFactory(std::shared_ptr<Context> const& context)
 
 PipelineFactory::~PipelineFactory() {}
 
-std::shared_ptr<vk::Pipeline> PipelineFactory::createPipeline(
+vk::Pipeline const& PipelineFactory::getPipelineHandle(
   GraphicsState const& gs, vk::RenderPass const& renderpass, uint32_t subPass) {
 
   Core::BitHash hash = gs.getHash();
   hash.push<32>(subPass);
 
   auto cached = mCache.find(hash);
-  if (cached != mCache.end()) { return cached->second; }
+  if (cached != mCache.end()) { return *cached->second; }
 
   // -----------------------------------------------------------------------------------------------
   std::vector<vk::PipelineShaderStageCreateInfo> stageInfos;
@@ -188,7 +188,7 @@ std::shared_ptr<vk::Pipeline> PipelineFactory::createPipeline(
   auto pipeline = mContext->createPipeline(info);
   mCache[hash]  = pipeline;
 
-  return pipeline;
+  return *pipeline;
 }
 
 void PipelineFactory::clearCache() { mCache.clear(); }
