@@ -44,8 +44,12 @@ int main(int argc, char* argv[]) {
   window->pSize.onChange().connect([&state](glm::uvec2 const& size) {
     auto viewports       = state.getViewports();
     viewports[0].mExtend = size;
-    viewports[0].mExtend = size;
     state.setViewports(viewports);
+
+    auto scissors       = state.getScissors();
+    scissors[0].mExtend = size;
+    state.setScissors(scissors);
+
     return true;
   });
 
