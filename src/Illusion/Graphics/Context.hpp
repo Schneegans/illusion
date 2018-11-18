@@ -59,10 +59,11 @@ class Context {
     vk::DeviceSize          size,
     vk::BufferUsageFlags    usage,
     vk::MemoryPropertyFlags properties,
-    void*                   data = nullptr) const;
+    const void*             data = nullptr) const;
 
-  std::shared_ptr<BackedBuffer> createVertexBuffer(vk::DeviceSize size, void* data) const;
-  std::shared_ptr<BackedBuffer> createIndexBuffer(vk::DeviceSize size, void* data) const;
+  std::shared_ptr<BackedBuffer> createVertexBuffer(vk::DeviceSize size, const void* data) const;
+  std::shared_ptr<BackedBuffer> createIndexBuffer(vk::DeviceSize size, const void* data) const;
+  std::shared_ptr<BackedBuffer> createUniformBuffer(vk::DeviceSize size) const;
 
   std::shared_ptr<CommandBuffer> allocateGraphicsCommandBuffer() const;
   std::shared_ptr<CommandBuffer> allocateComputeCommandBuffer() const;

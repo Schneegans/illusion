@@ -11,7 +11,7 @@
 #version 450
 
 // inputs ------------------------------------------------------------------------------------------
-layout(location = 0) in vec2 texcoords;
+layout(location = 0) in vec2 vTexcoords;
 
 // uniforms ----------------------------------------------------------------------------------------
 layout(binding = 0) uniform sampler2D texSampler;
@@ -21,6 +21,5 @@ layout(location = 0) out vec4 outColor;
 
 // methods -----------------------------------------------------------------------------------------
 void main() {
-    // outColor = vec4(texcoords, 0, 1);
-    outColor = texture(texSampler, texcoords);
+    outColor = texture(texSampler, vTexcoords);
 }

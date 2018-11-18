@@ -113,7 +113,7 @@ std::shared_ptr<BackedBuffer> Context::createBackedBuffer(
   vk::DeviceSize          size,
   vk::BufferUsageFlags    usage,
   vk::MemoryPropertyFlags properties,
-  void*                   data) const {
+  const void*             data) const {
 
   auto result   = std::make_shared<BackedBuffer>();
   result->mSize = size;
@@ -175,16 +175,27 @@ std::shared_ptr<BackedBuffer> Context::createBackedBuffer(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<BackedBuffer> Context::createVertexBuffer(vk::DeviceSize size, void* data) const {
+std::shared_ptr<BackedBuffer> Context::createVertexBuffer(
+  vk::DeviceSize size, const void* data) const {
   return createBackedBuffer(
     size, vk::BufferUsageFlagBits::eVertexBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal, data);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<BackedBuffer> Context::createIndexBuffer(vk::DeviceSize size, void* data) const {
+std::shared_ptr<BackedBuffer> Context::createIndexBuffer(
+  vk::DeviceSize size, const void* data) const {
   return createBackedBuffer(
     size, vk::BufferUsageFlagBits::eIndexBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal, data);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::shared_ptr<BackedBuffer> Context::createUniformBuffer(vk::DeviceSize size) const {
+  return createBackedBuffer(
+    size,
+    vk::BufferUsageFlagBits::eUniformBuffer | vk::BufferUsageFlagBits::eTransferDst,
+    vk::MemoryPropertyFlagBits::eDeviceLocal);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

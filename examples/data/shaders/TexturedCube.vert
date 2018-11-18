@@ -11,55 +11,27 @@
 #version 450
 
 // inputs ------------------------------------------------------------------------------------------
-vec3 positions[14] = vec3[](
-    vec3(0, 0, 0),
-    vec3(0, 1, 0),
-    vec3(1, 0, 0),
-    vec3(1, 1, 0),
-    vec3(1, 1, 1),
-    vec3(0, 1, 0),
-    vec3(0, 1, 1),
-    vec3(0, 0, 1),
-    vec3(1, 1, 1),
-    vec3(1, 0, 1),
-    vec3(1, 0, 0),
-    vec3(0, 0, 1),
-    vec3(0, 0, 0),
-    vec3(0, 1, 0)
-);
-
-vec2 texcoords[14] = vec2[](
-    vec2(0, 0),
-    vec2(0, 1),
-    vec2(1, 0),
-    vec2(1, 1),
-    vec2(1, 1),
-    vec2(1, 1), 
-    vec2(0, 1),
-    vec2(0, 0),
-    vec2(1, 1),
-    vec2(1, 0),
-    vec2(0, 1),
-    vec2(0, 0),
-    vec2(1, 0),
-    vec2(1, 1)
-);
+layout(location = 0) in vec3 inPosition;
+layout(location = 1) in vec3 inNormal;
+layout(location = 2) in vec2 inTexcoords;
 
 // uniforms ----------------------------------------------------------------------------------------
-layout(binding = 2) uniform Uniforms {
+layout(binding = 0, set = 0) uniform CameraUniforms {
     mat4 projection; 
-} uniforms;
+} cameraUniforms;
 
 // push constants ----------------------------------------------------------------------------------
 layout(push_constant, std430) uniform PushConstants {
-    mat4 modelView; 
+    mat4 modelView;
 } pushConstants;
 
 // outputs -----------------------------------------------------------------------------------------
 layout(location = 0) out vec2 vTexcoords;
+layout(location = 1) out vec3 vNormal;
 
 // methods -----------------------------------------------------------------------------------------
 void main() {
-    vTexcoords = texcoords[gl_VertexIndex];
-    gl_Position = uniforms.projection * pushConstants.modelView * vec4((positions[gl_VertexIndex]-vec3(0.5)), 1.0);
+    vTexcoords = inTexcoords;
+    vNormal = (inverse(transpose(pushConstants.modelView)) * vec4(inNormal, 0.0)).xyz;
+    gl_Position = cameraUniforms.projection * pushConstants.modelView * vec4(inPosition, 1.0);
 }

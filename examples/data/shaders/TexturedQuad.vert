@@ -18,17 +18,11 @@ vec2 positions[4] = vec2[](
     vec2(0.5, 0.5)
 );
 
-// push constants ----------------------------------------------------------------------------------
-layout(push_constant, std430) uniform PushConstants {
-    vec2 pos; 
-    float time;
-} pushConstants;
-
 // outputs -----------------------------------------------------------------------------------------
-layout(location = 0) out vec2 texcoords;
+layout(location = 0) out vec2 vTexcoords;
 
 // methods -----------------------------------------------------------------------------------------
 void main() {
-    texcoords = positions[gl_VertexIndex] + 0.5;
-    gl_Position = vec4(positions[gl_VertexIndex] + pushConstants.pos + vec2(0, sin(pushConstants.time)), 0.0, 1.0);
+    vTexcoords = positions[gl_VertexIndex] + 0.5;
+    gl_Position = vec4(positions[gl_VertexIndex], 0.0, 1.0);
 }
