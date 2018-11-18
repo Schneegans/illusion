@@ -53,10 +53,10 @@ vk::Pipeline const& PipelineFactory::getPipelineHandle(
 
   std::vector<vk::VertexInputBindingDescription>   vertexInputBindingDescriptions;
   std::vector<vk::VertexInputAttributeDescription> vertexInputAttributeDescriptions;
-  for (auto const& i : gs.getVertexInputState().mBindings) {
+  for (auto const& i : gs.getVertexInputBindings()) {
     vertexInputBindingDescriptions.push_back({i.mBinding, i.mStride, i.mInputRate});
   }
-  for (auto const& i : gs.getVertexInputState().mAttributes) {
+  for (auto const& i : gs.getVertexInputAttributes()) {
     vertexInputAttributeDescriptions.push_back({i.mLocation, i.mBinding, i.mFormat, i.mOffset});
   }
   vertexInputStateInfo.vertexBindingDescriptionCount   = vertexInputBindingDescriptions.size();
@@ -66,23 +66,22 @@ vk::Pipeline const& PipelineFactory::getPipelineHandle(
 
   // -----------------------------------------------------------------------------------------------
   vk::PipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo;
-  inputAssemblyStateInfo.topology = gs.getInputAssemblyState().mTopology;
-  inputAssemblyStateInfo.primitiveRestartEnable =
-    gs.getInputAssemblyState().mPrimitiveRestartEnable;
+  inputAssemblyStateInfo.topology               = gs.getTopology();
+  inputAssemblyStateInfo.primitiveRestartEnable = gs.getPrimitiveRestartEnable();
 
   // -----------------------------------------------------------------------------------------------
   vk::PipelineTessellationStateCreateInfo tessellationStateInfo;
-  tessellationStateInfo.patchControlPoints = gs.getTessellationState().mPatchControlPoints;
+  tessellationStateInfo.patchControlPoints = gs.getTessellationPatchControlPoints();
 
   // -----------------------------------------------------------------------------------------------
   vk::PipelineViewportStateCreateInfo viewportStateInfo;
   std::vector<vk::Viewport>           viewports;
   std::vector<vk::Rect2D>             scissors;
-  for (auto const& i : gs.getViewportState().mViewports) {
+  for (auto const& i : gs.getViewports()) {
     viewports.push_back(
       {i.mOffset[0], i.mOffset[1], i.mExtend[0], i.mExtend[1], i.mMinDepth, i.mMaxDepth});
   }
-  for (auto const& i : gs.getViewportState().mScissors) {
+  for (auto const& i : gs.getScissors()) {
     scissors.push_back({{i.mOffset[0], i.mOffset[1]}, {i.mExtend[0], i.mExtend[1]}});
   }
   viewportStateInfo.viewportCount = viewports.size();
@@ -92,56 +91,54 @@ vk::Pipeline const& PipelineFactory::getPipelineHandle(
 
   // -----------------------------------------------------------------------------------------------
   vk::PipelineRasterizationStateCreateInfo rasterizationStateInfo;
-  rasterizationStateInfo.depthClampEnable = gs.getRasterizationState().mDepthClampEnable;
-  rasterizationStateInfo.rasterizerDiscardEnable =
-    gs.getRasterizationState().mRasterizerDiscardEnable;
-  rasterizationStateInfo.polygonMode     = gs.getRasterizationState().mPolygonMode;
-  rasterizationStateInfo.cullMode        = gs.getRasterizationState().mCullMode;
-  rasterizationStateInfo.frontFace       = gs.getRasterizationState().mFrontFace;
-  rasterizationStateInfo.depthBiasEnable = gs.getRasterizationState().mDepthBiasEnable;
-  rasterizationStateInfo.depthBiasConstantFactor =
-    gs.getRasterizationState().mDepthBiasConstantFactor;
-  rasterizationStateInfo.depthBiasClamp       = gs.getRasterizationState().mDepthBiasClamp;
-  rasterizationStateInfo.depthBiasSlopeFactor = gs.getRasterizationState().mDepthBiasSlopeFactor;
-  rasterizationStateInfo.lineWidth            = gs.getRasterizationState().mLineWidth;
+  rasterizationStateInfo.depthClampEnable        = gs.getDepthClampEnable();
+  rasterizationStateInfo.rasterizerDiscardEnable = gs.getRasterizerDiscardEnable();
+  rasterizationStateInfo.polygonMode             = gs.getPolygonMode();
+  rasterizationStateInfo.cullMode                = gs.getCullMode();
+  rasterizationStateInfo.frontFace               = gs.getFrontFace();
+  rasterizationStateInfo.depthBiasEnable         = gs.getDepthBiasEnable();
+  rasterizationStateInfo.depthBiasConstantFactor = gs.getDepthBiasConstantFactor();
+  rasterizationStateInfo.depthBiasClamp          = gs.getDepthBiasClamp();
+  rasterizationStateInfo.depthBiasSlopeFactor    = gs.getDepthBiasSlopeFactor();
+  rasterizationStateInfo.lineWidth               = gs.getLineWidth();
 
   // -----------------------------------------------------------------------------------------------
   vk::PipelineMultisampleStateCreateInfo multisampleStateInfo;
-  multisampleStateInfo.rasterizationSamples  = gs.getMultisampleState().mRasterizationSamples;
-  multisampleStateInfo.sampleShadingEnable   = gs.getMultisampleState().mSampleShadingEnable;
-  multisampleStateInfo.minSampleShading      = gs.getMultisampleState().mMinSampleShading;
-  multisampleStateInfo.pSampleMask           = gs.getMultisampleState().mSampleMask.data();
-  multisampleStateInfo.alphaToCoverageEnable = gs.getMultisampleState().mAlphaToCoverageEnable;
-  multisampleStateInfo.alphaToOneEnable      = gs.getMultisampleState().mAlphaToOneEnable;
+  multisampleStateInfo.rasterizationSamples  = gs.getRasterizationSamples();
+  multisampleStateInfo.sampleShadingEnable   = gs.getSampleShadingEnable();
+  multisampleStateInfo.minSampleShading      = gs.getMinSampleShading();
+  multisampleStateInfo.pSampleMask           = gs.getSampleMask().data();
+  multisampleStateInfo.alphaToCoverageEnable = gs.getAlphaToCoverageEnable();
+  multisampleStateInfo.alphaToOneEnable      = gs.getAlphaToOneEnable();
 
   // -----------------------------------------------------------------------------------------------
   vk::PipelineDepthStencilStateCreateInfo depthStencilStateInfo;
-  depthStencilStateInfo.depthTestEnable       = gs.getDepthStencilState().mDepthTestEnable;
-  depthStencilStateInfo.depthWriteEnable      = gs.getDepthStencilState().mDepthWriteEnable;
-  depthStencilStateInfo.depthCompareOp        = gs.getDepthStencilState().mDepthCompareOp;
-  depthStencilStateInfo.depthBoundsTestEnable = gs.getDepthStencilState().mDepthBoundsTestEnable;
-  depthStencilStateInfo.stencilTestEnable     = gs.getDepthStencilState().mStencilTestEnable;
-  depthStencilStateInfo.front                 = {gs.getDepthStencilState().mFront.mFailOp,
-                                 gs.getDepthStencilState().mFront.mPassOp,
-                                 gs.getDepthStencilState().mFront.mDepthFailOp,
-                                 gs.getDepthStencilState().mFront.mCompareOp,
-                                 gs.getDepthStencilState().mFront.mCompareMask,
-                                 gs.getDepthStencilState().mFront.mWriteMask,
-                                 gs.getDepthStencilState().mFront.mReference};
-  depthStencilStateInfo.back                  = {gs.getDepthStencilState().mBack.mFailOp,
-                                gs.getDepthStencilState().mBack.mPassOp,
-                                gs.getDepthStencilState().mBack.mDepthFailOp,
-                                gs.getDepthStencilState().mBack.mCompareOp,
-                                gs.getDepthStencilState().mBack.mCompareMask,
-                                gs.getDepthStencilState().mBack.mWriteMask,
-                                gs.getDepthStencilState().mBack.mReference};
-  depthStencilStateInfo.minDepthBounds        = gs.getDepthStencilState().mMinDepthBounds;
-  depthStencilStateInfo.maxDepthBounds        = gs.getDepthStencilState().mMaxDepthBounds;
+  depthStencilStateInfo.depthTestEnable       = gs.getDepthTestEnable();
+  depthStencilStateInfo.depthWriteEnable      = gs.getDepthWriteEnable();
+  depthStencilStateInfo.depthCompareOp        = gs.getDepthCompareOp();
+  depthStencilStateInfo.depthBoundsTestEnable = gs.getDepthBoundsTestEnable();
+  depthStencilStateInfo.stencilTestEnable     = gs.getStencilTestEnable();
+  depthStencilStateInfo.front                 = {gs.getStencilFrontFailOp(),
+                                 gs.getStencilFrontPassOp(),
+                                 gs.getStencilFrontDepthFailOp(),
+                                 gs.getStencilFrontCompareOp(),
+                                 gs.getStencilFrontCompareMask(),
+                                 gs.getStencilFrontWriteMask(),
+                                 gs.getStencilFrontReference()};
+  depthStencilStateInfo.back                  = {gs.getStencilBackFailOp(),
+                                gs.getStencilBackPassOp(),
+                                gs.getStencilBackDepthFailOp(),
+                                gs.getStencilBackCompareOp(),
+                                gs.getStencilBackCompareMask(),
+                                gs.getStencilBackWriteMask(),
+                                gs.getStencilBackReference()};
+  depthStencilStateInfo.minDepthBounds        = gs.getMinDepthBounds();
+  depthStencilStateInfo.maxDepthBounds        = gs.getMaxDepthBounds();
 
   // -----------------------------------------------------------------------------------------------
   vk::PipelineColorBlendStateCreateInfo              colorBlendStateInfo;
   std::vector<vk::PipelineColorBlendAttachmentState> pipelineColorBlendAttachments;
-  for (auto const& i : gs.getColorBlendState().mAttachments) {
+  for (auto const& i : gs.getBlendAttachments()) {
     pipelineColorBlendAttachments.push_back({i.mBlendEnable,
                                              i.mSrcColorBlendFactor,
                                              i.mDstColorBlendFactor,
@@ -151,14 +148,14 @@ vk::Pipeline const& PipelineFactory::getPipelineHandle(
                                              i.mAlphaBlendOp,
                                              i.mColorWriteMask});
   }
-  colorBlendStateInfo.logicOpEnable     = gs.getColorBlendState().mLogicOpEnable;
-  colorBlendStateInfo.logicOp           = gs.getColorBlendState().mLogicOp;
+  colorBlendStateInfo.logicOpEnable     = gs.getBlendLogicOpEnable();
+  colorBlendStateInfo.logicOp           = gs.getBlendLogicOp();
   colorBlendStateInfo.attachmentCount   = pipelineColorBlendAttachments.size();
   colorBlendStateInfo.pAttachments      = pipelineColorBlendAttachments.data();
-  colorBlendStateInfo.blendConstants[0] = gs.getColorBlendState().mBlendConstants[0];
-  colorBlendStateInfo.blendConstants[1] = gs.getColorBlendState().mBlendConstants[1];
-  colorBlendStateInfo.blendConstants[2] = gs.getColorBlendState().mBlendConstants[2];
-  colorBlendStateInfo.blendConstants[3] = gs.getColorBlendState().mBlendConstants[3];
+  colorBlendStateInfo.blendConstants[0] = gs.getBlendConstants()[0];
+  colorBlendStateInfo.blendConstants[1] = gs.getBlendConstants()[1];
+  colorBlendStateInfo.blendConstants[2] = gs.getBlendConstants()[2];
+  colorBlendStateInfo.blendConstants[3] = gs.getBlendConstants()[3];
 
   // -----------------------------------------------------------------------------------------------
   vk::PipelineDynamicStateCreateInfo dynamicStateInfo;

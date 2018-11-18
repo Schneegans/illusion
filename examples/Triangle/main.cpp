@@ -30,21 +30,15 @@ int main(int argc, char* argv[]) {
 
   Illusion::Graphics::GraphicsState state;
   state.setShaderProgram(shader);
-
-  Illusion::Graphics::GraphicsState::ColorBlendState colorBlendState;
-  colorBlendState.mAttachments.resize(1);
-  state.setColorBlendState(colorBlendState);
-
-  Illusion::Graphics::GraphicsState::ViewportState viewportState;
-  viewportState.mViewports.push_back({glm::vec2(0), glm::vec2(window->pSize.get()), 0.f, 1.f});
-  viewportState.mScissors.push_back({glm::ivec2(0), window->pSize.get()});
-  state.setViewportState(viewportState);
+  state.addBlendAttachment({});
+  state.addViewport({glm::vec2(0), glm::vec2(window->pSize.get()), 0.f, 1.f});
+  state.addScissor({glm::ivec2(0), window->pSize.get()});
 
   window->pSize.onChange().connect([&state](glm::uvec2 const& size) {
-    auto viewportState                  = state.getViewportState();
-    viewportState.mViewports[0].mExtend = size;
-    viewportState.mScissors[0].mExtend  = size;
-    state.setViewportState(viewportState);
+    auto viewports       = state.getViewports();
+    viewports[0].mExtend = size;
+    viewports[0].mExtend = size;
+    state.setViewports(viewports);
     return true;
   });
 

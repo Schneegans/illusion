@@ -82,36 +82,25 @@ int main(int argc, char* argv[]) {
 
   Illusion::Graphics::GraphicsState state;
   state.setShaderProgram(shader);
-
-  Illusion::Graphics::GraphicsState::InputAssemblyState inputAssemblyState;
-  inputAssemblyState.mTopology = vk::PrimitiveTopology::eTriangleList;
-  state.setInputAssemblyState(inputAssemblyState);
-
-  Illusion::Graphics::GraphicsState::ColorBlendState colorBlendState;
-  colorBlendState.mAttachments.resize(1);
-  state.setColorBlendState(colorBlendState);
-
-  Illusion::Graphics::GraphicsState::ViewportState viewportState;
-  viewportState.mViewports.push_back({glm::vec2(0), glm::vec2(window->pSize.get()), 0.f, 1.f});
-  viewportState.mScissors.push_back({glm::ivec2(0), window->pSize.get()});
-  state.setViewportState(viewportState);
+  state.addBlendAttachment({});
+  state.addViewport({glm::vec2(0), glm::vec2(window->pSize.get()), 0.f, 1.f});
+  state.addScissor({glm::ivec2(0), window->pSize.get()});
+  state.setTopology(vk::PrimitiveTopology::eTriangleList);
 
   window->pSize.onChange().connect([&state](glm::uvec2 const& size) {
-    auto viewportState                  = state.getViewportState();
-    viewportState.mViewports[0].mExtend = size;
-    viewportState.mScissors[0].mExtend  = size;
-    state.setViewportState(viewportState);
+    auto viewports       = state.getViewports();
+    viewports[0].mExtend = size;
+    viewports[0].mExtend = size;
+    state.setViewports(viewports);
     return true;
   });
 
-  Illusion::Graphics::GraphicsState::VertexInputState vertexInputState;
-  vertexInputState.mBindings   = {{0, sizeof(glm::vec3), vk::VertexInputRate::eVertex},
+  state.setVertexInputBindings({{0, sizeof(glm::vec3), vk::VertexInputRate::eVertex},
                                 {1, sizeof(glm::vec3), vk::VertexInputRate::eVertex},
-                                {2, sizeof(glm::vec2), vk::VertexInputRate::eVertex}};
-  vertexInputState.mAttributes = {{0, 0, vk::Format::eR32G32B32Sfloat, 0},
+                                {2, sizeof(glm::vec2), vk::VertexInputRate::eVertex}});
+  state.setVertexInputAttributes({{0, 0, vk::Format::eR32G32B32Sfloat, 0},
                                   {1, 1, vk::Format::eR32G32B32Sfloat, 0},
-                                  {2, 2, vk::Format::eR32G32Sfloat, 0}};
-  state.setVertexInputState(vertexInputState);
+                                  {2, 2, vk::Format::eR32G32Sfloat, 0}});
 
   auto positionBuffer =
     context->createVertexBuffer(sizeof(glm::vec3) * POSITIONS.size(), POSITIONS.data());

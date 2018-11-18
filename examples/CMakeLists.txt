@@ -15,7 +15,6 @@ install(DIRECTORY "data"
 
 # -------------------------------------------------------------------------------- make each example
 set(ENABLED_EXAMPLES
-  "ModelViewer"
   "TexturedCube"
   "TexturedQuad"
   "Triangle"
