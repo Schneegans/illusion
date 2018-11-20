@@ -26,6 +26,7 @@ include(externals/glfw.cmake)
 include(externals/glm.cmake)
 include(externals/gli.cmake)
 include(externals/stb.cmake)
+include(externals/tinygltf.cmake)
 include(externals/glslang.cmake)
 include(externals/spirv-cross.cmake)
 

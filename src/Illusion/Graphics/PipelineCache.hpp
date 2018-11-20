@@ -8,8 +8,8 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_PIPELINE_FACTORY_HPP
-#define ILLUSION_GRAPHICS_PIPELINE_FACTORY_HPP
+#ifndef ILLUSION_GRAPHICS_PIPELINE_CACHE_HPP
+#define ILLUSION_GRAPHICS_PIPELINE_CACHE_HPP
 
 // ---------------------------------------------------------------------------------------- includes
 #include "fwd.hpp"
@@ -17,6 +17,7 @@
 #include "../Core/BitHash.hpp"
 
 #include <map>
+#include <mutex>
 
 namespace Illusion::Graphics {
 
@@ -24,23 +25,24 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // -------------------------------------------------------------------------------------------------
-class PipelineFactory {
+class PipelineCache {
 
  public:
   // -------------------------------------------------------------------------------- public methods
-  PipelineFactory(std::shared_ptr<Context> const& context);
-  virtual ~PipelineFactory();
+  PipelineCache(std::shared_ptr<Context> const& context);
+  virtual ~PipelineCache();
 
-  vk::Pipeline const& getPipelineHandle(
+  std::shared_ptr<vk::Pipeline> getPipelineHandle(
     GraphicsState const& graphicsState, vk::RenderPass const& renderpass, uint32_t subPass);
 
-  void clearCache();
+  void clear();
 
  private:
   // ------------------------------------------------------------------------------- private members
   std::shared_ptr<Context>                               mContext;
   std::map<Core::BitHash, std::shared_ptr<vk::Pipeline>> mCache;
+  std::mutex                                             mMutex;
 };
 } // namespace Illusion::Graphics
 
-#endif // ILLUSION_GRAPHICS_PIPELINE_FACTORY_HPP
+#endif // ILLUSION_GRAPHICS_PIPELINE_CACHE_HPP

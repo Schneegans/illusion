@@ -33,7 +33,9 @@ class DisplayPass : public RenderPass {
   void         setEnableVsync(bool enable);
   void         markSwapChainDirty() { mSwapchainDirty = true; }
   virtual void init() override;
-  virtual void render() override;
+
+  virtual std::shared_ptr<CommandBuffer> const& acquireCommandBuffer() override;
+  virtual void submitCommandBuffer(std::shared_ptr<CommandBuffer> const& cmd) override;
 
  private:
   // ------------------------------------------------------------------------------- private methods
@@ -46,7 +48,7 @@ class DisplayPass : public RenderPass {
   // ------------------------------------------------------------------------------- private members
   std::shared_ptr<vk::SurfaceKHR> mSurface;
 
-  std::shared_ptr<vk::Semaphore>    mSwapchainSemaphore;
+  std::shared_ptr<vk::Semaphore>    mImageAvailableSemaphore;
   vk::SurfaceFormatKHR              mSwapchainFormat;
   std::shared_ptr<vk::SwapchainKHR> mSwapchain;
 

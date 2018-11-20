@@ -26,8 +26,8 @@ DisplayPass::DisplayPass(
   : RenderPass(context)
   , mSurface(surface) {
 
-  mSwapchainSemaphore = createSwapchainSemaphore();
-  mWaitSemaphores.push_back(mSwapchainSemaphore);
+  mImageAvailableSemaphore = createSwapchainSemaphore();
+  mWaitSemaphores.push_back(mImageAvailableSemaphore);
 
   ILLUSION_TRACE << "Creating DisplayPass." << std::endl;
 }
@@ -78,34 +78,37 @@ void DisplayPass::init() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DisplayPass::render() {
-
+std::shared_ptr<CommandBuffer> const& DisplayPass::acquireCommandBuffer() {
   init();
 
   auto result = mContext->getDevice()->acquireNextImageKHR(
     *mSwapchain,
     std::numeric_limits<uint64_t>::max(),
-    *mSwapchainSemaphore,
+    *mImageAvailableSemaphore,
     nullptr,
     &mCurrentRingBufferIndex);
 
   if (result == vk::Result::eErrorOutOfDateKHR) {
     // mark dirty and call this method again
     mSwapchainDirty = true;
-    render();
-    return;
+
+    return acquireCommandBuffer();
   }
 
   if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR) {
     ILLUSION_ERROR << "Suboptimal swap chain!" << std::endl;
   }
 
-  RenderPass::render();
+  return RenderPass::acquireCommandBuffer();
+}
+
+void DisplayPass::submitCommandBuffer(std::shared_ptr<CommandBuffer> const& cmd) {
+  RenderPass::submitCommandBuffer(cmd);
 
   // present on mOutputWindow ----------------------------------------------------------------------
 
   vk::SwapchainKHR swapChains[]     = {*mSwapchain};
-  vk::Semaphore    waitSemaphores[] = {*mSignalSemaphore};
+  vk::Semaphore    waitSemaphores[] = {*mRenderingFinishedSemaphore};
 
   vk::PresentInfoKHR presentInfo;
   presentInfo.waitSemaphoreCount = 1;
@@ -114,7 +117,7 @@ void DisplayPass::render() {
   presentInfo.pSwapchains        = swapChains;
   presentInfo.pImageIndices      = &mCurrentRingBufferIndex;
 
-  result = mContext->getPresentQueue().presentKHR(presentInfo);
+  auto result = mContext->getPresentQueue().presentKHR(presentInfo);
   if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) {
     // when does this happen?
     ILLUSION_ERROR << "out of date 3!" << std::endl;

@@ -8,36 +8,37 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_FWD_HPP
-#define ILLUSION_GRAPHICS_FWD_HPP
+#ifndef ILLUSION_GRAPHICS_DESCRIPTOR_POOL_CACHE_HPP
+#define ILLUSION_GRAPHICS_DESCRIPTOR_POOL_CACHE_HPP
 
 // ---------------------------------------------------------------------------------------- includes
-#include <vulkan/vulkan.hpp>
+#include "../Core/BitHash.hpp"
+#include "PipelineResource.hpp"
+
+#include <map>
+#include <mutex>
 
 namespace Illusion::Graphics {
 
-struct BackedBuffer;
-struct BackedImage;
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class CommandBuffer;
-class Context;
-class DescriptorSet;
-class DescriptorPool;
-class DisplayPass;
-class Engine;
-class Framebuffer;
-class GraphicsState;
-class Material;
-class PhysicalDevice;
-class PipelinePool;
-class RenderPass;
-class ShaderModule;
-class ShaderProgram;
-class ShaderReflection;
-class Surface;
-class Texture;
-class Window;
+class DescriptorPoolCache {
+ public:
+  DescriptorPoolCache(std::shared_ptr<Context> const& context);
+  virtual ~DescriptorPoolCache();
+
+  std::shared_ptr<DescriptorPool> get(
+    std::vector<PipelineResource> const& setResources, uint32_t set);
+
+  void clear();
+
+ private:
+  std::shared_ptr<Context>                                 mContext;
+  std::mutex                                               mMutex;
+  std::map<Core::BitHash, std::shared_ptr<DescriptorPool>> mCache;
+};
 
 } // namespace Illusion::Graphics
 
-#endif // ILLUSION_GRAPHICS_FWD_HPP
+#endif // ILLUSION_GRAPHICS_DESCRIPTOR_POOL_CACHE_HPP

@@ -26,11 +26,11 @@ namespace Illusion::Graphics {
 
 RenderPass::RenderPass(std::shared_ptr<Context> const& context)
   : mContext(context)
-  , mPipelineFactory(context) {
+  , mPipelineCache(context) {
 
   ILLUSION_TRACE << "Creating RenderPass." << std::endl;
 
-  mSignalSemaphore = createSignalSemaphore();
+  mRenderingFinishedSemaphore = createSignalSemaphore();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -60,7 +60,7 @@ void RenderPass::init() {
     mFrameBufferAttachments.clear();
 
     mRenderPass.reset();
-    mPipelineFactory.clearCache();
+    mPipelineCache.clear();
 
     mRenderPass             = createRenderPass();
     mFrameBufferAttachments = createFramebufferAttachments();
@@ -72,12 +72,12 @@ void RenderPass::init() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void RenderPass::render() {
+std::shared_ptr<CommandBuffer> const& RenderPass::acquireCommandBuffer() {
   init();
 
   mContext->getDevice()->waitForFences(*mFences[mCurrentRingBufferIndex], true, ~0);
 
-  auto cmd = mCommandBuffers[mCurrentRingBufferIndex];
+  auto const& cmd = mCommandBuffers[mCurrentRingBufferIndex];
   mContext->getDevice()->resetFences(*mFences[mCurrentRingBufferIndex]);
 
   // record command buffer -------------------------------------------------------------------------
@@ -88,9 +88,12 @@ void RenderPass::render() {
   beginInfo.flags = vk::CommandBufferUsageFlagBits::eSimultaneousUse;
   cmd->begin(beginInfo);
 
-  // record render pass ----------------------------------------------------------------------------
-  if (beforeFunc) { beforeFunc(cmd, *this); }
+  return cmd;
+}
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void RenderPass::begin(std::shared_ptr<CommandBuffer> const& cmd) {
   vk::RenderPassBeginInfo passInfo;
   passInfo.renderPass        = *mRenderPass;
   passInfo.framebuffer       = *mRenderTargets[mCurrentRingBufferIndex]->getFramebuffer();
@@ -106,20 +109,15 @@ void RenderPass::render() {
   passInfo.pClearValues    = clearValues.data();
 
   cmd->beginRenderPass(passInfo, vk::SubpassContents::eInline);
+}
 
-  if (drawFunc) { drawFunc(cmd, *this, 0); }
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  if (mSubPasses.size() > 0) {
-    for (size_t i{1}; i < mSubPasses.size(); ++i) {
-      cmd->nextSubpass(vk::SubpassContents::eInline);
-      drawFunc(cmd, *this, i);
-    }
-  }
+void RenderPass::end(std::shared_ptr<CommandBuffer> const& cmd) { cmd->endRenderPass(); }
 
-  cmd->endRenderPass();
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  // submit to queue -------------------------------------------------------------------------------
-
+void RenderPass::submitCommandBuffer(std::shared_ptr<CommandBuffer> const& cmd) {
   cmd->end();
 
   vk::PipelineStageFlags waitStages[] = {vk::PipelineStageFlagBits::eColorAttachmentOutput};
@@ -129,7 +127,7 @@ void RenderPass::render() {
     waitSemaphores[i] = *mWaitSemaphores[i].lock();
   }
 
-  vk::Semaphore signalSemaphores[] = {*mSignalSemaphore};
+  vk::Semaphore signalSemaphores[] = {*mRenderingFinishedSemaphore};
 
   vk::SubmitInfo submitInfo;
   submitInfo.waitSemaphoreCount   = waitSemaphores.size();
@@ -159,13 +157,13 @@ void RenderPass::setSubPasses(std::vector<SubPass> const& subPasses) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::Pipeline const& RenderPass::getPipelineHandle(
+std::shared_ptr<vk::Pipeline> RenderPass::getPipelineHandle(
   GraphicsState const& graphicsState, uint32_t subPass) const {
   if (!mRenderPass) {
     throw std::runtime_error("Cannot create pipeline: Please initialize the RenderPass first!");
   }
 
-  return mPipelineFactory.getPipelineHandle(graphicsState, *mRenderPass, subPass);
+  return mPipelineCache.getPipelineHandle(graphicsState, *mRenderPass, subPass);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -197,13 +195,13 @@ uint32_t RenderPass::getRingBufferSize() const { return mRingbufferSize; }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void RenderPass::executeAfter(std::shared_ptr<RenderPass> const& other) {
-  mWaitSemaphores.push_back(other->mSignalSemaphore);
+  mWaitSemaphores.push_back(other->mRenderingFinishedSemaphore);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void RenderPass::executeBefore(std::shared_ptr<RenderPass> const& other) {
-  other->mWaitSemaphores.push_back(mSignalSemaphore);
+  other->mWaitSemaphores.push_back(mRenderingFinishedSemaphore);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

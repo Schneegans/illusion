@@ -119,9 +119,11 @@ int main(int argc, char* argv[]) {
 
   float time = 0.f;
 
-  renderPass->beforeFunc = [&time, &cameraUniformBuffer, &window](
-                             std::shared_ptr<Illusion::Graphics::CommandBuffer> cmd,
-                             Illusion::Graphics::RenderPass const&              pass) {
+  while (!window->shouldClose()) {
+    window->processInput();
+
+    auto cmd = renderPass->acquireCommandBuffer();
+
     time += 0.01;
 
     CameraUniforms cameraUniforms;
@@ -132,19 +134,8 @@ int main(int argc, char* argv[]) {
       100.0f);
     cmd->updateBuffer(
       *cameraUniformBuffer->mBuffer, 0, sizeof(CameraUniforms), (uint8_t*)&cameraUniforms);
-  };
 
-  renderPass->drawFunc = [&state,
-                          &materialDescriptorSet,
-                          &cameraUniformDescriptorSet,
-                          &positionBuffer,
-                          &normalBuffer,
-                          &texcoordBuffer,
-                          &indexBuffer,
-                          &time](
-                           std::shared_ptr<Illusion::Graphics::CommandBuffer> cmd,
-                           Illusion::Graphics::RenderPass const&              pass,
-                           uint32_t                                           subPass) {
+    renderPass->begin(cmd);
 
     PushConstants pushConstants;
     pushConstants.modelView = glm::mat4(1.f);
@@ -154,8 +145,8 @@ int main(int argc, char* argv[]) {
     pushConstants.modelView =
       glm::rotate(pushConstants.modelView, time * 0.314f, glm::vec3(1, 0, 0));
 
-    auto pipeline = pass.getPipelineHandle(state, subPass);
-    cmd->bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+    auto pipeline = renderPass->getPipelineHandle(state);
+    cmd->bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline);
     cmd->pushConstants(
       *state.getShaderProgram()->getPipelineLayout(),
       vk::ShaderStageFlagBits::eVertex,
@@ -178,11 +169,10 @@ int main(int argc, char* argv[]) {
       {0uL, 0uL, 0uL});
     cmd->bindIndexBuffer(*indexBuffer->mBuffer, 0, vk::IndexType::eUint32);
     cmd->drawIndexed(INDICES.size(), 1, 0, 0, 0);
-  };
 
-  while (!window->shouldClose()) {
-    window->processInput();
-    renderPass->render();
+    renderPass->end(cmd);
+    renderPass->submitCommandBuffer(cmd);
+
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
   }
 

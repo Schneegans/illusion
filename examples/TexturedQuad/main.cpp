@@ -53,13 +53,14 @@ int main(int argc, char* argv[]) {
     return true;
   });
 
-  auto renderPass      = window->getDisplayPass();
-  renderPass->drawFunc = [&state, &descriptorSet](
-                           std::shared_ptr<Illusion::Graphics::CommandBuffer> cmd,
-                           Illusion::Graphics::RenderPass const&              pass,
-                           uint32_t                                           subPass) {
-    auto pipeline = pass.getPipelineHandle(state, subPass);
-    cmd->bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+  auto renderPass = window->getDisplayPass();
+
+  while (!window->shouldClose()) {
+    window->processInput();
+    auto cmd      = renderPass->acquireCommandBuffer();
+    auto pipeline = renderPass->getPipelineHandle(state);
+    renderPass->begin(cmd);
+    cmd->bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline);
     cmd->bindDescriptorSets(
       vk::PipelineBindPoint::eGraphics,
       *state.getShaderProgram()->getPipelineLayout(),
@@ -67,11 +68,9 @@ int main(int argc, char* argv[]) {
       *descriptorSet,
       nullptr);
     cmd->draw(4, 1, 0, 0);
-  };
-
-  while (!window->shouldClose()) {
-    window->processInput();
-    renderPass->render();
+    cmd->draw(3, 1, 0, 0);
+    renderPass->end(cmd);
+    renderPass->submitCommandBuffer(cmd);
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
 

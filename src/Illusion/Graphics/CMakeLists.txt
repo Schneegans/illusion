@@ -20,6 +20,7 @@ target_link_libraries(illusion-graphics
     PUBLIC illusion-input
     PUBLIC gli
     PUBLIC stb
+    PUBLIC tinygltf
     PUBLIC glslang
     PUBLIC glslang-default-resource-limits
     PUBLIC spirv-cross

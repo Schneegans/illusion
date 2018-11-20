@@ -13,7 +13,7 @@
 
 // ---------------------------------------------------------------------------------------- includes
 #include "Context.hpp"
-#include "PipelineFactory.hpp"
+#include "PipelineCache.hpp"
 #include "RenderTarget.hpp"
 
 #include <functional>
@@ -39,38 +39,34 @@ class RenderPass {
   virtual ~RenderPass();
 
   virtual void init();
-  virtual void render();
 
-  virtual void addAttachment(vk::Format format);
+  virtual std::shared_ptr<CommandBuffer> const& acquireCommandBuffer();
+  virtual void                                  begin(std::shared_ptr<CommandBuffer> const& cmd);
+  virtual void                                  end(std::shared_ptr<CommandBuffer> const& cmd);
+  virtual void submitCommandBuffer(std::shared_ptr<CommandBuffer> const& cmd);
 
-  void setSubPasses(std::vector<SubPass> const& subPasses);
+  virtual void                addAttachment(vk::Format format);
+  virtual bool                hasDepthAttachment() const;
+  virtual void                setSubPasses(std::vector<SubPass> const& subPasses);
+  virtual void                setExtent(vk::Extent2D const& extent);
+  virtual vk::Extent2D const& getExtent() const;
+  virtual void                setRingBufferSize(uint32_t extent);
+  virtual uint32_t            getRingBufferSize() const;
 
-  vk::Pipeline const& getPipelineHandle(
+  std::shared_ptr<vk::Pipeline> getPipelineHandle(
     GraphicsState const& graphicsState, uint32_t subPass = 0) const;
-
-  void                setExtent(vk::Extent2D const& extent);
-  vk::Extent2D const& getExtent() const;
-
-  void     setRingBufferSize(uint32_t extent);
-  uint32_t getRingBufferSize() const;
 
   void executeAfter(std::shared_ptr<RenderPass> const& other);
   void executeBefore(std::shared_ptr<RenderPass> const& other);
-
-  std::function<void(std::shared_ptr<CommandBuffer>, RenderPass const&)>           beforeFunc;
-  std::function<void(std::shared_ptr<CommandBuffer>, RenderPass const&, uint32_t)> drawFunc;
-
-  bool hasDepthAttachment() const;
 
  protected:
   // ----------------------------------------------------------------------------- protected methods
   void setSwapchainInfo(std::vector<vk::Image> const& images, vk::Format format);
 
   // ----------------------------------------------------------------------------- protected members
-  std::shared_ptr<Context> mContext;
-
+  std::shared_ptr<Context>                  mContext;
   std::vector<std::weak_ptr<vk::Semaphore>> mWaitSemaphores;
-  std::shared_ptr<vk::Semaphore>            mSignalSemaphore;
+  std::shared_ptr<vk::Semaphore>            mRenderingFinishedSemaphore;
   std::shared_ptr<vk::RenderPass>           mRenderPass;
 
   // ring buffer of for command buffer and associated framebuffers
@@ -107,7 +103,7 @@ class RenderPass {
   vk::Extent2D mExtent         = {100, 100};
   uint32_t     mRingbufferSize = 1;
 
-  mutable PipelineFactory mPipelineFactory;
+  mutable PipelineCache mPipelineCache;
 };
 
 } // namespace Illusion::Graphics

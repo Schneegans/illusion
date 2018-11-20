@@ -8,31 +8,7 @@
 #                                                                                                  #
 #--------------------------------------------------------------------------------------------------#
 
-# -------------------------------------------------------------------------- install other resources
-install(DIRECTORY "data"
-    DESTINATION "bin"
+add_library(tinygltf INTERFACE)
+target_include_directories(tinygltf
+  INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/externals/tinygltf
 )
-
-# -------------------------------------------------------------------------------- make each example
-set(ENABLED_EXAMPLES
-  "GltfLoader"
-  "TexturedCube"
-  "TexturedQuad"
-  "Triangle"
-)
-
-foreach(EXAMPLE ${ENABLED_EXAMPLES})
-  file(GLOB_RECURSE EXAMPLE_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-    "${EXAMPLE}/*.cpp"
-  )
-
-  add_executable(${EXAMPLE} ${EXAMPLE_SRC})
-
-  target_link_libraries(${EXAMPLE} 
-    PRIVATE illusion-graphics
-  )
-
-  install(TARGETS ${EXAMPLE}
-    RUNTIME DESTINATION "bin"
-  )
-endforeach()

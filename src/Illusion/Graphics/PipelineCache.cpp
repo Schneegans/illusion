@@ -9,7 +9,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ---------------------------------------------------------------------------------------- includes
-#include "PipelineFactory.hpp"
+#include "PipelineCache.hpp"
 
 #include "../Core/Logger.hpp"
 #include "Context.hpp"
@@ -21,19 +21,22 @@
 
 namespace Illusion::Graphics {
 
-PipelineFactory::PipelineFactory(std::shared_ptr<Context> const& context)
+PipelineCache::PipelineCache(std::shared_ptr<Context> const& context)
   : mContext(context) {}
 
-PipelineFactory::~PipelineFactory() {}
+PipelineCache::~PipelineCache() {}
 
-vk::Pipeline const& PipelineFactory::getPipelineHandle(
+std::shared_ptr<vk::Pipeline> PipelineCache::getPipelineHandle(
   GraphicsState const& gs, vk::RenderPass const& renderpass, uint32_t subPass) {
 
   Core::BitHash hash = gs.getHash();
   hash.push<32>(subPass);
 
-  auto cached = mCache.find(hash);
-  if (cached != mCache.end()) { return *cached->second; }
+  {
+    std::unique_lock<std::mutex> lock(mMutex);
+    auto                         cached = mCache.find(hash);
+    if (cached != mCache.end()) { return cached->second; }
+  }
 
   // -----------------------------------------------------------------------------------------------
   std::vector<vk::PipelineShaderStageCreateInfo> stageInfos;
@@ -183,11 +186,16 @@ vk::Pipeline const& PipelineFactory::getPipelineHandle(
   if (gs.getShaderProgram()) { info.layout = *gs.getShaderProgram()->getPipelineLayout(); }
 
   auto pipeline = mContext->createPipeline(info);
-  mCache[hash]  = pipeline;
 
-  return *pipeline;
+  std::unique_lock<std::mutex> lock(mMutex);
+  mCache[hash] = pipeline;
+
+  return pipeline;
 }
 
-void PipelineFactory::clearCache() { mCache.clear(); }
+void PipelineCache::clear() {
+  std::unique_lock<std::mutex> lock(mMutex);
+  mCache.clear();
+}
 
 } // namespace Illusion::Graphics

@@ -16,3 +16,6 @@
 [submodule "externals/spirv-cross"]
 	path = externals/spirv-cross
 	url = ../../KhronosGroup/spirv-cross.git
+[submodule "externals/tinygltf"]
+	path = externals/tinygltf
+	url = ../../syoyo/tinygltf.git
