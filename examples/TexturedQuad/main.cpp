@@ -10,6 +10,7 @@
 
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/DescriptorSet.hpp>
+#include <Illusion/Graphics/DescriptorSetCache.hpp>
 #include <Illusion/Graphics/DisplayPass.hpp>
 #include <Illusion/Graphics/Engine.hpp>
 #include <Illusion/Graphics/GraphicsState.hpp>
@@ -25,14 +26,17 @@ int main(int argc, char* argv[]) {
   auto window  = std::make_shared<Illusion::Graphics::Window>(engine, context);
   window->open();
 
+  auto descriptorSetCache = std::make_shared<Illusion::Graphics::DescriptorSetCache>(context);
+
   auto shader = Illusion::Graphics::ShaderProgram::createFromGlslFiles(
     context,
+    descriptorSetCache,
     {{vk::ShaderStageFlagBits::eVertex, "data/shaders/TexturedQuad.vert"},
      {vk::ShaderStageFlagBits::eFragment, "data/shaders/TexturedQuad.frag"}});
 
   auto texture = Illusion::Graphics::Texture::createFromFile(context, "data/textures/box.dds");
 
-  auto descriptorSet = shader->allocateDescriptorSet();
+  auto descriptorSet = descriptorSetCache->acquireHandle(shader->getDescriptorSetLayouts().at(0));
   descriptorSet->bindCombinedImageSampler(texture, 0);
 
   Illusion::Graphics::GraphicsState state;
@@ -73,6 +77,8 @@ int main(int argc, char* argv[]) {
     renderPass->submitCommandBuffer(cmd);
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
+
+  context->getDevice()->waitIdle();
 
   return 0;
 }

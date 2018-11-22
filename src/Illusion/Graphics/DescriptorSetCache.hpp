@@ -8,37 +8,49 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_DESCRIPTOR_POOL_CACHE_HPP
-#define ILLUSION_GRAPHICS_DESCRIPTOR_POOL_CACHE_HPP
+#ifndef ILLUSION_GRAPHICS_DESCRIPTOR_SET_CACHE_HPP
+#define ILLUSION_GRAPHICS_DESCRIPTOR_SET_CACHE_HPP
 
 // ---------------------------------------------------------------------------------------- includes
 #include "../Core/BitHash.hpp"
-#include "PipelineResource.hpp"
+#include "ShaderReflection.hpp"
 
+#include <list>
 #include <map>
-#include <mutex>
 
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class DescriptorPoolCache {
+class DescriptorSetCache {
  public:
-  DescriptorPoolCache(std::shared_ptr<Context> const& context);
-  virtual ~DescriptorPoolCache();
+  DescriptorSetCache(std::shared_ptr<Context> const& context);
+  virtual ~DescriptorSetCache();
 
-  std::shared_ptr<DescriptorPool> get(
-    std::vector<PipelineResource> const& setResources, uint32_t set);
+  std::shared_ptr<vk::DescriptorSetLayout> createDescriptorSetLayout(
+    SetResources const& resources) const;
 
-  void clear();
+  std::shared_ptr<DescriptorSet> acquireHandle(
+    std::shared_ptr<vk::DescriptorSetLayout> const& layout);
+
+  void releaseHandle(std::shared_ptr<DescriptorSet> const& handle);
+
+  void releaseAll();
+  void deleteAll();
 
  private:
-  std::shared_ptr<Context>                                 mContext;
-  std::mutex                                               mMutex;
-  std::map<Core::BitHash, std::shared_ptr<DescriptorPool>> mCache;
+  struct CacheEntry {
+    std::shared_ptr<vk::DescriptorSetLayout> mLayout;
+    std::shared_ptr<DescriptorPool>          mPool;
+    std::set<std::shared_ptr<DescriptorSet>> mUsedHandels;
+    std::set<std::shared_ptr<DescriptorSet>> mFreeHandels;
+  };
+
+  std::shared_ptr<Context>                    mContext;
+  mutable std::map<Core::BitHash, CacheEntry> mCache;
 };
 
 } // namespace Illusion::Graphics
 
-#endif // ILLUSION_GRAPHICS_DESCRIPTOR_POOL_CACHE_HPP
+#endif // ILLUSION_GRAPHICS_DESCRIPTOR_SET_CACHE_HPP

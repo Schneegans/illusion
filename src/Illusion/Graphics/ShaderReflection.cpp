@@ -19,8 +19,6 @@
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// parts of this code is based on Vulkan-EZ
-// (MIT, Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ShaderReflection::ShaderReflection() {}
@@ -32,8 +30,9 @@ ShaderReflection::~ShaderReflection() {}
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ShaderReflection::addResource(PipelineResource const& resource) {
-  // The key used for each resource is its name, except in the case of outputs, since its legal to
-  // have separate outputs with the same name across shader stages.
+  // As in Vulkan-EZ, the key used for each resource is its name, except in the case of inputs and
+  // outputs, since its legal to have separate outputs and inputs with the same name across
+  // shader stages.
   auto key = resource.mName;
   if (
     resource.mResourceType == PipelineResource::ResourceType::eOutput ||
@@ -42,40 +41,65 @@ void ShaderReflection::addResource(PipelineResource const& resource) {
     key = std::to_string(static_cast<VkShaderStageFlags>(resource.mStages)) + ":" + key;
   }
 
-  // If resource already exists in pipeline resource map, add current stage's bit.
-  // Else create a new entry in the pipeline resource map.
-  auto it = mResources.find(key);
-  if (it != mResources.end()) {
-    it->second.mStages |= resource.mStages;
+  if (
+    resource.mResourceType == PipelineResource::ResourceType::eInput ||
+    resource.mResourceType == PipelineResource::ResourceType::eOutput ||
+    resource.mResourceType == PipelineResource::ResourceType::ePushConstantBuffer) {
+
+    std::map<std::string, PipelineResource>* map;
+
+    if (resource.mResourceType == PipelineResource::ResourceType::eInput) {
+      map = &mInputs;
+    } else if (resource.mResourceType == PipelineResource::ResourceType::eOutput) {
+      map = &mOutputs;
+    } else if (resource.mResourceType == PipelineResource::ResourceType::ePushConstantBuffer) {
+      map = &mPushConstantBuffers;
+    }
+
+    auto it = map->find(key);
+    if (it != map->end()) {
+      it->second.mStages |= resource.mStages;
+    } else {
+      map->emplace(key, resource);
+    }
+
+    return;
+  }
+
+  auto it = mSetResources.find(resource.mSet);
+  if (it != mSetResources.end()) {
+    it->second.addResource(resource);
   } else {
-    mResources.emplace(key, resource);
-    mActiveSets.insert(resource.mSet);
+    SetResources setResources(resource.mSet);
+    setResources.addResource(resource);
+    mSetResources.emplace(resource.mSet, setResources);
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ShaderReflection::addResources(std::vector<PipelineResource> const& resources) {
-  for (auto const& resource : resources) {
-    addResource(resource);
-  }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-std::map<std::string, PipelineResource> const& ShaderReflection::getResources() const {
-  return mResources;
+std::map<uint32_t, SetResources> const& ShaderReflection::getSetResources() const {
+  return mSetResources;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<PipelineResource> ShaderReflection::getResources(
+std::map<std::string, PipelineResource> ShaderReflection::getResources(
   PipelineResource::ResourceType type) const {
 
-  std::vector<PipelineResource> result;
+  if (type == PipelineResource::ResourceType::eInput) {
+    return mInputs;
+  } else if (type == PipelineResource::ResourceType::eOutput) {
+    return mOutputs;
+  } else if (type == PipelineResource::ResourceType::ePushConstantBuffer) {
+    return mPushConstantBuffers;
+  }
 
-  for (auto const& r : mResources) {
-    if (r.second.mResourceType == type) { result.push_back(r.second); }
+  std::map<std::string, PipelineResource> result;
+
+  for (auto const& s : mSetResources) {
+    auto const& r = s.second.getResources(type);
+    result.insert(r.begin(), r.end());
   }
 
   return result;
@@ -83,20 +107,21 @@ std::vector<PipelineResource> ShaderReflection::getResources(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<PipelineResource> ShaderReflection::getResources(uint32_t set) const {
+std::map<std::string, PipelineResource> ShaderReflection::getResources() const {
 
-  std::vector<PipelineResource> result;
+  std::map<std::string, PipelineResource> result;
 
-  for (auto const& r : mResources) {
-    if (r.second.mSet == set) { result.push_back(r.second); }
+  for (auto const& s : mSetResources) {
+    auto const& r = s.second.getResources();
+    result.insert(r.begin(), r.end());
   }
+
+  result.insert(mInputs.begin(), mInputs.end());
+  result.insert(mOutputs.begin(), mOutputs.end());
+  result.insert(mPushConstantBuffers.begin(), mPushConstantBuffers.end());
 
   return result;
 };
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-std::set<uint32_t> const& ShaderReflection::getActiveSets() const { return mActiveSets; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -141,16 +166,43 @@ void ShaderReflection::printInfo() const {
       }
     };
 
-  for (auto const& pair : mResources) {
-    auto const& r = pair.second;
-    ILLUSION_MESSAGE << "- \"" << r.mName << "\" (" << resourceTypes.find(r.mResourceType)->second
-                     << ", " << vk::to_string(r.mStages) << ", access: " << vk::to_string(r.mAccess)
-                     << ", set: " << r.mSet << ", binding: " << r.mBinding
-                     << ", location: " << r.mLocation << ")" << std::endl;
-    for (auto const& member : r.mMembers) {
-      printMemberInfo(member, 1);
+  ILLUSION_MESSAGE << "Inputs" << std::endl;
+  for (auto const& r : mInputs) {
+    ILLUSION_MESSAGE << "  - \"" << r.second.mName << "\" (" << vk::to_string(r.second.mStages)
+                     << ", binding: " << r.second.mBinding << ", location: " << r.second.mLocation
+                     << ")" << std::endl;
+  }
+
+  ILLUSION_MESSAGE << "Outputs" << std::endl;
+  for (auto const& r : mOutputs) {
+    ILLUSION_MESSAGE << "  - \"" << r.second.mName << "\" (" << vk::to_string(r.second.mStages)
+                     << ", binding: " << r.second.mBinding << ", location: " << r.second.mLocation
+                     << ")" << std::endl;
+  }
+
+  ILLUSION_MESSAGE << "PushConstants" << std::endl;
+  for (auto const& r : mPushConstantBuffers) {
+    ILLUSION_MESSAGE << "  - \"" << r.second.mName << "\" (" << vk::to_string(r.second.mStages)
+                     << ", size: " << r.second.mSize << ", offset: " << r.second.mOffset << ")"
+                     << std::endl;
+  }
+
+  for (auto const& s : mSetResources) {
+    ILLUSION_MESSAGE << "set: " << s.first << std::endl;
+    for (auto const& pair : s.second.getResources()) {
+      auto const& r = pair.second;
+      ILLUSION_MESSAGE << "  - \"" << r.mName << "\" ("
+                       << resourceTypes.find(r.mResourceType)->second << ", "
+                       << vk::to_string(r.mStages) << ", access: " << vk::to_string(r.mAccess)
+                       << ", set: " << r.mSet << ", binding: " << r.mBinding
+                       << ", location: " << r.mLocation << ")" << std::endl;
+      for (auto const& member : r.mMembers) {
+        printMemberInfo(member, 2);
+      }
     }
   }
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 } // namespace Illusion::Graphics

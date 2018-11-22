@@ -8,13 +8,15 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_DESCRIPTOR_POOL_HPP
-#define ILLUSION_GRAPHICS_DESCRIPTOR_POOL_HPP
+#ifndef ILLUSION_GRAPHICS_SET_RESOURCES_HPP
+#define ILLUSION_GRAPHICS_SET_RESOURCES_HPP
 
 // ---------------------------------------------------------------------------------------- includes
-#include "fwd.hpp"
+#include "../Core/BitHash.hpp"
+#include "PipelineResource.hpp"
 
-#include <list>
+#include <map>
+#include <set>
 #include <unordered_map>
 
 namespace Illusion::Graphics {
@@ -22,34 +24,27 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class DescriptorPool {
+class SetResources {
  public:
-  DescriptorPool(
-    std::shared_ptr<Context> const&                 context,
-    vk::DescriptorSetLayoutCreateInfo const&        info,
-    std::shared_ptr<vk::DescriptorSetLayout> const& layout,
-    uint32_t                                        set);
-  virtual ~DescriptorPool();
+  SetResources(uint32_t set);
+  virtual ~SetResources();
 
-  std::shared_ptr<DescriptorSet> allocateDescriptorSet();
+  void addResource(PipelineResource const& resource);
+
+  std::map<std::string, PipelineResource> const& getResources() const;
+  std::map<std::string, PipelineResource> getResources(PipelineResource::ResourceType type) const;
+  uint32_t                                getSet() const;
+
+  Core::BitHash const& getHash() const;
 
  private:
-  const uint32_t                           mMaxSetsPerPool = 64;
-  std::shared_ptr<Context>                 mContext;
-  std::shared_ptr<vk::DescriptorSetLayout> mDescriptorSetLayout;
-  std::vector<vk::DescriptorPoolSize>      mPoolSizes;
-  uint32_t                                 mSet;
+  std::map<std::string, PipelineResource> mResources;
+  uint32_t                                mSet;
 
-  // stores all descriptor pools and the number of descriptor sets
-  // which have been allocated from those pools
-  struct PoolInfo {
-    std::shared_ptr<vk::DescriptorPool> mPool;
-    uint32_t                            mAllocationCount = 0;
-  };
-
-  std::vector<std::shared_ptr<PoolInfo>> mDescriptorPools;
+  mutable bool          mHashDirty = true;
+  mutable Core::BitHash mHash;
 };
 
 } // namespace Illusion::Graphics
 
-#endif // ILLUSION_GRAPHICS_DESCRIPTOR_POOL_HPP
+#endif // ILLUSION_GRAPHICS_SET_RESOURCES_HPP

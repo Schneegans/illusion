@@ -23,13 +23,13 @@ namespace Illusion::Graphics {
 class DescriptorSet : public vk::DescriptorSet {
  public:
   DescriptorSet(
-    std::shared_ptr<Context> const& context, vk::DescriptorSet const& base, uint32_t set);
-
-  uint32_t getSet() const { return mSet; }
+    std::shared_ptr<Context> const& context, uint32_t set, vk::DescriptorSet const& base);
 
   void bindCombinedImageSampler(std::shared_ptr<Texture> const& texture, uint32_t binding);
   void bindStorageImage(std::shared_ptr<Texture> const& texture, uint32_t binding);
   void bindUniformBuffer(std::shared_ptr<BackedBuffer> const& buffer, uint32_t binding);
+
+  uint32_t getSet() const;
 
  private:
   std::shared_ptr<Context> mContext;

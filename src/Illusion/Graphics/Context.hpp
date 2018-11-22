@@ -12,7 +12,10 @@
 #define ILLUSION_GRAPHICS_CONTEXT_HPP
 
 // ---------------------------------------------------------------------------------------- includes
+#include "../Core/BitHash.hpp"
 #include "fwd.hpp"
+
+#include <map>
 
 struct GLFWwindow;
 

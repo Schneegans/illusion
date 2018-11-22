@@ -10,6 +10,7 @@
 
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/DescriptorSet.hpp>
+#include <Illusion/Graphics/DescriptorSetCache.hpp>
 #include <Illusion/Graphics/DisplayPass.hpp>
 #include <Illusion/Graphics/Engine.hpp>
 #include <Illusion/Graphics/GraphicsState.hpp>
@@ -67,16 +68,21 @@ int main(int argc, char* argv[]) {
   auto window  = std::make_shared<Illusion::Graphics::Window>(engine, context);
   window->open();
 
+  auto descriptorSetCache = std::make_shared<Illusion::Graphics::DescriptorSetCache>(context);
+
   auto shader = Illusion::Graphics::ShaderProgram::createFromGlslFiles(
     context,
+    descriptorSetCache,
     {{vk::ShaderStageFlagBits::eVertex, "data/shaders/TexturedCube.vert"},
      {vk::ShaderStageFlagBits::eFragment, "data/shaders/TexturedCube.frag"}});
 
-  auto cameraUniformDescriptorSet = shader->allocateDescriptorSet(0);
-  auto cameraUniformBuffer        = context->createUniformBuffer(sizeof(CameraUniforms));
+  auto cameraUniformDescriptorSet =
+    descriptorSetCache->acquireHandle(shader->getDescriptorSetLayouts().at(0));
+  auto cameraUniformBuffer = context->createUniformBuffer(sizeof(CameraUniforms));
   cameraUniformDescriptorSet->bindUniformBuffer(cameraUniformBuffer, 0);
 
-  auto materialDescriptorSet = shader->allocateDescriptorSet(1);
+  auto materialDescriptorSet =
+    descriptorSetCache->acquireHandle(shader->getDescriptorSetLayouts().at(1));
   auto texture = Illusion::Graphics::Texture::createFromFile(context, "data/textures/box.dds");
   materialDescriptorSet->bindCombinedImageSampler(texture, 0);
 

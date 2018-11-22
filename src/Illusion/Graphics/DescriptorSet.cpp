@@ -20,7 +20,7 @@
 namespace Illusion::Graphics {
 
 DescriptorSet::DescriptorSet(
-  std::shared_ptr<Context> const& context, vk::DescriptorSet const& base, uint32_t set)
+  std::shared_ptr<Context> const& context, uint32_t set, vk::DescriptorSet const& base)
   : vk::DescriptorSet(base)
   , mContext(context)
   , mSet(set) {}
@@ -77,5 +77,7 @@ void DescriptorSet::bindUniformBuffer(
 
   mContext->getDevice()->updateDescriptorSets(info, nullptr);
 }
+
+uint32_t DescriptorSet::getSet() const { return mSet; }
 
 } // namespace Illusion::Graphics

@@ -8,7 +8,9 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#include <Illusion/Core/Logger.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
+#include <Illusion/Graphics/DescriptorSetCache.hpp>
 #include <Illusion/Graphics/DisplayPass.hpp>
 #include <Illusion/Graphics/Engine.hpp>
 #include <Illusion/Graphics/GraphicsState.hpp>
@@ -18,13 +20,19 @@
 #include <thread>
 
 int main(int argc, char* argv[]) {
+
+  Illusion::Core::Logger::enableTrace = true;
+
   auto engine  = std::make_shared<Illusion::Graphics::Engine>("Triangle Demo");
   auto context = std::make_shared<Illusion::Graphics::Context>(engine->getPhysicalDevice());
   auto window  = std::make_shared<Illusion::Graphics::Window>(engine, context);
   window->open();
 
+  auto descriptorSetCache = std::make_shared<Illusion::Graphics::DescriptorSetCache>(context);
+
   auto shader = Illusion::Graphics::ShaderProgram::createFromGlslFiles(
     context,
+    descriptorSetCache,
     {{vk::ShaderStageFlagBits::eVertex, "data/shaders/Triangle.vert"},
      {vk::ShaderStageFlagBits::eFragment, "data/shaders/Triangle.frag"}});
 
