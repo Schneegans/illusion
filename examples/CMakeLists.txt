@@ -16,8 +16,8 @@ install(DIRECTORY "data"
 # -------------------------------------------------------------------------------- make each example
 set(ENABLED_EXAMPLES
   # "GltfLoader"
-  "TexturedCube"
-  "TexturedQuad"
+  # "TexturedCube"
+  # "TexturedQuad"
   "Triangle"
 )
 

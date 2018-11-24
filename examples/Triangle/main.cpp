@@ -9,7 +9,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <Illusion/Core/Logger.hpp>
+#include <Illusion/Core/RingBuffer.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
+#include <Illusion/Graphics/DescriptorSetCache.hpp>
 #include <Illusion/Graphics/DisplayPass.hpp>
 #include <Illusion/Graphics/Engine.hpp>
 #include <Illusion/Graphics/GraphicsState.hpp>
@@ -51,6 +53,19 @@ int main(int argc, char* argv[]) {
   });
 
   auto renderPass = window->getDisplayPass();
+
+  struct FrameResources {
+    FrameResources(std::shared_ptr<Illusion::Graphics::Context> const& context)
+      : mDescriptorSetCache(std::make_shared<Illusion::Graphics::DescriptorSetCache>(context)) {}
+
+    std::shared_ptr<Illusion::Graphics::DescriptorSetCache> mDescriptorSetCache;
+    std::shared_ptr<Illusion::Graphics::CommandBuffer>      mCommandBuffer;
+    std::shared_ptr<vk::Fence>                              mRenderFinishedFence;
+    std::shared_ptr<vk::Semaphore>                          mRenderFinishedSemaphore;
+  };
+
+  Illusion::Core::RingBuffer<FrameResources, 2> frameResources{FrameResources(context),
+                                                               FrameResources(context)};
 
   while (!window->shouldClose()) {
     window->processInput();
