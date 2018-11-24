@@ -28,34 +28,28 @@ class ShaderProgram {
   // -------------------------------------------------------------- helper methods for easy creation
   static std::shared_ptr<ShaderProgram> createFromGlslFiles(
     std::shared_ptr<Context> const&                                 context,
-    std::shared_ptr<DescriptorSetCache> const&                      descriptorSetCache,
     std::unordered_map<vk::ShaderStageFlagBits, std::string> const& files);
 
   // -------------------------------------------------------------------------------- public methods
   ShaderProgram(
     std::shared_ptr<Context> const&                   context,
-    std::shared_ptr<DescriptorSetCache> const&        descriptorSetCache,
     std::vector<std::shared_ptr<ShaderModule>> const& modules);
   virtual ~ShaderProgram();
 
-  std::vector<std::shared_ptr<ShaderModule>> const&                   getModules() const;
-  std::shared_ptr<ShaderReflection> const&                            getReflection() const;
-  std::map<uint32_t, std::shared_ptr<vk::DescriptorSetLayout>> const& getDescriptorSetLayouts()
+  std::vector<std::shared_ptr<ShaderModule>> const& getModules() const;
+
+  std::shared_ptr<PipelineReflection> const&                          getReflection() const;
+  std::map<uint32_t, std::shared_ptr<DescriptorSetReflection>> const& getDescriptorSetReflections()
     const;
-  std::shared_ptr<vk::PipelineLayout> const& getPipelineLayout() const;
 
  private:
   // ------------------------------------------------------------------------------- private methods
   void createReflection();
-  void createDescriptorSetLayouts(std::shared_ptr<DescriptorSetCache> const& descriptorSetCache);
-  void createPipelineLayout();
 
   // ------------------------------------------------------------------------------- private members
-  std::shared_ptr<Context>                                     mContext;
-  std::vector<std::shared_ptr<ShaderModule>>                   mModules;
-  std::shared_ptr<ShaderReflection>                            mReflection;
-  std::map<uint32_t, std::shared_ptr<vk::DescriptorSetLayout>> mDescriptorSetLayouts;
-  std::shared_ptr<vk::PipelineLayout>                          mPipelineLayout;
+  std::shared_ptr<Context>                   mContext;
+  std::vector<std::shared_ptr<ShaderModule>> mModules;
+  std::shared_ptr<PipelineReflection>        mReflection;
 };
 } // namespace Illusion::Graphics
 

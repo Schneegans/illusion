@@ -14,9 +14,8 @@
 #include "../Core/File.hpp"
 #include "../Core/Logger.hpp"
 #include "Context.hpp"
-#include "DescriptorSetCache.hpp"
+#include "PipelineReflection.hpp"
 #include "ShaderModule.hpp"
-#include "ShaderReflection.hpp"
 #include "Window.hpp"
 
 #include <spirv_glsl.hpp>
@@ -27,7 +26,6 @@ namespace Illusion::Graphics {
 
 std::shared_ptr<ShaderProgram> ShaderProgram::createFromGlslFiles(
   std::shared_ptr<Context> const&                                 context,
-  std::shared_ptr<DescriptorSetCache> const&                      descriptorSetCache,
   std::unordered_map<vk::ShaderStageFlagBits, std::string> const& files) {
 
   std::vector<std::shared_ptr<Illusion::Graphics::ShaderModule>> modules;
@@ -38,14 +36,13 @@ std::shared_ptr<ShaderProgram> ShaderProgram::createFromGlslFiles(
       std::make_shared<Illusion::Graphics::ShaderModule>(context, glsl, file.first));
   }
 
-  return std::make_shared<Illusion::Graphics::ShaderProgram>(context, descriptorSetCache, modules);
+  return std::make_shared<Illusion::Graphics::ShaderProgram>(context, modules);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ShaderProgram::ShaderProgram(
   std::shared_ptr<Context> const&                   context,
-  std::shared_ptr<DescriptorSetCache> const&        descriptorSetCache,
   std::vector<std::shared_ptr<ShaderModule>> const& modules)
   : mContext(context)
   , mModules(modules) {
@@ -53,16 +50,11 @@ ShaderProgram::ShaderProgram(
   ILLUSION_TRACE << "Creating ShaderProgram." << std::endl;
 
   createReflection();
-  createDescriptorSetLayouts(descriptorSetCache);
-  createPipelineLayout();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ShaderProgram::~ShaderProgram() {
-  ILLUSION_TRACE << "Deleting ShaderProgram." << std::endl;
-  mContext->getDevice()->waitIdle();
-}
+ShaderProgram::~ShaderProgram() { ILLUSION_TRACE << "Deleting ShaderProgram." << std::endl; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -72,67 +64,27 @@ std::vector<std::shared_ptr<ShaderModule>> const& ShaderProgram::getModules() co
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<ShaderReflection> const& ShaderProgram::getReflection() const {
+std::shared_ptr<PipelineReflection> const& ShaderProgram::getReflection() const {
   return mReflection;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::map<uint32_t, std::shared_ptr<vk::DescriptorSetLayout>> const& ShaderProgram::
-  getDescriptorSetLayouts() const {
-  return mDescriptorSetLayouts;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-std::shared_ptr<vk::PipelineLayout> const& ShaderProgram::getPipelineLayout() const {
-  return mPipelineLayout;
+std::map<uint32_t, std::shared_ptr<DescriptorSetReflection>> const& ShaderProgram::
+  getDescriptorSetReflections() const {
+  return mReflection->getDescriptorSetReflections();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ShaderProgram::createReflection() {
-  mReflection = std::make_shared<Illusion::Graphics::ShaderReflection>();
+  mReflection = std::make_shared<Illusion::Graphics::PipelineReflection>(mContext);
 
   for (auto const& module : mModules) {
-    for (auto const& resource : module->getReflection().getResources()) {
-      mReflection->addResource(resource.second);
+    for (auto const& resource : module->getResources()) {
+      mReflection->addResource(resource);
     }
   }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void ShaderProgram::createDescriptorSetLayouts(
-  std::shared_ptr<DescriptorSetCache> const& descriptorSetCache) {
-  for (auto const& set : mReflection->getSetResources()) {
-    mDescriptorSetLayouts[set.first] = descriptorSetCache->createDescriptorSetLayout(set.second);
-  }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void ShaderProgram::createPipelineLayout() {
-  std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
-  for (auto const& descriptorSetLayout : mDescriptorSetLayouts) {
-    descriptorSetLayouts.push_back(*descriptorSetLayout.second);
-  }
-
-  std::vector<vk::PushConstantRange> pushConstantRanges;
-  for (auto const& r :
-       mReflection->getResources(PipelineResource::ResourceType::ePushConstantBuffer)) {
-    if (r.second.mStages) {
-      pushConstantRanges.push_back({r.second.mStages, r.second.mOffset, r.second.mSize});
-    }
-  }
-
-  vk::PipelineLayoutCreateInfo pipelineLayoutInfo;
-  pipelineLayoutInfo.setLayoutCount         = descriptorSetLayouts.size();
-  pipelineLayoutInfo.pSetLayouts            = descriptorSetLayouts.data();
-  pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(pushConstantRanges.size());
-  pipelineLayoutInfo.pPushConstantRanges    = pushConstantRanges.data();
-
-  mPipelineLayout = mContext->createPipelineLayout(pipelineLayoutInfo);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

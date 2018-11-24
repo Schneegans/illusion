@@ -14,7 +14,7 @@
 #include "../Core/Logger.hpp"
 #include "Context.hpp"
 #include "DescriptorSet.hpp"
-#include "SetResources.hpp"
+#include "DescriptorSetReflection.hpp"
 #include "Utils.hpp"
 
 #include <iostream>
@@ -24,21 +24,33 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+const std::unordered_map<PipelineResource::ResourceType, vk::DescriptorType> resourceTypeMapping = {
+  {PipelineResource::ResourceType::eCombinedImageSampler,
+   vk::DescriptorType::eCombinedImageSampler},
+  {PipelineResource::ResourceType::eInputAttachment, vk::DescriptorType::eInputAttachment},
+  {PipelineResource::ResourceType::eSampledImage, vk::DescriptorType::eSampledImage},
+  {PipelineResource::ResourceType::eSampler, vk::DescriptorType::eSampler},
+  {PipelineResource::ResourceType::eStorageBuffer, vk::DescriptorType::eStorageBuffer},
+  {PipelineResource::ResourceType::eStorageImage, vk::DescriptorType::eStorageImage},
+  {PipelineResource::ResourceType::eStorageTexelBuffer, vk::DescriptorType::eStorageTexelBuffer},
+  {PipelineResource::ResourceType::eUniformBuffer, vk::DescriptorType::eUniformBuffer},
+  {PipelineResource::ResourceType::eUniformTexelBuffer, vk::DescriptorType::eUniformTexelBuffer},
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 DescriptorPool::DescriptorPool(
   std::shared_ptr<Context> const&                 context,
-  vk::DescriptorSetLayoutCreateInfo const&        info,
-  std::shared_ptr<vk::DescriptorSetLayout> const& layout,
-  uint32_t                                        set)
+  std::shared_ptr<DescriptorSetReflection> const& reflection)
   : mContext(context)
-  , mDescriptorSetLayout(layout)
-  , mSet(set) {
+  , mReflection(reflection) {
 
   ILLUSION_TRACE << "Creating DescriptorPool." << std::endl;
 
   // calculate pool sizes for later pool creation --------------------------------------------------
   std::unordered_map<vk::DescriptorType, uint32_t> descriptorTypeCounts;
-  for (uint32_t i(0); i < info.bindingCount; ++i) {
-    descriptorTypeCounts[info.pBindings[i].descriptorType] += info.pBindings[i].descriptorCount;
+  for (auto const& r : reflection->getResources()) {
+    descriptorTypeCounts[resourceTypeMapping.at(r.second.mResourceType)] += r.second.mArraySize;
   }
 
   for (auto it : descriptorTypeCounts) {
@@ -47,7 +59,7 @@ DescriptorPool::DescriptorPool(
     pool.descriptorCount = static_cast<uint32_t>(it.second * mMaxSetsPerPool);
     mPoolSizes.push_back(pool);
   }
-} // namespace Illusion::Graphics
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -88,7 +100,7 @@ std::shared_ptr<DescriptorSet> DescriptorPool::allocateDescriptorSet() {
   }
 
   // now allocate the descriptor set from this pool
-  vk::DescriptorSetLayout descriptorSetLayouts[] = {*mDescriptorSetLayout};
+  vk::DescriptorSetLayout descriptorSetLayouts[] = {*mReflection->getLayout()};
 
   vk::DescriptorSetAllocateInfo info;
   info.descriptorPool     = *pool->mPool;
@@ -99,7 +111,7 @@ std::shared_ptr<DescriptorSet> DescriptorPool::allocateDescriptorSet() {
 
   auto device{mContext->getDevice()};
   return std::shared_ptr<DescriptorSet>(
-    new DescriptorSet(mContext, mSet, device->allocateDescriptorSets(info)[0]),
+    new DescriptorSet(mContext, mReflection->getSet(), device->allocateDescriptorSets(info)[0]),
     [device, pool](DescriptorSet* obj) {
       ILLUSION_TRACE << "Freeing DescriptorSet." << std::endl;
       --pool->mAllocationCount;

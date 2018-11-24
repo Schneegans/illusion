@@ -8,13 +8,12 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_SHADER_REFLECTION_HPP
-#define ILLUSION_GRAPHICS_SHADER_REFLECTION_HPP
+#ifndef ILLUSION_GRAPHICS_DESCRIPTOR_SET_REFLECTION_HPP
+#define ILLUSION_GRAPHICS_DESCRIPTOR_SET_REFLECTION_HPP
 
 // ---------------------------------------------------------------------------------------- includes
 #include "../Core/BitHash.hpp"
 #include "PipelineResource.hpp"
-#include "SetResources.hpp"
 
 #include <map>
 #include <set>
@@ -25,26 +24,29 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class ShaderReflection {
+class DescriptorSetReflection {
  public:
-  ShaderReflection();
-  virtual ~ShaderReflection();
+  DescriptorSetReflection(std::shared_ptr<Context> const& context, uint32_t set);
+  virtual ~DescriptorSetReflection();
 
   void addResource(PipelineResource const& resource);
 
-  std::map<uint32_t, SetResources> const& getSetResources() const;
-  std::map<std::string, PipelineResource> getResources() const;
+  std::map<std::string, PipelineResource> const& getResources() const;
   std::map<std::string, PipelineResource> getResources(PipelineResource::ResourceType type) const;
+  uint32_t                                getSet() const;
 
-  void printInfo() const;
+  std::shared_ptr<vk::DescriptorSetLayout> getLayout() const;
+  Core::BitHash const&                     getHash() const;
 
  private:
-  std::map<uint32_t, SetResources>        mSetResources;
-  std::map<std::string, PipelineResource> mInputs;
-  std::map<std::string, PipelineResource> mOutputs;
-  std::map<std::string, PipelineResource> mPushConstantBuffers;
+  std::shared_ptr<Context>                mContext;
+  std::map<std::string, PipelineResource> mResources;
+  uint32_t                                mSet;
+
+  mutable std::shared_ptr<vk::DescriptorSetLayout> mLayout;
+  mutable Core::BitHash                            mHash;
 };
 
 } // namespace Illusion::Graphics
 
-#endif // ILLUSION_GRAPHICS_SHADER_REFLECTION_HPP
+#endif // ILLUSION_GRAPHICS_DESCRIPTOR_SET_REFLECTION_HPP

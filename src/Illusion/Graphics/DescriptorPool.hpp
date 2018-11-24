@@ -26,9 +26,7 @@ class DescriptorPool {
  public:
   DescriptorPool(
     std::shared_ptr<Context> const&                 context,
-    vk::DescriptorSetLayoutCreateInfo const&        info,
-    std::shared_ptr<vk::DescriptorSetLayout> const& layout,
-    uint32_t                                        set);
+    std::shared_ptr<DescriptorSetReflection> const& reflection);
   virtual ~DescriptorPool();
 
   std::shared_ptr<DescriptorSet> allocateDescriptorSet();
@@ -36,9 +34,8 @@ class DescriptorPool {
  private:
   const uint32_t                           mMaxSetsPerPool = 64;
   std::shared_ptr<Context>                 mContext;
-  std::shared_ptr<vk::DescriptorSetLayout> mDescriptorSetLayout;
+  std::shared_ptr<DescriptorSetReflection> mReflection;
   std::vector<vk::DescriptorPoolSize>      mPoolSizes;
-  uint32_t                                 mSet;
 
   // stores all descriptor pools and the number of descriptor sets
   // which have been allocated from those pools

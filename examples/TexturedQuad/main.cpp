@@ -8,12 +8,14 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#include <Illusion/Core/Logger.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/DescriptorSet.hpp>
 #include <Illusion/Graphics/DescriptorSetCache.hpp>
 #include <Illusion/Graphics/DisplayPass.hpp>
 #include <Illusion/Graphics/Engine.hpp>
 #include <Illusion/Graphics/GraphicsState.hpp>
+#include <Illusion/Graphics/PipelineReflection.hpp>
 #include <Illusion/Graphics/ShaderProgram.hpp>
 #include <Illusion/Graphics/Texture.hpp>
 #include <Illusion/Graphics/Window.hpp>
@@ -21,6 +23,9 @@
 #include <thread>
 
 int main(int argc, char* argv[]) {
+
+  Illusion::Core::Logger::enableTrace = true;
+
   auto engine  = std::make_shared<Illusion::Graphics::Engine>("Textured Quad Demo");
   auto context = std::make_shared<Illusion::Graphics::Context>(engine->getPhysicalDevice());
   auto window  = std::make_shared<Illusion::Graphics::Window>(engine, context);
@@ -30,13 +35,13 @@ int main(int argc, char* argv[]) {
 
   auto shader = Illusion::Graphics::ShaderProgram::createFromGlslFiles(
     context,
-    descriptorSetCache,
     {{vk::ShaderStageFlagBits::eVertex, "data/shaders/TexturedQuad.vert"},
      {vk::ShaderStageFlagBits::eFragment, "data/shaders/TexturedQuad.frag"}});
 
   auto texture = Illusion::Graphics::Texture::createFromFile(context, "data/textures/box.dds");
 
-  auto descriptorSet = descriptorSetCache->acquireHandle(shader->getDescriptorSetLayouts().at(0));
+  auto descriptorSet =
+    descriptorSetCache->acquireHandle(shader->getDescriptorSetReflections().at(0));
   descriptorSet->bindCombinedImageSampler(texture, 0);
 
   Illusion::Graphics::GraphicsState state;
@@ -67,7 +72,7 @@ int main(int argc, char* argv[]) {
     cmd->bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline);
     cmd->bindDescriptorSets(
       vk::PipelineBindPoint::eGraphics,
-      *state.getShaderProgram()->getPipelineLayout(),
+      *state.getShaderProgram()->getReflection()->getLayout(),
       descriptorSet->getSet(),
       *descriptorSet,
       nullptr);

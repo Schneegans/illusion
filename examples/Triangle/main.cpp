@@ -10,7 +10,6 @@
 
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
-#include <Illusion/Graphics/DescriptorSetCache.hpp>
 #include <Illusion/Graphics/DisplayPass.hpp>
 #include <Illusion/Graphics/Engine.hpp>
 #include <Illusion/Graphics/GraphicsState.hpp>
@@ -28,11 +27,8 @@ int main(int argc, char* argv[]) {
   auto window  = std::make_shared<Illusion::Graphics::Window>(engine, context);
   window->open();
 
-  auto descriptorSetCache = std::make_shared<Illusion::Graphics::DescriptorSetCache>(context);
-
   auto shader = Illusion::Graphics::ShaderProgram::createFromGlslFiles(
     context,
-    descriptorSetCache,
     {{vk::ShaderStageFlagBits::eVertex, "data/shaders/Triangle.vert"},
      {vk::ShaderStageFlagBits::eFragment, "data/shaders/Triangle.frag"}});
 

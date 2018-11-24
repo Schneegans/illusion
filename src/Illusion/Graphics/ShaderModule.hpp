@@ -12,7 +12,7 @@
 #define ILLUSION_GRAPHICS_SHADERMODULE_HPP
 
 // ---------------------------------------------------------------------------------------- includes
-#include "ShaderReflection.hpp"
+#include "PipelineResource.hpp"
 #include "fwd.hpp"
 
 namespace Illusion::Graphics {
@@ -37,9 +37,9 @@ class ShaderModule {
 
   virtual ~ShaderModule();
 
-  vk::ShaderStageFlagBits           getStage() const;
-  std::shared_ptr<vk::ShaderModule> getModule() const;
-  ShaderReflection const&           getReflection() const;
+  vk::ShaderStageFlagBits              getStage() const;
+  std::shared_ptr<vk::ShaderModule>    getModule() const;
+  std::vector<PipelineResource> const& getResources() const;
 
  private:
   void createReflection();
@@ -47,7 +47,7 @@ class ShaderModule {
   std::vector<uint32_t>             mSpirv;
   vk::ShaderStageFlagBits           mStage;
   std::shared_ptr<vk::ShaderModule> mModule;
-  ShaderReflection                  mReflection;
+  std::vector<PipelineResource>     mResources;
 };
 } // namespace Illusion::Graphics
 

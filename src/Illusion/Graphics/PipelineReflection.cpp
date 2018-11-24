@@ -9,9 +9,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ---------------------------------------------------------------------------------------- includes
-#include "ShaderReflection.hpp"
+#include "PipelineReflection.hpp"
 
 #include "../Core/Logger.hpp"
+#include "Context.hpp"
 
 #include <functional>
 #include <iostream>
@@ -21,15 +22,19 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ShaderReflection::ShaderReflection() {}
+PipelineReflection::PipelineReflection(std::shared_ptr<Context> const& context)
+  : mContext(context) {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ShaderReflection::~ShaderReflection() {}
+PipelineReflection::~PipelineReflection() {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ShaderReflection::addResource(PipelineResource const& resource) {
+void PipelineReflection::addResource(PipelineResource const& resource) {
+
+  mLayout.reset();
+
   // As in Vulkan-EZ, the key used for each resource is its name, except in the case of inputs and
   // outputs, since its legal to have separate outputs and inputs with the same name across
   // shader stages.
@@ -66,25 +71,26 @@ void ShaderReflection::addResource(PipelineResource const& resource) {
     return;
   }
 
-  auto it = mSetResources.find(resource.mSet);
-  if (it != mSetResources.end()) {
-    it->second.addResource(resource);
+  auto it = mDescriptorSetReflections.find(resource.mSet);
+  if (it != mDescriptorSetReflections.end()) {
+    it->second->addResource(resource);
   } else {
-    SetResources setResources(resource.mSet);
-    setResources.addResource(resource);
-    mSetResources.emplace(resource.mSet, setResources);
+    auto setReflection = std::make_shared<DescriptorSetReflection>(mContext, resource.mSet);
+    setReflection->addResource(resource);
+    mDescriptorSetReflections.emplace(resource.mSet, setReflection);
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::map<uint32_t, SetResources> const& ShaderReflection::getSetResources() const {
-  return mSetResources;
+std::map<uint32_t, std::shared_ptr<DescriptorSetReflection>> const& PipelineReflection::
+  getDescriptorSetReflections() const {
+  return mDescriptorSetReflections;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::map<std::string, PipelineResource> ShaderReflection::getResources(
+std::map<std::string, PipelineResource> PipelineReflection::getResources(
   PipelineResource::ResourceType type) const {
 
   if (type == PipelineResource::ResourceType::eInput) {
@@ -97,8 +103,8 @@ std::map<std::string, PipelineResource> ShaderReflection::getResources(
 
   std::map<std::string, PipelineResource> result;
 
-  for (auto const& s : mSetResources) {
-    auto const& r = s.second.getResources(type);
+  for (auto const& s : mDescriptorSetReflections) {
+    auto const& r = s.second->getResources(type);
     result.insert(r.begin(), r.end());
   }
 
@@ -107,12 +113,12 @@ std::map<std::string, PipelineResource> ShaderReflection::getResources(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::map<std::string, PipelineResource> ShaderReflection::getResources() const {
+std::map<std::string, PipelineResource> PipelineReflection::getResources() const {
 
   std::map<std::string, PipelineResource> result;
 
-  for (auto const& s : mSetResources) {
-    auto const& r = s.second.getResources();
+  for (auto const& s : mDescriptorSetReflections) {
+    auto const& r = s.second->getResources();
     result.insert(r.begin(), r.end());
   }
 
@@ -125,7 +131,35 @@ std::map<std::string, PipelineResource> ShaderReflection::getResources() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ShaderReflection::printInfo() const {
+std::shared_ptr<vk::PipelineLayout> const& PipelineReflection::getLayout() const {
+  if (!mLayout) {
+    std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
+    for (auto const& r : mDescriptorSetReflections) {
+      descriptorSetLayouts.push_back(*r.second->getLayout());
+    }
+
+    std::vector<vk::PushConstantRange> pushConstantRanges;
+    for (auto const& r : mPushConstantBuffers) {
+      if (r.second.mStages) {
+        pushConstantRanges.push_back({r.second.mStages, r.second.mOffset, r.second.mSize});
+      }
+    }
+
+    vk::PipelineLayoutCreateInfo pipelineLayoutInfo;
+    pipelineLayoutInfo.setLayoutCount         = descriptorSetLayouts.size();
+    pipelineLayoutInfo.pSetLayouts            = descriptorSetLayouts.data();
+    pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(pushConstantRanges.size());
+    pipelineLayoutInfo.pPushConstantRanges    = pushConstantRanges.data();
+
+    mLayout = mContext->createPipelineLayout(pipelineLayoutInfo);
+  }
+
+  return mLayout;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void PipelineReflection::printInfo() const {
   const std::unordered_map<PipelineResource::BaseType, std::string> baseTypes = {
     {PipelineResource::BaseType::eBool, "bool"},
     {PipelineResource::BaseType::eChar, "char"},
@@ -187,9 +221,9 @@ void ShaderReflection::printInfo() const {
                      << std::endl;
   }
 
-  for (auto const& s : mSetResources) {
+  for (auto const& s : mDescriptorSetReflections) {
     ILLUSION_MESSAGE << "set: " << s.first << std::endl;
-    for (auto const& pair : s.second.getResources()) {
+    for (auto const& pair : s.second->getResources()) {
       auto const& r = pair.second;
       ILLUSION_MESSAGE << "  - \"" << r.mName << "\" ("
                        << resourceTypes.find(r.mResourceType)->second << ", "

@@ -15,7 +15,6 @@
 #include "CommandBuffer.hpp"
 #include "PhysicalDevice.hpp"
 #include "PipelineResource.hpp"
-#include "SetResources.hpp"
 #include "Utils.hpp"
 
 #include <iostream>

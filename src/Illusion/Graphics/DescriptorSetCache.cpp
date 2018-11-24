@@ -18,19 +18,6 @@
 
 namespace Illusion::Graphics {
 
-const std::unordered_map<PipelineResource::ResourceType, vk::DescriptorType> resourceTypeMapping = {
-  {PipelineResource::ResourceType::eCombinedImageSampler,
-   vk::DescriptorType::eCombinedImageSampler},
-  {PipelineResource::ResourceType::eInputAttachment, vk::DescriptorType::eInputAttachment},
-  {PipelineResource::ResourceType::eSampledImage, vk::DescriptorType::eSampledImage},
-  {PipelineResource::ResourceType::eSampler, vk::DescriptorType::eSampler},
-  {PipelineResource::ResourceType::eStorageBuffer, vk::DescriptorType::eStorageBuffer},
-  {PipelineResource::ResourceType::eStorageImage, vk::DescriptorType::eStorageImage},
-  {PipelineResource::ResourceType::eStorageTexelBuffer, vk::DescriptorType::eStorageTexelBuffer},
-  {PipelineResource::ResourceType::eUniformBuffer, vk::DescriptorType::eUniformBuffer},
-  {PipelineResource::ResourceType::eUniformTexelBuffer, vk::DescriptorType::eUniformTexelBuffer},
-};
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 DescriptorSetCache::DescriptorSetCache(std::shared_ptr<Context> const& context)
@@ -42,63 +29,38 @@ DescriptorSetCache::~DescriptorSetCache() {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::DescriptorSetLayout> DescriptorSetCache::createDescriptorSetLayout(
-  SetResources const& setResources) const {
-
-  auto const& hash = setResources.getHash();
-
-  auto it = mCache.find(hash);
-  if (it != mCache.end()) { return it->second.mLayout; }
-
-  std::vector<vk::DescriptorSetLayoutBinding> bindings;
-
-  for (auto const& r : setResources.getResources()) {
-    auto t = r.second.mResourceType;
-    bindings.push_back(
-      {r.second.mBinding, resourceTypeMapping.at(t), r.second.mArraySize, r.second.mStages});
-  }
-
-  vk::DescriptorSetLayoutCreateInfo descriptorSetLayoutInfo;
-  descriptorSetLayoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-  descriptorSetLayoutInfo.pBindings    = bindings.data();
-
-  auto descriptorSetLayout = mContext->createDescriptorSetLayout(descriptorSetLayoutInfo);
-
-  CacheEntry entry;
-  entry.mLayout = descriptorSetLayout;
-  entry.mPool   = std::make_shared<DescriptorPool>(
-    mContext, descriptorSetLayoutInfo, descriptorSetLayout, setResources.getSet());
-
-  mCache[hash] = entry;
-
-  return descriptorSetLayout;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
 std::shared_ptr<DescriptorSet> DescriptorSetCache::acquireHandle(
-  std::shared_ptr<vk::DescriptorSetLayout> const& layout) {
+  std::shared_ptr<DescriptorSetReflection> const& reflection) {
 
-  for (auto& cacheEntry : mCache) {
-    if (cacheEntry.second.mLayout == layout) {
+  auto const& hash       = reflection->getHash();
+  auto        cacheEntry = mCache.find(hash);
 
-      // Firts case: we have a handle which has been acquired before; return it!
-      if (cacheEntry.second.mFreeHandels.size() > 0) {
-        auto descriptorSet = *cacheEntry.second.mFreeHandels.begin();
-        cacheEntry.second.mFreeHandels.erase(cacheEntry.second.mFreeHandels.begin());
-        cacheEntry.second.mUsedHandels.insert(descriptorSet);
-        return descriptorSet;
-      }
+  if (cacheEntry != mCache.end()) {
 
-      // Second case: we have no free handle. So we have to create a new one!
-      auto descriptorSet = cacheEntry.second.mPool->allocateDescriptorSet();
-      cacheEntry.second.mUsedHandels.insert(descriptorSet);
+    // First case: we have a handle which has been acquired before; return it!
+    if (cacheEntry->second.mFreeHandels.size() > 0) {
+      auto descriptorSet = *cacheEntry->second.mFreeHandels.begin();
+      cacheEntry->second.mFreeHandels.erase(cacheEntry->second.mFreeHandels.begin());
+      cacheEntry->second.mUsedHandels.insert(descriptorSet);
       return descriptorSet;
     }
+
+    // Second case: we have no free handle. So we have to create a new one!
+    auto descriptorSet = cacheEntry->second.mPool->allocateDescriptorSet();
+    cacheEntry->second.mUsedHandels.insert(descriptorSet);
+    return descriptorSet;
   }
 
-  throw std::runtime_error("Failed to acquire DescriptorSet: DescriptorSetLayout was not created "
-                           "from this DescriptorSetCache!");
+  // Last case: there is no pool at all! Create a new one!
+  CacheEntry entry;
+  entry.mPool = std::make_shared<DescriptorPool>(mContext, reflection);
+
+  auto descriptorSet = entry.mPool->allocateDescriptorSet();
+  entry.mUsedHandels.insert(descriptorSet);
+
+  mCache.emplace(hash, entry);
+
+  return descriptorSet;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -14,6 +14,7 @@
 #include <Illusion/Graphics/DisplayPass.hpp>
 #include <Illusion/Graphics/Engine.hpp>
 #include <Illusion/Graphics/GraphicsState.hpp>
+#include <Illusion/Graphics/PipelineReflection.hpp>
 #include <Illusion/Graphics/ShaderProgram.hpp>
 #include <Illusion/Graphics/Texture.hpp>
 #include <Illusion/Graphics/Window.hpp>
@@ -72,17 +73,16 @@ int main(int argc, char* argv[]) {
 
   auto shader = Illusion::Graphics::ShaderProgram::createFromGlslFiles(
     context,
-    descriptorSetCache,
     {{vk::ShaderStageFlagBits::eVertex, "data/shaders/TexturedCube.vert"},
      {vk::ShaderStageFlagBits::eFragment, "data/shaders/TexturedCube.frag"}});
 
   auto cameraUniformDescriptorSet =
-    descriptorSetCache->acquireHandle(shader->getDescriptorSetLayouts().at(0));
+    descriptorSetCache->acquireHandle(shader->getDescriptorSetReflections().at(0));
   auto cameraUniformBuffer = context->createUniformBuffer(sizeof(CameraUniforms));
   cameraUniformDescriptorSet->bindUniformBuffer(cameraUniformBuffer, 0);
 
   auto materialDescriptorSet =
-    descriptorSetCache->acquireHandle(shader->getDescriptorSetLayouts().at(1));
+    descriptorSetCache->acquireHandle(shader->getDescriptorSetReflections().at(1));
   auto texture = Illusion::Graphics::Texture::createFromFile(context, "data/textures/box.dds");
   materialDescriptorSet->bindCombinedImageSampler(texture, 0);
 
@@ -154,18 +154,18 @@ int main(int argc, char* argv[]) {
     auto pipeline = renderPass->getPipelineHandle(state);
     cmd->bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline);
     cmd->pushConstants(
-      *state.getShaderProgram()->getPipelineLayout(),
+      *state.getShaderProgram()->getReflection()->getLayout(),
       vk::ShaderStageFlagBits::eVertex,
       pushConstants);
     cmd->bindDescriptorSets(
       vk::PipelineBindPoint::eGraphics,
-      *state.getShaderProgram()->getPipelineLayout(),
+      *state.getShaderProgram()->getReflection()->getLayout(),
       materialDescriptorSet->getSet(),
       *materialDescriptorSet,
       nullptr);
     cmd->bindDescriptorSets(
       vk::PipelineBindPoint::eGraphics,
-      *state.getShaderProgram()->getPipelineLayout(),
+      *state.getShaderProgram()->getReflection()->getLayout(),
       cameraUniformDescriptorSet->getSet(),
       *cameraUniformDescriptorSet,
       nullptr);

@@ -13,7 +13,7 @@
 
 // ---------------------------------------------------------------------------------------- includes
 #include "../Core/BitHash.hpp"
-#include "ShaderReflection.hpp"
+#include "DescriptorSetReflection.hpp"
 
 #include <list>
 #include <map>
@@ -28,11 +28,8 @@ class DescriptorSetCache {
   DescriptorSetCache(std::shared_ptr<Context> const& context);
   virtual ~DescriptorSetCache();
 
-  std::shared_ptr<vk::DescriptorSetLayout> createDescriptorSetLayout(
-    SetResources const& resources) const;
-
   std::shared_ptr<DescriptorSet> acquireHandle(
-    std::shared_ptr<vk::DescriptorSetLayout> const& layout);
+    std::shared_ptr<DescriptorSetReflection> const& reflection);
 
   void releaseHandle(std::shared_ptr<DescriptorSet> const& handle);
 
@@ -41,7 +38,6 @@ class DescriptorSetCache {
 
  private:
   struct CacheEntry {
-    std::shared_ptr<vk::DescriptorSetLayout> mLayout;
     std::shared_ptr<DescriptorPool>          mPool;
     std::set<std::shared_ptr<DescriptorSet>> mUsedHandels;
     std::set<std::shared_ptr<DescriptorSet>> mFreeHandels;

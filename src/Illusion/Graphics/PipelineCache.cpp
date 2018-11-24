@@ -14,6 +14,7 @@
 #include "../Core/Logger.hpp"
 #include "Context.hpp"
 #include "GraphicsState.hpp"
+#include "PipelineReflection.hpp"
 #include "ShaderModule.hpp"
 #include "ShaderProgram.hpp"
 
@@ -183,7 +184,7 @@ std::shared_ptr<vk::Pipeline> PipelineCache::getPipelineHandle(
   info.renderPass = renderpass;
   info.subpass    = subPass;
 
-  if (gs.getShaderProgram()) { info.layout = *gs.getShaderProgram()->getPipelineLayout(); }
+  if (gs.getShaderProgram()) { info.layout = *gs.getShaderProgram()->getReflection()->getLayout(); }
 
   auto pipeline = mContext->createPipeline(info);
 
