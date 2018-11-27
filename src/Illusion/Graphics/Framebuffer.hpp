@@ -11,7 +11,6 @@
 #ifndef ILLUSION_GRAPHICS_RENDERTARGET_HPP
 #define ILLUSION_GRAPHICS_RENDERTARGET_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include "fwd.hpp"
 
 #include <glm/glm.hpp>
@@ -21,10 +20,8 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// -------------------------------------------------------------------------------------------------
 class Framebuffer {
  public:
-  // -------------------------------------------------------------------------------- public methods
   Framebuffer(
     std::shared_ptr<Device> const&         device,
     std::shared_ptr<vk::RenderPass> const& renderPass,

@@ -11,7 +11,6 @@
 #ifndef ILLUSION_GRAPHICS_GLTF_MODEL_HPP
 #define ILLUSION_GRAPHICS_GLTF_MODEL_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include "fwd.hpp"
 
 #include <glm/glm.hpp>
@@ -26,7 +25,6 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// -------------------------------------------------------------------------------------------------
 class GltfModel {
  public:
   struct PBRMaterialUniforms {
@@ -40,7 +38,6 @@ class GltfModel {
     glm::vec3 color;
   };
 
-  // -------------------------------------------------------------------------------- public methods
   GltfModel(std::shared_ptr<Illusion::Graphics::Device> const& device, std::string const& file);
 
   void predraw(vk::CommandBuffer const& cmd);
@@ -54,7 +51,6 @@ class GltfModel {
   void printInfo() const;
 
  private:
-  // ------------------------------------------------------------------------------- private methods
   static vk::Filter             convertFilter(int value);
   static vk::SamplerMipmapMode  convertSamplerMipmapMode(int value);
   static vk::SamplerAddressMode convertSamplerAddressMode(int value);
@@ -66,7 +62,6 @@ class GltfModel {
   std::shared_ptr<Illusion::Graphics::BackedBuffer> createBuffer(int index);
   int getTextureIndex(int materialIndex, std::string const& name);
 
-  // ------------------------------------------------------------------------------- private members
   std::shared_ptr<Illusion::Graphics::Device> mDevice;
   std::string                                 mFile;
   tinygltf::Model                             mGLTF;
@@ -77,8 +72,6 @@ class GltfModel {
   std::vector<vk::DescriptorSet>   mDescriptorSets;
   std::vector<PBRMaterialUniforms> mUniformBuffers;
 };
-
-// -------------------------------------------------------------------------------------------------
 
 } // namespace Illusion::Graphics
 

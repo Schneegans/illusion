@@ -11,7 +11,6 @@
 #ifndef ILLUSION_GRAPHICS_DEVICE_HPP
 #define ILLUSION_GRAPHICS_DEVICE_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include "../Core/BitHash.hpp"
 #include "fwd.hpp"
 
@@ -38,15 +37,13 @@ struct BackedBuffer {
   vk::DeviceSize                    mSize;
 };
 
-// -------------------------------------------------------------------------------------------------
 class Device {
 
  public:
-  // -------------------------------------------------------------------------------- public methods
   Device(std::shared_ptr<PhysicalDevice> const& physicalDevice);
   virtual ~Device();
 
-  // --------------------------------------------------------------------- high-level create methods
+  // high-level create methods ---------------------------------------------------------------------
   std::shared_ptr<BackedImage> createBackedImage(
     uint32_t                width,
     uint32_t                height,
@@ -80,7 +77,7 @@ class Device {
     std::vector<vk::Semaphore> const&          signalSemaphores = {},
     vk::Fence const&                           fence            = nullptr) const;
 
-  // ---------------------------------------------------------------------- low-level create methods
+  // low-level create methods ----------------------------------------------------------------------
   // clang-format off
   std::shared_ptr<vk::Buffer>              createBuffer(vk::BufferCreateInfo const&) const;
   std::shared_ptr<vk::CommandPool>         createCommandPool(vk::CommandPoolCreateInfo const&) const;
@@ -101,14 +98,14 @@ class Device {
   std::shared_ptr<vk::SwapchainKHR>        createSwapChainKhr(vk::SwapchainCreateInfoKHR const&) const;
   // clang-format on
 
-  // ------------------------------------------------------------------------- vulkan helper methods
+  // vulkan helper methods -------------------------------------------------------------------------
   std::shared_ptr<CommandBuffer> beginSingleTimeGraphicsCommands() const;
   void                           endSingleTimeGraphicsCommands() const;
 
   std::shared_ptr<CommandBuffer> beginSingleTimeComputeCommands() const;
   void                           endSingleTimeComputeCommands() const;
 
-  // -------------------------------------------------------------------------------- vulkan getters
+  // vulkan getters --------------------------------------------------------------------------------
   std::shared_ptr<vk::Device> const&     getHandle() const { return mDevice; }
   std::shared_ptr<PhysicalDevice> const& getPhysicalDevice() const { return mPhysicalDevice; }
   vk::Queue const&                       getGraphicsQueue() const { return mGraphicsQueue; }
@@ -122,16 +119,14 @@ class Device {
     return mComputeCommandPool;
   }
 
-  // ------------------------------------------------------------------- device interface forwarding
+  // device interface forwarding -------------------------------------------------------------------
   void waitForFences(vk::ArrayProxy<const vk::Fence> const& fences, bool waitAll, uint64_t timeout);
   void resetFences(vk::ArrayProxy<const vk::Fence> const& fences);
   void waitIdle();
 
  private:
-  // ------------------------------------------------------------------------------- private methods
   std::shared_ptr<vk::Device> createDevice() const;
 
-  // ------------------------------------------------------------------------------- private members
   std::shared_ptr<PhysicalDevice>  mPhysicalDevice;
   std::shared_ptr<vk::Device>      mDevice;
   std::shared_ptr<vk::CommandPool> mGraphicsCommandPool;

@@ -11,7 +11,6 @@
 #ifndef ILLUSION_GRAPHICS_SHADERMODULE_HPP
 #define ILLUSION_GRAPHICS_SHADERMODULE_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include "PipelineResource.hpp"
 #include "fwd.hpp"
 
@@ -20,7 +19,6 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// -------------------------------------------------------------------------------------------------
 class ShaderModule {
  public:
   static std::vector<uint32_t> compileGlsl(std::string const& glsl, vk::ShaderStageFlagBits stage);

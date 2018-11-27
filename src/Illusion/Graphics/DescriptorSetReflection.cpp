@@ -48,16 +48,15 @@ DescriptorSetReflection::~DescriptorSetReflection() {}
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void DescriptorSetReflection::addResource(PipelineResource const& resource) {
-  // sanity check
+  // sanity checks
   if (
     resource.mResourceType == PipelineResource::ResourceType::eInput ||
     resource.mResourceType == PipelineResource::ResourceType::eOutput ||
-    resource.mResourceType == PipelineResource::ResourceType::eInputAttachment ||
     resource.mResourceType == PipelineResource::ResourceType::ePushConstantBuffer) {
 
     throw std::runtime_error(
-      "Failed to add resource to DescriptorSetReflection: Types Input, Output, "
-      "InputAttachment and PushConstantBuffer are not allowed.");
+      "Failed to add resource to DescriptorSetReflection: Types Input, Output and "
+      "PushConstantBuffer are not allowed.");
   }
 
   if (resource.mSet != mSet) {
@@ -65,9 +64,11 @@ void DescriptorSetReflection::addResource(PipelineResource const& resource) {
       "Failed to add resource to DescriptorSetReflection: resource does not belong to this set.");
   }
 
+  // reset lazy members
   mLayout.reset();
   mHash.clear();
 
+  // add resource; if its already there just append it's mStages
   auto it = mResources.find(resource.mName);
   if (it != mResources.end()) {
     it->second.mStages |= resource.mStages;
@@ -125,12 +126,67 @@ std::shared_ptr<vk::DescriptorSetLayout> DescriptorSetReflection::getLayout() co
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void DescriptorSetReflection::printInfo() const {
+  const std::unordered_map<PipelineResource::BaseType, std::string> baseTypes = {
+    {PipelineResource::BaseType::eBool, "bool"},
+    {PipelineResource::BaseType::eChar, "char"},
+    {PipelineResource::BaseType::eInt, "int"},
+    {PipelineResource::BaseType::eUint, "uint"},
+    {PipelineResource::BaseType::eUint64, "uint64"},
+    {PipelineResource::BaseType::eHalf, "half"},
+    {PipelineResource::BaseType::eFloat, "float"},
+    {PipelineResource::BaseType::eDouble, "double"},
+    {PipelineResource::BaseType::eStruct, "struct"},
+    {PipelineResource::BaseType::eNone, "none"}};
+
+  const std::unordered_map<PipelineResource::ResourceType, std::string> resourceTypes = {
+    {PipelineResource::ResourceType::eInput, "input"},
+    {PipelineResource::ResourceType::eOutput, "output"},
+    {PipelineResource::ResourceType::eSampler, "sampler"},
+    {PipelineResource::ResourceType::eCombinedImageSampler, "combined_image_sampler"},
+    {PipelineResource::ResourceType::eSampledImage, "sampled_image"},
+    {PipelineResource::ResourceType::eStorageImage, "storage_image"},
+    {PipelineResource::ResourceType::eUniformTexelBuffer, "uniform_texel_buffer"},
+    {PipelineResource::ResourceType::eStorageTexelBuffer, "storage_texel_buffer"},
+    {PipelineResource::ResourceType::eUniformBuffer, "uniform_buffer"},
+    {PipelineResource::ResourceType::eStorageBuffer, "storage_buffer"},
+    {PipelineResource::ResourceType::eInputAttachment, "input_attachment"},
+    {PipelineResource::ResourceType::ePushConstantBuffer, "push_constant_buffer"},
+    {PipelineResource::ResourceType::eNone, "none"}};
+
+  std::function<void(PipelineResource::Member const&, int)> printMemberInfo =
+    [&printMemberInfo, &baseTypes](PipelineResource::Member const& m, int indent) {
+
+      ILLUSION_MESSAGE << std::string(indent * 2, ' ') << "- \"" << m.mName
+                       << "\", type: " << baseTypes.find(m.mBaseType)->second
+                       << ", dims: " << m.mColumns << "x" << m.mVecSize << "[" << m.mArraySize
+                       << "], size: " << m.mSize << ", offset: " << m.mOffset << std::endl;
+
+      for (auto const& member : m.mMembers) {
+        printMemberInfo(member, indent + 1);
+      }
+    };
+
+  ILLUSION_MESSAGE << "Set: " << mSet << std::endl;
+  for (auto const& pair : mResources) {
+    auto const& r = pair.second;
+    ILLUSION_MESSAGE << "  - \"" << r.mName << "\" (" << resourceTypes.find(r.mResourceType)->second
+                     << ", " << vk::to_string(r.mStages) << ", access: " << vk::to_string(r.mAccess)
+                     << ", set: " << r.mSet << ", binding: " << r.mBinding
+                     << ", location: " << r.mLocation << ")" << std::endl;
+    for (auto const& member : r.mMembers) {
+      printMemberInfo(member, 2);
+    }
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 Core::BitHash const& DescriptorSetReflection::getHash() const {
   if (mHash.size() == 0) {
     mHash.push<32>(mSet);
 
     for (auto const& r : mResources) {
-      // TODO: Are those bit sizes too much / sufficient? These are based on Vulkan-EZ
       mHash.push<6>(r.second.mStages);
       mHash.push<4>(r.second.mResourceType);
       mHash.push<16>(r.second.mBinding);

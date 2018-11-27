@@ -11,19 +11,14 @@
 #ifndef ILLUSION_GRAPHICS_TEXTURE_HPP
 #define ILLUSION_GRAPHICS_TEXTURE_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include "fwd.hpp"
 
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// -------------------------------------------------------------------------------------------------
 class Texture {
-
-  // ------------------------------------------------------------------------------ public interface
 
  public:
   struct TextureLevel {
@@ -34,7 +29,6 @@ class Texture {
 
   Texture() {}
 
-  // --------------------------------------------------------------------------------------- methods
   static std::shared_ptr<Texture> createFromFile(
     std::shared_ptr<Device> const& device,
     std::string const&             fileName,
@@ -76,8 +70,6 @@ class Texture {
   std::shared_ptr<vk::ImageView> const&    getImageView() const { return mImageView; }
   std::shared_ptr<vk::Sampler> const&      getSampler() const { return mSampler; }
 
-  // --------------------------------------------------------------------------- protected interface
-
  protected:
   void initData(
     std::shared_ptr<Device> const& device,
@@ -95,7 +87,6 @@ class Texture {
   std::shared_ptr<vk::Sampler>      mSampler;
 };
 
-// -------------------------------------------------------------------------------------------------
 } // namespace Illusion::Graphics
 
 #endif // ILLUSION_GRAPHICS_TEXTURE_HPP

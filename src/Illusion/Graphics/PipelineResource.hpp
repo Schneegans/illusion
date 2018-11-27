@@ -11,7 +11,6 @@
 #ifndef ILLUSION_GRAPHICS_PIPELINE_RESOURCE_HPP
 #define ILLUSION_GRAPHICS_PIPELINE_RESOURCE_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include "fwd.hpp"
 
 #include <string>

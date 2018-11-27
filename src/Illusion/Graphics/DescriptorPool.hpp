@@ -11,7 +11,6 @@
 #ifndef ILLUSION_GRAPHICS_DESCRIPTOR_POOL_HPP
 #define ILLUSION_GRAPHICS_DESCRIPTOR_POOL_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include "fwd.hpp"
 
 #include <list>
@@ -20,6 +19,12 @@
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// The DescriptorPool is used by the DescriptorSetCache to create the DescriptorSets. For a given //
+// DescriptorSetReflection it is able to create an arbitrary amount of DescriptorSets.            //
+// Internally, vk::DescriptorPools will be allocated on demand, whenever the maximum number of    //
+// DescriptorSet allocations is reached.                                                          //
+// Reference counting on the returned handle is used to decide when a Descriptor set can be freed //
+// and returned to the allocating vk::DescriporPool.                                              //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class DescriptorPool {
@@ -29,6 +34,8 @@ class DescriptorPool {
     std::shared_ptr<DescriptorSetReflection> const& reflection);
   virtual ~DescriptorPool();
 
+  // Allocates a fresh DescriptorSet, may create a vk::DescriptorPool if no free pool is available.
+  // Once the reference count on this handle runs out of scope, the DescriptorSet will be freed.
   std::shared_ptr<DescriptorSet> allocateDescriptorSet();
 
  private:
@@ -37,8 +44,8 @@ class DescriptorPool {
   std::shared_ptr<DescriptorSetReflection> mReflection;
   std::vector<vk::DescriptorPoolSize>      mPoolSizes;
 
-  // stores all descriptor pools and the number of descriptor sets
-  // which have been allocated from those pools
+  // The cache stores all vk::DescriptorPools and the number of descriptor sets which have been
+  // allocated from those pools.
   struct PoolInfo {
     std::shared_ptr<vk::DescriptorPool> mPool;
     uint32_t                            mAllocationCount = 0;

@@ -11,7 +11,6 @@
 #ifndef ILLUSION_GRAPHICS_WINDOW_HPP
 #define ILLUSION_GRAPHICS_WINDOW_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include "../Core/Property.hpp"
 #include "../Input/KeyEvent.hpp"
 #include "../Input/MouseEvent.hpp"
@@ -25,13 +24,11 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// -------------------------------------------------------------------------------------------------
 class Window {
 
  public:
   enum class Cursor { ePointer, eIBeam, eCross, eHand, eHResize, eVResize };
 
-  // ------------------------------------------------------------------------------------ properties
   Core::String           pTitle      = std::string("Illusion3D");
   Core::UVec2            pExtent     = glm::uvec2(640, 480);
   Core::IVec2            pPosition   = glm::ivec2(-1, -1);
@@ -41,7 +38,6 @@ class Window {
   Core::Bool             pFullscreen = false;
   Core::Property<Cursor> pCursor     = Cursor::ePointer;
 
-  // --------------------------------------------------------------------------------------- signals
   Core::Signal<>                                                sOnClose;
   Core::Signal<bool>                                            sOnMinimize;
   Core::Signal<Input::KeyEvent>                                 sOnKeyEvent;
@@ -50,7 +46,6 @@ class Window {
   Core::Signal<Input::JoystickId, Input::JoystickButtonId>      sOnJoystickButtonPressed;
   Core::Signal<Input::JoystickId, Input::JoystickButtonId>      sOnJoystickButtonReleased;
 
-  // -------------------------------------------------------------------------------- public methods
   Window(std::shared_ptr<Engine> const& engine, std::shared_ptr<Device> const& device);
   virtual ~Window();
 
@@ -70,10 +65,8 @@ class Window {
     std::shared_ptr<vk::Fence> const&     signalFence);
 
  private:
-  // ------------------------------------------------------------------------------- private methods
   void updateJoysticks();
 
-  // ------------------------------------------------------------------------------- private members
   std::shared_ptr<Engine> mEngine;
   std::shared_ptr<Device> mDevice;
   GLFWwindow*             mWindow = nullptr;

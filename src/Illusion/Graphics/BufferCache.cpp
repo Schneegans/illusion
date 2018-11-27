@@ -66,12 +66,21 @@ std::shared_ptr<BackedBuffer> BufferCache::acquireHandle(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void BufferCache::releaseHandle(std::shared_ptr<BackedBuffer> const& handle) {
+
+  // Search the cache entry which created this handle
   for (auto& p : mCache) {
     auto it = p.second.mUsedHandels.find(handle);
-    if (it != p.second.mUsedHandels.end()) {}
-    p.second.mFreeHandels.insert(p.second.mUsedHandels.begin(), p.second.mUsedHandels.end());
-    p.second.mUsedHandels.clear();
+
+    // Once found, mark the handle as beeing free agin
+    if (it != p.second.mUsedHandels.end()) {
+      p.second.mUsedHandels.erase(it);
+      p.second.mFreeHandels.insert(handle);
+      return;
+    }
   }
+
+  throw std::runtime_error("Failed to release buffer handle from BufferCache: The given handle has "
+                           "not been released before or has never been created by this cache!");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

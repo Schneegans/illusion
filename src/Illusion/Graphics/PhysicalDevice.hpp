@@ -11,7 +11,6 @@
 #ifndef ILLUSION_GRAPHICS_PHYSICAL_DEVICE_HPP
 #define ILLUSION_GRAPHICS_PHYSICAL_DEVICE_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include "fwd.hpp"
 
 namespace Illusion::Graphics {
@@ -19,7 +18,6 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// -------------------------------------------------------------------------------------------------
 class PhysicalDevice : public vk::PhysicalDevice {
  public:
   PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice const& device);

@@ -11,7 +11,6 @@
 #ifndef ILLUSION_GRAPHICS_SWAPCHAIN_HPP
 #define ILLUSION_GRAPHICS_SWAPCHAIN_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include "RenderPass.hpp"
 
 #include <functional>
@@ -21,11 +20,9 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// -------------------------------------------------------------------------------------------------
 class Swapchain {
 
  public:
-  // -------------------------------------------------------------------------------- public methods
   Swapchain(std::shared_ptr<Device> const& device, std::shared_ptr<vk::SurfaceKHR> const& surface);
   virtual ~Swapchain();
 
@@ -39,14 +36,12 @@ class Swapchain {
     std::shared_ptr<vk::Fence> const&     signalFence);
 
  private:
-  // ------------------------------------------------------------------------------- private methods
   void chooseExtent();
   void chooseFormat();
   void createSwapchain();
   void createSemaphores();
   void createCommandBuffers();
 
-  // ------------------------------------------------------------------------------- private members
   std::shared_ptr<Device>           mDevice;
   std::shared_ptr<vk::SurfaceKHR>   mSurface;
   glm::uvec2                        mExtent;

@@ -11,7 +11,6 @@
 #ifndef ILLUSION_GRAPHICS_DESCRIPTOR_SET_HPP
 #define ILLUSION_GRAPHICS_DESCRIPTOR_SET_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include "fwd.hpp"
 
 namespace Illusion::Graphics {
@@ -19,7 +18,6 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// -------------------------------------------------------------------------------------------------
 class DescriptorSet : public vk::DescriptorSet {
  public:
   DescriptorSet(std::shared_ptr<Device> const& device, uint32_t set, vk::DescriptorSet const& base);

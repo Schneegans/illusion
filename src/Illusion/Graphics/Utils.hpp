@@ -11,7 +11,6 @@
 #ifndef ILLUSION_GRAPHICS_VULKAN_PTR_HPP
 #define ILLUSION_GRAPHICS_VULKAN_PTR_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include "fwd.hpp"
 
 #include <functional>
@@ -19,13 +18,13 @@
 
 namespace Illusion::Graphics::Utils {
 
-// --------------------------------------------------------------- some helpers regarding vk::Format
+// some helpers regarding vk::Format ---------------------------------------------------------------
 bool isColorFormat(vk::Format format);
 bool isDepthFormat(vk::Format format);
 bool isDepthOnlyFormat(vk::Format format);
 bool isDepthStencilFormat(vk::Format format);
 
-// ------------------------------------------- shared_ptr based memory management for vulkan objects
+// shared_ptr based memory management for vulkan objects -------------------------------------------
 template <typename T>
 struct Identity {
   typedef T type;

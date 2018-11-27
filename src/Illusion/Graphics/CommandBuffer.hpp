@@ -11,7 +11,6 @@
 #ifndef ILLUSION_GRAPHICS_COMMAND_BUFFER_HPP
 #define ILLUSION_GRAPHICS_COMMAND_BUFFER_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include "fwd.hpp"
 
 #include <glm/glm.hpp>
@@ -21,7 +20,6 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// -------------------------------------------------------------------------------------------------
 class CommandBuffer : public vk::CommandBuffer {
  public:
   CommandBuffer(vk::CommandBuffer const& base);

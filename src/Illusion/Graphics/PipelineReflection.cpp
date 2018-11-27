@@ -160,46 +160,6 @@ std::shared_ptr<vk::PipelineLayout> const& PipelineReflection::getLayout() const
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PipelineReflection::printInfo() const {
-  const std::unordered_map<PipelineResource::BaseType, std::string> baseTypes = {
-    {PipelineResource::BaseType::eBool, "bool"},
-    {PipelineResource::BaseType::eChar, "char"},
-    {PipelineResource::BaseType::eInt, "int"},
-    {PipelineResource::BaseType::eUint, "uint"},
-    {PipelineResource::BaseType::eUint64, "uint64"},
-    {PipelineResource::BaseType::eHalf, "half"},
-    {PipelineResource::BaseType::eFloat, "float"},
-    {PipelineResource::BaseType::eDouble, "double"},
-    {PipelineResource::BaseType::eStruct, "struct"},
-    {PipelineResource::BaseType::eNone, "none"}};
-
-  const std::unordered_map<PipelineResource::ResourceType, std::string> resourceTypes = {
-    {PipelineResource::ResourceType::eInput, "input"},
-    {PipelineResource::ResourceType::eOutput, "output"},
-    {PipelineResource::ResourceType::eSampler, "sampler"},
-    {PipelineResource::ResourceType::eCombinedImageSampler, "combined_image_sampler"},
-    {PipelineResource::ResourceType::eSampledImage, "sampled_image"},
-    {PipelineResource::ResourceType::eStorageImage, "storage_image"},
-    {PipelineResource::ResourceType::eUniformTexelBuffer, "uniform_texel_buffer"},
-    {PipelineResource::ResourceType::eStorageTexelBuffer, "storage_texel_buffer"},
-    {PipelineResource::ResourceType::eUniformBuffer, "uniform_buffer"},
-    {PipelineResource::ResourceType::eStorageBuffer, "storage_buffer"},
-    {PipelineResource::ResourceType::eInputAttachment, "input_attachment"},
-    {PipelineResource::ResourceType::ePushConstantBuffer, "push_constant_buffer"},
-    {PipelineResource::ResourceType::eNone, "none"}};
-
-  std::function<void(PipelineResource::Member const&, int)> printMemberInfo =
-    [&printMemberInfo, &baseTypes](PipelineResource::Member const& m, int indent) {
-
-      ILLUSION_MESSAGE << std::string(indent * 2, ' ') << "- \"" << m.mName
-                       << "\", type: " << baseTypes.find(m.mBaseType)->second
-                       << ", dims: " << m.mColumns << "x" << m.mVecSize << "[" << m.mArraySize
-                       << "], size: " << m.mSize << ", offset: " << m.mOffset << std::endl;
-
-      for (auto const& member : m.mMembers) {
-        printMemberInfo(member, indent + 1);
-      }
-    };
-
   ILLUSION_MESSAGE << "Inputs" << std::endl;
   for (auto const& r : mInputs) {
     ILLUSION_MESSAGE << "  - \"" << r.second.mName << "\" (" << vk::to_string(r.second.mStages)
@@ -222,18 +182,7 @@ void PipelineReflection::printInfo() const {
   }
 
   for (auto const& s : mDescriptorSetReflections) {
-    ILLUSION_MESSAGE << "set: " << s.first << std::endl;
-    for (auto const& pair : s.second->getResources()) {
-      auto const& r = pair.second;
-      ILLUSION_MESSAGE << "  - \"" << r.mName << "\" ("
-                       << resourceTypes.find(r.mResourceType)->second << ", "
-                       << vk::to_string(r.mStages) << ", access: " << vk::to_string(r.mAccess)
-                       << ", set: " << r.mSet << ", binding: " << r.mBinding
-                       << ", location: " << r.mLocation << ")" << std::endl;
-      for (auto const& member : r.mMembers) {
-        printMemberInfo(member, 2);
-      }
-    }
+    s.second->printInfo();
   }
 }
 

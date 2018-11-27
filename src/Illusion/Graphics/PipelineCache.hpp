@@ -11,7 +11,6 @@
 #ifndef ILLUSION_GRAPHICS_PIPELINE_CACHE_HPP
 #define ILLUSION_GRAPHICS_PIPELINE_CACHE_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include "fwd.hpp"
 
 #include "../Core/BitHash.hpp"
@@ -24,11 +23,9 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// -------------------------------------------------------------------------------------------------
 class PipelineCache {
 
  public:
-  // -------------------------------------------------------------------------------- public methods
   PipelineCache(std::shared_ptr<Device> const& device);
   virtual ~PipelineCache();
 
@@ -38,7 +35,6 @@ class PipelineCache {
   void clear();
 
  private:
-  // ------------------------------------------------------------------------------- private members
   std::shared_ptr<Device>                                mDevice;
   std::map<Core::BitHash, std::shared_ptr<vk::Pipeline>> mCache;
   std::mutex                                             mMutex;

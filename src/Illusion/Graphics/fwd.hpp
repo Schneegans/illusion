@@ -11,7 +11,6 @@
 #ifndef ILLUSION_GRAPHICS_FWD_HPP
 #define ILLUSION_GRAPHICS_FWD_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include <vulkan/vulkan.hpp>
 
 namespace Illusion::Graphics {

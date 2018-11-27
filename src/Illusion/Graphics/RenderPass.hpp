@@ -11,7 +11,6 @@
 #ifndef ILLUSION_GRAPHICS_RENDER_PASS_HPP
 #define ILLUSION_GRAPHICS_RENDER_PASS_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include "Device.hpp"
 #include "Framebuffer.hpp"
 #include "PipelineCache.hpp"
@@ -25,7 +24,6 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// -------------------------------------------------------------------------------------------------
 class RenderPass {
 
  public:
@@ -35,7 +33,6 @@ class RenderPass {
     std::vector<uint32_t> mOutputAttachments;
   };
 
-  // -------------------------------------------------------------------------------- public methods
   RenderPass(std::shared_ptr<Device> const& device);
   virtual ~RenderPass();
 
@@ -54,21 +51,16 @@ class RenderPass {
   std::shared_ptr<vk::Pipeline> getPipelineHandle(
     GraphicsState const& graphicsState, uint32_t subPass = 0);
 
- protected:
-  // ----------------------------------------------------------------------------- protected members
-  std::shared_ptr<Device>         mDevice;
-  std::shared_ptr<vk::RenderPass> mRenderPass;
-
-  // ------------------------------------------------------------------------------- private methods
+ private:
   std::shared_ptr<vk::RenderPass> createRenderPass() const;
 
-  // ------------------------------------------------------------------------------- private members
-  std::shared_ptr<Framebuffer> mFramebuffer;
-  std::vector<vk::Format>      mFrameBufferAttachmentFormats;
-  std::vector<SubPass>         mSubPasses;
-
-  bool       mAttachmentsDirty = true;
-  glm::uvec2 mExtent           = {100, 100};
+  std::shared_ptr<Device>         mDevice;
+  std::shared_ptr<vk::RenderPass> mRenderPass;
+  std::shared_ptr<Framebuffer>    mFramebuffer;
+  std::vector<vk::Format>         mFrameBufferAttachmentFormats;
+  std::vector<SubPass>            mSubPasses;
+  bool                            mAttachmentsDirty = true;
+  glm::uvec2                      mExtent           = {100, 100};
 
   PipelineCache mPipelineCache;
 };

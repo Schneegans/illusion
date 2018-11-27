@@ -11,7 +11,6 @@
 #ifndef ILLUSION_GRAPHICS_GRAPHICS_STATE_HPP
 #define ILLUSION_GRAPHICS_GRAPHICS_STATE_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include "fwd.hpp"
 
 #include "../Core/BitHash.hpp"
@@ -24,10 +23,8 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// -------------------------------------------------------------------------------------------------
 class GraphicsState {
  public:
-  // -----------------------------------------------------------------------------------------------
   struct BlendAttachment {
     bool                    mBlendEnable         = true;
     vk::BlendFactor         mSrcColorBlendFactor = vk::BlendFactor::eSrcAlpha;
@@ -66,6 +63,8 @@ class GraphicsState {
     glm::uvec2 mExtend = glm::uvec2(0);
   };
 
+  // clang-format off
+
   // Color Blend State------------------------------------------------------------------------------
   void                                setBlendLogicOpEnable(bool val);
   bool                                getBlendLogicOpEnable() const;
@@ -78,122 +77,124 @@ class GraphicsState {
   std::vector<BlendAttachment> const& getBlendAttachments() const;
 
   // Depth Stencil State ---------------------------------------------------------------------------
-  void          setDepthTestEnable(bool val);
-  bool          getDepthTestEnable() const;
-  void          setDepthWriteEnable(bool val);
-  bool          getDepthWriteEnable() const;
-  void          setDepthCompareOp(vk::CompareOp val);
-  vk::CompareOp getDepthCompareOp() const;
-  void          setDepthBoundsTestEnable(bool val);
-  bool          getDepthBoundsTestEnable() const;
-  void          setStencilTestEnable(bool val);
-  bool          getStencilTestEnable() const;
-  void          setStencilFrontFailOp(vk::StencilOp val);
-  vk::StencilOp getStencilFrontFailOp() const;
-  void          setStencilFrontPassOp(vk::StencilOp val);
-  vk::StencilOp getStencilFrontPassOp() const;
-  void          setStencilFrontDepthFailOp(vk::StencilOp val);
-  vk::StencilOp getStencilFrontDepthFailOp() const;
-  void          setStencilFrontCompareOp(vk::CompareOp val);
-  vk::CompareOp getStencilFrontCompareOp() const;
-  void          setStencilFrontCompareMask(uint32_t val);
-  uint32_t      getStencilFrontCompareMask() const;
-  void          setStencilFrontWriteMask(uint32_t val);
-  uint32_t      getStencilFrontWriteMask() const;
-  void          setStencilFrontReference(uint32_t val);
-  uint32_t      getStencilFrontReference() const;
-  void          setStencilBackFailOp(vk::StencilOp val);
-  vk::StencilOp getStencilBackFailOp() const;
-  void          setStencilBackPassOp(vk::StencilOp val);
-  vk::StencilOp getStencilBackPassOp() const;
-  void          setStencilBackDepthFailOp(vk::StencilOp val);
-  vk::StencilOp getStencilBackDepthFailOp() const;
-  void          setStencilBackCompareOp(vk::CompareOp val);
-  vk::CompareOp getStencilBackCompareOp() const;
-  void          setStencilBackCompareMask(uint32_t val);
-  uint32_t      getStencilBackCompareMask() const;
-  void          setStencilBackWriteMask(uint32_t val);
-  uint32_t      getStencilBackWriteMask() const;
-  void          setStencilBackReference(uint32_t val);
-  uint32_t      getStencilBackReference() const;
-  void          setMinDepthBounds(float val);
-  float         getMinDepthBounds() const;
-  void          setMaxDepthBounds(float val);
-  float         getMaxDepthBounds() const;
+  void                                setDepthTestEnable(bool val);
+  bool                                getDepthTestEnable() const;
+  void                                setDepthWriteEnable(bool val);
+  bool                                getDepthWriteEnable() const;
+  void                                setDepthCompareOp(vk::CompareOp val);
+  vk::CompareOp                       getDepthCompareOp() const;
+  void                                setDepthBoundsTestEnable(bool val);
+  bool                                getDepthBoundsTestEnable() const;
+  void                                setStencilTestEnable(bool val);
+  bool                                getStencilTestEnable() const;
+  void                                setStencilFrontFailOp(vk::StencilOp val);
+  vk::StencilOp                       getStencilFrontFailOp() const;
+  void                                setStencilFrontPassOp(vk::StencilOp val);
+  vk::StencilOp                       getStencilFrontPassOp() const;
+  void                                setStencilFrontDepthFailOp(vk::StencilOp val);
+  vk::StencilOp                       getStencilFrontDepthFailOp() const;
+  void                                setStencilFrontCompareOp(vk::CompareOp val);
+  vk::CompareOp                       getStencilFrontCompareOp() const;
+  void                                setStencilFrontCompareMask(uint32_t val);
+  uint32_t                            getStencilFrontCompareMask() const;
+  void                                setStencilFrontWriteMask(uint32_t val);
+  uint32_t                            getStencilFrontWriteMask() const;
+  void                                setStencilFrontReference(uint32_t val);
+  uint32_t                            getStencilFrontReference() const;
+  void                                setStencilBackFailOp(vk::StencilOp val);
+  vk::StencilOp                       getStencilBackFailOp() const;
+  void                                setStencilBackPassOp(vk::StencilOp val);
+  vk::StencilOp                       getStencilBackPassOp() const;
+  void                                setStencilBackDepthFailOp(vk::StencilOp val);
+  vk::StencilOp                       getStencilBackDepthFailOp() const;
+  void                                setStencilBackCompareOp(vk::CompareOp val);
+  vk::CompareOp                       getStencilBackCompareOp() const;
+  void                                setStencilBackCompareMask(uint32_t val);
+  uint32_t                            getStencilBackCompareMask() const;
+  void                                setStencilBackWriteMask(uint32_t val);
+  uint32_t                            getStencilBackWriteMask() const;
+  void                                setStencilBackReference(uint32_t val);
+  uint32_t                            getStencilBackReference() const;
+  void                                setMinDepthBounds(float val);
+  float                               getMinDepthBounds() const;
+  void                                setMaxDepthBounds(float val);
+  float                               getMaxDepthBounds() const;
 
   // Input Assembly State --------------------------------------------------------------------------
-  void                  setTopology(vk::PrimitiveTopology val);
-  vk::PrimitiveTopology getTopology() const;
-  void                  setPrimitiveRestartEnable(bool val);
-  bool                  getPrimitiveRestartEnable() const;
+  void                                setTopology(vk::PrimitiveTopology val);
+  vk::PrimitiveTopology               getTopology() const;
+  void                                setPrimitiveRestartEnable(bool val);
+  bool                                getPrimitiveRestartEnable() const;
 
   // Multisample State -----------------------------------------------------------------------------
-  void                    setRasterizationSamples(vk::SampleCountFlagBits val);
-  vk::SampleCountFlagBits getRasterizationSamples() const;
-  void                    setSampleShadingEnable(bool val);
-  bool                    getSampleShadingEnable() const;
-  void                    setMinSampleShading(float val);
-  float                   getMinSampleShading() const;
-  void                    setAlphaToCoverageEnable(bool val);
-  bool                    getAlphaToCoverageEnable() const;
-  void                    setAlphaToOneEnable(bool val);
-  bool                    getAlphaToOneEnable() const;
-  void                    setSampleMask(std::vector<uint32_t> val);
-  std::vector<uint32_t>   getSampleMask() const;
+  void                                setRasterizationSamples(vk::SampleCountFlagBits val);
+  vk::SampleCountFlagBits             getRasterizationSamples() const;
+  void                                setSampleShadingEnable(bool val);
+  bool                                getSampleShadingEnable() const;
+  void                                setMinSampleShading(float val);
+  float                               getMinSampleShading() const;
+  void                                setAlphaToCoverageEnable(bool val);
+  bool                                getAlphaToCoverageEnable() const;
+  void                                setAlphaToOneEnable(bool val);
+  bool                                getAlphaToOneEnable() const;
+  void                                setSampleMask(std::vector<uint32_t> val);
+  std::vector<uint32_t>               getSampleMask() const;
 
   // Rasterization State ---------------------------------------------------------------------------
-  void              setDepthClampEnable(bool val);
-  bool              getDepthClampEnable() const;
-  void              setRasterizerDiscardEnable(bool val);
-  bool              getRasterizerDiscardEnable() const;
-  void              setPolygonMode(vk::PolygonMode val);
-  vk::PolygonMode   getPolygonMode() const;
-  void              setCullMode(vk::CullModeFlags val);
-  vk::CullModeFlags getCullMode() const;
-  void              setFrontFace(vk::FrontFace val);
-  vk::FrontFace     getFrontFace() const;
-  void              setDepthBiasEnable(bool val);
-  bool              getDepthBiasEnable() const;
-  void              setDepthBiasConstantFactor(float val);
-  float             getDepthBiasConstantFactor() const;
-  void              setDepthBiasClamp(float val);
-  float             getDepthBiasClamp() const;
-  void              setDepthBiasSlopeFactor(float val);
-  float             getDepthBiasSlopeFactor() const;
-  void              setLineWidth(float val);
-  float             getLineWidth() const;
+  void                                setDepthClampEnable(bool val);
+  bool                                getDepthClampEnable() const;
+  void                                setRasterizerDiscardEnable(bool val);
+  bool                                getRasterizerDiscardEnable() const;
+  void                                setPolygonMode(vk::PolygonMode val);
+  vk::PolygonMode                     getPolygonMode() const;
+  void                                setCullMode(vk::CullModeFlags val);
+  vk::CullModeFlags                   getCullMode() const;
+  void                                setFrontFace(vk::FrontFace val);
+  vk::FrontFace                       getFrontFace() const;
+  void                                setDepthBiasEnable(bool val);
+  bool                                getDepthBiasEnable() const;
+  void                                setDepthBiasConstantFactor(float val);
+  float                               getDepthBiasConstantFactor() const;
+  void                                setDepthBiasClamp(float val);
+  float                               getDepthBiasClamp() const;
+  void                                setDepthBiasSlopeFactor(float val);
+  float                               getDepthBiasSlopeFactor() const;
+  void                                setLineWidth(float val);
+  float                               getLineWidth() const;
 
   // Tesselation State -----------------------------------------------------------------------------
-  void     setTessellationPatchControlPoints(uint32_t val);
-  uint32_t getTessellationPatchControlPoints() const;
+  void                                setTessellationPatchControlPoints(uint32_t val);
+  uint32_t                            getTessellationPatchControlPoints() const;
 
   // Vertex Input State ----------------------------------------------------------------------------
-  void addVertexInputBinding(VertexInputBinding const& val);
-  void setVertexInputBindings(std::vector<VertexInputBinding> const& val);
+  void                                addVertexInputBinding(VertexInputBinding const& val);
+  void                                setVertexInputBindings(std::vector<VertexInputBinding> const& val);
   std::vector<VertexInputBinding> const& getVertexInputBindings() const;
 
-  void addVertexInputAttribute(VertexInputAttribute const& val);
-  void setVertexInputAttributes(std::vector<VertexInputAttribute> const& val);
+  void                                addVertexInputAttribute(VertexInputAttribute const& val);
+  void                                setVertexInputAttributes(std::vector<VertexInputAttribute> const& val);
   std::vector<VertexInputAttribute> const& getVertexInputAttributes() const;
 
   // Viewport State --------------------------------------------------------------------------------
-  void                         addViewport(Viewport const& val);
-  void                         setViewports(std::vector<Viewport> const& val);
-  std::vector<Viewport> const& getViewports() const;
+  void                                addViewport(Viewport const& val);
+  void                                setViewports(std::vector<Viewport> const& val);
+  std::vector<Viewport> const&        getViewports() const;
 
-  void                        addScissor(Scissor const& val);
-  void                        setScissors(std::vector<Scissor> const& val);
-  std::vector<Scissor> const& getScissors() const;
+  void                                addScissor(Scissor const& val);
+  void                                setScissors(std::vector<Scissor> const& val);
+  std::vector<Scissor> const&         getScissors() const;
 
   // Dynamic State ---------------------------------------------------------------------------------
-  void                              addDynamicState(vk::DynamicState val);
-  void                              removeDynamicState(vk::DynamicState val);
-  void                              setDynamicState(std::set<vk::DynamicState> const& val);
-  std::set<vk::DynamicState> const& getDynamicState() const;
+  void                                addDynamicState(vk::DynamicState val);
+  void                                removeDynamicState(vk::DynamicState val);
+  void                                setDynamicState(std::set<vk::DynamicState> const& val);
+  std::set<vk::DynamicState> const&   getDynamicState() const;
 
   // Shader State ----------------------------------------------------------------------------------
-  void                                  setShaderProgram(std::shared_ptr<ShaderProgram> const& val);
+  void                                setShaderProgram(std::shared_ptr<ShaderProgram> const& val);
   std::shared_ptr<ShaderProgram> const& getShaderProgram() const;
+
+  // clang-format on
 
   // -----------------------------------------------------------------------------------------------
   Core::BitHash const& getHash() const;
