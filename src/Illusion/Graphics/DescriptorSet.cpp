@@ -12,7 +12,7 @@
 #include "DescriptorSet.hpp"
 
 #include "../Core/Logger.hpp"
-#include "Context.hpp"
+#include "Device.hpp"
 #include "Texture.hpp"
 
 #include <iostream>
@@ -20,9 +20,9 @@
 namespace Illusion::Graphics {
 
 DescriptorSet::DescriptorSet(
-  std::shared_ptr<Context> const& context, uint32_t set, vk::DescriptorSet const& base)
+  std::shared_ptr<Device> const& device, uint32_t set, vk::DescriptorSet const& base)
   : vk::DescriptorSet(base)
-  , mContext(context)
+  , mDevice(device)
   , mSet(set) {}
 
 void DescriptorSet::bindCombinedImageSampler(
@@ -40,7 +40,7 @@ void DescriptorSet::bindCombinedImageSampler(
   info.descriptorCount = 1;
   info.pImageInfo      = &imageInfo;
 
-  mContext->getDevice()->updateDescriptorSets(info, nullptr);
+  mDevice->getHandle()->updateDescriptorSets(info, nullptr);
 }
 
 void DescriptorSet::bindStorageImage(std::shared_ptr<Texture> const& texture, uint32_t binding) {
@@ -57,7 +57,7 @@ void DescriptorSet::bindStorageImage(std::shared_ptr<Texture> const& texture, ui
   info.descriptorCount = 1;
   info.pImageInfo      = &imageInfo;
 
-  mContext->getDevice()->updateDescriptorSets(info, nullptr);
+  mDevice->getHandle()->updateDescriptorSets(info, nullptr);
 }
 
 void DescriptorSet::bindUniformBuffer(
@@ -75,7 +75,7 @@ void DescriptorSet::bindUniformBuffer(
   info.descriptorCount = 1;
   info.pBufferInfo     = &bufferInfo;
 
-  mContext->getDevice()->updateDescriptorSets(info, nullptr);
+  mDevice->getHandle()->updateDescriptorSets(info, nullptr);
 }
 
 uint32_t DescriptorSet::getSet() const { return mSet; }

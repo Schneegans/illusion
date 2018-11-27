@@ -12,8 +12,8 @@
 #include "Window.hpp"
 
 #include "../Core/Logger.hpp"
-#include "DisplayPass.hpp"
 #include "Engine.hpp"
+#include "Swapchain.hpp"
 
 #include <GLFW/glfw3.h>
 
@@ -23,9 +23,9 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Window::Window(std::shared_ptr<Engine> const& engine, std::shared_ptr<Context> const& context)
+Window::Window(std::shared_ptr<Engine> const& engine, std::shared_ptr<Device> const& device)
   : mEngine(engine)
-  , mContext(context) {
+  , mDevice(device) {
 
   ILLUSION_TRACE << "Creating Window." << std::endl;
 
@@ -61,7 +61,7 @@ Window::Window(std::shared_ptr<Engine> const& engine, std::shared_ptr<Context> c
   pLockAspect.onChange().connect([this](bool val) {
     if (mWindow) {
       if (val) {
-        glfwSetWindowAspectRatio(mWindow, pSize().x, pSize().y);
+        glfwSetWindowAspectRatio(mWindow, pExtent().x, pExtent().y);
       } else {
         glfwSetWindowAspectRatio(mWindow, GLFW_DONT_CARE, GLFW_DONT_CARE);
       }
@@ -86,7 +86,7 @@ Window::Window(std::shared_ptr<Engine> const& engine, std::shared_ptr<Context> c
   });
 
   pVsync.onChange().connect([this](bool vsync) {
-    if (mDisplayPass) { mDisplayPass->setEnableVsync(vsync); }
+    if (mSwapchain) { mSwapchain->setEnableVsync(vsync); }
     return true;
   });
 
@@ -110,8 +110,6 @@ Window::~Window() {
 
   if (mCursor) { glfwDestroyCursor(mCursor); }
   close();
-
-  mContext->getDevice()->waitIdle();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -126,11 +124,11 @@ void Window::open() {
       mWindow   = glfwCreateWindow(
         mode->width, mode->height, pTitle().c_str(), glfwGetPrimaryMonitor(), nullptr);
     } else {
-      mWindow = glfwCreateWindow(pSize().x, pSize().y, pTitle().c_str(), nullptr, nullptr);
+      mWindow = glfwCreateWindow(pExtent().x, pExtent().y, pTitle().c_str(), nullptr, nullptr);
     }
 
-    mSurface     = mEngine->createSurface(mWindow);
-    mDisplayPass = std::make_shared<DisplayPass>(mContext, mSurface);
+    mSurface   = mEngine->createSurface(mWindow);
+    mSwapchain = std::make_shared<Swapchain>(mDevice, mSurface);
 
     pLockAspect.touch();
     pHideCursor.touch();
@@ -148,8 +146,8 @@ void Window::open() {
       auto window(static_cast<Window*>(glfwGetWindowUserPointer(w)));
       // issuing this here reduces flickering during resize but may result in more swapchain
       // recreations than abolutely neccessary
-      window->pSize = glm::uvec2(width, height);
-      window->mDisplayPass->markSwapChainDirty();
+      window->pExtent = glm::uvec2(width, height);
+      window->mSwapchain->markDirty();
     });
 
     glfwSetKeyCallback(mWindow, [](GLFWwindow* w, int key, int scancode, int action, int mods) {
@@ -239,6 +237,15 @@ glm::vec2 Window::getCursorPos() const {
   double x, y;
   glfwGetCursorPos(mWindow, &x, &y);
   return glm::vec2(x, y);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Window::present(
+  std::shared_ptr<BackedImage> const&   image,
+  std::shared_ptr<vk::Semaphore> const& renderFinishedSemaphore,
+  std::shared_ptr<vk::Fence> const&     signalFence) {
+  mSwapchain->present(image, renderFinishedSemaphore, signalFence);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

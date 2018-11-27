@@ -9,7 +9,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ---------------------------------------------------------------------------------------- includes
-#include "Context.hpp"
+#include "Device.hpp"
 
 #include "../Core/Logger.hpp"
 #include "CommandBuffer.hpp"
@@ -28,40 +28,40 @@ const std::vector<const char*> DEVICE_EXTENSIONS{VK_KHR_SWAPCHAIN_EXTENSION_NAME
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Context::Context(std::shared_ptr<PhysicalDevice> const& physicalDevice)
+Device::Device(std::shared_ptr<PhysicalDevice> const& physicalDevice)
   : mPhysicalDevice(physicalDevice)
   , mDevice(createDevice())
   , mGraphicsQueue(mDevice->getQueue(mPhysicalDevice->getGraphicsFamily(), 0))
   , mComputeQueue(mDevice->getQueue(mPhysicalDevice->getComputeFamily(), 0))
   , mPresentQueue(mDevice->getQueue(mPhysicalDevice->getPresentFamily(), 0)) {
 
-  ILLUSION_TRACE << "Creating Context." << std::endl;
+  ILLUSION_TRACE << "Creating Device." << std::endl;
   {
     vk::CommandPoolCreateInfo info;
-    info.queueFamilyIndex = mPhysicalDevice->getGraphicsFamily();
-    info.flags            = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
-
-    mGraphicsCommandPool = createCommandPool(info);
+    info.queueFamilyIndex         = mPhysicalDevice->getGraphicsFamily();
+    info.flags                    = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+    mGraphicsCommandPool          = createCommandPool(info);
+    mOneTimeGraphicsCommandBuffer = allocateGraphicsCommandBuffer();
   }
   {
     vk::CommandPoolCreateInfo info;
-    info.queueFamilyIndex = mPhysicalDevice->getComputeFamily();
-    info.flags            = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
-
-    mComputeCommandPool = createCommandPool(info);
+    info.queueFamilyIndex        = mPhysicalDevice->getComputeFamily();
+    info.flags                   = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+    mComputeCommandPool          = createCommandPool(info);
+    mOneTimeComputeCommandBuffer = allocateComputeCommandBuffer();
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Context::~Context() {
+Device::~Device() {
   // FIXME: Material::clearPipelineCache();
-  ILLUSION_TRACE << "Deleting Context." << std::endl;
+  ILLUSION_TRACE << "Deleting Device." << std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<BackedImage> Context::createBackedImage(
+std::shared_ptr<BackedImage> Device::createBackedImage(
   uint32_t                width,
   uint32_t                height,
   uint32_t                depth,
@@ -74,24 +74,23 @@ std::shared_ptr<BackedImage> Context::createBackedImage(
   vk::SampleCountFlagBits samples,
   vk::ImageCreateFlags    flags) const {
 
-  vk::ImageCreateInfo info;
-  info.imageType     = vk::ImageType::e2D;
-  info.extent.width  = width;
-  info.extent.height = height;
-  info.extent.depth  = depth;
-  info.mipLevels     = levels;
-  info.arrayLayers   = layers;
-  info.format        = format;
-  info.tiling        = tiling;
-  info.initialLayout = vk::ImageLayout::eUndefined;
-  info.usage         = usage;
-  info.sharingMode   = vk::SharingMode::eExclusive;
-  info.samples       = samples;
-  info.flags         = flags;
-
   auto result = std::make_shared<BackedImage>();
 
-  result->mImage = createImage(info);
+  result->mInfo.imageType     = vk::ImageType::e2D;
+  result->mInfo.extent.width  = width;
+  result->mInfo.extent.height = height;
+  result->mInfo.extent.depth  = depth;
+  result->mInfo.mipLevels     = levels;
+  result->mInfo.arrayLayers   = layers;
+  result->mInfo.format        = format;
+  result->mInfo.tiling        = tiling;
+  result->mInfo.initialLayout = vk::ImageLayout::eUndefined;
+  result->mInfo.usage         = usage;
+  result->mInfo.sharingMode   = vk::SharingMode::eExclusive;
+  result->mInfo.samples       = samples;
+  result->mInfo.flags         = flags;
+
+  result->mImage = createImage(result->mInfo);
 
   auto requirements = mDevice->getImageMemoryRequirements(*result->mImage);
 
@@ -110,7 +109,7 @@ std::shared_ptr<BackedImage> Context::createBackedImage(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<BackedBuffer> Context::createBackedBuffer(
+std::shared_ptr<BackedBuffer> Device::createBackedBuffer(
   vk::DeviceSize          size,
   vk::BufferUsageFlags    usage,
   vk::MemoryPropertyFlags properties,
@@ -167,7 +166,9 @@ std::shared_ptr<BackedBuffer> Context::createBackedBuffer(
         vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
         data);
 
-      copyBuffer(stagingBuffer->mBuffer, result->mBuffer, size);
+      auto cmd = beginSingleTimeGraphicsCommands();
+      cmd->copyBuffer(*stagingBuffer->mBuffer, *result->mBuffer, size);
+      endSingleTimeGraphicsCommands();
     }
   }
 
@@ -176,7 +177,7 @@ std::shared_ptr<BackedBuffer> Context::createBackedBuffer(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<BackedBuffer> Context::createVertexBuffer(
+std::shared_ptr<BackedBuffer> Device::createVertexBuffer(
   vk::DeviceSize size, const void* data) const {
   return createBackedBuffer(
     size, vk::BufferUsageFlagBits::eVertexBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal, data);
@@ -184,7 +185,7 @@ std::shared_ptr<BackedBuffer> Context::createVertexBuffer(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<BackedBuffer> Context::createIndexBuffer(
+std::shared_ptr<BackedBuffer> Device::createIndexBuffer(
   vk::DeviceSize size, const void* data) const {
   return createBackedBuffer(
     size, vk::BufferUsageFlagBits::eIndexBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal, data);
@@ -192,7 +193,7 @@ std::shared_ptr<BackedBuffer> Context::createIndexBuffer(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<BackedBuffer> Context::createUniformBuffer(vk::DeviceSize size) const {
+std::shared_ptr<BackedBuffer> Device::createUniformBuffer(vk::DeviceSize size) const {
   return createBackedBuffer(
     size,
     vk::BufferUsageFlagBits::eUniformBuffer | vk::BufferUsageFlagBits::eTransferDst,
@@ -201,7 +202,7 @@ std::shared_ptr<BackedBuffer> Context::createUniformBuffer(vk::DeviceSize size) 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<CommandBuffer> Context::allocateGraphicsCommandBuffer() const {
+std::shared_ptr<CommandBuffer> Device::allocateGraphicsCommandBuffer() const {
   vk::CommandBufferAllocateInfo info;
   info.level              = vk::CommandBufferLevel::ePrimary;
   info.commandPool        = *mGraphicsCommandPool;
@@ -224,7 +225,7 @@ std::shared_ptr<CommandBuffer> Context::allocateGraphicsCommandBuffer() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<CommandBuffer> Context::allocateComputeCommandBuffer() const {
+std::shared_ptr<CommandBuffer> Device::allocateComputeCommandBuffer() const {
   vk::CommandBufferAllocateInfo info;
   info.level              = vk::CommandBufferLevel::ePrimary;
   info.commandPool        = *mComputeCommandPool;
@@ -247,7 +248,28 @@ std::shared_ptr<CommandBuffer> Context::allocateComputeCommandBuffer() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::Buffer> Context::createBuffer(vk::BufferCreateInfo const& info) const {
+void Device::submit(
+  std::vector<CommandBuffer> const&          commandBuffers,
+  std::vector<vk::Semaphore> const&          waitSemaphores,
+  std::vector<vk::PipelineStageFlags> const& waitStages,
+  std::vector<vk::Semaphore> const&          signalSemaphores,
+  vk::Fence const&                           fence) const {
+
+  vk::SubmitInfo info;
+  info.pWaitDstStageMask    = waitStages.data();
+  info.commandBufferCount   = commandBuffers.size();
+  info.pCommandBuffers      = commandBuffers.data();
+  info.signalSemaphoreCount = signalSemaphores.size();
+  info.pSignalSemaphores    = signalSemaphores.data();
+  info.waitSemaphoreCount   = waitSemaphores.size();
+  info.pWaitSemaphores      = waitSemaphores.data();
+
+  mGraphicsQueue.submit(info, fence);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::shared_ptr<vk::Buffer> Device::createBuffer(vk::BufferCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::Buffer." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(device->createBuffer(info), [device](vk::Buffer* obj) {
@@ -259,7 +281,7 @@ std::shared_ptr<vk::Buffer> Context::createBuffer(vk::BufferCreateInfo const& in
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::CommandPool> Context::createCommandPool(
+std::shared_ptr<vk::CommandPool> Device::createCommandPool(
   vk::CommandPoolCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::CommandPool." << std::endl;
   auto device{mDevice};
@@ -272,7 +294,7 @@ std::shared_ptr<vk::CommandPool> Context::createCommandPool(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::DescriptorPool> Context::createDescriptorPool(
+std::shared_ptr<vk::DescriptorPool> Device::createDescriptorPool(
   vk::DescriptorPoolCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::DescriptorPool." << std::endl;
   auto device{mDevice};
@@ -286,7 +308,7 @@ std::shared_ptr<vk::DescriptorPool> Context::createDescriptorPool(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::DescriptorSetLayout> Context::createDescriptorSetLayout(
+std::shared_ptr<vk::DescriptorSetLayout> Device::createDescriptorSetLayout(
   vk::DescriptorSetLayoutCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::DescriptorSetLayout." << std::endl;
   auto device{mDevice};
@@ -300,7 +322,7 @@ std::shared_ptr<vk::DescriptorSetLayout> Context::createDescriptorSetLayout(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::DeviceMemory> Context::createMemory(vk::MemoryAllocateInfo const& info) const {
+std::shared_ptr<vk::DeviceMemory> Device::createMemory(vk::MemoryAllocateInfo const& info) const {
   ILLUSION_TRACE << "Allocating vk::DeviceMemory." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(device->allocateMemory(info), [device](vk::DeviceMemory* obj) {
@@ -312,7 +334,7 @@ std::shared_ptr<vk::DeviceMemory> Context::createMemory(vk::MemoryAllocateInfo c
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::Fence> Context::createFence(vk::FenceCreateInfo const& info) const {
+std::shared_ptr<vk::Fence> Device::createFence(vk::FenceCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::Fence." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(device->createFence(info), [device](vk::Fence* obj) {
@@ -324,7 +346,7 @@ std::shared_ptr<vk::Fence> Context::createFence(vk::FenceCreateInfo const& info)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::Framebuffer> Context::createFramebuffer(
+std::shared_ptr<vk::Framebuffer> Device::createFramebuffer(
   vk::FramebufferCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::Framebuffer." << std::endl;
   auto device{mDevice};
@@ -337,7 +359,7 @@ std::shared_ptr<vk::Framebuffer> Context::createFramebuffer(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::Image> Context::createImage(vk::ImageCreateInfo const& info) const {
+std::shared_ptr<vk::Image> Device::createImage(vk::ImageCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::Image." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(device->createImage(info), [device](vk::Image* obj) {
@@ -349,7 +371,7 @@ std::shared_ptr<vk::Image> Context::createImage(vk::ImageCreateInfo const& info)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::ImageView> Context::createImageView(vk::ImageViewCreateInfo const& info) const {
+std::shared_ptr<vk::ImageView> Device::createImageView(vk::ImageViewCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::ImageView." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(device->createImageView(info), [device](vk::ImageView* obj) {
@@ -361,7 +383,7 @@ std::shared_ptr<vk::ImageView> Context::createImageView(vk::ImageViewCreateInfo 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::Pipeline> Context::createComputePipeline(
+std::shared_ptr<vk::Pipeline> Device::createComputePipeline(
   vk::ComputePipelineCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::ComputePipeline." << std::endl;
   auto device{mDevice};
@@ -375,7 +397,7 @@ std::shared_ptr<vk::Pipeline> Context::createComputePipeline(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::Pipeline> Context::createPipeline(
+std::shared_ptr<vk::Pipeline> Device::createPipeline(
   vk::GraphicsPipelineCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::Pipeline." << std::endl;
   auto device{mDevice};
@@ -389,7 +411,7 @@ std::shared_ptr<vk::Pipeline> Context::createPipeline(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::PipelineLayout> Context::createPipelineLayout(
+std::shared_ptr<vk::PipelineLayout> Device::createPipelineLayout(
   vk::PipelineLayoutCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::PipelineLayout." << std::endl;
   auto device{mDevice};
@@ -403,7 +425,7 @@ std::shared_ptr<vk::PipelineLayout> Context::createPipelineLayout(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::RenderPass> Context::createRenderPass(
+std::shared_ptr<vk::RenderPass> Device::createRenderPass(
   vk::RenderPassCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::RenderPass." << std::endl;
   auto device{mDevice};
@@ -416,7 +438,7 @@ std::shared_ptr<vk::RenderPass> Context::createRenderPass(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::Sampler> Context::createSampler(vk::SamplerCreateInfo const& info) const {
+std::shared_ptr<vk::Sampler> Device::createSampler(vk::SamplerCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::Sampler." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(device->createSampler(info), [device](vk::Sampler* obj) {
@@ -428,7 +450,7 @@ std::shared_ptr<vk::Sampler> Context::createSampler(vk::SamplerCreateInfo const&
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::Semaphore> Context::createSemaphore(vk::SemaphoreCreateInfo const& info) const {
+std::shared_ptr<vk::Semaphore> Device::createSemaphore(vk::SemaphoreCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::Semaphore." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(device->createSemaphore(info), [device](vk::Semaphore* obj) {
@@ -440,7 +462,7 @@ std::shared_ptr<vk::Semaphore> Context::createSemaphore(vk::SemaphoreCreateInfo 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::ShaderModule> Context::createShaderModule(
+std::shared_ptr<vk::ShaderModule> Device::createShaderModule(
   vk::ShaderModuleCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::ShaderModule." << std::endl;
   auto device{mDevice};
@@ -453,7 +475,7 @@ std::shared_ptr<vk::ShaderModule> Context::createShaderModule(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::SwapchainKHR> Context::createSwapChainKhr(
+std::shared_ptr<vk::SwapchainKHR> Device::createSwapChainKhr(
   vk::SwapchainCreateInfoKHR const& info) const {
   ILLUSION_TRACE << "Creating vk::SwapchainKHR." << std::endl;
   auto device{mDevice};
@@ -466,24 +488,20 @@ std::shared_ptr<vk::SwapchainKHR> Context::createSwapChainKhr(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<CommandBuffer> Context::beginSingleTimeGraphicsCommands() const {
-  auto commandBuffer = allocateGraphicsCommandBuffer();
-
-  vk::CommandBufferBeginInfo beginInfo;
-  beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
-  commandBuffer->begin(beginInfo);
-
-  return commandBuffer;
+std::shared_ptr<CommandBuffer> Device::beginSingleTimeGraphicsCommands() const {
+  mOneTimeGraphicsCommandBuffer->reset({});
+  mOneTimeGraphicsCommandBuffer->begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
+  return mOneTimeGraphicsCommandBuffer;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Context::endSingleTimeGraphicsCommands(std::shared_ptr<CommandBuffer> commandBuffer) const {
-  commandBuffer->end();
+void Device::endSingleTimeGraphicsCommands() const {
+  mOneTimeGraphicsCommandBuffer->end();
 
   vk::SubmitInfo info;
   info.commandBufferCount = 1;
-  info.pCommandBuffers    = commandBuffer.get();
+  info.pCommandBuffers    = mOneTimeGraphicsCommandBuffer.get();
 
   mGraphicsQueue.submit(info, nullptr);
   mGraphicsQueue.waitIdle();
@@ -491,25 +509,20 @@ void Context::endSingleTimeGraphicsCommands(std::shared_ptr<CommandBuffer> comma
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<CommandBuffer> Context::beginSingleTimeComputeCommands() const {
-  auto commandBuffer = allocateComputeCommandBuffer();
-
-  vk::CommandBufferBeginInfo beginInfo;
-  beginInfo.flags = vk::CommandBufferUsageFlagBits::eOneTimeSubmit;
-
-  commandBuffer->begin(beginInfo);
-
-  return commandBuffer;
+std::shared_ptr<CommandBuffer> Device::beginSingleTimeComputeCommands() const {
+  mOneTimeComputeCommandBuffer->reset({});
+  mOneTimeComputeCommandBuffer->begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
+  return mOneTimeComputeCommandBuffer;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Context::endSingleTimeComputeCommands(std::shared_ptr<CommandBuffer> commandBuffer) const {
-  commandBuffer->end();
+void Device::endSingleTimeComputeCommands() const {
+  mOneTimeComputeCommandBuffer->end();
 
   vk::SubmitInfo info;
   info.commandBufferCount = 1;
-  info.pCommandBuffers    = commandBuffer.get();
+  info.pCommandBuffers    = mOneTimeComputeCommandBuffer.get();
 
   mComputeQueue.submit(info, nullptr);
   mComputeQueue.waitIdle();
@@ -517,100 +530,20 @@ void Context::endSingleTimeComputeCommands(std::shared_ptr<CommandBuffer> comman
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Context::transitionImageLayout(
-  std::shared_ptr<vk::Image>& image,
-  vk::ImageLayout             oldLayout,
-  vk::ImageLayout             newLayout,
-  vk::ImageSubresourceRange   subresourceRange) const {
-
-  auto commandBuffer = beginSingleTimeGraphicsCommands();
-
-  vk::ImageMemoryBarrier barrier;
-  barrier.oldLayout           = oldLayout;
-  barrier.newLayout           = newLayout;
-  barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-  barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-  barrier.image               = *image;
-  barrier.subresourceRange    = subresourceRange;
-
-  vk::PipelineStageFlags sourceStage;
-  vk::PipelineStageFlags destinationStage;
-
-  if (
-    oldLayout == vk::ImageLayout::eUndefined && newLayout == vk::ImageLayout::eTransferDstOptimal) {
-    barrier.dstAccessMask = vk::AccessFlagBits::eTransferWrite;
-    sourceStage           = vk::PipelineStageFlagBits::eTopOfPipe;
-    destinationStage      = vk::PipelineStageFlagBits::eTransfer;
-  } else if (
-    oldLayout == vk::ImageLayout::eTransferDstOptimal &&
-    newLayout == vk::ImageLayout::eShaderReadOnlyOptimal) {
-    barrier.srcAccessMask = vk::AccessFlagBits::eTransferWrite;
-    barrier.dstAccessMask = vk::AccessFlagBits::eShaderRead;
-    sourceStage           = vk::PipelineStageFlagBits::eTransfer;
-    destinationStage      = vk::PipelineStageFlagBits::eFragmentShader;
-  } else {
-    ILLUSION_ERROR << "Requested an unsupported layout transition!" << std::endl;
-  }
-
-  commandBuffer->pipelineBarrier(
-    sourceStage, destinationStage, vk::DependencyFlagBits(), nullptr, nullptr, barrier);
-
-  endSingleTimeGraphicsCommands(commandBuffer);
+void Device::waitForFences(
+  vk::ArrayProxy<const vk::Fence> const& fences, bool waitAll, uint64_t timeout) {
+  mDevice->waitForFences(fences, waitAll, timeout);
 }
+
+void Device::resetFences(vk::ArrayProxy<const vk::Fence> const& fences) {
+  mDevice->resetFences(fences);
+}
+
+void Device::waitIdle() { mDevice->waitIdle(); }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Context::copyImage(
-  std::shared_ptr<vk::Image>& src,
-  std::shared_ptr<vk::Image>& dst,
-  uint32_t                    width,
-  uint32_t                    height) const {
-
-  ILLUSION_TRACE << "Copying vk::Image." << std::endl;
-
-  auto commandBuffer = beginSingleTimeGraphicsCommands();
-
-  vk::ImageSubresourceLayers subResource;
-  subResource.aspectMask     = vk::ImageAspectFlagBits::eColor;
-  subResource.baseArrayLayer = 0;
-  subResource.mipLevel       = 0;
-  subResource.layerCount     = 1;
-
-  vk::ImageCopy region;
-  region.srcSubresource = subResource;
-  region.dstSubresource = subResource;
-  region.srcOffset      = vk::Offset3D(0, 0, 0);
-  region.dstOffset      = vk::Offset3D(0, 0, 0);
-  region.extent.width   = width;
-  region.extent.height  = height;
-  region.extent.depth   = 1;
-
-  commandBuffer->copyImage(
-    *src, vk::ImageLayout::eTransferSrcOptimal, *dst, vk::ImageLayout::eTransferDstOptimal, region);
-
-  endSingleTimeGraphicsCommands(commandBuffer);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void Context::copyBuffer(
-  std::shared_ptr<vk::Buffer>& src, std::shared_ptr<vk::Buffer>& dst, vk::DeviceSize size) const {
-
-  ILLUSION_TRACE << "Copying vk::Buffer." << std::endl;
-
-  auto commandBuffer = beginSingleTimeGraphicsCommands();
-
-  vk::BufferCopy region;
-  region.size = size;
-
-  commandBuffer->copyBuffer(*src, *dst, 1, &region);
-
-  endSingleTimeGraphicsCommands(commandBuffer);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-std::shared_ptr<vk::Device> Context::createDevice() const {
+std::shared_ptr<vk::Device> Device::createDevice() const {
 
   std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
 

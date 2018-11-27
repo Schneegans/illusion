@@ -14,6 +14,8 @@
 // ---------------------------------------------------------------------------------------- includes
 #include "fwd.hpp"
 
+#include <glm/glm.hpp>
+
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -33,6 +35,22 @@ class CommandBuffer : public vk::CommandBuffer {
 
     vk::CommandBuffer::pushConstants(layout, stages, offset, sizeof(T), &data);
   }
+
+  void transitionImageLayout(
+    vk::Image                 image,
+    vk::ImageLayout           oldLayout,
+    vk::ImageLayout           newLayout,
+    vk::PipelineStageFlagBits stage = vk::PipelineStageFlagBits::eTopOfPipe,
+    vk::ImageSubresourceRange range = {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}) const;
+
+  void copyImage(vk::Image src, vk::Image dst, glm::uvec2 const& size) const;
+  void blitImage(
+    vk::Image         src,
+    vk::Image         dst,
+    glm::uvec2 const& srcSize,
+    glm::uvec2 const& dstSize,
+    vk::Filter        filter) const;
+  void copyBuffer(vk::Buffer src, vk::Buffer dst, vk::DeviceSize size) const;
 
  private:
 };

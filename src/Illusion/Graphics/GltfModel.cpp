@@ -12,7 +12,7 @@
 #include "GltfModel.hpp"
 
 #include "../Core/Logger.hpp"
-#include "Context.hpp"
+#include "Device.hpp"
 #include "Texture.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -77,8 +77,8 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 GltfModel::GltfModel(
-  std::shared_ptr<Illusion::Graphics::Context> const& context, std::string const& file)
-  : mContext(context)
+  std::shared_ptr<Illusion::Graphics::Device> const& device, std::string const& file)
+  : mDevice(device)
   , mFile(file) {
 
   std::string        extension{file.substr(file.find_last_of('.'))};
@@ -553,7 +553,7 @@ std::shared_ptr<Illusion::Graphics::BackedBuffer> GltfModel::createBuffer(int in
     usage = vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eIndexBuffer;
   }
 
-  return mContext->createBackedBuffer(
+  return mDevice->createBackedBuffer(
     mGLTF.buffers[index].data.size(),
     usage,
     vk::MemoryPropertyFlagBits::eDeviceLocal,
@@ -601,13 +601,13 @@ std::shared_ptr<Illusion::Graphics::Texture> GltfModel::createTexture(int index)
   info.maxLod                  = 0;
 
   // if no image data has been loaded, try loading it on our own
-  if (image.image.empty()) { return Texture::createFromFile(mContext, image.uri, info); }
+  if (image.image.empty()) { return Texture::createFromFile(mDevice, image.uri, info); }
 
   // if there is image data, create an appropriate texture object for it
   uint32_t channels = image.image.size() / image.width / image.height;
 
   return Texture::create2D(
-    mContext,
+    mDevice,
     image.width,
     image.height,
     channels == 3 ? vk::Format::eR8G8B8Unorm : vk::Format::eR8G8B8A8Unorm,

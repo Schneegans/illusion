@@ -26,7 +26,7 @@ namespace Illusion::Graphics {
 
 class DescriptorSetReflection {
  public:
-  DescriptorSetReflection(std::shared_ptr<Context> const& context, uint32_t set);
+  DescriptorSetReflection(std::shared_ptr<Device> const& device, uint32_t set);
   virtual ~DescriptorSetReflection();
 
   void addResource(PipelineResource const& resource);
@@ -39,7 +39,7 @@ class DescriptorSetReflection {
   Core::BitHash const&                     getHash() const;
 
  private:
-  std::shared_ptr<Context>                mContext;
+  std::shared_ptr<Device>                 mDevice;
   std::map<std::string, PipelineResource> mResources;
   uint32_t                                mSet;
 

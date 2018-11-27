@@ -9,12 +9,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <Illusion/Core/Logger.hpp>
-#include <Illusion/Core/RingBuffer.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
-#include <Illusion/Graphics/DescriptorSetCache.hpp>
-#include <Illusion/Graphics/DisplayPass.hpp>
 #include <Illusion/Graphics/Engine.hpp>
 #include <Illusion/Graphics/GraphicsState.hpp>
+#include <Illusion/Graphics/RenderPass.hpp>
 #include <Illusion/Graphics/ShaderProgram.hpp>
 #include <Illusion/Graphics/Window.hpp>
 
@@ -24,60 +22,56 @@ int main(int argc, char* argv[]) {
 
   Illusion::Core::Logger::enableTrace = true;
 
-  auto engine  = std::make_shared<Illusion::Graphics::Engine>("Triangle Demo");
-  auto context = std::make_shared<Illusion::Graphics::Context>(engine->getPhysicalDevice());
-  auto window  = std::make_shared<Illusion::Graphics::Window>(engine, context);
-  window->open();
+  auto engine = std::make_shared<Illusion::Graphics::Engine>("Triangle Demo");
+  auto device = std::make_shared<Illusion::Graphics::Device>(engine->getPhysicalDevice());
+  auto window = std::make_shared<Illusion::Graphics::Window>(engine, device);
 
   auto shader = Illusion::Graphics::ShaderProgram::createFromGlslFiles(
-    context,
+    device,
     {{vk::ShaderStageFlagBits::eVertex, "data/shaders/Triangle.vert"},
      {vk::ShaderStageFlagBits::eFragment, "data/shaders/Triangle.frag"}});
 
   Illusion::Graphics::GraphicsState state;
   state.setShaderProgram(shader);
   state.addBlendAttachment({});
-  state.addViewport({glm::vec2(0), glm::vec2(window->pSize.get()), 0.f, 1.f});
-  state.addScissor({glm::ivec2(0), window->pSize.get()});
+  state.addViewport({glm::vec2(0), glm::vec2(window->pExtent.get()), 0.f, 1.f});
 
-  window->pSize.onChange().connect([&state](glm::uvec2 const& size) {
-    auto viewports       = state.getViewports();
-    viewports[0].mExtend = size;
-    state.setViewports(viewports);
+  auto renderPass = std::make_shared<Illusion::Graphics::RenderPass>(device);
+  renderPass->addAttachment(vk::Format::eR8G8B8A8Unorm);
+  renderPass->setExtent(window->pExtent.get());
 
-    auto scissors       = state.getScissors();
-    scissors[0].mExtend = size;
-    state.setScissors(scissors);
+  auto commandBuffer           = device->allocateGraphicsCommandBuffer();
+  auto renderFinishedFence     = device->createFence({vk::FenceCreateFlagBits::eSignaled});
+  auto renderFinishedSemaphore = device->createSemaphore({});
 
-    return true;
-  });
-
-  auto renderPass = window->getDisplayPass();
-
-  struct FrameResources {
-    FrameResources(std::shared_ptr<Illusion::Graphics::Context> const& context)
-      : mDescriptorSetCache(std::make_shared<Illusion::Graphics::DescriptorSetCache>(context)) {}
-
-    std::shared_ptr<Illusion::Graphics::DescriptorSetCache> mDescriptorSetCache;
-    std::shared_ptr<Illusion::Graphics::CommandBuffer>      mCommandBuffer;
-    std::shared_ptr<vk::Fence>                              mRenderFinishedFence;
-    std::shared_ptr<vk::Semaphore>                          mRenderFinishedSemaphore;
-  };
-
-  Illusion::Core::RingBuffer<FrameResources, 2> frameResources{FrameResources(context),
-                                                               FrameResources(context)};
-
+  window->open();
   while (!window->shouldClose()) {
     window->processInput();
-    auto cmd      = renderPass->acquireCommandBuffer();
+
+    device->waitForFences(*renderFinishedFence, true, ~0);
+    device->resetFences(*renderFinishedFence);
+
+    commandBuffer->reset({});
+    commandBuffer->begin({vk::CommandBufferUsageFlagBits::eSimultaneousUse});
+
+    renderPass->begin(commandBuffer);
+
     auto pipeline = renderPass->getPipelineHandle(state);
-    renderPass->begin(cmd);
-    cmd->bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline);
-    cmd->draw(3, 1, 0, 0);
-    renderPass->end(cmd);
-    renderPass->submitCommandBuffer(cmd);
+    commandBuffer->bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline);
+    commandBuffer->draw(3, 1, 0, 0);
+    renderPass->end(commandBuffer);
+
+    commandBuffer->end();
+
+    device->submit({*commandBuffer}, {}, {}, {*renderFinishedSemaphore});
+
+    window->present(
+      renderPass->getFramebuffer()->getImages()[0], renderFinishedSemaphore, renderFinishedFence);
+
     std::this_thread::sleep_for(std::chrono::milliseconds(1));
   }
+
+  device->waitIdle();
 
   return 0;
 }

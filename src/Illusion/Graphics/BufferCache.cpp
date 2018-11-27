@@ -9,61 +9,63 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ---------------------------------------------------------------------------------------- includes
-#include "DescriptorSetCache.hpp"
+#include "BufferCache.hpp"
 
-#include "DescriptorPool.hpp"
 #include "Device.hpp"
+
+#include <functional>
 
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-DescriptorSetCache::DescriptorSetCache(std::shared_ptr<Device> const& device)
+BufferCache::BufferCache(std::shared_ptr<Device> const& device)
   : mDevice(device) {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-DescriptorSetCache::~DescriptorSetCache() {}
+BufferCache::~BufferCache() {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<DescriptorSet> DescriptorSetCache::acquireHandle(
-  std::shared_ptr<DescriptorSetReflection> const& reflection) {
+std::shared_ptr<BackedBuffer> BufferCache::acquireHandle(
+  vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties) {
 
-  auto const& hash       = reflection->getHash();
-  auto        cacheEntry = mCache.find(hash);
+  Core::BitHash hash;
+  hash.push<64>(size);
+  hash.push<9>(usage);
+  hash.push<6>(properties);
+
+  auto cacheEntry = mCache.find(hash);
 
   if (cacheEntry != mCache.end()) {
 
     // First case: we have a handle which has been acquired before; return it!
     if (cacheEntry->second.mFreeHandels.size() > 0) {
-      auto descriptorSet = *cacheEntry->second.mFreeHandels.begin();
+      auto backedBuffer = *cacheEntry->second.mFreeHandels.begin();
       cacheEntry->second.mFreeHandels.erase(cacheEntry->second.mFreeHandels.begin());
-      cacheEntry->second.mUsedHandels.insert(descriptorSet);
-      return descriptorSet;
+      cacheEntry->second.mUsedHandels.insert(backedBuffer);
+      return backedBuffer;
     }
 
     // Second case: we have no free handle. So we have to create a new one!
-    auto descriptorSet = cacheEntry->second.mPool->allocateDescriptorSet();
-    cacheEntry->second.mUsedHandels.insert(descriptorSet);
-    return descriptorSet;
+    auto backedBuffer = mDevice->createBackedBuffer(size, usage, properties);
+    cacheEntry->second.mUsedHandels.insert(backedBuffer);
+    return backedBuffer;
   }
 
-  // Last case: there is no pool at all! Create a new one!
+  // Last case: there is no cache entry at all! Create a new one!
   CacheEntry entry;
-  entry.mPool = std::make_shared<DescriptorPool>(mDevice, reflection);
-
-  auto descriptorSet = entry.mPool->allocateDescriptorSet();
-  entry.mUsedHandels.insert(descriptorSet);
-
+  auto       backedBuffer = mDevice->createBackedBuffer(size, usage, properties);
+  entry.mUsedHandels.insert(backedBuffer);
   mCache.emplace(hash, entry);
 
-  return descriptorSet;
+  return backedBuffer;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DescriptorSetCache::releaseHandle(std::shared_ptr<DescriptorSet> const& handle) {
+void BufferCache::releaseHandle(std::shared_ptr<BackedBuffer> const& handle) {
   for (auto& p : mCache) {
     auto it = p.second.mUsedHandels.find(handle);
     if (it != p.second.mUsedHandels.end()) {}
@@ -74,7 +76,7 @@ void DescriptorSetCache::releaseHandle(std::shared_ptr<DescriptorSet> const& han
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DescriptorSetCache::releaseAll() {
+void BufferCache::releaseAll() {
   for (auto& p : mCache) {
     p.second.mFreeHandels.insert(p.second.mUsedHandels.begin(), p.second.mUsedHandels.end());
     p.second.mUsedHandels.clear();
@@ -83,7 +85,7 @@ void DescriptorSetCache::releaseAll() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DescriptorSetCache::deleteAll() { mCache.clear(); }
+void BufferCache::deleteAll() { mCache.clear(); }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

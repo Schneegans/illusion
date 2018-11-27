@@ -41,7 +41,7 @@ class GltfModel {
   };
 
   // -------------------------------------------------------------------------------- public methods
-  GltfModel(std::shared_ptr<Illusion::Graphics::Context> const& context, std::string const& file);
+  GltfModel(std::shared_ptr<Illusion::Graphics::Device> const& device, std::string const& file);
 
   void predraw(vk::CommandBuffer const& cmd);
 
@@ -67,9 +67,9 @@ class GltfModel {
   int getTextureIndex(int materialIndex, std::string const& name);
 
   // ------------------------------------------------------------------------------- private members
-  std::shared_ptr<Illusion::Graphics::Context> mContext;
-  std::string                                  mFile;
-  tinygltf::Model                              mGLTF;
+  std::shared_ptr<Illusion::Graphics::Device> mDevice;
+  std::string                                 mFile;
+  tinygltf::Model                             mGLTF;
 
   std::vector<std::shared_ptr<Illusion::Graphics::Texture>>      mTextures;
   std::vector<std::shared_ptr<Illusion::Graphics::BackedBuffer>> mBuffers;

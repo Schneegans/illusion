@@ -8,13 +8,14 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_CONTEXT_HPP
-#define ILLUSION_GRAPHICS_CONTEXT_HPP
+#ifndef ILLUSION_GRAPHICS_DEVICE_HPP
+#define ILLUSION_GRAPHICS_DEVICE_HPP
 
 // ---------------------------------------------------------------------------------------- includes
 #include "../Core/BitHash.hpp"
 #include "fwd.hpp"
 
+#include <glm/glm.hpp>
 #include <map>
 
 struct GLFWwindow;
@@ -28,6 +29,7 @@ struct BackedImage {
   std::shared_ptr<vk::Image>        mImage;
   std::shared_ptr<vk::DeviceMemory> mMemory;
   vk::DeviceSize                    mSize;
+  vk::ImageCreateInfo               mInfo;
 };
 
 struct BackedBuffer {
@@ -37,12 +39,12 @@ struct BackedBuffer {
 };
 
 // -------------------------------------------------------------------------------------------------
-class Context {
+class Device {
 
  public:
   // -------------------------------------------------------------------------------- public methods
-  Context(std::shared_ptr<PhysicalDevice> const& physicalDevice);
-  virtual ~Context();
+  Device(std::shared_ptr<PhysicalDevice> const& physicalDevice);
+  virtual ~Device();
 
   // --------------------------------------------------------------------- high-level create methods
   std::shared_ptr<BackedImage> createBackedImage(
@@ -71,6 +73,13 @@ class Context {
   std::shared_ptr<CommandBuffer> allocateGraphicsCommandBuffer() const;
   std::shared_ptr<CommandBuffer> allocateComputeCommandBuffer() const;
 
+  void submit(
+    std::vector<CommandBuffer> const&          commandBuffers,
+    std::vector<vk::Semaphore> const&          waitSemaphores   = {},
+    std::vector<vk::PipelineStageFlags> const& waitStages       = {},
+    std::vector<vk::Semaphore> const&          signalSemaphores = {},
+    vk::Fence const&                           fence            = nullptr) const;
+
   // ---------------------------------------------------------------------- low-level create methods
   // clang-format off
   std::shared_ptr<vk::Buffer>              createBuffer(vk::BufferCreateInfo const&) const;
@@ -90,33 +99,17 @@ class Context {
   std::shared_ptr<vk::Semaphore>           createSemaphore(vk::SemaphoreCreateInfo const&) const;
   std::shared_ptr<vk::ShaderModule>        createShaderModule(vk::ShaderModuleCreateInfo const&) const;
   std::shared_ptr<vk::SwapchainKHR>        createSwapChainKhr(vk::SwapchainCreateInfoKHR const&) const;
-
   // clang-format on
 
   // ------------------------------------------------------------------------- vulkan helper methods
   std::shared_ptr<CommandBuffer> beginSingleTimeGraphicsCommands() const;
-  void endSingleTimeGraphicsCommands(std::shared_ptr<CommandBuffer> commandBuffer) const;
+  void                           endSingleTimeGraphicsCommands() const;
 
   std::shared_ptr<CommandBuffer> beginSingleTimeComputeCommands() const;
-  void endSingleTimeComputeCommands(std::shared_ptr<CommandBuffer> commandBuffer) const;
-
-  void transitionImageLayout(
-    std::shared_ptr<vk::Image>& image,
-    vk::ImageLayout             oldLayout,
-    vk::ImageLayout             newLayout,
-    vk::ImageSubresourceRange   range) const;
-
-  void copyImage(
-    std::shared_ptr<vk::Image>& src,
-    std::shared_ptr<vk::Image>& dst,
-    uint32_t                    width,
-    uint32_t                    height) const;
-
-  void copyBuffer(
-    std::shared_ptr<vk::Buffer>& src, std::shared_ptr<vk::Buffer>& dst, vk::DeviceSize size) const;
+  void                           endSingleTimeComputeCommands() const;
 
   // -------------------------------------------------------------------------------- vulkan getters
-  std::shared_ptr<vk::Device> const&     getDevice() const { return mDevice; }
+  std::shared_ptr<vk::Device> const&     getHandle() const { return mDevice; }
   std::shared_ptr<PhysicalDevice> const& getPhysicalDevice() const { return mPhysicalDevice; }
   vk::Queue const&                       getGraphicsQueue() const { return mGraphicsQueue; }
   vk::Queue const&                       getComputeQueue() const { return mComputeQueue; }
@@ -129,6 +122,11 @@ class Context {
     return mComputeCommandPool;
   }
 
+  // ------------------------------------------------------------------- device interface forwarding
+  void waitForFences(vk::ArrayProxy<const vk::Fence> const& fences, bool waitAll, uint64_t timeout);
+  void resetFences(vk::ArrayProxy<const vk::Fence> const& fences);
+  void waitIdle();
+
  private:
   // ------------------------------------------------------------------------------- private methods
   std::shared_ptr<vk::Device> createDevice() const;
@@ -137,10 +135,12 @@ class Context {
   std::shared_ptr<PhysicalDevice>  mPhysicalDevice;
   std::shared_ptr<vk::Device>      mDevice;
   std::shared_ptr<vk::CommandPool> mGraphicsCommandPool;
+  std::shared_ptr<CommandBuffer>   mOneTimeGraphicsCommandBuffer;
   std::shared_ptr<vk::CommandPool> mComputeCommandPool;
+  std::shared_ptr<CommandBuffer>   mOneTimeComputeCommandBuffer;
 
   vk::Queue mGraphicsQueue, mComputeQueue, mPresentQueue;
 };
 } // namespace Illusion::Graphics
 
-#endif // ILLUSION_GRAPHICS_CONTEXT_HPP
+#endif // ILLUSION_GRAPHICS_DEVICE_HPP

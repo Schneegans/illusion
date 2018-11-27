@@ -12,11 +12,12 @@
 #define ILLUSION_GRAPHICS_RENDER_PASS_HPP
 
 // ---------------------------------------------------------------------------------------- includes
-#include "Context.hpp"
+#include "Device.hpp"
+#include "Framebuffer.hpp"
 #include "PipelineCache.hpp"
-#include "RenderTarget.hpp"
 
 #include <functional>
+#include <glm/glm.hpp>
 #include <unordered_map>
 
 namespace Illusion::Graphics {
@@ -35,75 +36,41 @@ class RenderPass {
   };
 
   // -------------------------------------------------------------------------------- public methods
-  RenderPass(std::shared_ptr<Context> const& context);
+  RenderPass(std::shared_ptr<Device> const& device);
   virtual ~RenderPass();
 
   virtual void init();
 
-  virtual std::shared_ptr<CommandBuffer> const& acquireCommandBuffer();
-  virtual void                                  begin(std::shared_ptr<CommandBuffer> const& cmd);
-  virtual void                                  end(std::shared_ptr<CommandBuffer> const& cmd);
-  virtual void submitCommandBuffer(std::shared_ptr<CommandBuffer> const& cmd);
+  void begin(std::shared_ptr<CommandBuffer> const& cmd);
+  void end(std::shared_ptr<CommandBuffer> const& cmd);
 
-  virtual void                addAttachment(vk::Format format);
-  virtual bool                hasDepthAttachment() const;
-  virtual void                setSubPasses(std::vector<SubPass> const& subPasses);
-  virtual void                setExtent(vk::Extent2D const& extent);
-  virtual vk::Extent2D const& getExtent() const;
-  virtual void                setRingBufferSize(uint32_t extent);
-  virtual uint32_t            getRingBufferSize() const;
+  virtual void                        addAttachment(vk::Format format);
+  virtual bool                        hasDepthAttachment() const;
+  virtual void                        setSubPasses(std::vector<SubPass> const& subPasses);
+  virtual void                        setExtent(glm::uvec2 const& extent);
+  virtual glm::uvec2 const&           getExtent() const;
+  std::shared_ptr<Framebuffer> const& getFramebuffer() const;
 
   std::shared_ptr<vk::Pipeline> getPipelineHandle(
-    GraphicsState const& graphicsState, uint32_t subPass = 0) const;
-
-  void executeAfter(std::shared_ptr<RenderPass> const& other);
-  void executeBefore(std::shared_ptr<RenderPass> const& other);
+    GraphicsState const& graphicsState, uint32_t subPass = 0);
 
  protected:
-  // ----------------------------------------------------------------------------- protected methods
-  void setSwapchainInfo(std::vector<vk::Image> const& images, vk::Format format);
-
   // ----------------------------------------------------------------------------- protected members
-  std::shared_ptr<Context>                  mContext;
-  std::vector<std::weak_ptr<vk::Semaphore>> mWaitSemaphores;
-  std::shared_ptr<vk::Semaphore>            mRenderingFinishedSemaphore;
-  std::shared_ptr<vk::RenderPass>           mRenderPass;
+  std::shared_ptr<Device>         mDevice;
+  std::shared_ptr<vk::RenderPass> mRenderPass;
 
-  // ring buffer of for command buffer and associated framebuffers
-  uint32_t mCurrentRingBufferIndex = 0;
-
- protected:
   // ------------------------------------------------------------------------------- private methods
-  std::shared_ptr<vk::Semaphore>              createSignalSemaphore() const;
-  std::vector<std::shared_ptr<vk::Fence>>     createFences() const;
-  std::vector<std::shared_ptr<CommandBuffer>> createCommandBuffers() const;
-  std::shared_ptr<vk::RenderPass>             createRenderPass() const;
-  std::vector<std::shared_ptr<BackedImage>>   createFramebufferAttachments() const;
-  std::vector<std::shared_ptr<RenderTarget>>  createRenderTargets() const;
+  std::shared_ptr<vk::RenderPass> createRenderPass() const;
 
   // ------------------------------------------------------------------------------- private members
-  std::vector<std::shared_ptr<vk::Fence>>     mFences;
-  std::vector<std::shared_ptr<CommandBuffer>> mCommandBuffers;
-  std::vector<std::shared_ptr<RenderTarget>>  mRenderTargets;
+  std::shared_ptr<Framebuffer> mFramebuffer;
+  std::vector<vk::Format>      mFrameBufferAttachmentFormats;
+  std::vector<SubPass>         mSubPasses;
 
-  // when this RenderPass is used for presentation on a Swapchain, these members will define the
-  // first framebuffer attachment for each ringbuffer element
-  std::vector<vk::Image> mSwapchainImages;
-  vk::Format             mSwapchainFormat;
+  bool       mAttachmentsDirty = true;
+  glm::uvec2 mExtent           = {100, 100};
 
-  // one for each framebuffer attachment, will be appended after the swapchain image
-  std::vector<vk::Format>                   mFrameBufferAttachmentFormats;
-  std::vector<std::shared_ptr<BackedImage>> mFrameBufferAttachments;
-
-  std::vector<SubPass> mSubPasses;
-
-  bool mAttachmentsDirty    = true;
-  bool mRingbufferSizeDirty = true;
-
-  vk::Extent2D mExtent         = {100, 100};
-  uint32_t     mRingbufferSize = 1;
-
-  mutable PipelineCache mPipelineCache;
+  PipelineCache mPipelineCache;
 };
 
 } // namespace Illusion::Graphics

@@ -12,7 +12,7 @@
 #include "DescriptorSetReflection.hpp"
 
 #include "../Core/Logger.hpp"
-#include "Context.hpp"
+#include "Device.hpp"
 
 #include <functional>
 #include <iostream>
@@ -37,8 +37,8 @@ const std::unordered_map<PipelineResource::ResourceType, vk::DescriptorType> res
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 DescriptorSetReflection::DescriptorSetReflection(
-  std::shared_ptr<Context> const& context, uint32_t set)
-  : mContext(context)
+  std::shared_ptr<Device> const& device, uint32_t set)
+  : mDevice(device)
   , mSet(set) {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -117,7 +117,7 @@ std::shared_ptr<vk::DescriptorSetLayout> DescriptorSetReflection::getLayout() co
     descriptorSetLayoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
     descriptorSetLayoutInfo.pBindings    = bindings.data();
 
-    mLayout = mContext->createDescriptorSetLayout(descriptorSetLayoutInfo);
+    mLayout = mDevice->createDescriptorSetLayout(descriptorSetLayoutInfo);
   }
 
   return mLayout;

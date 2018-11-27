@@ -8,8 +8,8 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_DISPLAY_PASS_HPP
-#define ILLUSION_GRAPHICS_DISPLAY_PASS_HPP
+#ifndef ILLUSION_GRAPHICS_SWAPCHAIN_HPP
+#define ILLUSION_GRAPHICS_SWAPCHAIN_HPP
 
 // ---------------------------------------------------------------------------------------- includes
 #include "RenderPass.hpp"
@@ -22,40 +22,49 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // -------------------------------------------------------------------------------------------------
-class DisplayPass : public RenderPass {
+class Swapchain {
 
  public:
   // -------------------------------------------------------------------------------- public methods
-  DisplayPass(
-    std::shared_ptr<Context> const& context, std::shared_ptr<vk::SurfaceKHR> const& surface);
-  virtual ~DisplayPass();
+  Swapchain(std::shared_ptr<Device> const& device, std::shared_ptr<vk::SurfaceKHR> const& surface);
+  virtual ~Swapchain();
 
-  void         setEnableVsync(bool enable);
-  void         markSwapChainDirty() { mSwapchainDirty = true; }
-  virtual void init() override;
+  void              setEnableVsync(bool enable);
+  void              markDirty();
+  glm::uvec2 const& getExtent() const;
 
-  virtual std::shared_ptr<CommandBuffer> const& acquireCommandBuffer() override;
-  virtual void submitCommandBuffer(std::shared_ptr<CommandBuffer> const& cmd) override;
+  void present(
+    std::shared_ptr<BackedImage> const&   image,
+    std::shared_ptr<vk::Semaphore> const& renderFinishedSemaphore,
+    std::shared_ptr<vk::Fence> const&     signalFence);
 
  private:
   // ------------------------------------------------------------------------------- private methods
-  std::shared_ptr<vk::Semaphore>    createSwapchainSemaphore() const;
-  vk::Extent2D                      chooseExtent() const;
-  vk::SurfaceFormatKHR              chooseSwapchainFormat() const;
-  uint32_t                          chooseSwapchainImageCount() const;
-  std::shared_ptr<vk::SwapchainKHR> createSwapChain() const;
+  void chooseExtent();
+  void chooseFormat();
+  void createSwapchain();
+  void createSemaphores();
+  void createCommandBuffers();
 
   // ------------------------------------------------------------------------------- private members
-  std::shared_ptr<vk::SurfaceKHR> mSurface;
-
-  std::shared_ptr<vk::Semaphore>    mImageAvailableSemaphore;
-  vk::SurfaceFormatKHR              mSwapchainFormat;
+  std::shared_ptr<Device>           mDevice;
+  std::shared_ptr<vk::SurfaceKHR>   mSurface;
+  glm::uvec2                        mExtent;
+  vk::SurfaceFormatKHR              mFormat;
   std::shared_ptr<vk::SwapchainKHR> mSwapchain;
 
-  bool mEnableVsync    = true;
-  bool mSwapchainDirty = true;
+  std::vector<vk::Image> mImages;
+  uint32_t               mCurrentImageIndex = 0;
+
+  std::vector<std::shared_ptr<vk::Semaphore>> mImageAvailableSemaphores;
+  std::vector<std::shared_ptr<vk::Semaphore>> mCopyFinishedSemaphores;
+  std::vector<std::shared_ptr<CommandBuffer>> mPresentCommandBuffers;
+  uint32_t                                    mCurrentPresentIndex = 0;
+
+  bool mEnableVsync = true;
+  bool mDirty       = true;
 };
 
 } // namespace Illusion::Graphics
 
-#endif // ILLUSION_GRAPHICS_DISPLAY_PASS_HPP
+#endif // ILLUSION_GRAPHICS_SWAPCHAIN_HPP

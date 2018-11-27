@@ -9,10 +9,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // ---------------------------------------------------------------------------------------- includes
-#include "RenderTarget.hpp"
+#include "Framebuffer.hpp"
 
 #include "../Core/Logger.hpp"
-#include "Context.hpp"
+#include "Device.hpp"
 #include "Utils.hpp"
 
 #include <iostream>
@@ -20,33 +20,54 @@
 namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-RenderTarget::RenderTarget(
-  std::shared_ptr<Context> const&           context,
-  std::shared_ptr<vk::RenderPass> const&    renderPass,
-  vk::Extent2D const&                       extent,
-  std::vector<AttachmentDescription> const& attachmentDescriptions)
-  : mContext(context)
+Framebuffer::Framebuffer(
+  std::shared_ptr<Device> const&         device,
+  std::shared_ptr<vk::RenderPass> const& renderPass,
+  glm::uvec2 const&                      extent,
+  std::vector<vk::Format> const&         attachments)
+  : mDevice(device)
   , mRenderPass(renderPass)
   , mExtent(extent) {
 
-  ILLUSION_TRACE << "Creating RenderTarget." << std::endl;
+  ILLUSION_TRACE << "Creating Framebuffer." << std::endl;
 
-  for (auto attachment : attachmentDescriptions) {
+  for (auto attachment : attachments) {
     vk::ImageAspectFlags aspect;
 
-    if (Utils::isDepthOnlyFormat(attachment.mFormat)) {
+    if (Utils::isDepthOnlyFormat(attachment)) {
       aspect |= vk::ImageAspectFlagBits::eDepth;
-    } else if (Utils::isDepthStencilFormat(attachment.mFormat)) {
+    } else if (Utils::isDepthStencilFormat(attachment)) {
       aspect |= vk::ImageAspectFlagBits::eDepth;
       aspect |= vk::ImageAspectFlagBits::eStencil;
     } else {
       aspect |= vk::ImageAspectFlagBits::eColor;
     }
 
+    // eTransferSrc is actually only required for the attachment which will be blitted to the
+    // swapchain images
+    vk::ImageUsageFlags usage =
+      vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc;
+
+    if (Utils::isDepthFormat(attachment)) {
+      usage = vk::ImageUsageFlagBits::eDepthStencilAttachment;
+    }
+
+    auto image = mDevice->createBackedImage(
+      extent.x,
+      extent.y,
+      1,
+      1,
+      1,
+      attachment,
+      vk::ImageTiling::eOptimal,
+      usage,
+      vk::MemoryPropertyFlagBits::eDeviceLocal,
+      vk::SampleCountFlagBits::e1);
+
     vk::ImageViewCreateInfo info;
-    info.image                           = *attachment.mImage;
+    info.image                           = *image->mImage;
     info.viewType                        = vk::ImageViewType::e2D;
-    info.format                          = attachment.mFormat;
+    info.format                          = attachment;
     info.components.r                    = vk::ComponentSwizzle::eIdentity;
     info.components.g                    = vk::ComponentSwizzle::eIdentity;
     info.components.b                    = vk::ComponentSwizzle::eIdentity;
@@ -57,30 +78,30 @@ RenderTarget::RenderTarget(
     info.subresourceRange.baseArrayLayer = 0;
     info.subresourceRange.layerCount     = 1;
 
-    mImageStore.push_back(attachment.mImage);
-    mImageViewStore.push_back(mContext->createImageView(info));
+    mImageStore.push_back(image);
+    mImageViewStore.push_back(mDevice->createImageView(info));
   }
 
-  std::vector<vk::ImageView> attachments(mImageViewStore.size());
+  std::vector<vk::ImageView> imageViewInfos(mImageViewStore.size());
 
   for (size_t i{0}; i < mImageViewStore.size(); ++i) {
-    attachments[i] = *mImageViewStore[i];
+    imageViewInfos[i] = *mImageViewStore[i];
   }
 
   vk::FramebufferCreateInfo info;
   info.renderPass      = *mRenderPass;
-  info.attachmentCount = attachments.size();
-  info.pAttachments    = attachments.data();
-  info.width           = mExtent.width;
-  info.height          = mExtent.height;
+  info.attachmentCount = imageViewInfos.size();
+  info.pAttachments    = imageViewInfos.data();
+  info.width           = mExtent.x;
+  info.height          = mExtent.y;
   info.layers          = 1;
 
-  mFramebuffer = mContext->createFramebuffer(info);
+  mFramebuffer = mDevice->createFramebuffer(info);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-RenderTarget::~RenderTarget() { ILLUSION_TRACE << "Deleting RenderTarget." << std::endl; }
+Framebuffer::~Framebuffer() { ILLUSION_TRACE << "Deleting Framebuffer." << std::endl; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

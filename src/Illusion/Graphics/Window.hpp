@@ -15,7 +15,7 @@
 #include "../Core/Property.hpp"
 #include "../Input/KeyEvent.hpp"
 #include "../Input/MouseEvent.hpp"
-#include "Context.hpp"
+#include "Device.hpp"
 
 struct GLFWwindow;
 struct GLFWcursor;
@@ -33,7 +33,7 @@ class Window {
 
   // ------------------------------------------------------------------------------------ properties
   Core::String           pTitle      = std::string("Illusion3D");
-  Core::UVec2            pSize       = glm::uvec2(640, 480);
+  Core::UVec2            pExtent     = glm::uvec2(640, 480);
   Core::IVec2            pPosition   = glm::ivec2(-1, -1);
   Core::Bool             pLockAspect = false;
   Core::Bool             pVsync      = false;
@@ -51,7 +51,7 @@ class Window {
   Core::Signal<Input::JoystickId, Input::JoystickButtonId>      sOnJoystickButtonReleased;
 
   // -------------------------------------------------------------------------------- public methods
-  Window(std::shared_ptr<Engine> const& engine, std::shared_ptr<Context> const& context);
+  Window(std::shared_ptr<Engine> const& engine, std::shared_ptr<Device> const& device);
   virtual ~Window();
 
   void open();
@@ -64,21 +64,23 @@ class Window {
   float     joyAxis(int joyStick, int axis);
   glm::vec2 getCursorPos() const;
 
-  std::shared_ptr<vk::SurfaceKHR> const& getSurface() const { return mSurface; }
-  std::shared_ptr<DisplayPass> const&    getDisplayPass() const { return mDisplayPass; }
+  void present(
+    std::shared_ptr<BackedImage> const&   image,
+    std::shared_ptr<vk::Semaphore> const& renderFinishedSemaphore,
+    std::shared_ptr<vk::Fence> const&     signalFence);
 
  private:
   // ------------------------------------------------------------------------------- private methods
   void updateJoysticks();
 
   // ------------------------------------------------------------------------------- private members
-  std::shared_ptr<Engine>  mEngine;
-  std::shared_ptr<Context> mContext;
-  GLFWwindow*              mWindow = nullptr;
-  GLFWcursor*              mCursor = nullptr;
+  std::shared_ptr<Engine> mEngine;
+  std::shared_ptr<Device> mDevice;
+  GLFWwindow*             mWindow = nullptr;
+  GLFWcursor*             mCursor = nullptr;
 
   std::shared_ptr<vk::SurfaceKHR> mSurface;
-  std::shared_ptr<DisplayPass>    mDisplayPass;
+  std::shared_ptr<Swapchain>      mSwapchain;
 
   std::array<
     std::array<float, static_cast<int>(Input::JoystickAxisId::JOYSTICK_AXIS_NUM)>,

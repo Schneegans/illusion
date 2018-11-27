@@ -27,12 +27,12 @@ class ShaderProgram {
  public:
   // -------------------------------------------------------------- helper methods for easy creation
   static std::shared_ptr<ShaderProgram> createFromGlslFiles(
-    std::shared_ptr<Context> const&                                 context,
+    std::shared_ptr<Device> const&                                  device,
     std::unordered_map<vk::ShaderStageFlagBits, std::string> const& files);
 
   // -------------------------------------------------------------------------------- public methods
   ShaderProgram(
-    std::shared_ptr<Context> const&                   context,
+    std::shared_ptr<Device> const&                    device,
     std::vector<std::shared_ptr<ShaderModule>> const& modules);
   virtual ~ShaderProgram();
 
@@ -47,7 +47,7 @@ class ShaderProgram {
   void createReflection();
 
   // ------------------------------------------------------------------------------- private members
-  std::shared_ptr<Context>                   mContext;
+  std::shared_ptr<Device>                    mDevice;
   std::vector<std::shared_ptr<ShaderModule>> mModules;
   std::shared_ptr<PipelineReflection>        mReflection;
 };

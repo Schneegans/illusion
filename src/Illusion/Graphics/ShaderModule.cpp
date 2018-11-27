@@ -12,7 +12,7 @@
 #include "ShaderModule.hpp"
 
 #include "../Core/Logger.hpp"
-#include "Context.hpp"
+#include "Device.hpp"
 
 #include <SPIRV/GLSL.std.450.h>
 #include <SPIRV/GlslangToSpv.h>
@@ -247,9 +247,9 @@ std::vector<uint32_t> ShaderModule::compileGlsl(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ShaderModule::ShaderModule(
-  std::shared_ptr<Context> const& context,
-  std::vector<uint32_t>&&         spirv,
-  vk::ShaderStageFlagBits         stage)
+  std::shared_ptr<Device> const& device,
+  std::vector<uint32_t>&&        spirv,
+  vk::ShaderStageFlagBits        stage)
   : mSpirv(spirv)
   , mStage(stage) {
   createReflection();
@@ -257,13 +257,13 @@ ShaderModule::ShaderModule(
   vk::ShaderModuleCreateInfo info;
   info.codeSize = mSpirv.size() * 4;
   info.pCode    = mSpirv.data();
-  mModule       = context->createShaderModule(info);
+  mModule       = device->createShaderModule(info);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ShaderModule::ShaderModule(
-  std::shared_ptr<Context> const& context, std::string const& glsl, vk::ShaderStageFlagBits stage)
+  std::shared_ptr<Device> const& device, std::string const& glsl, vk::ShaderStageFlagBits stage)
   : mSpirv(compileGlsl(glsl, stage))
   , mStage(stage) {
 
@@ -272,7 +272,7 @@ ShaderModule::ShaderModule(
   vk::ShaderModuleCreateInfo info;
   info.codeSize = mSpirv.size() * 4;
   info.pCode    = mSpirv.data();
-  mModule       = context->createShaderModule(info);
+  mModule       = device->createShaderModule(info);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

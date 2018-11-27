@@ -13,7 +13,7 @@
 
 #include "../Core/Logger.hpp"
 #include "CommandBuffer.hpp"
-#include "Context.hpp"
+#include "Device.hpp"
 
 #include <gli/gli.hpp>
 #include <iostream>
@@ -24,9 +24,9 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::shared_ptr<Texture> Texture::createFromFile(
-  std::shared_ptr<Context> const& context,
-  std::string const&              fileName,
-  vk::SamplerCreateInfo const&    sampler) {
+  std::shared_ptr<Device> const& device,
+  std::string const&             fileName,
+  vk::SamplerCreateInfo const&   sampler) {
 
   auto result = std::make_shared<Texture>();
 
@@ -53,7 +53,7 @@ std::shared_ptr<Texture> Texture::createFromFile(
     }
 
     result->initData(
-      context,
+      device,
       levels,
       (vk::Format)texture.format(),
       vk::ImageUsageFlagBits::eSampled,
@@ -108,7 +108,7 @@ std::shared_ptr<Texture> Texture::createFromFile(
     }
 
     result->initData(
-      context,
+      device,
       levels,
       format,
       vk::ImageUsageFlagBits::eSampled,
@@ -130,14 +130,14 @@ std::shared_ptr<Texture> Texture::createFromFile(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::shared_ptr<Texture> Texture::create2D(
-  std::shared_ptr<Context> const& context,
-  int32_t                         width,
-  int32_t                         height,
-  vk::Format                      format,
-  vk::ImageUsageFlags const&      usage,
-  vk::SamplerCreateInfo const&    sampler,
-  size_t                          dataSize,
-  void*                           data) {
+  std::shared_ptr<Device> const& device,
+  int32_t                        width,
+  int32_t                        height,
+  vk::Format                     format,
+  vk::ImageUsageFlags const&     usage,
+  vk::SamplerCreateInfo const&   sampler,
+  size_t                         dataSize,
+  void*                          data) {
 
   ILLUSION_TRACE << "Creating Texture." << std::endl;
 
@@ -147,40 +147,39 @@ std::shared_ptr<Texture> Texture::create2D(
   level.mSize   = dataSize;
 
   auto result = std::make_shared<Texture>();
-  result->initData(
-    context, {level}, format, usage, vk::ImageViewType::e2D, sampler, dataSize, data);
+  result->initData(device, {level}, format, usage, vk::ImageViewType::e2D, sampler, dataSize, data);
   return result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::shared_ptr<Texture> Texture::create2DMipMap(
-  std::shared_ptr<Context> const& context,
-  std::vector<TextureLevel>       levels,
-  vk::Format                      format,
-  vk::ImageUsageFlags const&      usage,
-  vk::ImageViewType               type,
-  vk::SamplerCreateInfo const&    sampler,
-  size_t                          dataSize,
-  void*                           data) {
+  std::shared_ptr<Device> const& device,
+  std::vector<TextureLevel>      levels,
+  vk::Format                     format,
+  vk::ImageUsageFlags const&     usage,
+  vk::ImageViewType              type,
+  vk::SamplerCreateInfo const&   sampler,
+  size_t                         dataSize,
+  void*                          data) {
 
   ILLUSION_TRACE << "Creating Texture." << std::endl;
 
   auto result = std::make_shared<Texture>();
-  result->initData(context, levels, format, usage, type, sampler, dataSize, data);
+  result->initData(device, levels, format, usage, type, sampler, dataSize, data);
   return result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::shared_ptr<Texture> Texture::createCubemap(
-  std::shared_ptr<Context> const& context,
-  int32_t                         size,
-  vk::Format                      format,
-  vk::ImageUsageFlags const&      usage,
-  vk::SamplerCreateInfo const&    sampler,
-  size_t                          dataSize,
-  void*                           data) {
+  std::shared_ptr<Device> const& device,
+  int32_t                        size,
+  vk::Format                     format,
+  vk::ImageUsageFlags const&     usage,
+  vk::SamplerCreateInfo const&   sampler,
+  size_t                         dataSize,
+  void*                          data) {
 
   ILLUSION_TRACE << "Creating Texture." << std::endl;
 
@@ -191,7 +190,7 @@ std::shared_ptr<Texture> Texture::createCubemap(
 
   auto result = std::make_shared<Texture>();
   result->initData(
-    context, {level}, format, usage, vk::ImageViewType::eCube, sampler, dataSize, data);
+    device, {level}, format, usage, vk::ImageViewType::eCube, sampler, dataSize, data);
   return result;
 }
 
@@ -202,14 +201,14 @@ Texture::~Texture() { ILLUSION_TRACE << "Deleting Texture." << std::endl; }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Texture::initData(
-  std::shared_ptr<Context> const& context,
-  std::vector<TextureLevel>       levels,
-  vk::Format                      format,
-  vk::ImageUsageFlags             usage,
-  vk::ImageViewType               type,
-  vk::SamplerCreateInfo const&    sampler,
-  size_t                          size,
-  void*                           data) {
+  std::shared_ptr<Device> const& device,
+  std::vector<TextureLevel>      levels,
+  vk::Format                     format,
+  vk::ImageUsageFlags            usage,
+  vk::ImageViewType              type,
+  vk::SamplerCreateInfo const&   sampler,
+  size_t                         size,
+  void*                          data) {
 
   if (data) { usage |= vk::ImageUsageFlagBits::eTransferDst; }
 
@@ -221,7 +220,7 @@ void Texture::initData(
     flags      = vk::ImageCreateFlagBits::eCubeCompatible;
   }
 
-  auto image = context->createBackedImage(
+  auto image = device->createBackedImage(
     levels[0].mWidth,
     levels[0].mHeight,
     1,
@@ -248,14 +247,14 @@ void Texture::initData(
     info.subresourceRange.baseArrayLayer = 0;
     info.subresourceRange.layerCount     = layerCount;
 
-    mImageView = context->createImageView(info);
+    mImageView = device->createImageView(info);
   }
 
   {
     vk::SamplerCreateInfo info(sampler);
     info.maxLod = levels.size();
 
-    mSampler = context->createSampler(info);
+    mSampler = device->createSampler(info);
   }
 
   vk::ImageSubresourceRange subresourceRange;
@@ -265,16 +264,24 @@ void Texture::initData(
   subresourceRange.layerCount   = layerCount;
 
   if (data) {
-    context->transitionImageLayout(
-      mImage, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, subresourceRange);
+    auto cmd = device->beginSingleTimeGraphicsCommands();
+    {
+      cmd->transitionImageLayout(
+        *mImage,
+        vk::ImageLayout::eUndefined,
+        vk::ImageLayout::eTransferDstOptimal,
+        vk::PipelineStageFlagBits::eTransfer,
+        subresourceRange);
+    }
+    device->endSingleTimeGraphicsCommands();
 
-    auto stagingBuffer = context->createBackedBuffer(
+    auto stagingBuffer = device->createBackedBuffer(
       size,
       vk::BufferUsageFlagBits::eTransferSrc,
       vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
       data);
 
-    auto cmd = context->beginSingleTimeGraphicsCommands();
+    cmd = device->beginSingleTimeGraphicsCommands();
     {
       std::vector<vk::BufferImageCopy> infos;
       uint64_t                         offset = 0;
@@ -300,13 +307,18 @@ void Texture::initData(
       cmd->copyBufferToImage(
         *stagingBuffer->mBuffer, *mImage, vk::ImageLayout::eTransferDstOptimal, infos);
     }
-    context->endSingleTimeGraphicsCommands(cmd);
+    device->endSingleTimeGraphicsCommands();
 
-    context->transitionImageLayout(
-      mImage,
-      vk::ImageLayout::eTransferDstOptimal,
-      vk::ImageLayout::eShaderReadOnlyOptimal,
-      subresourceRange);
+    cmd = device->beginSingleTimeGraphicsCommands();
+    {
+      cmd->transitionImageLayout(
+        *mImage,
+        vk::ImageLayout::eTransferDstOptimal,
+        vk::ImageLayout::eShaderReadOnlyOptimal,
+        vk::PipelineStageFlagBits::eTransfer,
+        subresourceRange);
+    }
+    device->endSingleTimeGraphicsCommands();
   }
 }
 

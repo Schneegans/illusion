@@ -25,7 +25,7 @@ namespace Illusion::Graphics {
 class DescriptorPool {
  public:
   DescriptorPool(
-    std::shared_ptr<Context> const&                 context,
+    std::shared_ptr<Device> const&                  device,
     std::shared_ptr<DescriptorSetReflection> const& reflection);
   virtual ~DescriptorPool();
 
@@ -33,7 +33,7 @@ class DescriptorPool {
 
  private:
   const uint32_t                           mMaxSetsPerPool = 64;
-  std::shared_ptr<Context>                 mContext;
+  std::shared_ptr<Device>                  mDevice;
   std::shared_ptr<DescriptorSetReflection> mReflection;
   std::vector<vk::DescriptorPoolSize>      mPoolSizes;
 

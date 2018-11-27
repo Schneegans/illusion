@@ -27,7 +27,7 @@ namespace Illusion::Graphics {
 
 class PipelineReflection {
  public:
-  PipelineReflection(std::shared_ptr<Context> const& context);
+  PipelineReflection(std::shared_ptr<Device> const& device);
   virtual ~PipelineReflection();
 
   void addResource(PipelineResource const& resource);
@@ -42,7 +42,7 @@ class PipelineReflection {
   void                                       printInfo() const;
 
  private:
-  std::shared_ptr<Context>                                     mContext;
+  std::shared_ptr<Device>                                      mDevice;
   std::map<uint32_t, std::shared_ptr<DescriptorSetReflection>> mDescriptorSetReflections;
   std::map<std::string, PipelineResource>                      mInputs;
   std::map<std::string, PipelineResource>                      mOutputs;

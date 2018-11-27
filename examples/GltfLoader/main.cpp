@@ -19,18 +19,18 @@
 #include <thread>
 
 int main(int argc, char* argv[]) {
-  auto engine  = std::make_shared<Illusion::Graphics::Engine>("Triangle Demo");
-  auto context = std::make_shared<Illusion::Graphics::Context>(engine->getPhysicalDevice());
-  auto window  = std::make_shared<Illusion::Graphics::Window>(engine, context);
+  auto engine = std::make_shared<Illusion::Graphics::Engine>("Triangle Demo");
+  auto device = std::make_shared<Illusion::Graphics::Device>(engine->getPhysicalDevice());
+  auto window = std::make_shared<Illusion::Graphics::Window>(engine, device);
   window->open();
 
   auto shader = Illusion::Graphics::ShaderProgram::createFromGlslFiles(
-    context,
+    device,
     {{vk::ShaderStageFlagBits::eVertex, "data/shaders/Triangle.vert"},
      {vk::ShaderStageFlagBits::eFragment, "data/shaders/Triangle.frag"}});
 
   auto model =
-    std::make_shared<Illusion::Graphics::GltfModel>(context, "data/models/DamagedHelmet.glb");
+    std::make_shared<Illusion::Graphics::GltfModel>(device, "data/models/DamagedHelmet.glb");
   model->printInfo();
 
   return 0;

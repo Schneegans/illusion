@@ -8,12 +8,13 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_SHADERMODULE_HPP
-#define ILLUSION_GRAPHICS_SHADERMODULE_HPP
+#ifndef ILLUSION_GRAPHICS_RENDERTARGET_HPP
+#define ILLUSION_GRAPHICS_RENDERTARGET_HPP
 
 // ---------------------------------------------------------------------------------------- includes
-#include "PipelineResource.hpp"
 #include "fwd.hpp"
+
+#include <glm/glm.hpp>
 
 namespace Illusion::Graphics {
 
@@ -21,32 +22,29 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // -------------------------------------------------------------------------------------------------
-class ShaderModule {
+class Framebuffer {
  public:
-  static std::vector<uint32_t> compileGlsl(std::string const& glsl, vk::ShaderStageFlagBits stage);
+  // -------------------------------------------------------------------------------- public methods
+  Framebuffer(
+    std::shared_ptr<Device> const&         device,
+    std::shared_ptr<vk::RenderPass> const& renderPass,
+    glm::uvec2 const&                      extent,
+    std::vector<vk::Format> const&         attachments);
 
-  ShaderModule(
-    std::shared_ptr<Device> const& device, std::string const& glsl, vk::ShaderStageFlagBits stage);
+  virtual ~Framebuffer();
 
-  ShaderModule(
-    std::shared_ptr<Device> const& device,
-    std::vector<uint32_t>&&        spirv,
-    vk::ShaderStageFlagBits        stage);
-
-  virtual ~ShaderModule();
-
-  vk::ShaderStageFlagBits              getStage() const;
-  std::shared_ptr<vk::ShaderModule>    getModule() const;
-  std::vector<PipelineResource> const& getResources() const;
+  std::shared_ptr<vk::Framebuffer> const&          getFramebuffer() const { return mFramebuffer; }
+  std::vector<std::shared_ptr<BackedImage>> const& getImages() const { return mImageStore; }
 
  private:
-  void createReflection();
+  std::shared_ptr<Device>         mDevice;
+  std::shared_ptr<vk::RenderPass> mRenderPass;
+  glm::uvec2                      mExtent;
 
-  std::vector<uint32_t>             mSpirv;
-  vk::ShaderStageFlagBits           mStage;
-  std::shared_ptr<vk::ShaderModule> mModule;
-  std::vector<PipelineResource>     mResources;
+  std::shared_ptr<vk::Framebuffer>            mFramebuffer;
+  std::vector<std::shared_ptr<vk::ImageView>> mImageViewStore;
+  std::vector<std::shared_ptr<BackedImage>>   mImageStore;
 };
 } // namespace Illusion::Graphics
 
-#endif // ILLUSION_GRAPHICS_SHADERMODULE_HPP
+#endif // ILLUSION_GRAPHICS_RENDERTARGET_HPP

@@ -8,46 +8,43 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_RENDERTARGET_HPP
-#define ILLUSION_GRAPHICS_RENDERTARGET_HPP
+#ifndef ILLUSION_GRAPHICS_BUFFER_CACHE_HPP
+#define ILLUSION_GRAPHICS_BUFFER_CACHE_HPP
 
 // ---------------------------------------------------------------------------------------- includes
+#include "../Core/BitHash.hpp"
 #include "fwd.hpp"
+
+#include <map>
+#include <set>
 
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// -------------------------------------------------------------------------------------------------
-class RenderTarget {
+class BufferCache {
  public:
-  struct AttachmentDescription {
-    vk::Format                 mFormat;
-    std::shared_ptr<vk::Image> mImage;
-  };
+  BufferCache(std::shared_ptr<Device> const& device);
+  virtual ~BufferCache();
 
-  // -------------------------------------------------------------------------------- public methods
-  RenderTarget(
-    std::shared_ptr<Context> const&           context,
-    std::shared_ptr<vk::RenderPass> const&    renderPass,
-    vk::Extent2D const&                       extent,
-    std::vector<AttachmentDescription> const& attachmentDescriptions);
+  std::shared_ptr<BackedBuffer> acquireHandle(
+    vk::DeviceSize size, vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties);
+  void releaseHandle(std::shared_ptr<BackedBuffer> const& handle);
 
-  virtual ~RenderTarget();
-
-  std::shared_ptr<vk::Framebuffer> const& getFramebuffer() const { return mFramebuffer; }
+  void releaseAll();
+  void deleteAll();
 
  private:
-  std::shared_ptr<Context>        mContext;
-  std::shared_ptr<vk::RenderPass> mRenderPass;
-  vk::Extent2D                    mExtent;
+  struct CacheEntry {
+    std::set<std::shared_ptr<BackedBuffer>> mUsedHandels;
+    std::set<std::shared_ptr<BackedBuffer>> mFreeHandels;
+  };
 
-  std::shared_ptr<vk::Framebuffer> mFramebuffer;
-
-  std::vector<std::shared_ptr<vk::ImageView>> mImageViewStore;
-  std::vector<std::shared_ptr<vk::Image>>     mImageStore;
+  std::shared_ptr<Device>                     mDevice;
+  mutable std::map<Core::BitHash, CacheEntry> mCache;
 };
+
 } // namespace Illusion::Graphics
 
-#endif // ILLUSION_GRAPHICS_RENDERTARGET_HPP
+#endif // ILLUSION_GRAPHICS_BUFFER_CACHE_HPP

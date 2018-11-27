@@ -15,7 +15,6 @@
 #include "../Core/BitHash.hpp"
 #include "DescriptorSetReflection.hpp"
 
-#include <list>
 #include <map>
 
 namespace Illusion::Graphics {
@@ -25,7 +24,7 @@ namespace Illusion::Graphics {
 
 class DescriptorSetCache {
  public:
-  DescriptorSetCache(std::shared_ptr<Context> const& context);
+  DescriptorSetCache(std::shared_ptr<Device> const& device);
   virtual ~DescriptorSetCache();
 
   std::shared_ptr<DescriptorSet> acquireHandle(
@@ -43,7 +42,7 @@ class DescriptorSetCache {
     std::set<std::shared_ptr<DescriptorSet>> mFreeHandels;
   };
 
-  std::shared_ptr<Context>                    mContext;
+  std::shared_ptr<Device>                     mDevice;
   mutable std::map<Core::BitHash, CacheEntry> mCache;
 };
 

@@ -12,9 +12,9 @@
 #include "DescriptorPool.hpp"
 
 #include "../Core/Logger.hpp"
-#include "Context.hpp"
 #include "DescriptorSet.hpp"
 #include "DescriptorSetReflection.hpp"
+#include "Device.hpp"
 #include "Utils.hpp"
 
 #include <iostream>
@@ -40,9 +40,8 @@ const std::unordered_map<PipelineResource::ResourceType, vk::DescriptorType> res
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 DescriptorPool::DescriptorPool(
-  std::shared_ptr<Context> const&                 context,
-  std::shared_ptr<DescriptorSetReflection> const& reflection)
-  : mContext(context)
+  std::shared_ptr<Device> const& device, std::shared_ptr<DescriptorSetReflection> const& reflection)
+  : mDevice(device)
   , mReflection(reflection) {
 
   ILLUSION_TRACE << "Creating DescriptorPool." << std::endl;
@@ -94,7 +93,7 @@ std::shared_ptr<DescriptorSet> DescriptorPool::allocateDescriptorSet() {
     info.flags         = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
 
     pool                   = std::make_shared<PoolInfo>();
-    pool->mPool            = mContext->createDescriptorPool(info);
+    pool->mPool            = mDevice->createDescriptorPool(info);
     pool->mAllocationCount = 0;
     mDescriptorPools.push_back(pool);
   }
@@ -109,13 +108,12 @@ std::shared_ptr<DescriptorSet> DescriptorPool::allocateDescriptorSet() {
 
   ILLUSION_TRACE << "Allocating DescriptorSet." << std::endl;
 
-  auto device{mContext->getDevice()};
+  auto device{mDevice->getHandle()};
   return std::shared_ptr<DescriptorSet>(
-    new DescriptorSet(mContext, mReflection->getSet(), device->allocateDescriptorSets(info)[0]),
+    new DescriptorSet(mDevice, mReflection->getSet(), device->allocateDescriptorSets(info)[0]),
     [device, pool](DescriptorSet* obj) {
       ILLUSION_TRACE << "Freeing DescriptorSet." << std::endl;
       --pool->mAllocationCount;
-      device->waitIdle();
       device->freeDescriptorSets(*pool->mPool, *obj);
       delete obj;
     });

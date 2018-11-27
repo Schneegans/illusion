@@ -12,7 +12,7 @@
 #include "PipelineCache.hpp"
 
 #include "../Core/Logger.hpp"
-#include "Context.hpp"
+#include "Device.hpp"
 #include "GraphicsState.hpp"
 #include "PipelineReflection.hpp"
 #include "ShaderModule.hpp"
@@ -22,8 +22,8 @@
 
 namespace Illusion::Graphics {
 
-PipelineCache::PipelineCache(std::shared_ptr<Context> const& context)
-  : mContext(context) {}
+PipelineCache::PipelineCache(std::shared_ptr<Device> const& device)
+  : mDevice(device) {}
 
 PipelineCache::~PipelineCache() {}
 
@@ -85,8 +85,17 @@ std::shared_ptr<vk::Pipeline> PipelineCache::getPipelineHandle(
     viewports.push_back(
       {i.mOffset[0], i.mOffset[1], i.mExtend[0], i.mExtend[1], i.mMinDepth, i.mMaxDepth});
   }
-  for (auto const& i : gs.getScissors()) {
-    scissors.push_back({{i.mOffset[0], i.mOffset[1]}, {i.mExtend[0], i.mExtend[1]}});
+
+  // use viewport as scissors if no scissors are defined
+  if (gs.getScissors().size() > 0) {
+    for (auto const& i : gs.getScissors()) {
+      scissors.push_back({{i.mOffset[0], i.mOffset[1]}, {i.mExtend[0], i.mExtend[1]}});
+    }
+  } else {
+    for (auto const& i : gs.getViewports()) {
+      scissors.push_back({{(int32_t)i.mOffset[0], (int32_t)i.mOffset[1]},
+                          {(uint32_t)i.mExtend[0], (uint32_t)i.mExtend[1]}});
+    }
   }
   viewportStateInfo.viewportCount = viewports.size();
   viewportStateInfo.pViewports    = viewports.data();
@@ -186,7 +195,7 @@ std::shared_ptr<vk::Pipeline> PipelineCache::getPipelineHandle(
 
   if (gs.getShaderProgram()) { info.layout = *gs.getShaderProgram()->getReflection()->getLayout(); }
 
-  auto pipeline = mContext->createPipeline(info);
+  auto pipeline = mDevice->createPipeline(info);
 
   std::unique_lock<std::mutex> lock(mMutex);
   mCache[hash] = pipeline;

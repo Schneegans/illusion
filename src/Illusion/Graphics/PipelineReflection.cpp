@@ -12,7 +12,7 @@
 #include "PipelineReflection.hpp"
 
 #include "../Core/Logger.hpp"
-#include "Context.hpp"
+#include "Device.hpp"
 
 #include <functional>
 #include <iostream>
@@ -22,8 +22,8 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-PipelineReflection::PipelineReflection(std::shared_ptr<Context> const& context)
-  : mContext(context) {}
+PipelineReflection::PipelineReflection(std::shared_ptr<Device> const& device)
+  : mDevice(device) {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -75,7 +75,7 @@ void PipelineReflection::addResource(PipelineResource const& resource) {
   if (it != mDescriptorSetReflections.end()) {
     it->second->addResource(resource);
   } else {
-    auto setReflection = std::make_shared<DescriptorSetReflection>(mContext, resource.mSet);
+    auto setReflection = std::make_shared<DescriptorSetReflection>(mDevice, resource.mSet);
     setReflection->addResource(resource);
     mDescriptorSetReflections.emplace(resource.mSet, setReflection);
   }
@@ -151,7 +151,7 @@ std::shared_ptr<vk::PipelineLayout> const& PipelineReflection::getLayout() const
     pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(pushConstantRanges.size());
     pipelineLayoutInfo.pPushConstantRanges    = pushConstantRanges.data();
 
-    mLayout = mContext->createPipelineLayout(pipelineLayoutInfo);
+    mLayout = mDevice->createPipelineLayout(pipelineLayoutInfo);
   }
 
   return mLayout;
