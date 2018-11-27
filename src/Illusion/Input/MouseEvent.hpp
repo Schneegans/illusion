@@ -18,7 +18,7 @@ namespace Illusion::Input {
 
 struct MouseEvent {
 
-  enum class Type { MOVE, SCROLL, PRESS, RELEASE, LEAVE };
+  enum class Type { eMove, eScroll, ePress, eRelease, eLeave };
 
   // -------------------------------------------------------------------------------- public methods
   MouseEvent();

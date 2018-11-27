@@ -29,7 +29,7 @@ namespace Illusion::Graphics {
 class Window {
 
  public:
-  enum class Cursor { POINTER, IBEAM, CROSS, HAND, HRESIZE, VRESIZE };
+  enum class Cursor { ePointer, eIBeam, eCross, eHand, eHResize, eVResize };
 
   // ------------------------------------------------------------------------------------ properties
   Core::String           pTitle      = std::string("Illusion3D");
@@ -39,7 +39,7 @@ class Window {
   Core::Bool             pVsync      = false;
   Core::Bool             pHideCursor = false;
   Core::Bool             pFullscreen = false;
-  Core::Property<Cursor> pCursor     = Cursor::POINTER;
+  Core::Property<Cursor> pCursor     = Cursor::ePointer;
 
   // --------------------------------------------------------------------------------------- signals
   Core::Signal<>                                                sOnClose;
@@ -83,13 +83,13 @@ class Window {
   std::shared_ptr<Swapchain>      mSwapchain;
 
   std::array<
-    std::array<float, static_cast<int>(Input::JoystickAxisId::JOYSTICK_AXIS_NUM)>,
-    static_cast<int>(Input::JoystickId::JOYSTICK_NUM)>
+    std::array<float, static_cast<int>(Input::JoystickAxisId::eJoystickAxisNum)>,
+    static_cast<int>(Input::JoystickId::eJoystickNum)>
     mJoystickAxisCache;
 
   std::array<
-    std::array<int, static_cast<int>(Input::JoystickButtonId::JOYSTICK_BUTTON_NUM)>,
-    static_cast<int>(Input::JoystickId::JOYSTICK_NUM)>
+    std::array<int, static_cast<int>(Input::JoystickButtonId::eJoystickButtonNum)>,
+    static_cast<int>(Input::JoystickId::eJoystickNum)>
     mJoystickButtonCache;
 
   glm::ivec2 mOrigSize = glm::ivec2(640, 480), mOrigPos = glm::ivec2(0, 0);

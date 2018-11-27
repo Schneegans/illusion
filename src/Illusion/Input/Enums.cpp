@@ -17,467 +17,467 @@ namespace Illusion::Input {
 
 std::ostream& operator<<(std::ostream& os, Key key) {
   switch (key) {
-  case Key::BACKSPACE:
-    os << "BACKSPACE";
+  case Key::eBackspace:
+    os << "Backspace";
     break;
-  case Key::TAB:
-    os << "TAB";
+  case Key::eTab:
+    os << "Tab";
     break;
-  case Key::CLEAR:
-    os << "CLEAR";
+  case Key::eClear:
+    os << "Clear";
     break;
-  case Key::RETURN:
-    os << "RETURN";
+  case Key::eReturn:
+    os << "Return";
     break;
-  case Key::SHIFT:
-    os << "SHIFT";
+  case Key::eShift:
+    os << "Shift";
     break;
-  case Key::CONTROL:
-    os << "CONTROL";
+  case Key::eControl:
+    os << "Control";
     break;
-  case Key::ALT:
-    os << "ALT";
+  case Key::eAlt:
+    os << "Alt";
     break;
-  case Key::PAUSE:
-    os << "PAUSE";
+  case Key::ePause:
+    os << "Pause";
     break;
-  case Key::CAPS_LOCK:
-    os << "CAPS_LOCK";
+  case Key::eCapsLock:
+    os << "CapsLock";
     break;
-  case Key::KANA:
-    os << "KANA";
+  case Key::eKana:
+    os << "Kana";
     break;
-  case Key::JUNJA:
-    os << "JUNJA";
+  case Key::eJunja:
+    os << "Junja";
     break;
-  case Key::FINAL:
-    os << "FINAL";
+  case Key::eFinal:
+    os << "Final";
     break;
-  case Key::HANJA:
-    os << "HANJA";
+  case Key::eHanja:
+    os << "Hanja";
     break;
-  case Key::ESCAPE:
-    os << "ESCAPE";
+  case Key::eEscape:
+    os << "Escape";
     break;
-  case Key::CONVERT:
-    os << "CONVERT";
+  case Key::eConvert:
+    os << "Convert";
     break;
-  case Key::NONCONVERT:
-    os << "NONCONVERT";
+  case Key::eNonconvert:
+    os << "Nonconvert";
     break;
-  case Key::ACCEPT:
-    os << "ACCEPT";
+  case Key::eAccept:
+    os << "Accept";
     break;
-  case Key::MODECHANGE:
-    os << "MODECHANGE";
+  case Key::eModechange:
+    os << "Modechange";
     break;
-  case Key::SPACE:
-    os << "SPACE";
+  case Key::eSpace:
+    os << "Space";
     break;
-  case Key::PAGE_UP:
-    os << "PAGE_UP";
+  case Key::ePageUp:
+    os << "PageUp";
     break;
-  case Key::PAGE_DOWN:
-    os << "PAGE_DOWN";
+  case Key::ePageDown:
+    os << "PageDown";
     break;
-  case Key::END:
-    os << "END";
+  case Key::eEnd:
+    os << "End";
     break;
-  case Key::HOME:
-    os << "HOME";
+  case Key::eHome:
+    os << "Home";
     break;
-  case Key::LEFT:
-    os << "LEFT";
+  case Key::eLeft:
+    os << "Left";
     break;
-  case Key::UP:
-    os << "UP";
+  case Key::eUp:
+    os << "Up";
     break;
-  case Key::RIGHT:
-    os << "RIGHT";
+  case Key::eRight:
+    os << "Right";
     break;
-  case Key::DOWN:
-    os << "DOWN";
+  case Key::eDown:
+    os << "Down";
     break;
-  case Key::SELECT:
-    os << "SELECT";
+  case Key::eSelect:
+    os << "Select";
     break;
-  case Key::PRINT:
-    os << "PRINT";
+  case Key::ePrint:
+    os << "Print";
     break;
-  case Key::EXECUTE:
-    os << "EXECUTE";
+  case Key::eExecute:
+    os << "Execute";
     break;
-  case Key::PRINT_SCREEN:
-    os << "PRINT_SCREEN";
+  case Key::ePrintScreen:
+    os << "PrintScreen";
     break;
-  case Key::INSERT:
-    os << "INSERT";
+  case Key::eInsert:
+    os << "Insert";
     break;
-  case Key::KEY_DELETE:
-    os << "DELETE";
+  case Key::eDelete:
+    os << "Delete";
     break;
-  case Key::HELP:
-    os << "HELP";
+  case Key::eHelp:
+    os << "Help";
     break;
-  case Key::KEY_0:
-    os << "KEY_0";
+  case Key::e0:
+    os << "0";
     break;
-  case Key::KEY_1:
-    os << "KEY_1";
+  case Key::e1:
+    os << "1";
     break;
-  case Key::KEY_2:
-    os << "KEY_2";
+  case Key::e2:
+    os << "2";
     break;
-  case Key::KEY_3:
-    os << "KEY_3";
+  case Key::e3:
+    os << "3";
     break;
-  case Key::KEY_4:
-    os << "KEY_4";
+  case Key::e4:
+    os << "4";
     break;
-  case Key::KEY_5:
-    os << "KEY_5";
+  case Key::e5:
+    os << "5";
     break;
-  case Key::KEY_6:
-    os << "KEY_6";
+  case Key::e6:
+    os << "6";
     break;
-  case Key::KEY_7:
-    os << "KEY_7";
+  case Key::e7:
+    os << "7";
     break;
-  case Key::KEY_8:
-    os << "KEY_8";
+  case Key::e8:
+    os << "8";
     break;
-  case Key::KEY_9:
-    os << "KEY_9";
+  case Key::e9:
+    os << "9";
     break;
-  case Key::KEY_A:
-    os << "KEY_A";
+  case Key::eA:
+    os << "A";
     break;
-  case Key::KEY_B:
-    os << "KEY_B";
+  case Key::eB:
+    os << "B";
     break;
-  case Key::KEY_C:
-    os << "KEY_C";
+  case Key::eC:
+    os << "C";
     break;
-  case Key::KEY_D:
-    os << "KEY_D";
+  case Key::eD:
+    os << "D";
     break;
-  case Key::KEY_E:
-    os << "KEY_E";
+  case Key::eE:
+    os << "E";
     break;
-  case Key::KEY_F:
-    os << "KEY_F";
+  case Key::eF:
+    os << "F";
     break;
-  case Key::KEY_G:
-    os << "KEY_G";
+  case Key::eG:
+    os << "G";
     break;
-  case Key::KEY_H:
-    os << "KEY_H";
+  case Key::eH:
+    os << "H";
     break;
-  case Key::KEY_I:
-    os << "KEY_I";
+  case Key::eI:
+    os << "I";
     break;
-  case Key::KEY_J:
-    os << "KEY_J";
+  case Key::eJ:
+    os << "J";
     break;
-  case Key::KEY_K:
-    os << "KEY_K";
+  case Key::eK:
+    os << "K";
     break;
-  case Key::KEY_L:
-    os << "KEY_L";
+  case Key::eL:
+    os << "L";
     break;
-  case Key::KEY_M:
-    os << "KEY_M";
+  case Key::eM:
+    os << "M";
     break;
-  case Key::KEY_N:
-    os << "KEY_N";
+  case Key::eN:
+    os << "N";
     break;
-  case Key::KEY_O:
-    os << "KEY_O";
+  case Key::eO:
+    os << "O";
     break;
-  case Key::KEY_P:
-    os << "KEY_P";
+  case Key::eP:
+    os << "P";
     break;
-  case Key::KEY_Q:
-    os << "KEY_Q";
+  case Key::eQ:
+    os << "Q";
     break;
-  case Key::KEY_R:
-    os << "KEY_R";
+  case Key::eR:
+    os << "R";
     break;
-  case Key::KEY_S:
-    os << "KEY_S";
+  case Key::eS:
+    os << "S";
     break;
-  case Key::KEY_T:
-    os << "KEY_T";
+  case Key::eT:
+    os << "T";
     break;
-  case Key::KEY_U:
-    os << "KEY_U";
+  case Key::eU:
+    os << "U";
     break;
-  case Key::KEY_V:
-    os << "KEY_V";
+  case Key::eV:
+    os << "V";
     break;
-  case Key::KEY_W:
-    os << "KEY_W";
+  case Key::eW:
+    os << "W";
     break;
-  case Key::KEY_X:
-    os << "KEY_X";
+  case Key::eX:
+    os << "X";
     break;
-  case Key::KEY_Y:
-    os << "KEY_Y";
+  case Key::eY:
+    os << "Y";
     break;
-  case Key::KEY_Z:
-    os << "KEY_Z";
+  case Key::eZ:
+    os << "Z";
     break;
-  case Key::LEFT_SUPER:
-    os << "LEFT_SUPER";
+  case Key::eLeftSuper:
+    os << "LeftSuper";
     break;
-  case Key::RIGHT_SUPER:
-    os << "RIGHT_SUPER";
+  case Key::eRightSuper:
+    os << "RightSuper";
     break;
-  case Key::APPS:
-    os << "APPS";
+  case Key::eApps:
+    os << "Apps";
     break;
-  case Key::SLEEP:
-    os << "SLEEP";
+  case Key::eSleep:
+    os << "Sleep";
     break;
-  case Key::KP_0:
-    os << "KP_0";
+  case Key::eKp0:
+    os << "Kp0";
     break;
-  case Key::KP_1:
-    os << "KP_1";
+  case Key::eKp1:
+    os << "Kp1";
     break;
-  case Key::KP_2:
-    os << "KP_2";
+  case Key::eKp2:
+    os << "Kp2";
     break;
-  case Key::KP_3:
-    os << "KP_3";
+  case Key::eKp3:
+    os << "Kp3";
     break;
-  case Key::KP_4:
-    os << "KP_4";
+  case Key::eKp4:
+    os << "Kp4";
     break;
-  case Key::KP_5:
-    os << "KP_5";
+  case Key::eKp5:
+    os << "Kp5";
     break;
-  case Key::KP_6:
-    os << "KP_6";
+  case Key::eKp6:
+    os << "Kp6";
     break;
-  case Key::KP_7:
-    os << "KP_7";
+  case Key::eKp7:
+    os << "Kp7";
     break;
-  case Key::KP_8:
-    os << "KP_8";
+  case Key::eKp8:
+    os << "Kp8";
     break;
-  case Key::KP_9:
-    os << "KP_9";
+  case Key::eKp9:
+    os << "Kp9";
     break;
-  case Key::KP_MULTIPLY:
-    os << "KP_MULTIPLY";
+  case Key::eKpMultiply:
+    os << "KpMultiply";
     break;
-  case Key::KP_ADD:
-    os << "KP_ADD";
+  case Key::eKpAdd:
+    os << "KpAdd";
     break;
-  case Key::KP_SEPARATOR:
-    os << "KP_SEPARATOR";
+  case Key::eKpSeparator:
+    os << "KpSeparator";
     break;
-  case Key::KP_SUBTRACT:
-    os << "KP_SUBTRACT";
+  case Key::eKpSubtract:
+    os << "KpSubtract";
     break;
-  case Key::KP_DECIMAL:
-    os << "KP_DECIMAL";
+  case Key::eKpDecimal:
+    os << "KpDecimal";
     break;
-  case Key::KP_DIVIDE:
-    os << "KP_DIVIDE";
+  case Key::eKpDivide:
+    os << "KpDivide";
     break;
-  case Key::F1:
+  case Key::eF1:
     os << "F1";
     break;
-  case Key::F2:
+  case Key::eF2:
     os << "F2";
     break;
-  case Key::F3:
+  case Key::eF3:
     os << "F3";
     break;
-  case Key::F4:
+  case Key::eF4:
     os << "F4";
     break;
-  case Key::F5:
+  case Key::eF5:
     os << "F5";
     break;
-  case Key::F6:
+  case Key::eF6:
     os << "F6";
     break;
-  case Key::F7:
+  case Key::eF7:
     os << "F7";
     break;
-  case Key::F8:
+  case Key::eF8:
     os << "F8";
     break;
-  case Key::F9:
+  case Key::eF9:
     os << "F9";
     break;
-  case Key::F10:
+  case Key::eF10:
     os << "F10";
     break;
-  case Key::F11:
+  case Key::eF11:
     os << "F11";
     break;
-  case Key::F12:
+  case Key::eF12:
     os << "F12";
     break;
-  case Key::F13:
+  case Key::eF13:
     os << "F13";
     break;
-  case Key::F14:
+  case Key::eF14:
     os << "F14";
     break;
-  case Key::F15:
+  case Key::eF15:
     os << "F15";
     break;
-  case Key::F16:
+  case Key::eF16:
     os << "F16";
     break;
-  case Key::F17:
+  case Key::eF17:
     os << "F17";
     break;
-  case Key::F18:
+  case Key::eF18:
     os << "F18";
     break;
-  case Key::F19:
+  case Key::eF19:
     os << "F19";
     break;
-  case Key::F20:
+  case Key::eF20:
     os << "F20";
     break;
-  case Key::F21:
+  case Key::eF21:
     os << "F21";
     break;
-  case Key::F22:
+  case Key::eF22:
     os << "F22";
     break;
-  case Key::F23:
+  case Key::eF23:
     os << "F23";
     break;
-  case Key::F24:
+  case Key::eF24:
     os << "F24";
     break;
-  case Key::NUM_LOCK:
-    os << "NUM_LOCK";
+  case Key::eNumLock:
+    os << "NumLock";
     break;
-  case Key::SCROLL_LOCK:
-    os << "SCROLL_LOCK";
+  case Key::eScrollLock:
+    os << "ScrollLock";
     break;
-  case Key::LEFT_SHIFT:
-    os << "LEFT_SHIFT";
+  case Key::eLeftShift:
+    os << "LeftShift";
     break;
-  case Key::RIGHT_SHIFT:
-    os << "RIGHT_SHIFT";
+  case Key::eRightShift:
+    os << "RightShift";
     break;
-  case Key::LEFT_CONTROL:
-    os << "LEFT_CONTROL";
+  case Key::eLeftControl:
+    os << "LeftControl";
     break;
-  case Key::RIGHT_CONTROL:
-    os << "RIGHT_CONTROL";
+  case Key::eRightControl:
+    os << "RightControl";
     break;
-  case Key::LEFT_MENU:
-    os << "LEFT_MENU";
+  case Key::eLeftMenu:
+    os << "LeftMenu";
     break;
-  case Key::RIGHT_MENU:
-    os << "RIGHT_MENU";
+  case Key::eRightMenu:
+    os << "RightMenu";
     break;
-  case Key::BROWSER_BACK:
-    os << "BROWSER_BACK";
+  case Key::eBrowserBack:
+    os << "BrowserBack";
     break;
-  case Key::BROWSER_FORWARD:
-    os << "BROWSER_FORWARD";
+  case Key::eBrowserForward:
+    os << "BrowserForward";
     break;
-  case Key::BROWSER_REFRESH:
-    os << "BROWSER_REFRESH";
+  case Key::eBrowserRefresh:
+    os << "BrowserRefresh";
     break;
-  case Key::BROWSER_STOP:
-    os << "BROWSER_STOP";
+  case Key::eBrowserStop:
+    os << "BrowserStop";
     break;
-  case Key::BROWSER_SEARCH:
-    os << "BROWSER_SEARCH";
+  case Key::eBrowserSearch:
+    os << "BrowserSearch";
     break;
-  case Key::BROWSER_FAVORITES:
-    os << "BROWSER_FAVORITES";
+  case Key::eBrowserFavorites:
+    os << "BrowserFavorites";
     break;
-  case Key::BROWSER_HOME:
-    os << "BROWSER_HOME";
+  case Key::eBrowserHome:
+    os << "BrowserHome";
     break;
-  case Key::VOLUME_MUTE:
-    os << "VOLUME_MUTE";
+  case Key::eVolumeMute:
+    os << "VolumeMute";
     break;
-  case Key::VOLUME_DOWN:
-    os << "VOLUME_DOWN";
+  case Key::eVolumeDown:
+    os << "VolumeDown";
     break;
-  case Key::VOLUME_UP:
-    os << "VOLUME_UP";
+  case Key::eVolumeUp:
+    os << "VolumeUp";
     break;
-  case Key::MEDIA_NEXT_TRACK:
-    os << "MEDIA_NEXT_TRACK";
+  case Key::eMediaNextTrack:
+    os << "MediaNextTrack";
     break;
-  case Key::MEDIA_PREV_TRACK:
-    os << "MEDIA_PREV_TRACK";
+  case Key::eMediaPrevTrack:
+    os << "MediaPrevTrack";
     break;
-  case Key::MEDIA_STOP:
-    os << "MEDIA_STOP";
+  case Key::eMediaStop:
+    os << "MediaStop";
     break;
-  case Key::MEDIA_PLAY_PAUSE:
-    os << "MEDIA_PLAY_PAUSE";
+  case Key::eMediaPlayPause:
+    os << "MediaPlayPause";
     break;
-  case Key::MEDIA_LAUNCH_MAIL:
-    os << "MEDIA_LAUNCH_MAIL";
+  case Key::eMediaLaunchMail:
+    os << "MediaLaunchMail";
     break;
-  case Key::MEDIA_LAUNCH_MEDIA_SELECT:
-    os << "MEDIA_LAUNCH_MEDIA_SELECT";
+  case Key::eMediaLaunchMediaSelect:
+    os << "MediaLaunchMediaSelect";
     break;
-  case Key::MEDIA_LAUNCH_APP1:
-    os << "MEDIA_LAUNCH_APP1";
+  case Key::eMediaLaunchApp1:
+    os << "MediaLaunchApp1";
     break;
-  case Key::MEDIA_LAUNCH_APP2:
-    os << "MEDIA_LAUNCH_APP2";
+  case Key::eMediaLaunchApp2:
+    os << "MediaLaunchApp2";
     break;
-  case Key::PLUS:
-    os << "PLUS";
+  case Key::ePlus:
+    os << "Plus";
     break;
-  case Key::COMMA:
-    os << "COMMA";
+  case Key::eComma:
+    os << "Comma";
     break;
-  case Key::MINUS:
-    os << "MINUS";
+  case Key::eMinus:
+    os << "Minus";
     break;
-  case Key::PERIOD:
-    os << "PERIOD";
+  case Key::ePeriod:
+    os << "Period";
     break;
-  case Key::OEM_1:
-    os << "OEM_1";
+  case Key::eOem1:
+    os << "Oem1";
     break;
-  case Key::OEM_2:
-    os << "OEM_2";
+  case Key::eOem2:
+    os << "Oem2";
     break;
-  case Key::OEM_3:
-    os << "OEM_3";
+  case Key::eOem3:
+    os << "Oem3";
     break;
-  case Key::OEM_4:
-    os << "OEM_4";
+  case Key::eOem4:
+    os << "Oem4";
     break;
-  case Key::OEM_5:
-    os << "OEM_5";
+  case Key::eOem5:
+    os << "Oem5";
     break;
-  case Key::OEM_6:
-    os << "OEM_6";
+  case Key::eOem6:
+    os << "Oem6";
     break;
-  case Key::OEM_7:
-    os << "OEM_7";
+  case Key::eOem7:
+    os << "Oem7";
     break;
-  case Key::OEM_8:
-    os << "OEM_8";
+  case Key::eOem8:
+    os << "Oem8";
     break;
-  case Key::OEM_102:
-    os << "OEM_102";
+  case Key::eOem102:
+    os << "Oem102";
     break;
-  case Key::UNKNOWN:
-    os << "UNKNOWN";
+  case Key::eUnknown:
+    os << "Unknown";
     break;
   default:
     os << "ERROR";
@@ -508,50 +508,50 @@ std::ostream& operator<<(std::ostream& os, JoystickButtonId button) {
 
 std::ostream& operator<<(std::ostream& os, Xbox360ControllerButton button) {
   switch (button) {
-  case Xbox360ControllerButton::XBOX_A:
-    os << "XBOX_A";
+  case Xbox360ControllerButton::eXboxA:
+    os << "XboxA";
     return os;
-  case Xbox360ControllerButton::XBOX_B:
-    os << "XBOX_B";
+  case Xbox360ControllerButton::eXboxB:
+    os << "XboxB";
     return os;
-  case Xbox360ControllerButton::XBOX_X:
-    os << "XBOX_X";
+  case Xbox360ControllerButton::eXboxX:
+    os << "XboxX";
     return os;
-  case Xbox360ControllerButton::XBOX_Y:
-    os << "XBOX_Y";
+  case Xbox360ControllerButton::eXboxY:
+    os << "XboxY";
     return os;
-  case Xbox360ControllerButton::XBOX_BUMPER_LEFT:
-    os << "XBOX_BUMPER_LEFT";
+  case Xbox360ControllerButton::eXboxBumperLeft:
+    os << "XboxBumperLeft";
     return os;
-  case Xbox360ControllerButton::XBOX_BUMPER_RIGHT:
-    os << "XBOX_BUMPER_RIGHT";
+  case Xbox360ControllerButton::eXboxBumperRight:
+    os << "XboxBumperRight";
     return os;
-  case Xbox360ControllerButton::XBOX_BACK:
-    os << "XBOX_BACK";
+  case Xbox360ControllerButton::eXboxBack:
+    os << "XboxBack";
     return os;
-  case Xbox360ControllerButton::XBOX_START:
-    os << "XBOX_START";
+  case Xbox360ControllerButton::eXboxStart:
+    os << "XboxStart";
     return os;
-  case Xbox360ControllerButton::XBOX_XBOX:
-    os << "XBOX_XBOX";
+  case Xbox360ControllerButton::eXboxXbox:
+    os << "XboxXbox";
     return os;
-  case Xbox360ControllerButton::XBOX_LEFT_STICK_BUTTON:
-    os << "XBOX_LEFT_STICK_BUTTON";
+  case Xbox360ControllerButton::eXboxLeftStickButton:
+    os << "XboxLeftStickButton";
     return os;
-  case Xbox360ControllerButton::XBOX_RIGHT_STICK_BUTTON:
-    os << "XBOX_RIGHT_STICK_BUTTON";
+  case Xbox360ControllerButton::eXboxRightStickButton:
+    os << "XboxRightStickButton";
     return os;
-  case Xbox360ControllerButton::XBOX_PAD_UP:
-    os << "XBOX_PAD_UP";
+  case Xbox360ControllerButton::eXboxPadUp:
+    os << "XboxPadUp";
     return os;
-  case Xbox360ControllerButton::XBOX_PAD_RIGHT:
-    os << "XBOX_PAD_RIGHT";
+  case Xbox360ControllerButton::eXboxPadRight:
+    os << "XboxPadRight";
     return os;
-  case Xbox360ControllerButton::XBOX_PAD_DOWN:
-    os << "XBOX_PAD_DOWN";
+  case Xbox360ControllerButton::eXboxPadDown:
+    os << "XboxPadDown";
     return os;
-  case Xbox360ControllerButton::XBOX_PAD_LEFT:
-    os << "XBOX_PAD_LEFT";
+  case Xbox360ControllerButton::eXboxPadLeft:
+    os << "XboxPadLeft";
     return os;
   }
   return os;
@@ -559,23 +559,23 @@ std::ostream& operator<<(std::ostream& os, Xbox360ControllerButton button) {
 
 std::ostream& operator<<(std::ostream& os, Xbox360ControllerAxis axis) {
   switch (axis) {
-  case Xbox360ControllerAxis::XBOX_LEFT_STICK_X:
-    os << "XBOX_LEFT_STICK_X";
+  case Xbox360ControllerAxis::eXboxLeftStickX:
+    os << "XboxLeftStickX";
     return os;
-  case Xbox360ControllerAxis::XBOX_LEFT_STICK_Y:
-    os << "XBOX_LEFT_STICK_Y";
+  case Xbox360ControllerAxis::eXboxLeftStickY:
+    os << "XboxLeftStickY";
     return os;
-  case Xbox360ControllerAxis::XBOX_LEFT_TRIGGER:
-    os << "XBOX_LEFT_TRIGGER";
+  case Xbox360ControllerAxis::eXboxLeftTrigger:
+    os << "XboxLeftTrigger";
     return os;
-  case Xbox360ControllerAxis::XBOX_RIGHT_STICK_X:
-    os << "XBOX_RIGHT_STICK_X";
+  case Xbox360ControllerAxis::eXboxRightStickX:
+    os << "XboxRightStickX";
     return os;
-  case Xbox360ControllerAxis::XBOX_RIGHT_STICK_Y:
-    os << "XBOX_RIGHT_STICK_Y";
+  case Xbox360ControllerAxis::eXboxRightStickY:
+    os << "XboxRightStickY";
     return os;
-  case Xbox360ControllerAxis::XBOX_RIGHT_TRIGGER:
-    os << "XBOX_RIGHT_TRIGGER";
+  case Xbox360ControllerAxis::eXboxRightTrigger:
+    os << "XboxRightTrigger";
     return os;
   }
   return os;

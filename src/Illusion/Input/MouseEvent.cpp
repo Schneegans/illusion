@@ -16,53 +16,53 @@
 namespace Illusion::Input {
 
 MouseEvent::MouseEvent()
-  : mType(Type::MOVE)
+  : mType(Type::eMove)
   , mX(0)
   , mY(0) {}
 
 MouseEvent::MouseEvent(int x, int y) {
-  mType = MouseEvent::Type::MOVE;
+  mType = MouseEvent::Type::eMove;
   mX    = x;
   mY    = y;
 }
 
 MouseEvent::MouseEvent(int scrollAmount) {
-  mType = MouseEvent::Type::SCROLL;
+  mType = MouseEvent::Type::eScroll;
   mY    = scrollAmount;
 }
 
 MouseEvent::MouseEvent(int button, bool press) {
   if (button == GLFW_MOUSE_BUTTON_LEFT)
-    mButton = Button::BUTTON_1;
+    mButton = Button::eButton1;
   else if (button == GLFW_MOUSE_BUTTON_RIGHT)
-    mButton = Button::BUTTON_2;
+    mButton = Button::eButton2;
   else if (button == GLFW_MOUSE_BUTTON_MIDDLE)
-    mButton = Button::BUTTON_3;
+    mButton = Button::eButton3;
   else
     mButton = (Button)button;
 
   if (press)
-    mType = MouseEvent::Type::PRESS;
+    mType = MouseEvent::Type::ePress;
   else
-    mType = MouseEvent::Type::RELEASE;
+    mType = MouseEvent::Type::eRelease;
 }
 
 std::ostream& operator<<(std::ostream& os, MouseEvent const& e) {
   switch (e.mType) {
-  case MouseEvent::Type::MOVE:
-    os << "MOVE " << e.mX << " " << e.mY;
+  case MouseEvent::Type::eMove:
+    os << "move " << e.mX << " " << e.mY;
     return os;
-  case MouseEvent::Type::SCROLL:
-    os << "SCROLL " << e.mX << " " << e.mY;
+  case MouseEvent::Type::eScroll:
+    os << "scroll " << e.mX << " " << e.mY;
     return os;
-  case MouseEvent::Type::PRESS:
-    os << "PRESS " << e.mButton;
+  case MouseEvent::Type::ePress:
+    os << "press " << e.mButton;
     return os;
-  case MouseEvent::Type::RELEASE:
-    os << "RELEASE " << e.mButton;
+  case MouseEvent::Type::eRelease:
+    os << "release " << e.mButton;
     return os;
-  case MouseEvent::Type::LEAVE:
-    os << "LEAVE";
+  case MouseEvent::Type::eLeave:
+    os << "leave";
     return os;
   }
   return os;

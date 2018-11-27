@@ -22,8 +22,8 @@ namespace Illusion::Core {
 /// A class for smooth value interpolation.
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-enum class AnimationDirection { IN, OUT, IN_OUT, OUT_IN, LINEAR };
-enum class AnimationLoop { NONE, REPEAT, TOGGLE };
+enum class AnimationDirection { eIn, eOut, eInOut, eOutIn, eLinear };
+enum class AnimationLoop { eNone, eRepeat, eToggle };
 
 // -------------------------------------------------------------------------------------------------
 template <typename T>
@@ -32,8 +32,8 @@ class AnimatedProperty : public Property<T> {
   // ---------------------------------------------------------------------------------- public types
 
   // -------------------------------------------------------------------------------- public members
-  AnimationDirection mDirection = AnimationDirection::IN_OUT;
-  AnimationLoop      mLoop      = AnimationLoop::NONE;
+  AnimationDirection mDirection = AnimationDirection::eInOut;
+  AnimationLoop      mLoop      = AnimationLoop::eNone;
   double             mDuration  = 0.0;
   double             mExponent  = 0.0;
   double             mDelay     = 0.0;
@@ -56,8 +56,8 @@ class AnimatedProperty : public Property<T> {
     T const&           start,
     T const&           end,
     double             dur   = 1.0,
-    AnimationDirection dir   = AnimationDirection::IN_OUT,
-    AnimationLoop      loop  = AnimationLoop::NONE,
+    AnimationDirection dir   = AnimationDirection::eInOut,
+    AnimationLoop      loop  = AnimationLoop::eNone,
     double             exp   = 0.0,
     double             delay = 0.0)
     : Property<T>(start)
@@ -96,19 +96,19 @@ class AnimatedProperty : public Property<T> {
         mState += time / mDuration;
 
         switch (mDirection) {
-        case AnimationDirection::LINEAR:
+        case AnimationDirection::eLinear:
           Property<T>::set(updateLinear(mState, mStart, mEnd));
           break;
-        case AnimationDirection::IN:
+        case AnimationDirection::eIn:
           Property<T>::set(updateEaseIn(mState, mStart, mEnd));
           break;
-        case AnimationDirection::OUT:
+        case AnimationDirection::eOut:
           Property<T>::set(updateEaseOut(mState, mStart, mEnd));
           break;
-        case AnimationDirection::IN_OUT:
+        case AnimationDirection::eInOut:
           Property<T>::set(updateEaseInOut(mState, mStart, mEnd));
           break;
-        case AnimationDirection::OUT_IN:
+        case AnimationDirection::eOutIn:
           Property<T>::set(updateEaseOutIn(mState, mStart, mEnd));
           break;
         }
@@ -118,11 +118,11 @@ class AnimatedProperty : public Property<T> {
       mState = -1.0;
       onFinish.emit();
 
-      if (mLoop == AnimationLoop::REPEAT) {
+      if (mLoop == AnimationLoop::eRepeat) {
         Property<T>::set(mStart);
         set(mEnd, mDuration);
 
-      } else if (mLoop == AnimationLoop::TOGGLE) {
+      } else if (mLoop == AnimationLoop::eToggle) {
         set(mStart, mDuration);
       }
     }
@@ -188,8 +188,8 @@ class AnimatedFloat : public AnimatedProperty<float> {
     float const&       start,
     float const&       end,
     double             duration  = 1.0,
-    AnimationDirection direction = AnimationDirection::IN_OUT,
-    AnimationLoop      loop      = AnimationLoop::NONE,
+    AnimationDirection direction = AnimationDirection::eInOut,
+    AnimationLoop      loop      = AnimationLoop::eNone,
     double             exponent  = 0.0,
     double             delay     = 0.0)
     : AnimatedProperty<float>(start, end, duration, direction, loop, exponent, delay) {}
@@ -221,8 +221,8 @@ class AnimatedDouble : public AnimatedProperty<double> {
     double const&      start,
     double const&      end,
     double             duration  = 1.0,
-    AnimationDirection direction = AnimationDirection::IN_OUT,
-    AnimationLoop      loop      = AnimationLoop::NONE,
+    AnimationDirection direction = AnimationDirection::eInOut,
+    AnimationLoop      loop      = AnimationLoop::eNone,
     double             exponent  = 0.0,
     double             delay     = 0.0)
     : AnimatedProperty<double>(start, end, duration, direction, loop, exponent, delay) {}

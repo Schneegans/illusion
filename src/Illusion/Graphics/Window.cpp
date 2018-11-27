@@ -33,19 +33,19 @@ Window::Window(std::shared_ptr<Engine> const& engine, std::shared_ptr<Device> co
     if (mCursor) { glfwDestroyCursor(mCursor); }
 
     switch (cursor) {
-    case Cursor::CROSS:
+    case Cursor::eCross:
       mCursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
       break;
-    case Cursor::HAND:
+    case Cursor::eHand:
       mCursor = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
       break;
-    case Cursor::IBEAM:
+    case Cursor::eIBeam:
       mCursor = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
       break;
-    case Cursor::VRESIZE:
+    case Cursor::eVResize:
       mCursor = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
       break;
-    case Cursor::HRESIZE:
+    case Cursor::eHResize:
       mCursor = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
       break;
     default:
@@ -222,8 +222,8 @@ bool Window::buttonPressed(Input::Button button) const {
 
 float Window::joyAxis(int joyStick, int axis) {
   if (
-    joyStick >= static_cast<int>(Input::JoystickId::JOYSTICK_NUM) ||
-    axis >= static_cast<int>(Input::JoystickAxisId::JOYSTICK_AXIS_NUM)) {
+    joyStick >= static_cast<int>(Input::JoystickId::eJoystickNum) ||
+    axis >= static_cast<int>(Input::JoystickAxisId::eJoystickAxisNum)) {
     return 0;
   }
   if (!glfwJoystickPresent(joyStick)) { return 0; }
@@ -255,7 +255,7 @@ void Window::updateJoysticks() {
   const float minThreshold(0.15f);
   const float maxThreshold(0.9f);
 
-  const int joystickNum(static_cast<int>(Input::JoystickId::JOYSTICK_NUM));
+  const int joystickNum(static_cast<int>(Input::JoystickId::eJoystickNum));
   for (int joy(0); joy < joystickNum; ++joy) {
     if (glfwJoystickPresent(joy)) {
       Input::JoystickId joyId(static_cast<Input::JoystickId>(joy));

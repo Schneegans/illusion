@@ -18,7 +18,7 @@ namespace Illusion::Input {
 
 struct KeyEvent {
 
-  enum class Type { PRESS, RELEASE, REPEAT, CHARACTER };
+  enum class Type { ePress, eRelease, eRepeat, eCharacter };
 
   // -------------------------------------------------------------------------------- public methods
   KeyEvent();
