@@ -8,18 +8,21 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// ---------------------------------------------------------------------------------------- includes
 #include "KeyEvent.hpp"
 
 #include <GLFW/glfw3.h>
 
 namespace Illusion::Input {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 KeyEvent::KeyEvent()
   : mType(Type::ePress)
   , mModifiers(0)
   , mScancode(0)
   , mKey(Key::eUnknown) {}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 KeyEvent::KeyEvent(int key, int scancode, int action, int mods) {
   if (action == GLFW_RELEASE)
@@ -396,11 +399,15 @@ KeyEvent::KeyEvent(int key, int scancode, int action, int mods) {
   SetMods(mods);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 KeyEvent::KeyEvent(unsigned int key, int mods) {
   mType      = KeyEvent::Type::eCharacter;
   mCharacter = key;
   SetMods(mods);
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void KeyEvent::SetMods(int mods) {
   if (mods & GLFW_MOD_SHIFT) mModifiers |= (int)Modifier::eShift;
@@ -408,6 +415,8 @@ void KeyEvent::SetMods(int mods) {
   if (mods & GLFW_MOD_ALT) mModifiers |= (int)Modifier::eAlt;
   if (mods & GLFW_MOD_SUPER) mModifiers |= (int)Modifier::eCommand;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::ostream& operator<<(std::ostream& os, KeyEvent const& e) {
   switch (e.mType) {
@@ -426,5 +435,7 @@ std::ostream& operator<<(std::ostream& os, KeyEvent const& e) {
   }
   return os;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 } // namespace Illusion::Input

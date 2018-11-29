@@ -8,7 +8,6 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// ---------------------------------------------------------------------------------------- includes
 #include "Device.hpp"
 
 #include "../Core/Logger.hpp"
@@ -21,6 +20,8 @@
 #include <set>
 
 namespace Illusion::Graphics {
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 namespace {
 const std::vector<const char*> DEVICE_EXTENSIONS{VK_KHR_SWAPCHAIN_EXTENSION_NAME};
@@ -578,4 +579,5 @@ std::shared_ptr<vk::Device> Device::createDevice() const {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 } // namespace Illusion::Graphics

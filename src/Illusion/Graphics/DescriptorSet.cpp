@@ -8,7 +8,6 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// ---------------------------------------------------------------------------------------- includes
 #include "DescriptorSet.hpp"
 
 #include "../Core/Logger.hpp"
@@ -19,11 +18,15 @@
 
 namespace Illusion::Graphics {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 DescriptorSet::DescriptorSet(
   std::shared_ptr<Device> const& device, uint32_t set, vk::DescriptorSet const& base)
   : vk::DescriptorSet(base)
   , mDevice(device)
   , mSet(set) {}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void DescriptorSet::bindCombinedImageSampler(
   std::shared_ptr<Texture> const& texture, uint32_t binding) {
@@ -43,6 +46,8 @@ void DescriptorSet::bindCombinedImageSampler(
   mDevice->getHandle()->updateDescriptorSets(info, nullptr);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void DescriptorSet::bindStorageImage(std::shared_ptr<Texture> const& texture, uint32_t binding) {
   vk::DescriptorImageInfo imageInfo;
   imageInfo.imageLayout = vk::ImageLayout::eGeneral;
@@ -59,6 +64,8 @@ void DescriptorSet::bindStorageImage(std::shared_ptr<Texture> const& texture, ui
 
   mDevice->getHandle()->updateDescriptorSets(info, nullptr);
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void DescriptorSet::bindUniformBuffer(
   std::shared_ptr<BackedBuffer> const& buffer, uint32_t binding) {
@@ -78,6 +85,10 @@ void DescriptorSet::bindUniformBuffer(
   mDevice->getHandle()->updateDescriptorSets(info, nullptr);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 uint32_t DescriptorSet::getSet() const { return mSet; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 } // namespace Illusion::Graphics

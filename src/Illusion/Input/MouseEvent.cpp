@@ -8,17 +8,20 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// ---------------------------------------------------------------------------------------- includes
 #include "MouseEvent.hpp"
 
 #include <GLFW/glfw3.h>
 
 namespace Illusion::Input {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 MouseEvent::MouseEvent()
   : mType(Type::eMove)
   , mX(0)
   , mY(0) {}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 MouseEvent::MouseEvent(int x, int y) {
   mType = MouseEvent::Type::eMove;
@@ -26,10 +29,14 @@ MouseEvent::MouseEvent(int x, int y) {
   mY    = y;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 MouseEvent::MouseEvent(int scrollAmount) {
   mType = MouseEvent::Type::eScroll;
   mY    = scrollAmount;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 MouseEvent::MouseEvent(int button, bool press) {
   if (button == GLFW_MOUSE_BUTTON_LEFT)
@@ -46,6 +53,8 @@ MouseEvent::MouseEvent(int button, bool press) {
   else
     mType = MouseEvent::Type::eRelease;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::ostream& operator<<(std::ostream& os, MouseEvent const& e) {
   switch (e.mType) {
@@ -67,5 +76,7 @@ std::ostream& operator<<(std::ostream& os, MouseEvent const& e) {
   }
   return os;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 } // namespace Illusion::Input

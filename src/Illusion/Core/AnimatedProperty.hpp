@@ -11,7 +11,6 @@
 #ifndef ILLUSION_CORE_ANIMATED_PROPERTY_HPP
 #define ILLUSION_CORE_ANIMATED_PROPERTY_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include "Property.hpp"
 
 #include <glm/glm.hpp>
@@ -19,29 +18,25 @@
 namespace Illusion::Core {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// A class for smooth value interpolation.
+/// A class for smooth value interpolation.                                                       //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 enum class AnimationDirection { eIn, eOut, eInOut, eOutIn, eLinear };
 enum class AnimationLoop { eNone, eRepeat, eToggle };
 
-// -------------------------------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 template <typename T>
 class AnimatedProperty : public Property<T> {
  public:
-  // ---------------------------------------------------------------------------------- public types
-
-  // -------------------------------------------------------------------------------- public members
   AnimationDirection mDirection = AnimationDirection::eInOut;
   AnimationLoop      mLoop      = AnimationLoop::eNone;
   double             mDuration  = 0.0;
   double             mExponent  = 0.0;
   double             mDelay     = 0.0;
 
-  // -------------------------------------------------------------------------------- public signals
   Signal<> onFinish;
 
-  // -------------------------------------------------------------------------------- public methods
   AnimatedProperty()
     : Property<T>()
     , mStart()
@@ -140,7 +135,6 @@ class AnimatedProperty : public Property<T> {
   }
 
  protected:
-  // ------------------------------------------------------------------------------- private methods
   T updateLinear(T const& t, T const& s, double e) {
     return glm::clamp((T)(s + t * (e - s)), mStart, mEnd);
   }
@@ -167,19 +161,21 @@ class AnimatedProperty : public Property<T> {
       return updateEaseIn(t * 2 - 1, s + (e - s) * 0.5f, e);
   }
 
-  // ------------------------------------------------------------------------------- private members
   T      mStart, mEnd;
   double mState = 0.0;
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::ostream& operator<<(std::ostream& os, AnimationDirection value);
 std::istream& operator>>(std::istream& is, AnimationDirection& value);
 std::ostream& operator<<(std::ostream& os, AnimationLoop value);
 std::istream& operator>>(std::istream& is, AnimationLoop& value);
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 class AnimatedFloat : public AnimatedProperty<float> {
  public:
-  // -------------------------------------------------------------------------------- public methods
   AnimatedFloat()
     : AnimatedProperty<float>(0.f) {}
   AnimatedFloat(float val)
@@ -210,9 +206,10 @@ class AnimatedFloat : public AnimatedProperty<float> {
   }
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 class AnimatedDouble : public AnimatedProperty<double> {
  public:
-  // -------------------------------------------------------------------------------- public methods
   AnimatedDouble()
     : AnimatedProperty<double>(0.0) {}
   AnimatedDouble(double val)
@@ -242,6 +239,7 @@ class AnimatedDouble : public AnimatedProperty<double> {
     return *this;
   }
 };
+
 } // namespace Illusion::Core
 
 #endif // ILLUSION_CORE_ANIMATED_PROPERTY_HPP

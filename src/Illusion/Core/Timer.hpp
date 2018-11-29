@@ -11,19 +11,15 @@
 #ifndef ILLUSION_CORE_TIMER_HPP
 #define ILLUSION_CORE_TIMER_HPP
 
-// ---------------------------------------------------------------------------------------- includes
-
 namespace Illusion::Core {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // A class which can be used to measure time intervals.                                           //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// -------------------------------------------------------------------------------------------------
 class Timer {
 
  public:
-  // -------------------------------------------------------------------------------- public methods
   Timer(bool autoStart = true);
 
   void   start();
@@ -35,9 +31,9 @@ class Timer {
   static double getNow();
 
  private:
-  // ------------------------------------------------------------------------------- private members
   double mStart = 1.0;
 };
+
 } // namespace Illusion::Core
 
 #endif // ILLUSION_CORE_TIMER_HPP

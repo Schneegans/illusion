@@ -35,6 +35,7 @@ std::shared_ptr<T> makeVulkanPtr(
   T const& vkObject, typename Identity<std::function<void(T* obj)>>::type deleter) {
   return std::shared_ptr<T>(new T{vkObject}, deleter);
 }
+
 } // namespace Illusion::Graphics::Utils
 
 #endif // ILLUSION_GRAPHICS_VULKAN_PTR_HPP

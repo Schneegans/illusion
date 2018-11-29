@@ -8,12 +8,13 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// ---------------------------------------------------------------------------------------- includes
 #include "Enums.hpp"
 
 #include <iostream>
 
 namespace Illusion::Input {
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::ostream& operator<<(std::ostream& os, Key key) {
   switch (key) {
@@ -486,25 +487,35 @@ std::ostream& operator<<(std::ostream& os, Key key) {
   return os;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::ostream& operator<<(std::ostream& os, Button button) {
   os << "BUTTON_" << (int)button;
   return os;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::ostream& operator<<(std::ostream& os, JoystickId id) {
   os << "JOYSTICK_" << (int)id;
   return os;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::ostream& operator<<(std::ostream& os, JoystickAxisId axis) {
   os << "JOYSTICK_AXIS_" << (int)axis;
   return os;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::ostream& operator<<(std::ostream& os, JoystickButtonId button) {
   os << "JOYSTICK_BUTTON_" << (int)button;
   return os;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::ostream& operator<<(std::ostream& os, Xbox360ControllerButton button) {
   switch (button) {
@@ -557,6 +568,8 @@ std::ostream& operator<<(std::ostream& os, Xbox360ControllerButton button) {
   return os;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::ostream& operator<<(std::ostream& os, Xbox360ControllerAxis axis) {
   switch (axis) {
   case Xbox360ControllerAxis::eXboxLeftStickX:
@@ -580,5 +593,7 @@ std::ostream& operator<<(std::ostream& os, Xbox360ControllerAxis axis) {
   }
   return os;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 } // namespace Illusion::Input

@@ -8,17 +8,20 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// ---------------------------------------------------------------------------------------- includes
 #include "AnimatedProperty.hpp"
 
 #include <iostream>
 
 namespace Illusion::Core {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::ostream& operator<<(std::ostream& os, AnimationDirection value) {
   os << static_cast<int>(value);
   return os;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::istream& operator>>(std::istream& is, AnimationDirection& value) {
   int tmp(0);
@@ -27,10 +30,14 @@ std::istream& operator>>(std::istream& is, AnimationDirection& value) {
   return is;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::ostream& operator<<(std::ostream& os, AnimationLoop value) {
   os << static_cast<int>(value);
   return os;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::istream& operator>>(std::istream& is, AnimationLoop& value) {
   int tmp(0);
@@ -38,4 +45,7 @@ std::istream& operator>>(std::istream& is, AnimationLoop& value) {
   value = static_cast<AnimationLoop>(tmp);
   return is;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 } // namespace Illusion::Core

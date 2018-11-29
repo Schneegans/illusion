@@ -36,6 +36,7 @@ class PhysicalDevice : public vk::PhysicalDevice {
 
   int mGraphicsFamily = -1, mComputeFamily = -1, mPresentFamily = -1;
 };
+
 } // namespace Illusion::Graphics
 
 #endif // ILLUSION_GRAPHICS_PHYSICAL_DEVICE_HPP

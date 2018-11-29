@@ -11,7 +11,6 @@
 #ifndef ILLUSION_CORE_SIGNAL_HPP
 #define ILLUSION_CORE_SIGNAL_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include <functional>
 #include <map>
 #include <mutex>
@@ -26,19 +25,16 @@ namespace Illusion::Core {
 // emit().                                                                                        //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// -------------------------------------------------------------------------------------------------
 template <typename... Parameters>
 class Signal {
 
  public:
-  // -------------------------------------------------------------------------------- public methods
-
   Signal() {}
 
-  /// copy creates new signal
+  // copy creates new signal
   Signal(Signal const& other) {}
 
-  /// connects a member function of a given object to this Signal
+  // connects a member function of a given object to this Signal
   template <typename F, typename... Args>
   int connectMember(F&& f, Args&&... a) const {
     std::unique_lock<std::mutex> lock(mMutex);
@@ -46,28 +42,28 @@ class Signal {
     return mCurrentId;
   }
 
-  /// connects a std::function to the signal. The returned value can be used to
-  /// disconnect the function again
+  // connects a std::function to the signal. The returned value can be used to
+  // disconnect the function again
   int connect(std::function<bool(Parameters...)> const& callback) const {
     std::unique_lock<std::mutex> lock(mMutex);
     mCallbacks.insert(std::make_pair(++mCurrentId, callback));
     return mCurrentId;
   }
 
-  /// disconnects a previously connected function
+  // disconnects a previously connected function
   void disconnect(int id) const {
     std::unique_lock<std::mutex> lock(mMutex);
     mCallbacks.erase(id);
   }
 
-  /// disconnects all previously connected functions
+  // disconnects all previously connected functions
   void disconnectAll() const {
     std::unique_lock<std::mutex> lock(mMutex);
     mCallbacks.clear();
     mCurrentId = 0;
   }
 
-  /// calls all connected functions
+  // calls all connected functions
   void emit(Parameters... p) {
     std::unique_lock<std::mutex> lock(mMutex);
     auto                         it(mCallbacks.begin());
@@ -80,18 +76,16 @@ class Signal {
     }
   }
 
-  /// assignment creates new Signal
+  // assignment creates new Signal
   Signal& operator=(Signal const& other) { disconnectAll(); }
 
  private:
-  // ------------------------------------------------------------------------------- private members
   mutable std::map<int, std::function<bool(Parameters...)>> mCallbacks;
   mutable int                                               mCurrentId = 0;
 
   mutable std::mutex mMutex;
 };
 
-// -------------------------------------------------------------------------------------------------
 } // namespace Illusion::Core
 
 #endif // ILLUSION_CORE_SIGNAL_HPP

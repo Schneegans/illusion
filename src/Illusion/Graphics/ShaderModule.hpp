@@ -45,6 +45,7 @@ class ShaderModule {
   std::shared_ptr<vk::ShaderModule> mModule;
   std::vector<PipelineResource>     mResources;
 };
+
 } // namespace Illusion::Graphics
 
 #endif // ILLUSION_GRAPHICS_SHADERMODULE_HPP

@@ -18,42 +18,45 @@
 namespace Illusion::Core {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Prints beautiful messages to the console output.                                               //
+// Prints beautiful messages to the console output. You can use the macros at the bottom of this  //
+// file like this:                                                                                //
+// LOG_MESSAGE << "hello world" << std::endl;                                                     //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // -------------------------------------------------------------------------------------------------
 class Logger {
 
  public:
-  // ------------------------------------------------------------------- public static const members
+  // These are constant which can be used to modify the color of cout streams. For now, this only
+  // works on linux.
   const static std::string PRINT_RED;
   const static std::string PRINT_GREEN;
   const static std::string PRINT_YELLOW;
   const static std::string PRINT_BLUE;
   const static std::string PRINT_PURPLE;
   const static std::string PRINT_TURQUOISE;
-
   const static std::string PRINT_RED_BOLD;
   const static std::string PRINT_GREEN_BOLD;
   const static std::string PRINT_YELLOW_BOLD;
   const static std::string PRINT_BLUE_BOLD;
   const static std::string PRINT_PURPLE_BOLD;
   const static std::string PRINT_TURQUOISE_BOLD;
-
   const static std::string PRINT_BOLD;
   const static std::string PRINT_RESET;
 
-  // ------------------------------------------------------------------------- public static members
+  // Modify those to enable or disable printing of file names or line numbers.
   static bool printFile;
   static bool printLine;
 
-  static bool enableTrace;   // If any one of these
-  static bool enableDebug;   // is set to false,
-  static bool enableMessage; // the corresponding
-  static bool enableWarning; // messages are discarded.
+  // If any one of these is set to false, the corresponding messages are discarded.
+  static bool enableTrace;
+  static bool enableDebug;
+  static bool enableMessage;
+  static bool enableWarning;
   static bool enableError;
 
-  // ------------------------------------------------------------------------- public static methods
+  // These are used by the marcos below. You can also use them directly, however using the macros
+  // might be a better idea.
   static std::ostream& traceImpl(const char* file, int line);
   static std::ostream& debugImpl(const char* file, int line);
   static std::ostream& messageImpl(const char* file, int line);
@@ -63,7 +66,6 @@ class Logger {
 
 } // namespace Illusion::Core
 
-// ------------------------------------------------------------------------------------------ macros
 // Use these macros in your code like this:
 // LOG_MESSAGE << "hello world" << std::endl;
 #define ILLUSION_TRACE Illusion::Core::Logger::traceImpl(__FILE__, __LINE__)

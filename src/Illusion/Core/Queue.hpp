@@ -11,7 +11,6 @@
 #ifndef ILLUSION_CORE_QUEUE_HPP
 #define ILLUSION_CORE_QUEUE_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include <mutex>
 #include <queue>
 
@@ -21,12 +20,10 @@ namespace Illusion::Core {
 // A thread safe queue.                                                                           //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// -------------------------------------------------------------------------------------------------
 template <class T>
 class Queue {
 
  public:
-  // -------------------------------------------------------------------------------- public methods
   bool empty() const {
     std::unique_lock<std::mutex> lock(mMutex);
     return mQueue.empty();
@@ -63,12 +60,10 @@ class Queue {
   }
 
  private:
-  // ------------------------------------------------------------------------------ private members
   std::queue<T>      mQueue;
   mutable std::mutex mMutex;
 };
 
-// -------------------------------------------------------------------------------------------------
 } // namespace Illusion::Core
 
 #endif // ILLUSION_CORE_QUEUE_HPP

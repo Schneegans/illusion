@@ -11,7 +11,6 @@
 #ifndef ILLUSION_INPUT_ENUMS_HPP
 #define ILLUSION_INPUT_ENUMS_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include <iostream>
 
 namespace Illusion::Input {

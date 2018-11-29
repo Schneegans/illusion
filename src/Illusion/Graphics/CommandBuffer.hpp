@@ -52,6 +52,7 @@ class CommandBuffer : public vk::CommandBuffer {
 
  private:
 };
+
 } // namespace Illusion::Graphics
 
 #endif // ILLUSION_GRAPHICS_COMMAND_BUFFER_HPP

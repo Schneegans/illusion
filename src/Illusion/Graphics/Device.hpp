@@ -31,11 +31,15 @@ struct BackedImage {
   vk::ImageCreateInfo               mInfo;
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct BackedBuffer {
   std::shared_ptr<vk::Buffer>       mBuffer;
   std::shared_ptr<vk::DeviceMemory> mMemory;
   vk::DeviceSize                    mSize;
 };
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Device {
 
@@ -136,6 +140,7 @@ class Device {
 
   vk::Queue mGraphicsQueue, mComputeQueue, mPresentQueue;
 };
+
 } // namespace Illusion::Graphics
 
 #endif // ILLUSION_GRAPHICS_DEVICE_HPP

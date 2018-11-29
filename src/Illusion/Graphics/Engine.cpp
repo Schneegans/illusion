@@ -8,7 +8,6 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// ---------------------------------------------------------------------------------------- includes
 #include "Engine.hpp"
 
 #include "../Core/Logger.hpp"
@@ -16,7 +15,6 @@
 #include "Utils.hpp"
 
 #include <GLFW/glfw3.h>
-
 #include <iostream>
 #include <set>
 #include <sstream>
@@ -250,7 +248,8 @@ std::shared_ptr<vk::DebugReportCallbackEXT> Engine::createDebugCallback() const 
       destroyCallback(*instance, *obj, nullptr);
       delete obj;
     });
-} // namespace Illusion::Graphics
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 } // namespace Illusion::Graphics

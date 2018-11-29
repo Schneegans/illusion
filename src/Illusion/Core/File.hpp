@@ -11,7 +11,6 @@
 #ifndef ILLUSION_CORE_FILE_HPP
 #define ILLUSION_CORE_FILE_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include "Logger.hpp"
 
 #include <fstream>
@@ -20,7 +19,12 @@
 #include <vector>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// This class is used to read and write text files.                                               //
+// This class is used to read and write text files. The template parameter specifies the type the //
+// content of the file is returned as. Common use cases include:                                  //
+//                                                                                                //
+// File<std::string>     mFile; // reads and writes the content as a std::string                  //
+// File<vector<uint8_t>> mFile; // reads and writes the content as a byte array                   //
+//                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 namespace Illusion::Core {
@@ -29,7 +33,6 @@ template <typename T>
 class File {
 
  public:
-  // ------------------------------------------------------------------------- contruction interface
   // This constructs a invalid File.
   File()
     : mFileName("")
@@ -42,7 +45,6 @@ class File {
     , mContent()
     , mIsLoaded(false) {}
 
-  // -------------------------------------------------------------------------------- public methods
   // Returns if the given file is valid.
   bool isValid() const {
     std::ifstream file(mFileName.c_str());
@@ -112,11 +114,11 @@ class File {
   std::string const& getFileName() const { return mFileName; }
 
  private:
-  // ------------------------------------------------------------------------------- private members
   std::string  mFileName;
   mutable T    mContent;
   mutable bool mIsLoaded;
 };
+
 } // namespace Illusion::Core
 
 #endif // ILLUSION_CORE_FILE_HPP

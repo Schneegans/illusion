@@ -8,10 +8,11 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// ---------------------------------------------------------------------------------------- includes
 #include "Utils.hpp"
 
 namespace Illusion::Graphics::Utils {
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool isColorFormat(vk::Format format) {
   return !isDepthStencilFormat(format) && !isDepthOnlyFormat(format);
@@ -35,5 +36,7 @@ bool isDepthStencilFormat(vk::Format format) {
   return format == vk::Format::eD16UnormS8Uint || format == vk::Format::eD24UnormS8Uint ||
          format == vk::Format::eD32SfloatS8Uint;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 } // namespace Illusion::Graphics::Utils

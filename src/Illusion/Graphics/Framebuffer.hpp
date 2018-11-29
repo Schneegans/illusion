@@ -42,6 +42,7 @@ class Framebuffer {
   std::vector<std::shared_ptr<vk::ImageView>> mImageViewStore;
   std::vector<std::shared_ptr<BackedImage>>   mImageStore;
 };
+
 } // namespace Illusion::Graphics
 
 #endif // ILLUSION_GRAPHICS_RENDERTARGET_HPP

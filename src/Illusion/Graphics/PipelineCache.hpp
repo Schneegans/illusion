@@ -39,6 +39,7 @@ class PipelineCache {
   std::map<Core::BitHash, std::shared_ptr<vk::Pipeline>> mCache;
   std::mutex                                             mMutex;
 };
+
 } // namespace Illusion::Graphics
 
 #endif // ILLUSION_GRAPHICS_PIPELINE_CACHE_HPP

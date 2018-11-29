@@ -11,7 +11,6 @@
 #ifndef ILLUSION_INPUT_MOUSE_EVENT_HPP
 #define ILLUSION_INPUT_MOUSE_EVENT_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include "Enums.hpp"
 
 namespace Illusion::Input {
@@ -20,25 +19,22 @@ struct MouseEvent {
 
   enum class Type { eMove, eScroll, ePress, eRelease, eLeave };
 
-  // -------------------------------------------------------------------------------- public methods
   MouseEvent();
   MouseEvent(int x, int y);
   MouseEvent(int scrollAmount);
   MouseEvent(int button, bool press);
 
-  // -------------------------------------------------------------------------------- public members
-  // either MOVE, SCROLL, PRESS or RELEASE
   Type mType;
 
   union {
-    // x-position for MOVE, x-direction for SCROLL
+    // x-position for eMove, x-direction for eScroll
     int mX;
 
-    // only used for PRESS and RELEASE
+    // only used for ePress and eRelease
     Button mButton;
   };
 
-  // y-position for MOVE, y-direction for SCROLL
+  // y-position for eMove, y-direction for eScroll
   int mY;
 };
 

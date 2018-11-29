@@ -45,6 +45,7 @@ class Engine {
   std::shared_ptr<vk::DebugReportCallbackEXT>  mDebugCallback;
   std::vector<std::shared_ptr<PhysicalDevice>> mPhysicalDevices;
 };
+
 } // namespace Illusion::Graphics
 
 #endif // ILLUSION_GRAPHICS_ENGINE_HPP

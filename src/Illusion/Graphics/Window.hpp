@@ -87,6 +87,7 @@ class Window {
 
   glm::ivec2 mOrigSize = glm::ivec2(640, 480), mOrigPos = glm::ivec2(0, 0);
 };
+
 } // namespace Illusion::Graphics
 
 #endif // ILLUSION_GRAPHICS_WINDOW_HPP

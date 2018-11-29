@@ -11,7 +11,6 @@
 #ifndef ILLUSION_INPUT_KEY_EVENT_HPP
 #define ILLUSION_INPUT_KEY_EVENT_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include "Enums.hpp"
 
 namespace Illusion::Input {
@@ -20,14 +19,11 @@ struct KeyEvent {
 
   enum class Type { ePress, eRelease, eRepeat, eCharacter };
 
-  // -------------------------------------------------------------------------------- public methods
   KeyEvent();
   KeyEvent(int key, int scancode, int action, int mods);
   KeyEvent(unsigned int key, int mods);
   void SetMods(int mods);
 
-  // -------------------------------------------------------------------------------- public members
-  // PRESS, RELEASE, CHARACTER
   Type mType;
 
   // bitwise or of any Modifier defined in InputEnums.hpp
@@ -36,10 +32,10 @@ struct KeyEvent {
   int mScancode;
 
   union {
-    // only used for PRESS, RELEASE and REPEAT
+    // only used for ePress, eRelease and eRepeat
     Key mKey;
 
-    // only used for CHARACTER
+    // only used for eCharacter
     uint16_t mCharacter;
   };
 };

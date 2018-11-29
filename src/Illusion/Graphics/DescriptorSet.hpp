@@ -32,6 +32,7 @@ class DescriptorSet : public vk::DescriptorSet {
   std::shared_ptr<Device> mDevice;
   uint32_t                mSet;
 };
+
 } // namespace Illusion::Graphics
 
 #endif // ILLUSION_GRAPHICS_DESCRIPTOR_SET_HPP

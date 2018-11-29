@@ -11,7 +11,6 @@
 #ifndef ILLUSION_CORE_SCOPED_TIMER_HPP
 #define ILLUSION_CORE_SCOPED_TIMER_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include <string>
 
 namespace Illusion::Core {
@@ -22,18 +21,16 @@ namespace Illusion::Core {
 
 class ScopedTimer {
  public:
-  // -------------------------------------------------------------------------------- public methods
   ScopedTimer(std::string const& name);
   virtual ~ScopedTimer();
 
  private:
-  // ------------------------------------------------------------------------------- private methods
   double getNow();
 
-  // ------------------------------------------------------------------------------- private members
   std::string mName;
   double      mStartTime;
 };
+
 } // namespace Illusion::Core
 
 #endif // ILLUSION_CORE_SCOPED_TIMER_HPP
