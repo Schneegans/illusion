@@ -22,9 +22,13 @@ class DescriptorSet : public vk::DescriptorSet {
  public:
   DescriptorSet(std::shared_ptr<Device> const& device, uint32_t set, vk::DescriptorSet const& base);
 
-  void bindCombinedImageSampler(std::shared_ptr<Texture> const& texture, uint32_t binding);
-  void bindStorageImage(std::shared_ptr<Texture> const& texture, uint32_t binding);
-  void bindUniformBuffer(std::shared_ptr<BackedBuffer> const& buffer, uint32_t binding);
+  void bindCombinedImageSampler(std::shared_ptr<Texture> const& texture, uint32_t binding = 0);
+  void bindStorageImage(std::shared_ptr<Texture> const& texture, uint32_t binding = 0);
+  void bindUniformBuffer(
+    std::shared_ptr<BackedBuffer> const& buffer,
+    uint32_t                             binding = 0,
+    vk::DeviceSize                       size    = 0,
+    vk::DeviceSize                       offset  = 0);
 
   uint32_t getSet() const;
 

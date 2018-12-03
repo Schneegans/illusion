@@ -8,7 +8,7 @@
 #                                                                                                  #
 #--------------------------------------------------------------------------------------------------#
 
-# ------------------------------------------------------------------------------------------ compile
+# compile ------------------------------------------------------------------------------------------
 file(GLOB FILES_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
   "*.cpp"
 )
@@ -32,7 +32,7 @@ target_include_directories(illusion-graphics
     PUBLIC ${CMAKE_SOURCE_DIR}/src
 )
 
-# ------------------------------------------------------------------------------------------ install
+# install ------------------------------------------------------------------------------------------
 install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} DESTINATION "include"
   FILES_MATCHING PATTERN "*.hpp"
   PATTERN "internal" EXCLUDE)

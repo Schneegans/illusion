@@ -8,49 +8,44 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_COMMAND_BUFFER_HPP
-#define ILLUSION_GRAPHICS_COMMAND_BUFFER_HPP
+#ifndef ILLUSION_GRAPHICS_COHERENT_UNIFORM_BUFFER_HPP
+#define ILLUSION_GRAPHICS_COHERENT_UNIFORM_BUFFER_HPP
 
 #include "fwd.hpp"
-
-#include <glm/glm.hpp>
 
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class CommandBuffer : public vk::CommandBuffer {
+class CoherentUniformBuffer {
  public:
-  CommandBuffer(vk::CommandBuffer const& base);
+  CoherentUniformBuffer(std::shared_ptr<Device> const& device, vk::DeviceSize size);
+  virtual ~CoherentUniformBuffer();
+
+  vk::DeviceSize addData(uint8_t const* data, vk::DeviceSize count);
 
   template <typename T>
-  void pushConstants(
-    vk::PipelineLayout const& layout,
-    vk::ShaderStageFlags      stages,
-    T const&                  data,
-    uint32_t                  offset = 0) {
-
-    vk::CommandBuffer::pushConstants(layout, stages, offset, sizeof(T), &data);
+  vk::DeviceSize addData(T const& data) {
+    addData((uint8_t*)&data, sizeof(data));
   }
 
-  void transitionImageLayout(
-    vk::Image                 image,
-    vk::ImageLayout           oldLayout,
-    vk::ImageLayout           newLayout,
-    vk::PipelineStageFlagBits stage = vk::PipelineStageFlagBits::eTopOfPipe,
-    vk::ImageSubresourceRange range = {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}) const;
+  vk::DeviceSize updateData(uint8_t const* data, vk::DeviceSize count, vk::DeviceSize offset);
 
-  void copyImage(vk::Image src, vk::Image dst, glm::uvec2 const& size) const;
-  void blitImage(
-    vk::Image         src,
-    vk::Image         dst,
-    glm::uvec2 const& srcSize,
-    glm::uvec2 const& dstSize,
-    vk::Filter        filter) const;
-  void copyBuffer(vk::Buffer src, vk::Buffer dst, vk::DeviceSize size) const;
+  template <typename T>
+  void updateData(T const& data, vk::DeviceSize offset = 0) {
+    updateData((uint8_t*)&data, sizeof(data), offset);
+  }
+
+  std::shared_ptr<BackedBuffer> const& getBuffer() const;
+
+ private:
+  std::shared_ptr<Device>       mDevice;
+  std::shared_ptr<BackedBuffer> mBuffer;
+  uint8_t*                      mMappedData         = nullptr;
+  vk::DeviceSize                mCurrentWriteOffset = 0;
 };
 
 } // namespace Illusion::Graphics
 
-#endif // ILLUSION_GRAPHICS_COMMAND_BUFFER_HPP
+#endif // ILLUSION_GRAPHICS_COHERENT_UNIFORM_BUFFER_HPP

@@ -38,19 +38,6 @@ class GraphicsState {
       vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
   };
 
-  struct VertexInputBinding {
-    uint32_t            mBinding   = 0;
-    uint32_t            mStride    = 0;
-    vk::VertexInputRate mInputRate = vk::VertexInputRate::eVertex;
-  };
-
-  struct VertexInputAttribute {
-    uint32_t   mLocation = 0;
-    uint32_t   mBinding  = 0;
-    vk::Format mFormat   = vk::Format::eUndefined;
-    uint32_t   mOffset   = 0;
-  };
-
   struct Viewport {
     glm::vec2 mOffset   = glm::vec2(0);
     glm::vec2 mExtend   = glm::vec2(0);
@@ -167,13 +154,13 @@ class GraphicsState {
   uint32_t                            getTessellationPatchControlPoints() const;
 
   // Vertex Input State ----------------------------------------------------------------------------
-  void                                addVertexInputBinding(VertexInputBinding const& val);
-  void                                setVertexInputBindings(std::vector<VertexInputBinding> const& val);
-  std::vector<VertexInputBinding> const& getVertexInputBindings() const;
+  void                                addVertexInputBinding(vk::VertexInputBindingDescription const& val);
+  void                                setVertexInputBindings(std::vector<vk::VertexInputBindingDescription> const& val);
+  std::vector<vk::VertexInputBindingDescription> const& getVertexInputBindings() const;
 
-  void                                addVertexInputAttribute(VertexInputAttribute const& val);
-  void                                setVertexInputAttributes(std::vector<VertexInputAttribute> const& val);
-  std::vector<VertexInputAttribute> const& getVertexInputAttributes() const;
+  void                                addVertexInputAttribute(vk::VertexInputAttributeDescription const& val);
+  void                                setVertexInputAttributes(std::vector<vk::VertexInputAttributeDescription> const& val);
+  std::vector<vk::VertexInputAttributeDescription> const& getVertexInputAttributes() const;
 
   // Viewport State --------------------------------------------------------------------------------
   void                                addViewport(Viewport const& val);
@@ -257,8 +244,8 @@ class GraphicsState {
   uint32_t mTessellationPatchControlPoints = 0;
 
   // Vertex Input State ----------------------------------------------------------------------------
-  std::vector<VertexInputBinding>   mVertexInputBindings;
-  std::vector<VertexInputAttribute> mVertexInputAttributes;
+  std::vector<vk::VertexInputBindingDescription>   mVertexInputBindings;
+  std::vector<vk::VertexInputAttributeDescription> mVertexInputAttributes;
 
   // Viewport State --------------------------------------------------------------------------------
   std::vector<Viewport> mViewports;

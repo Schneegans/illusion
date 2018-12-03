@@ -10,7 +10,7 @@
 
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Core/RingBuffer.hpp>
-#include <Illusion/Graphics/BufferCache.hpp>
+#include <Illusion/Graphics/CoherentUniformBuffer.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/DescriptorSet.hpp>
 #include <Illusion/Graphics/DescriptorSetCache.hpp>
@@ -70,7 +70,8 @@ struct FrameResources {
   FrameResources(std::shared_ptr<Illusion::Graphics::Device> const& device)
     : mRenderPass(std::make_shared<Illusion::Graphics::RenderPass>(device))
     , mDescriptorSetCache(std::make_shared<Illusion::Graphics::DescriptorSetCache>(device))
-    , mBufferCache(std::make_shared<Illusion::Graphics::BufferCache>(device))
+    , mUniformBuffer(
+        std::make_shared<Illusion::Graphics::CoherentUniformBuffer>(device, sizeof(CameraUniforms)))
     , mCommandBuffer(device->allocateGraphicsCommandBuffer())
     , mRenderFinishedFence(device->createFence({vk::FenceCreateFlagBits::eSignaled}))
     , mRenderFinishedSemaphore(device->createSemaphore({})) {
@@ -79,12 +80,12 @@ struct FrameResources {
     mRenderPass->addAttachment(vk::Format::eD32Sfloat);
   }
 
-  std::shared_ptr<Illusion::Graphics::RenderPass>         mRenderPass;
-  std::shared_ptr<Illusion::Graphics::DescriptorSetCache> mDescriptorSetCache;
-  std::shared_ptr<Illusion::Graphics::BufferCache>        mBufferCache;
-  std::shared_ptr<Illusion::Graphics::CommandBuffer>      mCommandBuffer;
-  std::shared_ptr<vk::Fence>                              mRenderFinishedFence;
-  std::shared_ptr<vk::Semaphore>                          mRenderFinishedSemaphore;
+  std::shared_ptr<Illusion::Graphics::RenderPass>            mRenderPass;
+  std::shared_ptr<Illusion::Graphics::DescriptorSetCache>    mDescriptorSetCache;
+  std::shared_ptr<Illusion::Graphics::CoherentUniformBuffer> mUniformBuffer;
+  std::shared_ptr<Illusion::Graphics::CommandBuffer>         mCommandBuffer;
+  std::shared_ptr<vk::Fence>                                 mRenderFinishedFence;
+  std::shared_ptr<vk::Semaphore>                             mRenderFinishedSemaphore;
 };
 
 int main(int argc, char* argv[]) {
@@ -149,15 +150,11 @@ int main(int argc, char* argv[]) {
 
     auto cameraUniformDescriptorSet =
       res.mDescriptorSetCache->acquireHandle(shader->getDescriptorSetReflections().at(0));
-    auto cameraUniformBuffer = res.mBufferCache->acquireHandle(
-      sizeof(CameraUniforms),
-      vk::BufferUsageFlagBits::eUniformBuffer | vk::BufferUsageFlagBits::eTransferDst,
-      vk::MemoryPropertyFlagBits::eDeviceLocal);
-    cameraUniformDescriptorSet->bindUniformBuffer(cameraUniformBuffer, 0);
+    cameraUniformDescriptorSet->bindUniformBuffer(res.mUniformBuffer->getBuffer());
 
     auto materialDescriptorSet =
       res.mDescriptorSetCache->acquireHandle(shader->getDescriptorSetReflections().at(1));
-    materialDescriptorSet->bindCombinedImageSampler(texture, 0);
+    materialDescriptorSet->bindCombinedImageSampler(texture);
 
     res.mCommandBuffer->reset({});
     res.mCommandBuffer->begin({vk::CommandBufferUsageFlagBits::eSimultaneousUse});
@@ -168,9 +165,7 @@ int main(int argc, char* argv[]) {
       static_cast<float>(window->pExtent.get().x) / static_cast<float>(window->pExtent.get().y),
       0.1f,
       100.0f);
-    res.mCommandBuffer->updateBuffer(
-      *cameraUniformBuffer->mBuffer, 0, sizeof(CameraUniforms), (uint8_t*)&cameraUniforms);
-
+    res.mUniformBuffer->updateData(cameraUniforms);
     res.mRenderPass->begin(res.mCommandBuffer);
 
     PushConstants pushConstants;
@@ -218,7 +213,6 @@ int main(int argc, char* argv[]) {
       res.mRenderFinishedFence);
 
     res.mDescriptorSetCache->releaseAll();
-    res.mBufferCache->releaseAll();
 
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
   }

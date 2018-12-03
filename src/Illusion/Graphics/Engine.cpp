@@ -70,7 +70,9 @@ bool checkValidationLayerSupport() {
       }
     }
 
-    if (!layerFound) { return false; }
+    if (!layerFound) {
+      return false;
+    }
   }
 
   return true;
@@ -87,7 +89,9 @@ std::vector<const char*> getRequiredInstanceExtensions(bool debugMode) {
     extensions.push_back(glfwExtensions[i]);
   }
 
-  if (debugMode) { extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME); }
+  if (debugMode) {
+    extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+  }
 
   return extensions;
 }
@@ -141,7 +145,9 @@ std::shared_ptr<PhysicalDevice> Engine::getPhysicalDevice(
       requiredExtensions.erase(extension.extensionName);
     }
 
-    if (!requiredExtensions.empty()) { continue; }
+    if (!requiredExtensions.empty()) {
+      continue;
+    }
 
     // all required extensions are supported - take this device!
     return physicalDevice;
@@ -174,7 +180,9 @@ std::shared_ptr<vk::Instance> Engine::createInstance(
   std::string const& engine, std::string const& app) const {
 
   if (!glfwInitialized) {
-    if (!glfwInit()) { throw std::runtime_error("Failed to initialize GLFW."); }
+    if (!glfwInit()) {
+      throw std::runtime_error("Failed to initialize GLFW.");
+    }
 
     glfwSetErrorCallback([](int error, const char* description) {
       throw std::runtime_error("GLFW: " + std::string(description));
@@ -222,7 +230,9 @@ std::shared_ptr<vk::Instance> Engine::createInstance(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::shared_ptr<vk::DebugReportCallbackEXT> Engine::createDebugCallback() const {
-  if (!mDebugMode) { return nullptr; }
+  if (!mDebugMode) {
+    return nullptr;
+  }
 
   auto createCallback{
     (PFN_vkCreateDebugReportCallbackEXT)mInstance->getProcAddr("vkCreateDebugReportCallbackEXT")};

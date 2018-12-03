@@ -41,7 +41,9 @@ std::shared_ptr<vk::Pipeline> PipelineCache::getPipelineHandle(
   {
     std::unique_lock<std::mutex> lock(mMutex);
     auto                         cached = mCache.find(hash);
-    if (cached != mCache.end()) { return cached->second; }
+    if (cached != mCache.end()) {
+      return cached->second;
+    }
   }
 
   // -----------------------------------------------------------------------------------------------
@@ -63,10 +65,10 @@ std::shared_ptr<vk::Pipeline> PipelineCache::getPipelineHandle(
   std::vector<vk::VertexInputBindingDescription>   vertexInputBindingDescriptions;
   std::vector<vk::VertexInputAttributeDescription> vertexInputAttributeDescriptions;
   for (auto const& i : gs.getVertexInputBindings()) {
-    vertexInputBindingDescriptions.push_back({i.mBinding, i.mStride, i.mInputRate});
+    vertexInputBindingDescriptions.push_back({i.binding, i.stride, i.inputRate});
   }
   for (auto const& i : gs.getVertexInputAttributes()) {
-    vertexInputAttributeDescriptions.push_back({i.mLocation, i.mBinding, i.mFormat, i.mOffset});
+    vertexInputAttributeDescriptions.push_back({i.location, i.binding, i.format, i.offset});
   }
   vertexInputStateInfo.vertexBindingDescriptionCount   = vertexInputBindingDescriptions.size();
   vertexInputStateInfo.pVertexBindingDescriptions      = vertexInputBindingDescriptions.data();
@@ -194,11 +196,15 @@ std::shared_ptr<vk::Pipeline> PipelineCache::getPipelineHandle(
   info.pMultisampleState   = &multisampleStateInfo;
   info.pDepthStencilState  = &depthStencilStateInfo;
   info.pColorBlendState    = &colorBlendStateInfo;
-  if (gs.getDynamicState().size() > 0) { info.pDynamicState = &dynamicStateInfo; }
+  if (gs.getDynamicState().size() > 0) {
+    info.pDynamicState = &dynamicStateInfo;
+  }
   info.renderPass = renderpass;
   info.subpass    = subPass;
 
-  if (gs.getShaderProgram()) { info.layout = *gs.getShaderProgram()->getReflection()->getLayout(); }
+  if (gs.getShaderProgram()) {
+    info.layout = *gs.getShaderProgram()->getReflection()->getLayout();
+  }
 
   auto pipeline = mDevice->createPipeline(info);
 

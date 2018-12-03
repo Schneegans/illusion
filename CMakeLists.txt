@@ -11,14 +11,14 @@
 cmake_minimum_required(VERSION 3.8)
 project(illusion-3d VERSION 0.0.1 LANGUAGES CXX)
 
-# ---------------------------------------------------------------------------------- global settings
+# global settings ----------------------------------------------------------------------------------
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_STANDARD 17)
 add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
 
-# -------------------------------------------------------------------------------- find dependencies
+# find dependencies --------------------------------------------------------------------------------
 # find vulkan
 find_package(Vulkan REQUIRED)
 
@@ -30,10 +30,10 @@ include(externals/tinygltf.cmake)
 include(externals/glslang.cmake)
 include(externals/spirv-cross.cmake)
 
-# ------------------------------------------------------------------------------ build the libraries
+# build the libraries ------------------------------------------------------------------------------
 add_subdirectory(src/Illusion)
 
-# ------------------------------------------------------------------------------- build the examples
+# build the examples -------------------------------------------------------------------------------
 option(ILLUSION_COMPILE_SAMPLES "Compile examples" ON)
 
 if(ILLUSION_COMPILE_SAMPLES)

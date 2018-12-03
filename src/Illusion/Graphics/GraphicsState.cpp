@@ -259,28 +259,30 @@ uint32_t GraphicsState::getTessellationPatchControlPoints() const {
 }
 
 // Vertex Input State ----------------------------------------------------------------------------
-void GraphicsState::addVertexInputBinding(VertexInputBinding const& val) {
+void GraphicsState::addVertexInputBinding(vk::VertexInputBindingDescription const& val) {
   mVertexInputBindings.push_back(val);
   mDirty = true;
 }
-void GraphicsState::setVertexInputBindings(std::vector<VertexInputBinding> const& val) {
+void GraphicsState::setVertexInputBindings(
+  std::vector<vk::VertexInputBindingDescription> const& val) {
   mVertexInputBindings = val;
   mDirty               = true;
 }
-std::vector<GraphicsState::VertexInputBinding> const& GraphicsState::getVertexInputBindings()
+std::vector<vk::VertexInputBindingDescription> const& GraphicsState::getVertexInputBindings()
   const {
   return mVertexInputBindings;
 }
-void GraphicsState::addVertexInputAttribute(VertexInputAttribute const& val) {
+void GraphicsState::addVertexInputAttribute(vk::VertexInputAttributeDescription const& val) {
   mVertexInputAttributes.push_back(val);
   mDirty = true;
 }
 
-void GraphicsState::setVertexInputAttributes(std::vector<VertexInputAttribute> const& val) {
+void GraphicsState::setVertexInputAttributes(
+  std::vector<vk::VertexInputAttributeDescription> const& val) {
   mVertexInputAttributes = val;
   mDirty                 = true;
 }
-std::vector<GraphicsState::VertexInputAttribute> const& GraphicsState::getVertexInputAttributes()
+std::vector<vk::VertexInputAttributeDescription> const& GraphicsState::getVertexInputAttributes()
   const {
   return mVertexInputAttributes;
 }
@@ -423,20 +425,22 @@ Core::BitHash const& GraphicsState::getHash() const {
       mHash.push<32>(mDepthBiasClamp);
       mHash.push<32>(mDepthBiasSlopeFactor);
     }
-    if (!getDynamicState().count(vk::DynamicState::eLineWidth)) { mHash.push<32>(mLineWidth); }
+    if (!getDynamicState().count(vk::DynamicState::eLineWidth)) {
+      mHash.push<32>(mLineWidth);
+    }
 
     mHash.push<32>(mTessellationPatchControlPoints);
 
     for (auto const& binding : mVertexInputBindings) {
-      mHash.push<32>(binding.mBinding);
-      mHash.push<32>(binding.mStride);
-      mHash.push<1>(binding.mInputRate);
+      mHash.push<32>(binding.binding);
+      mHash.push<32>(binding.stride);
+      mHash.push<1>(binding.inputRate);
     }
     for (auto const& attribute : mVertexInputAttributes) {
-      mHash.push<32>(attribute.mLocation);
-      mHash.push<32>(attribute.mBinding);
-      mHash.push<32>(attribute.mFormat);
-      mHash.push<32>(attribute.mOffset);
+      mHash.push<32>(attribute.location);
+      mHash.push<32>(attribute.binding);
+      mHash.push<32>(attribute.format);
+      mHash.push<32>(attribute.offset);
     }
 
     if (getDynamicState().count(vk::DynamicState::eViewport)) {

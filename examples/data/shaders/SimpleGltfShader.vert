@@ -13,27 +13,29 @@
 // inputs ------------------------------------------------------------------------------------------
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
-layout(location = 2) in vec3 inTangent;
-layout(location = 3) in vec2 inTexcoords;
+layout(location = 2) in vec2 inTexcoords;
+layout(location = 3) in vec4 inJoint;
+layout(location = 4) in vec4 inWeight;
 
 // uniforms ----------------------------------------------------------------------------------------
 layout(binding = 0, set = 0) uniform CameraUniforms {
-    mat4 projection; 
+    mat4 mProjection; 
 } camera;
 
 // push constants ----------------------------------------------------------------------------------
 layout(push_constant, std430) uniform PushConstants {
-    mat4 modelView;
-    float test;
+    mat4 mModelView;
 } pushConstants;
 
 // outputs -----------------------------------------------------------------------------------------
-layout(location = 0) out vec2 outTexcoords;
+layout(location = 0) out vec3 outNormal;
+layout(location = 1) out vec2 outTexcoords;
 
 // methods -----------------------------------------------------------------------------------------
 void main() {
     outTexcoords = inTexcoords;
+    outNormal = inNormal;
     // gl_Position = vec4(inPosition, 1.0);
     // gl_Position = uniforms.projection * vec4(inPosition + vec3(0, 0, -10), 1.0);
-    gl_Position = camera.projection * pushConstants.modelView * vec4(inPosition, 1.0);
+    gl_Position = camera.mProjection * pushConstants.mModelView * vec4(inPosition, 1.0);
 }

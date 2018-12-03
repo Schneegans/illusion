@@ -68,11 +68,15 @@ void DescriptorSet::bindStorageImage(std::shared_ptr<Texture> const& texture, ui
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void DescriptorSet::bindUniformBuffer(
-  std::shared_ptr<BackedBuffer> const& buffer, uint32_t binding) {
+  std::shared_ptr<BackedBuffer> const& buffer,
+  uint32_t                             binding,
+  vk::DeviceSize                       size,
+  vk::DeviceSize                       offset) {
+
   vk::DescriptorBufferInfo bufferInfo;
   bufferInfo.buffer = *buffer->mBuffer;
-  bufferInfo.offset = 0;
-  bufferInfo.range  = buffer->mSize;
+  bufferInfo.offset = offset;
+  bufferInfo.range  = size == 0 ? buffer->mSize : size;
 
   vk::WriteDescriptorSet info;
   info.dstSet          = *this;

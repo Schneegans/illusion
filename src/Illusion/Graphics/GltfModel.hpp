@@ -27,50 +27,72 @@ namespace Illusion::Graphics {
 
 class GltfModel {
  public:
-  struct PBRMaterialUniforms {
+  struct Material {
 
-    // reflection information
-    static vk::ShaderStageFlags getActiveStages() { return vk::ShaderStageFlagBits::eFragment; }
-    static uint32_t             getBindingPoint() { return 0; }
-    static uint32_t             getDescriptorSet() { return 1; }
+    enum class AlphaMode { eOpaque, eBlend, eMask };
 
-    // struct members
-    glm::vec3 color;
+    glm::vec4 mBaseColorFactor   = glm::vec4(1.f);
+    glm::vec3 mEmissiveFactor    = glm::vec3(1.f);
+    float     mMetallicFactor    = 1.f;
+    float     mRoughnessFactor   = 1.f;
+    float     mNormalScale       = 1.f;
+    float     mOcclusionStrength = 1.f;
+    float     mAlphaCutoff       = 0.f;
+    AlphaMode mAlphaMode         = AlphaMode::eOpaque;
+
+    std::shared_ptr<Illusion::Graphics::Texture> mBaseColorTexture;
+    std::shared_ptr<Illusion::Graphics::Texture> mMetallicRoughnessTexture;
+    std::shared_ptr<Illusion::Graphics::Texture> mNormalTexture;
+    std::shared_ptr<Illusion::Graphics::Texture> mOcclusionTexture;
+    std::shared_ptr<Illusion::Graphics::Texture> mEmissiveTexture;
+
+    std::string mName;
+  };
+
+  struct Vertex {
+    glm::vec3 mPosition  = glm::vec3(0.f);
+    glm::vec3 mNormal    = glm::vec3(0.f);
+    glm::vec2 mTexcoords = glm::vec2(0.f);
+    glm::vec4 mJoint0    = glm::vec4(0.f);
+    glm::vec4 mWeight0   = glm::vec4(0.f);
+  };
+
+  struct Primitive {
+    std::shared_ptr<Material> mMaterial;
+    vk::PrimitiveTopology     mTopology;
+    vk::DeviceSize            mIndexCount;
+    vk::DeviceSize            mIndexOffset;
+    glm::vec3                 mMaxPosition;
+    glm::vec3                 mMinPosition;
+  };
+
+  struct Node {
+    glm::dmat4             mModelMatrix = glm::dmat4(1);
+    std::vector<Primitive> mPrimitives;
+    std::vector<Node>      mChildren;
+    glm::vec3              mMaxPosition;
+    glm::vec3              mMinPosition;
+    std::string            mName;
   };
 
   GltfModel(std::shared_ptr<Illusion::Graphics::Device> const& device, std::string const& file);
 
-  void predraw(vk::CommandBuffer const& cmd);
+  std::vector<Node> const&                      getNodes() const;
+  std::vector<std::shared_ptr<Material>> const& getMaterials() const;
 
-  void draw(
-    vk::CommandBuffer const&           cmd,
-    std::shared_ptr<RenderPass> const& renderPass,
-    uint32_t                           subPass,
-    glm::dmat4                         modelMatrix);
+  void bindIndexBuffer(std::shared_ptr<CommandBuffer> const& cmd) const;
+  void bindVertexBuffer(std::shared_ptr<CommandBuffer> const& cmd) const;
 
-  void printInfo() const;
+  static std::vector<vk::VertexInputBindingDescription>   getVertexInputBindings();
+  static std::vector<vk::VertexInputAttributeDescription> getVertexInputAttributes();
 
  private:
-  static vk::Filter             convertFilter(int value);
-  static vk::SamplerMipmapMode  convertSamplerMipmapMode(int value);
-  static vk::SamplerAddressMode convertSamplerAddressMode(int value);
-  static vk::Format             convertFormat(int type, int componentType);
-  static vk::PrimitiveTopology  convertPrimitiveTopology(int value);
-
-  void                                              loadData();
-  std::shared_ptr<Illusion::Graphics::Texture>      createTexture(int index) const;
-  std::shared_ptr<Illusion::Graphics::BackedBuffer> createBuffer(int index);
-  int getTextureIndex(int materialIndex, std::string const& name);
-
   std::shared_ptr<Illusion::Graphics::Device> mDevice;
-  std::string                                 mFile;
-  tinygltf::Model                             mGLTF;
 
-  std::vector<std::shared_ptr<Illusion::Graphics::Texture>>      mTextures;
-  std::vector<std::shared_ptr<Illusion::Graphics::BackedBuffer>> mBuffers;
-
-  std::vector<vk::DescriptorSet>   mDescriptorSets;
-  std::vector<PBRMaterialUniforms> mUniformBuffers;
+  Node                                   mRootNode;
+  std::vector<std::shared_ptr<Material>> mMaterials;
+  std::shared_ptr<BackedBuffer>          mIndexBuffer;
+  std::shared_ptr<BackedBuffer>          mVertexBuffer;
 };
 
 } // namespace Illusion::Graphics
