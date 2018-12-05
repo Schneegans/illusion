@@ -22,7 +22,7 @@ CoherentUniformBuffer::CoherentUniformBuffer(
   , mBuffer(device->createBackedBuffer(
       size,
       vk::BufferUsageFlagBits::eUniformBuffer,
-      vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eDeviceLocal)) {
+      vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible)) {
 
   mMappedData = (uint8_t*)mDevice->getHandle()->mapMemory(*mBuffer->mMemory, 0, mBuffer->mSize);
 }

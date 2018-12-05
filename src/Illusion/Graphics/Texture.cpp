@@ -13,6 +13,7 @@
 #include "../Core/Logger.hpp"
 #include "CommandBuffer.hpp"
 #include "Device.hpp"
+#include "PhysicalDevice.hpp"
 
 #include <gli/gli.hpp>
 #include <iostream>
@@ -22,23 +23,29 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+namespace {
+bool isFormatSupported(std::shared_ptr<Device> const& device, vk::Format format) {
+  auto const& features =
+    device->getPhysicalDevice()->getFormatProperties(format).optimalTilingFeatures;
+
+  return (bool)(features & vk::FormatFeatureFlagBits::eSampledImage);
+}
+
+} // namespace
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 std::shared_ptr<Texture> Texture::createFromFile(
   std::shared_ptr<Device> const& device,
-  std::string const&             fileName,
-  vk::SamplerCreateInfo const&   sampler) {
+  std::string const&              fileName,
+  vk::SamplerCreateInfo const&    sampler) {
 
   auto result = std::make_shared<Texture>();
 
   // first try loading with gli
-  gli::texture texture = gli::load(fileName);
+  gli::texture texture(gli::load(fileName));
   if (!texture.empty()) {
 
     ILLUSION_TRACE << "Creating Texture for file " << fileName << " with gli." << std::endl;
-
-    std::vector<TextureLevel> levels;
-    for (uint32_t i{0}; i < texture.levels(); ++i) {
-      levels.push_back({texture.extent(i).x, texture.extent(i).y, texture.size(i)});
-    }
 
     vk::ImageViewType type;
 
@@ -51,10 +58,22 @@ std::shared_ptr<Texture> Texture::createFromFile(
                                ": Unsuppoerted texture target!"};
     }
 
+    vk::Format format(static_cast<vk::Format>(texture.format()));
+
+    if (format == vk::Format::eR8G8B8Unorm && !isFormatSupported(device, format)) {
+      format  = vk::Format::eR8G8B8A8Unorm;
+      texture = gli::convert(gli::texture2d(texture), gli::FORMAT_RGBA8_UNORM_PACK8);
+    }
+
+    std::vector<TextureLevel> levels;
+    for (uint32_t i{0}; i < texture.levels(); ++i) {
+      levels.push_back({texture.extent(i).x, texture.extent(i).y, texture.size(i)});
+    }
+
     result->initData(
       device,
       levels,
-      (vk::Format)texture.format(),
+      format,
       vk::ImageUsageFlagBits::eSampled,
       type,
       sampler,
@@ -209,7 +228,9 @@ void Texture::initData(
   size_t                         size,
   void*                          data) {
 
-  if (data) { usage |= vk::ImageUsageFlagBits::eTransferDst; }
+  if (data) {
+    usage |= vk::ImageUsageFlagBits::eTransferDst;
+  }
 
   uint32_t             layerCount{1u};
   vk::ImageCreateFlags flags;

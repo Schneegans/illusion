@@ -200,14 +200,17 @@ void Swapchain::present(
     presentInfo.pSwapchains        = swapChains;
     presentInfo.pImageIndices      = &mCurrentImageIndex;
 
-    result = mDevice->getPresentQueue().presentKHR(presentInfo);
-    if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) {
-      // when does this happen?
-      ILLUSION_ERROR << "out of date 3!" << std::endl;
-    } else if (result != vk::Result::eSuccess) {
-      // when does this happen?
-      ILLUSION_ERROR << "out of date 4!" << std::endl;
-    }
+    try {
+      result = mDevice->getPresentQueue().presentKHR(presentInfo);
+
+      if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) {
+        // when does this happen?
+        ILLUSION_ERROR << "out of date 1!" << std::endl;
+      } else if (result != vk::Result::eSuccess) {
+        // when does this happen?
+        ILLUSION_ERROR << "out of date 2!" << std::endl;
+      }
+    } catch (vk::OutOfDateKHRError const& e) { mDirty = true; }
   }
 }
 
