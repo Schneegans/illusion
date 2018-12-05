@@ -76,13 +76,13 @@ class Window {
   std::shared_ptr<Swapchain>      mSwapchain;
 
   std::array<
-    std::array<float, static_cast<int>(Input::JoystickAxisId::eJoystickAxisNum)>,
-    static_cast<int>(Input::JoystickId::eJoystickNum)>
+    std::array<float, Core::enumCast(Input::JoystickAxisId::eJoystickAxisNum)>,
+    Core::enumCast(Input::JoystickId::eJoystickNum)>
     mJoystickAxisCache;
 
   std::array<
-    std::array<int, static_cast<int>(Input::JoystickButtonId::eJoystickButtonNum)>,
-    static_cast<int>(Input::JoystickId::eJoystickNum)>
+    std::array<int, Core::enumCast(Input::JoystickButtonId::eJoystickButtonNum)>,
+    Core::enumCast(Input::JoystickId::eJoystickNum)>
     mJoystickButtonCache;
 
   glm::ivec2 mOrigSize = glm::ivec2(640, 480), mOrigPos = glm::ivec2(0, 0);

@@ -21,7 +21,7 @@ namespace Illusion::Core {
 
 class ScopedTimer {
  public:
-  ScopedTimer(std::string const& name);
+  explicit ScopedTimer(std::string const& name);
   virtual ~ScopedTimer();
 
  private:

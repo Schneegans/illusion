@@ -29,7 +29,9 @@ Window::Window(std::shared_ptr<Engine> const& engine, std::shared_ptr<Device> co
   ILLUSION_TRACE << "Creating Window." << std::endl;
 
   pCursor.onChange().connect([this](Cursor cursor) {
-    if (mCursor) { glfwDestroyCursor(mCursor); }
+    if (mCursor) {
+      glfwDestroyCursor(mCursor);
+    }
 
     switch (cursor) {
     case Cursor::eCross:
@@ -52,7 +54,9 @@ Window::Window(std::shared_ptr<Engine> const& engine, std::shared_ptr<Device> co
       break;
     }
 
-    if (mWindow) { glfwSetCursor(mWindow, mCursor); }
+    if (mWindow) {
+      glfwSetCursor(mWindow, mCursor);
+    }
 
     return true;
   });
@@ -85,12 +89,16 @@ Window::Window(std::shared_ptr<Engine> const& engine, std::shared_ptr<Device> co
   });
 
   pVsync.onChange().connect([this](bool vsync) {
-    if (mSwapchain) { mSwapchain->setEnableVsync(vsync); }
+    if (mSwapchain) {
+      mSwapchain->setEnableVsync(vsync);
+    }
     return true;
   });
 
   pTitle.onChange().connect([this](std::string const& title) {
-    if (mWindow) { glfwSetWindowTitle(mWindow, title.c_str()); }
+    if (mWindow) {
+      glfwSetWindowTitle(mWindow, title.c_str());
+    }
     return true;
   });
 
@@ -107,7 +115,9 @@ Window::Window(std::shared_ptr<Engine> const& engine, std::shared_ptr<Device> co
 Window::~Window() {
   ILLUSION_TRACE << "Deleting Window." << std::endl;
 
-  if (mCursor) { glfwDestroyCursor(mCursor); }
+  if (mCursor) {
+    glfwDestroyCursor(mCursor);
+  }
   close();
 }
 
@@ -204,7 +214,9 @@ void Window::processInput() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool Window::keyPressed(Input::Key key) const {
-  if (!mWindow) { return false; }
+  if (!mWindow) {
+    return false;
+  }
 
   return glfwGetKey(mWindow, (int)key) == GLFW_PRESS;
 }
@@ -212,7 +224,9 @@ bool Window::keyPressed(Input::Key key) const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool Window::buttonPressed(Input::Button button) const {
-  if (!mWindow) { return false; }
+  if (!mWindow) {
+    return false;
+  }
 
   return glfwGetMouseButton(mWindow, (int)button) == GLFW_PRESS;
 }
@@ -221,18 +235,22 @@ bool Window::buttonPressed(Input::Button button) const {
 
 float Window::joyAxis(int joyStick, int axis) {
   if (
-    joyStick >= static_cast<int>(Input::JoystickId::eJoystickNum) ||
-    axis >= static_cast<int>(Input::JoystickAxisId::eJoystickAxisNum)) {
+    joyStick >= Core::enumCast(Input::JoystickId::eJoystickNum) ||
+    axis >= Core::enumCast(Input::JoystickAxisId::eJoystickAxisNum)) {
     return 0;
   }
-  if (!glfwJoystickPresent(joyStick)) { return 0; }
+  if (!glfwJoystickPresent(joyStick)) {
+    return 0;
+  }
   return mJoystickAxisCache[joyStick][axis];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 glm::vec2 Window::getCursorPos() const {
-  if (!mWindow) { return glm::vec2(0.f, 0.f); }
+  if (!mWindow) {
+    return glm::vec2(0.f, 0.f);
+  }
   double x, y;
   glfwGetCursorPos(mWindow, &x, &y);
   return glm::vec2(x, y);
@@ -254,7 +272,7 @@ void Window::updateJoysticks() {
   const float minThreshold(0.15f);
   const float maxThreshold(0.9f);
 
-  const int joystickNum(static_cast<int>(Input::JoystickId::eJoystickNum));
+  const int joystickNum(Core::enumCast(Input::JoystickId::eJoystickNum));
   for (int joy(0); joy < joystickNum; ++joy) {
     if (glfwJoystickPresent(joy)) {
       Input::JoystickId joyId(static_cast<Input::JoystickId>(joy));
@@ -273,7 +291,9 @@ void Window::updateJoysticks() {
           }
         }
 #else
-        if (axis == 2 || axis == 5) { axisValue = (axisValue + 1) * 0.5; }
+        if (axis == 2 || axis == 5) {
+          axisValue = (axisValue + 1) * 0.5;
+        }
 #endif
 
         int sign(axisValue < 0.f ? -1 : 1);
@@ -282,7 +302,9 @@ void Window::updateJoysticks() {
         axisValue = (axisValue - minThreshold) / (maxThreshold - minThreshold);
         axisValue = sign * std::min(1.f, std::max(0.f, axisValue));
 
-        if (axisValue == 0.f || axisValue == 1.f || axisValue == -1.f) { changedThreshold = 0.f; }
+        if (axisValue == 0.f || axisValue == 1.f || axisValue == -1.f) {
+          changedThreshold = 0.f;
+        }
 
         if (std::abs(axisValue - mJoystickAxisCache[joy][axis]) > changedThreshold) {
           Input::JoystickAxisId axisId(static_cast<Input::JoystickAxisId>(axis));

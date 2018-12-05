@@ -27,8 +27,6 @@ class Texture {
     uint64_t mSize;
   };
 
-  Texture() {}
-
   static std::shared_ptr<Texture> createFromFile(
     std::shared_ptr<Device> const& device,
     std::string const&             fileName,
@@ -63,6 +61,7 @@ class Texture {
     size_t                         dataSize = 0,
     void*                          data     = nullptr);
 
+  Texture();
   virtual ~Texture();
 
   std::shared_ptr<vk::Image> const&        getImage() const { return mImage; }

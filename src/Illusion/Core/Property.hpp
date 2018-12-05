@@ -31,9 +31,7 @@ class Property {
   typedef T value_type;
 
   // -------------------------------------------------------------------------------- public methods
-  // Properties for built-in types are automatically initialized to 0.
-  // See template spezialisations at the bottom of this file
-  Property() {}
+  Property() = default;
 
   Property(T const& val)
     : mValue(val) {}
@@ -47,7 +45,7 @@ class Property {
   Property(Property<T>&& toCopy)
     : mValue(std::move(toCopy.mValue)) {}
 
-  virtual ~Property() {}
+  virtual ~Property() = default;
 
   // returns a Signal which is fired when the internal value will be changed.
   // The old value is passed as parameter.
@@ -139,51 +137,6 @@ class Property {
   Property<T> const* mConnection   = nullptr;
   int                mConnectionId = -1;
 };
-
-// ------------------------------------------------- specialization for built-in default contructors
-template <>
-inline Property<double>::Property()
-  : mValue(0.0) {}
-
-template <>
-inline Property<float>::Property()
-  : mValue(0.f) {}
-
-template <>
-inline Property<int8_t>::Property()
-  : mValue(0) {}
-
-template <>
-inline Property<int16_t>::Property()
-  : mValue(0) {}
-
-template <>
-inline Property<int32_t>::Property()
-  : mValue(0) {}
-
-template <>
-inline Property<int64_t>::Property()
-  : mValue(0) {}
-
-template <>
-inline Property<uint8_t>::Property()
-  : mValue(0) {}
-
-template <>
-inline Property<uint16_t>::Property()
-  : mValue(0) {}
-
-template <>
-inline Property<uint32_t>::Property()
-  : mValue(0) {}
-
-template <>
-inline Property<uint64_t>::Property()
-  : mValue(0) {}
-
-template <>
-inline Property<bool>::Property()
-  : mValue(false) {}
 
 // -------------------------------------------------------------------------------- stream operators
 template <typename T>

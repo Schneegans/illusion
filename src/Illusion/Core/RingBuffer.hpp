@@ -23,10 +23,10 @@ class RingBuffer {
 
  public:
   template <typename... Args>
-  RingBuffer(Args&&... a)
+  explicit RingBuffer(Args&&... a)
     : mBuffer{a...} {}
 
-  virtual ~RingBuffer() {}
+  virtual ~RingBuffer() = default;
 
   T& next() {
     mIndex = (mIndex + 1) % ringBufferSize;

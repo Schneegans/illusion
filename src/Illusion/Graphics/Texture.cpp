@@ -157,8 +157,6 @@ std::shared_ptr<Texture> Texture::create2D(
   size_t                         dataSize,
   void*                          data) {
 
-  ILLUSION_TRACE << "Creating Texture." << std::endl;
-
   TextureLevel level;
   level.mWidth  = width;
   level.mHeight = height;
@@ -181,8 +179,6 @@ std::shared_ptr<Texture> Texture::create2DMipMap(
   size_t                         dataSize,
   void*                          data) {
 
-  ILLUSION_TRACE << "Creating Texture." << std::endl;
-
   auto result = std::make_shared<Texture>();
   result->initData(device, levels, format, usage, type, sampler, dataSize, data);
   return result;
@@ -199,8 +195,6 @@ std::shared_ptr<Texture> Texture::createCubemap(
   size_t                         dataSize,
   void*                          data) {
 
-  ILLUSION_TRACE << "Creating Texture." << std::endl;
-
   TextureLevel level;
   level.mWidth  = size;
   level.mHeight = size;
@@ -211,6 +205,10 @@ std::shared_ptr<Texture> Texture::createCubemap(
     device, {level}, format, usage, vk::ImageViewType::eCube, sampler, dataSize, data);
   return result;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Texture::Texture() { ILLUSION_TRACE << "Creating Texture." << std::endl; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
