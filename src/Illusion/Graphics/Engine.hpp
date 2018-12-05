@@ -23,7 +23,7 @@ namespace Illusion::Graphics {
 class Engine {
 
  public:
-  Engine(std::string const& appName, bool debugMode = true);
+  explicit Engine(std::string const& appName, bool debugMode = true);
   virtual ~Engine();
 
   std::shared_ptr<PhysicalDevice> getPhysicalDevice(

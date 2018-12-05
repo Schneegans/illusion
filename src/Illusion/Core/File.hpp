@@ -40,7 +40,7 @@ class File {
     , mIsLoaded(false) {}
 
   // This constructs a File for a given name.
-  File(std::string const& fileName)
+  explicit File(std::string const& fileName)
     : mFileName(fileName)
     , mContent()
     , mIsLoaded(false) {}
@@ -49,7 +49,9 @@ class File {
   bool isValid() const {
     std::ifstream file(mFileName.c_str());
 
-    if (file.fail()) { return false; }
+    if (file.fail()) {
+      return false;
+    }
 
     file.close();
     return true;
@@ -57,7 +59,9 @@ class File {
 
   // Returns the given file's content.
   T const& getContent() const {
-    if (mIsLoaded) { return mContent; }
+    if (mIsLoaded) {
+      return mContent;
+    }
 
     std::ifstream ifs(mFileName, std::ifstream::in | std::ios::binary);
     if (!ifs) {

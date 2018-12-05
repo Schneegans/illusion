@@ -29,7 +29,7 @@ template <typename... Parameters>
 class Signal {
 
  public:
-  Signal() {}
+  Signal() = default;
 
   // copy creates new signal
   Signal(Signal const& other) {}

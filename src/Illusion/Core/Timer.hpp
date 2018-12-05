@@ -20,7 +20,7 @@ namespace Illusion::Core {
 class Timer {
 
  public:
-  Timer(bool autoStart = true);
+  explicit Timer(bool autoStart = true);
 
   void   start();
   double reset();

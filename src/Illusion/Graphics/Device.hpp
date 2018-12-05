@@ -44,7 +44,7 @@ struct BackedBuffer {
 class Device {
 
  public:
-  Device(std::shared_ptr<PhysicalDevice> const& physicalDevice);
+  explicit Device(std::shared_ptr<PhysicalDevice> const& physicalDevice);
   virtual ~Device();
 
   // high-level create methods ---------------------------------------------------------------------
