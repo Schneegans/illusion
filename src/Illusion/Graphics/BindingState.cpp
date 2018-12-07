@@ -14,54 +14,6 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool BindingState::StorageImageBinding::operator==(
-  BindingState::StorageImageBinding const& other) const {
-  return mImage == other.mImage;
-}
-
-bool BindingState::StorageImageBinding::operator!=(
-  BindingState::StorageImageBinding const& other) const {
-  return !(*this == other);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool BindingState::CombinedImageSamplerBinding::operator==(
-  BindingState::CombinedImageSamplerBinding const& other) const {
-  return mTexture == other.mTexture;
-}
-
-bool BindingState::CombinedImageSamplerBinding::operator!=(
-  BindingState::CombinedImageSamplerBinding const& other) const {
-  return !(*this == other);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool BindingState::DynamicUniformBufferBinding::operator==(
-  BindingState::DynamicUniformBufferBinding const& other) const {
-  return mBuffer == other.mBuffer && mSize == other.mSize;
-}
-
-bool BindingState::DynamicUniformBufferBinding::operator!=(
-  BindingState::DynamicUniformBufferBinding const& other) const {
-  return !(*this == other);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool BindingState::UniformBufferBinding::operator==(
-  BindingState::UniformBufferBinding const& other) const {
-  return mBuffer == other.mBuffer && mSize == other.mSize && mOffset == other.mOffset;
-}
-
-bool BindingState::UniformBufferBinding::operator!=(
-  BindingState::UniformBufferBinding const& other) const {
-  return !(*this == other);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
 void BindingState::setBinding(BindingType const& value, uint32_t set, uint32_t binding) {
   if (getBinding(set, binding) != value) {
     mBindings[set][binding] = value;
@@ -110,7 +62,7 @@ void BindingState::setUniformBuffer(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::optional<BindingState::BindingType> BindingState::getBinding(uint32_t set, uint32_t binding) {
+std::optional<BindingType> BindingState::getBinding(uint32_t set, uint32_t binding) {
   auto setIt = mBindings.find(set);
 
   if (setIt == mBindings.end()) {
@@ -128,35 +80,15 @@ std::optional<BindingState::BindingType> BindingState::getBinding(uint32_t set, 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Core::BitHash BindingState::getHash(uint32_t set) const {
-
-  Core::BitHash hash;
-
+std::map<uint32_t, BindingType> const& BindingState::getBindings(uint32_t set) {
   auto setIt = mBindings.find(set);
-  if (setIt != mBindings.end()) {
 
-    for (auto const& binding : setIt->second) {
-      hash.push<16>(binding.first);
-
-      if (std::holds_alternative<StorageImageBinding>(binding.second)) {
-        hash.push<64>(std::get<StorageImageBinding>(binding.second).mImage.get());
-
-      } else if (std::holds_alternative<CombinedImageSamplerBinding>(binding.second)) {
-        hash.push<64>(std::get<CombinedImageSamplerBinding>(binding.second).mTexture.get());
-
-      } else if (std::holds_alternative<DynamicUniformBufferBinding>(binding.second)) {
-        hash.push<64>(std::get<DynamicUniformBufferBinding>(binding.second).mBuffer.get());
-        hash.push<64>(std::get<DynamicUniformBufferBinding>(binding.second).mSize);
-
-      } else if (std::holds_alternative<UniformBufferBinding>(binding.second)) {
-        hash.push<64>(std::get<UniformBufferBinding>(binding.second).mBuffer.get());
-        hash.push<64>(std::get<UniformBufferBinding>(binding.second).mSize);
-        hash.push<64>(std::get<UniformBufferBinding>(binding.second).mOffset);
-      }
-    }
+  if (setIt == mBindings.end()) {
+    static std::map<uint32_t, BindingType> empty;
+    return empty;
   }
 
-  return hash;
+  return setIt->second;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

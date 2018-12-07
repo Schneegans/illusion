@@ -30,7 +30,7 @@ class CommandBuffer {
     QueueType                      type  = QueueType::eGeneric,
     vk::CommandBufferLevel         level = vk::CommandBufferLevel::ePrimary);
 
-  void reset() const;
+  void reset();
   void begin(
     vk::CommandBufferUsageFlagBits usage = vk::CommandBufferUsageFlagBits::eSimultaneousUse) const;
   void end() const;
@@ -70,14 +70,12 @@ class CommandBuffer {
   GraphicsState& graphicsState();
   BindingState&  bindingState();
 
-  template <typename T>
   void pushConstants(
-    vk::PipelineLayout const& layout,
-    vk::ShaderStageFlags      stages,
-    T const&                  data,
-    uint32_t                  offset = 0) const {
+    vk::ShaderStageFlags stages, const void* data, uint32_t size, uint32_t offset = 0) const;
 
-    mVkCmd->pushConstants(layout, stages, offset, sizeof(T), &data);
+  template <typename T>
+  void pushConstants(vk::ShaderStageFlags stages, T const& data, uint32_t offset = 0) const {
+    pushConstants(stages, &data, sizeof(T), offset);
   }
 
   void transitionImageLayout(
@@ -118,11 +116,13 @@ class CommandBuffer {
   QueueType                          mType;
   vk::CommandBufferLevel             mLevel;
 
-  std::shared_ptr<RenderPass> mCurrentRenderPass;
-
-  DescriptorSetCache mDescriptorSetCache;
   GraphicsState      mGraphicsState;
   BindingState       mBindingState;
+  DescriptorSetCache mDescriptorSetCache;
+
+  std::shared_ptr<RenderPass>       mCurrentRenderPass;
+  uint32_t                          mCurrentSubPass = 0;
+  std::map<uint32_t, Core::BitHash> mCurrentDescriptorSetLayoutHashes;
 };
 
 } // namespace Illusion::Graphics

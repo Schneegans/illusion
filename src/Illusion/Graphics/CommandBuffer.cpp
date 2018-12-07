@@ -11,11 +11,11 @@
 #include "CommandBuffer.hpp"
 
 #include "../Core/Logger.hpp"
-#include "DescriptorSet.hpp"
 #include "Device.hpp"
 #include "PipelineReflection.hpp"
 #include "RenderPass.hpp"
 #include "ShaderProgram.hpp"
+#include "Texture.hpp"
 
 #include <iostream>
 
@@ -29,12 +29,16 @@ CommandBuffer::CommandBuffer(
   , mVkCmd(device->allocateCommandBuffer(type, level))
   , mType(type)
   , mLevel(level)
-  , mDescriptorSetCache(device)
-  , mGraphicsState(device) {}
+  , mGraphicsState(device)
+  , mDescriptorSetCache(device) {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::reset() const { mVkCmd->reset({}); }
+void CommandBuffer::reset() {
+  mCurrentDescriptorSetLayoutHashes.clear();
+  mDescriptorSetCache.releaseAll();
+  mVkCmd->reset({});
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -95,6 +99,7 @@ void CommandBuffer::beginRenderPass(std::shared_ptr<RenderPass> const& renderPas
   mVkCmd->beginRenderPass(passInfo, vk::SubpassContents::eInline);
 
   mCurrentRenderPass = renderPass;
+  mCurrentSubPass    = 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -154,6 +159,15 @@ GraphicsState& CommandBuffer::graphicsState() { return mGraphicsState; }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 BindingState& CommandBuffer::bindingState() { return mBindingState; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CommandBuffer::pushConstants(
+  vk::ShaderStageFlags stages, const void* data, uint32_t size, uint32_t offset) const {
+
+  mVkCmd->pushConstants(
+    *mGraphicsState.getShaderProgram()->getReflection()->getLayout(), stages, offset, size, data);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -260,21 +274,99 @@ void CommandBuffer::copyBufferToImage(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::flush() {
-  auto pipeline = mGraphicsState.getPipelineHandle(mCurrentRenderPass, 0);
+  auto pipeline = mGraphicsState.getPipelineHandle(mCurrentRenderPass, mCurrentSubPass);
   mVkCmd->bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline);
 
-  for (uint32_t set : mBindingState.getDirtySets()) {
+  // for each set of current program
+  //    if binding state is dirty
+  //    or no currently bound set
+  //    or currently bound layout does not match layout of set
+  //         acquire new set
+  //         update descriptor set
+  //         bind descriptor set
+  //         store it
 
-    // auto descriptorSet = mDescriptorSetCache.acquireHandle(
-    //   mGraphicsState.getShaderProgram()->getDescriptorSetReflections().at(set));
-    // // descriptorSet->bindCombinedImageSampler(texture, 0);
+  for (auto setReflection : mGraphicsState.getShaderProgram()->getDescriptorSetReflections()) {
 
-    // mVkCmd->bindDescriptorSets(
-    //   vk::PipelineBindPoint::eGraphics,
-    //   *mGraphicsState.getShaderProgram()->getReflection()->getLayout(),
-    //   set,
-    //   *descriptorSet,
-    //   {});
+    uint32_t setNum = setReflection.first;
+
+    auto currentHashIt = mCurrentDescriptorSetLayoutHashes.find(setNum);
+
+    if (
+      mBindingState.getDirtySets().find(setNum) == mBindingState.getDirtySets().end() ||
+      currentHashIt == mCurrentDescriptorSetLayoutHashes.end() ||
+      currentHashIt->second != setReflection.second->getHash()) {
+
+      auto descriptorSet = mDescriptorSetCache.acquireHandle(
+        mGraphicsState.getShaderProgram()->getDescriptorSetReflections().at(setNum));
+
+      for (auto const& binding : mBindingState.getBindings(setNum)) {
+
+        if (std::holds_alternative<CombinedImageSamplerBinding>(binding.second)) {
+
+          auto                    value = std::get<CombinedImageSamplerBinding>(binding.second);
+          vk::DescriptorImageInfo imageInfo;
+          imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+          imageInfo.imageView   = *value.mTexture->getImageView();
+          imageInfo.sampler     = *value.mTexture->getSampler();
+
+          vk::WriteDescriptorSet info;
+          info.dstSet          = *descriptorSet;
+          info.dstBinding      = binding.first;
+          info.dstArrayElement = 0;
+          info.descriptorType  = vk::DescriptorType::eCombinedImageSampler;
+          info.descriptorCount = 1;
+          info.pImageInfo      = &imageInfo;
+
+          mDevice->getHandle()->updateDescriptorSets(info, nullptr);
+
+        } else if (std::holds_alternative<StorageImageBinding>(binding.second)) {
+
+          auto                    value = std::get<StorageImageBinding>(binding.second);
+          vk::DescriptorImageInfo imageInfo;
+          imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+          imageInfo.imageView   = *value.mImage->getImageView();
+          imageInfo.sampler     = *value.mImage->getSampler();
+
+          vk::WriteDescriptorSet info;
+          info.dstSet          = *descriptorSet;
+          info.dstBinding      = binding.first;
+          info.dstArrayElement = 0;
+          info.descriptorType  = vk::DescriptorType::eStorageImage;
+          info.descriptorCount = 1;
+          info.pImageInfo      = &imageInfo;
+
+          mDevice->getHandle()->updateDescriptorSets(info, nullptr);
+
+        } else if (std::holds_alternative<UniformBufferBinding>(binding.second)) {
+
+          auto                     value = std::get<UniformBufferBinding>(binding.second);
+          vk::DescriptorBufferInfo bufferInfo;
+          bufferInfo.buffer = *value.mBuffer->mBuffer;
+          bufferInfo.offset = value.mOffset;
+          bufferInfo.range  = value.mSize;
+
+          vk::WriteDescriptorSet info;
+          info.dstSet          = *descriptorSet;
+          info.dstBinding      = binding.first;
+          info.dstArrayElement = 0;
+          info.descriptorType  = vk::DescriptorType::eUniformBuffer;
+          info.descriptorCount = 1;
+          info.pBufferInfo     = &bufferInfo;
+
+          mDevice->getHandle()->updateDescriptorSets(info, nullptr);
+        }
+      }
+
+      mVkCmd->bindDescriptorSets(
+        vk::PipelineBindPoint::eGraphics,
+        *mGraphicsState.getShaderProgram()->getReflection()->getLayout(),
+        setNum,
+        *descriptorSet,
+        {});
+
+      mCurrentDescriptorSetLayoutHashes[setNum] = setReflection.second->getHash();
+    }
   }
 
   mBindingState.clearDirtySets();

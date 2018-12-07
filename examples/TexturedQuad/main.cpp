@@ -10,8 +10,6 @@
 
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
-#include <Illusion/Graphics/DescriptorSet.hpp>
-#include <Illusion/Graphics/DescriptorSetCache.hpp>
 #include <Illusion/Graphics/Engine.hpp>
 #include <Illusion/Graphics/GraphicsState.hpp>
 #include <Illusion/Graphics/PipelineReflection.hpp>

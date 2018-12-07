@@ -26,7 +26,7 @@ DescriptorSetCache::~DescriptorSetCache() {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<DescriptorSet> DescriptorSetCache::acquireHandle(
+std::shared_ptr<vk::DescriptorSet> DescriptorSetCache::acquireHandle(
   std::shared_ptr<DescriptorSetReflection> const& reflection) {
 
   auto const& hash       = reflection->getHash();
@@ -62,7 +62,7 @@ std::shared_ptr<DescriptorSet> DescriptorSetCache::acquireHandle(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DescriptorSetCache::releaseHandle(std::shared_ptr<DescriptorSet> const& handle) {
+void DescriptorSetCache::releaseHandle(std::shared_ptr<vk::DescriptorSet> const& handle) {
 
   // Search the cache entry which created this handle
   for (auto& p : mCache) {

@@ -11,7 +11,6 @@
 #include "DescriptorPool.hpp"
 
 #include "../Core/Logger.hpp"
-#include "DescriptorSet.hpp"
 #include "DescriptorSetReflection.hpp"
 #include "Device.hpp"
 #include "Utils.hpp"
@@ -45,7 +44,7 @@ DescriptorPool::DescriptorPool(
 
   ILLUSION_TRACE << "Creating DescriptorPool." << std::endl;
 
-  // calculate pool sizes for later pool creation --------------------------------------------------
+  // calculate pool sizes for later pool creation
   std::unordered_map<vk::DescriptorType, uint32_t> descriptorTypeCounts;
   for (auto const& r : reflection->getResources()) {
     descriptorTypeCounts[resourceTypeMapping.at(r.second.mResourceType)] += r.second.mArraySize;
@@ -65,7 +64,7 @@ DescriptorPool::~DescriptorPool() { ILLUSION_TRACE << "Deleting DescriptorPool."
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<DescriptorSet> DescriptorPool::allocateDescriptorSet() {
+std::shared_ptr<vk::DescriptorSet> DescriptorPool::allocateDescriptorSet() {
 
   if (mPoolSizes.size() == 0) {
     throw std::runtime_error(
@@ -108,9 +107,8 @@ std::shared_ptr<DescriptorSet> DescriptorPool::allocateDescriptorSet() {
   ILLUSION_TRACE << "Allocating DescriptorSet." << std::endl;
 
   auto device{mDevice->getHandle()};
-  return std::shared_ptr<DescriptorSet>(
-    new DescriptorSet(mDevice, device->allocateDescriptorSets(info)[0]),
-    [device, pool](DescriptorSet* obj) {
+  return Utils::makeVulkanPtr(
+    device->allocateDescriptorSets(info)[0], [device, pool](vk::DescriptorSet* obj) {
       ILLUSION_TRACE << "Freeing DescriptorSet." << std::endl;
       --pool->mAllocationCount;
       device->freeDescriptorSets(*pool->mPool, *obj);

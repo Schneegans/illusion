@@ -22,7 +22,7 @@ namespace Illusion::Graphics {
 // The DescriptorPool is used by the DescriptorSetCache to create the DescriptorSets. For a given //
 // DescriptorSetReflection it is able to create an arbitrary amount of DescriptorSets.            //
 // Internally, vk::DescriptorPools will be allocated on demand, whenever the maximum number of    //
-// DescriptorSet allocations is reached.                                                          //
+// vk::DescriptorSet allocations is reached.                                                      //
 // Reference counting on the returned handle is used to decide when a Descriptor set can be freed //
 // and returned to the allocating vk::DescriporPool.                                              //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -34,9 +34,10 @@ class DescriptorPool {
     std::shared_ptr<DescriptorSetReflection> const& reflection);
   virtual ~DescriptorPool();
 
-  // Allocates a fresh DescriptorSet, may create a vk::DescriptorPool if no free pool is available.
-  // Once the reference count on this handle runs out of scope, the DescriptorSet will be freed.
-  std::shared_ptr<DescriptorSet> allocateDescriptorSet();
+  // Allocates a fresh vk::DescriptorSet, may create a vk::DescriptorPool if no free pool is
+  // available. Once the reference count on this handle runs out of scope, the vk::DescriptorSet
+  // will be freed.
+  std::shared_ptr<vk::DescriptorSet> allocateDescriptorSet();
 
  private:
   const uint32_t                           mMaxSetsPerPool = 64;
