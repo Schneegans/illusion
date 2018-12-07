@@ -24,17 +24,15 @@ class PhysicalDevice : public vk::PhysicalDevice {
 
   uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) const;
 
-  int getGraphicsFamily() const { return mGraphicsFamily; }
-  int getComputeFamily() const { return mComputeFamily; }
-  int getPresentFamily() const { return mPresentFamily; }
+  // queues of this family can do graphics, compute, transfer and presentation
+  int32_t  getQueueFamily(QueueType type) const;
+  uint32_t getQueueIndex(QueueType type) const;
 
   void printInfo();
 
  private:
-  int chooseQueueFamily(vk::QueueFlagBits caps) const;
-  int choosePresentQueueFamily(vk::Instance const& instance) const;
-
-  int mGraphicsFamily = -1, mComputeFamily = -1, mPresentFamily = -1;
+  std::array<int32_t, 3>  mQueueFamilies = {-1, -1, -1};
+  std::array<uint32_t, 3> mQueueIndices  = {0, 0, 0};
 };
 
 } // namespace Illusion::Graphics

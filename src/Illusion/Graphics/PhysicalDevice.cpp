@@ -10,6 +10,7 @@
 
 #include "PhysicalDevice.hpp"
 
+#include "../Core/EnumCast.hpp"
 #include "../Core/Logger.hpp"
 
 #include <GLFW/glfw3.h>
@@ -38,7 +39,9 @@ void printVal(std::string const& name, std::vector<std::string> const& vals) {
 
   for (size_t i{0}; i < vals.size(); ++i) {
     sstr << vals[i];
-    if (i < vals.size() - 1) { sstr << " | "; }
+    if (i < vals.size() - 1) {
+      sstr << " | ";
+    }
   }
 
   ILLUSION_MESSAGE << std::left << std::setw(50) << std::setfill('.') << (name + " ") << " "
@@ -79,10 +82,86 @@ std::string printMax(S val, T ref) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice const& device)
-  : vk::PhysicalDevice(device)
-  , mGraphicsFamily(chooseQueueFamily(vk::QueueFlagBits::eGraphics))
-  , mComputeFamily(chooseQueueFamily(vk::QueueFlagBits::eCompute))
-  , mPresentFamily(choosePresentQueueFamily(instance)) {}
+  : vk::PhysicalDevice(device) {
+
+  auto available = getQueueFamilyProperties();
+
+  // first find a family which can do everything
+  for (size_t i{0}; i < available.size(); ++i) {
+    vk::QueueFlags required(
+      vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute | vk::QueueFlagBits::eTransfer);
+
+    if (
+      available[i].queueCount > 0 && (available[i].queueFlags & required) == required &&
+      glfwGetPhysicalDevicePresentationSupport(instance, *this, i)) {
+
+      mQueueFamilies[Core::enumCast(QueueType::eGeneric)] = i;
+      break;
+    }
+  }
+
+  // then find a different family for compute
+  for (size_t i{0}; i < available.size(); ++i) {
+    vk::QueueFlags required(vk::QueueFlagBits::eCompute);
+
+    if (
+      available[i].queueCount > 0 && (available[i].queueFlags & required) == required &&
+      i != mQueueFamilies[Core::enumCast(QueueType::eGeneric)]) {
+
+      mQueueFamilies[Core::enumCast(QueueType::eCompute)] = i;
+      break;
+    }
+  }
+
+  // then find a different family for transfer
+  for (size_t i{0}; i < available.size(); ++i) {
+    vk::QueueFlags required(vk::QueueFlagBits::eTransfer);
+
+    if (
+      available[i].queueCount > 0 && (available[i].queueFlags & required) == required &&
+      i != mQueueFamilies[Core::enumCast(QueueType::eGeneric)] &&
+      i != mQueueFamilies[Core::enumCast(QueueType::eCompute)]) {
+
+      mQueueFamilies[Core::enumCast(QueueType::eTransfer)] = i;
+      break;
+    }
+  }
+
+  // if we did not find a transfer family which is different from compute and generic, we might use
+  // the same as for compute
+  for (size_t i{0}; i < available.size(); ++i) {
+    vk::QueueFlags required(vk::QueueFlagBits::eTransfer);
+
+    if (
+      available[i].queueCount > 0 && (available[i].queueFlags & required) == required &&
+      i != mQueueFamilies[Core::enumCast(QueueType::eGeneric)]) {
+
+      mQueueFamilies[Core::enumCast(QueueType::eTransfer)] = i;
+      break;
+    }
+  }
+
+  // if we did not find a compute queue different from the generic one, we will use the same but
+  // another index, if possible
+  if (mQueueFamilies[Core::enumCast(QueueType::eCompute)] == -1) {
+
+    mQueueFamilies[Core::enumCast(QueueType::eCompute)] =
+      mQueueFamilies[Core::enumCast(QueueType::eGeneric)];
+    mQueueIndices[Core::enumCast(QueueType::eCompute)] = std::min(
+      available[mQueueFamilies[Core::enumCast(QueueType::eCompute)]].queueCount - 1,
+      mQueueIndices[Core::enumCast(QueueType::eGeneric)] + 1);
+  }
+
+  // if we did not find a transfer queue different from the generic one, we will use the same but
+  // another index, if possible
+  if (mQueueFamilies[Core::enumCast(QueueType::eTransfer)] == -1) {
+    mQueueFamilies[Core::enumCast(QueueType::eTransfer)] =
+      mQueueFamilies[Core::enumCast(QueueType::eGeneric)];
+    mQueueIndices[Core::enumCast(QueueType::eTransfer)] = std::min(
+      available[mQueueFamilies[Core::enumCast(QueueType::eTransfer)]].queueCount - 1,
+      mQueueIndices[Core::enumCast(QueueType::eCompute)] + 1);
+  }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -104,32 +183,14 @@ uint32_t PhysicalDevice::findMemoryType(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int PhysicalDevice::chooseQueueFamily(vk::QueueFlagBits caps) const {
-  auto queueFamilies = getQueueFamilyProperties();
-
-  for (size_t i{0}; i < queueFamilies.size(); ++i) {
-    if (queueFamilies[i].queueCount > 0 && (queueFamilies[i].queueFlags & caps) == caps) {
-      return i;
-    }
-  }
-
-  return -1;
+int32_t PhysicalDevice::getQueueFamily(QueueType type) const {
+  return mQueueFamilies[Core::enumCast(type)];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-int PhysicalDevice::choosePresentQueueFamily(vk::Instance const& instance) const {
-  auto queueFamilies = getQueueFamilyProperties();
-
-  for (size_t i{0}; i < queueFamilies.size(); ++i) {
-    if (
-      queueFamilies[i].queueCount > 0 &&
-      glfwGetPhysicalDevicePresentationSupport(instance, *this, i)) {
-      return i;
-    }
-  }
-
-  return -1;
+uint32_t PhysicalDevice::getQueueIndex(QueueType type) const {
+  return mQueueFamilies[Core::enumCast(type)];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

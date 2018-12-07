@@ -23,8 +23,7 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 RenderPass::RenderPass(std::shared_ptr<Device> const& device)
-  : mDevice(device)
-  , mPipelineCache(device) {
+  : mDevice(device) {
 
   ILLUSION_TRACE << "Creating RenderPass." << std::endl;
 }
@@ -41,7 +40,6 @@ void RenderPass::init() {
 
     mFramebuffer.reset();
     mRenderPass.reset();
-    mPipelineCache.clear();
 
     mRenderPass = createRenderPass();
     mFramebuffer =
@@ -50,33 +48,6 @@ void RenderPass::init() {
     mAttachmentsDirty = false;
   }
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void RenderPass::begin(std::shared_ptr<CommandBuffer> const& cmd) {
-  init();
-
-  vk::RenderPassBeginInfo passInfo;
-  passInfo.renderPass               = *mRenderPass;
-  passInfo.framebuffer              = *mFramebuffer->getFramebuffer();
-  passInfo.renderArea.offset        = vk::Offset2D(0, 0);
-  passInfo.renderArea.extent.width  = mExtent.x;
-  passInfo.renderArea.extent.height = mExtent.y;
-
-  std::vector<vk::ClearValue> clearValues;
-  clearValues.push_back(vk::ClearColorValue(std::array<float, 4>{{0.f, 0.f, 0.f, 0.f}}));
-
-  if (hasDepthAttachment()) { clearValues.push_back(vk::ClearDepthStencilValue(1.f, 0.f)); }
-
-  passInfo.clearValueCount = clearValues.size();
-  passInfo.pClearValues    = clearValues.data();
-
-  cmd->beginRenderPass(passInfo, vk::SubpassContents::eInline);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void RenderPass::end(std::shared_ptr<CommandBuffer> const& cmd) { cmd->endRenderPass(); }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -90,15 +61,6 @@ void RenderPass::addAttachment(vk::Format format) {
 void RenderPass::setSubPasses(std::vector<SubPass> const& subPasses) {
   mSubPasses        = subPasses;
   mAttachmentsDirty = true;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-std::shared_ptr<vk::Pipeline> RenderPass::getPipelineHandle(
-  GraphicsState const& graphicsState, uint32_t subPass) {
-  init();
-
-  return mPipelineCache.getPipelineHandle(graphicsState, *mRenderPass, subPass);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -120,9 +82,14 @@ std::shared_ptr<Framebuffer> const& RenderPass::getFramebuffer() const { return 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+std::shared_ptr<vk::RenderPass> const& RenderPass::getHandle() const { return mRenderPass; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool RenderPass::hasDepthAttachment() const {
   for (auto format : mFrameBufferAttachmentFormats) {
-    if (Utils::isDepthFormat(format)) return true;
+    if (Utils::isDepthFormat(format))
+      return true;
   }
 
   return false;
@@ -175,7 +142,9 @@ std::shared_ptr<vk::RenderPass> RenderPass::createRenderPass() const {
   if (mSubPasses.size() == 0) {
     std::vector<vk::AttachmentReference> colorAttachmentRefs;
     for (int i{0}; i < (int)attachmentRefs.size(); ++i) {
-      if (i != depthStencilAttachmentRef) { colorAttachmentRefs.push_back(attachmentRefs[i]); }
+      if (i != depthStencilAttachmentRef) {
+        colorAttachmentRefs.push_back(attachmentRefs[i]);
+      }
     }
 
     vk::SubpassDescription subPass;

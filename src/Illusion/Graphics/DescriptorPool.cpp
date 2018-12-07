@@ -109,7 +109,7 @@ std::shared_ptr<DescriptorSet> DescriptorPool::allocateDescriptorSet() {
 
   auto device{mDevice->getHandle()};
   return std::shared_ptr<DescriptorSet>(
-    new DescriptorSet(mDevice, mReflection->getSet(), device->allocateDescriptorSets(info)[0]),
+    new DescriptorSet(mDevice, device->allocateDescriptorSets(info)[0]),
     [device, pool](DescriptorSet* obj) {
       ILLUSION_TRACE << "Freeing DescriptorSet." << std::endl;
       --pool->mAllocationCount;

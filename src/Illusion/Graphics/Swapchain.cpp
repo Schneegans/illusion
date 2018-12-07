@@ -73,12 +73,15 @@ void Swapchain::present(
 
     mImages = mDevice->getHandle()->getSwapchainImagesKHR(*mSwapchain);
 
-    auto cmd = mDevice->beginSingleTimeGraphicsCommands();
+    auto cmd = std::make_shared<CommandBuffer>(mDevice);
+    cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
     for (auto const& image : mImages) {
       cmd->transitionImageLayout(
         image, vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR);
     }
-    mDevice->endSingleTimeGraphicsCommands();
+    cmd->end();
+    cmd->submit();
+    cmd->waitIdle();
 
     createSemaphores();
     createCommandBuffers();
@@ -108,10 +111,8 @@ void Swapchain::present(
   // copy image ------------------------------------------------------------------------------------
   {
     auto const& cmd = mPresentCommandBuffers[mCurrentPresentIndex];
-    cmd->reset(vk::CommandBufferResetFlags());
-    vk::CommandBufferBeginInfo beginInfo;
-    beginInfo.flags = vk::CommandBufferUsageFlagBits::eSimultaneousUse;
-    cmd->begin(beginInfo);
+    cmd->reset();
+    cmd->begin();
 
     vk::ImageSubresourceLayers subResource;
     subResource.aspectMask     = vk::ImageAspectFlagBits::eColor;
@@ -170,22 +171,11 @@ void Swapchain::present(
 
     cmd->end();
 
-    vk::PipelineStageFlags waitStages[]       = {vk::PipelineStageFlagBits::eColorAttachmentOutput,
-                                           vk::PipelineStageFlagBits::eColorAttachmentOutput};
-    vk::Semaphore          signalSemaphores[] = {*mCopyFinishedSemaphores[mCurrentPresentIndex]};
-    vk::Semaphore          waitSemaphores[]   = {*renderFinishedSemaphore,
-                                      *mImageAvailableSemaphores[mCurrentPresentIndex]};
-
-    vk::SubmitInfo submitInfo;
-    submitInfo.waitSemaphoreCount   = 2;
-    submitInfo.pWaitSemaphores      = waitSemaphores;
-    submitInfo.pWaitDstStageMask    = waitStages;
-    submitInfo.commandBufferCount   = 1;
-    submitInfo.pCommandBuffers      = cmd.get();
-    submitInfo.signalSemaphoreCount = 1;
-    submitInfo.pSignalSemaphores    = signalSemaphores;
-
-    mDevice->getGraphicsQueue().submit(submitInfo, *signalFence);
+    cmd->submit(
+      {*renderFinishedSemaphore, *mImageAvailableSemaphores[mCurrentPresentIndex]},
+      {2, vk::PipelineStageFlagBits::eColorAttachmentOutput},
+      {*mCopyFinishedSemaphores[mCurrentPresentIndex]},
+      *signalFence);
   }
 
   // present on mOutputWindow ----------------------------------------------------------------------
@@ -201,7 +191,7 @@ void Swapchain::present(
     presentInfo.pImageIndices      = &mCurrentImageIndex;
 
     try {
-      result = mDevice->getPresentQueue().presentKHR(presentInfo);
+      result = mDevice->getQueue(QueueType::eGeneric).presentKHR(presentInfo);
 
       if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) {
         // when does this happen?
@@ -301,32 +291,20 @@ void Swapchain::createSwapchain() {
   info.imageExtent.height = mExtent.y;
   info.imageArrayLayers   = 1;
   info.imageUsage = vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferDst;
-  info.preTransform   = capabilities.currentTransform;
-  info.compositeAlpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
-  info.presentMode    = presentMode;
-  info.clipped        = true;
-  info.oldSwapchain   = nullptr; // this could be optimized
-
-  uint32_t graphicsFamily = mDevice->getPhysicalDevice()->getGraphicsFamily();
-  uint32_t presentFamily  = mDevice->getPhysicalDevice()->getPresentFamily();
+  info.preTransform     = capabilities.currentTransform;
+  info.compositeAlpha   = vk::CompositeAlphaFlagBitsKHR::eOpaque;
+  info.presentMode      = presentMode;
+  info.clipped          = true;
+  info.oldSwapchain     = nullptr; // this could be optimized
+  info.imageSharingMode = vk::SharingMode::eExclusive;
 
   // this check should not be neccessary, but the validation layers complain
   // when only glfwGetPhysicalDevicePresentationSupport was used to check for
   // presentation support
-  if (!mDevice->getPhysicalDevice()->getSurfaceSupportKHR(presentFamily, *mSurface)) {
+  if (!mDevice->getPhysicalDevice()->getSurfaceSupportKHR(
+        mDevice->getPhysicalDevice()->getQueueFamily(QueueType::eGeneric), *mSurface)) {
     ILLUSION_ERROR << "The selected queue family does not "
                    << "support presentation!" << std::endl;
-  }
-
-  if (graphicsFamily != presentFamily) {
-    uint32_t queueFamilyIndices[] = {graphicsFamily, presentFamily};
-    info.imageSharingMode         = vk::SharingMode::eConcurrent;
-    info.queueFamilyIndexCount    = 2;
-    info.pQueueFamilyIndices      = queueFamilyIndices;
-  } else {
-    info.imageSharingMode      = vk::SharingMode::eExclusive;
-    info.queueFamilyIndexCount = 0;       // Optional
-    info.pQueueFamilyIndices   = nullptr; // Optional
   }
 
   mSwapchain = mDevice->createSwapChainKhr(info);
@@ -336,9 +314,8 @@ void Swapchain::createSwapchain() {
 
 void Swapchain::createSemaphores() {
   for (auto const& i : mImages) {
-    vk::SemaphoreCreateInfo info;
-    mImageAvailableSemaphores.push_back(mDevice->createSemaphore(info));
-    mCopyFinishedSemaphores.push_back(mDevice->createSemaphore(info));
+    mImageAvailableSemaphores.push_back(mDevice->createSemaphore());
+    mCopyFinishedSemaphores.push_back(mDevice->createSemaphore());
   }
 }
 
@@ -346,7 +323,7 @@ void Swapchain::createSemaphores() {
 
 void Swapchain::createCommandBuffers() {
   for (auto const& i : mImages) {
-    mPresentCommandBuffers.push_back(mDevice->allocateGraphicsCommandBuffer());
+    mPresentCommandBuffers.push_back(std::make_shared<CommandBuffer>(mDevice));
   }
 }
 

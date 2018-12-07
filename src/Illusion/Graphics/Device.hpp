@@ -71,24 +71,15 @@ class Device {
   std::shared_ptr<BackedBuffer> createIndexBuffer(vk::DeviceSize size, const void* data) const;
   std::shared_ptr<BackedBuffer> createUniformBuffer(vk::DeviceSize size) const;
 
-  std::shared_ptr<CommandBuffer> allocateGraphicsCommandBuffer() const;
-  std::shared_ptr<CommandBuffer> allocateComputeCommandBuffer() const;
-
-  void submit(
-    std::vector<CommandBuffer> const&          commandBuffers,
-    std::vector<vk::Semaphore> const&          waitSemaphores   = {},
-    std::vector<vk::PipelineStageFlags> const& waitStages       = {},
-    std::vector<vk::Semaphore> const&          signalSemaphores = {},
-    vk::Fence const&                           fence            = nullptr) const;
-
   // low-level create methods ----------------------------------------------------------------------
   // clang-format off
+  std::shared_ptr<vk::CommandBuffer>       allocateCommandBuffer(QueueType = QueueType::eGeneric, vk::CommandBufferLevel = vk::CommandBufferLevel::ePrimary) const;
   std::shared_ptr<vk::Buffer>              createBuffer(vk::BufferCreateInfo const&) const;
   std::shared_ptr<vk::CommandPool>         createCommandPool(vk::CommandPoolCreateInfo const&) const;
   std::shared_ptr<vk::DescriptorPool>      createDescriptorPool(vk::DescriptorPoolCreateInfo const&) const;
   std::shared_ptr<vk::DescriptorSetLayout> createDescriptorSetLayout(vk::DescriptorSetLayoutCreateInfo const&) const;
   std::shared_ptr<vk::DeviceMemory>        createMemory(vk::MemoryAllocateInfo const&) const;
-  std::shared_ptr<vk::Fence>               createFence(vk::FenceCreateInfo const&) const;
+  std::shared_ptr<vk::Fence>               createFence(vk::FenceCreateFlags const& = vk::FenceCreateFlagBits::eSignaled) const;
   std::shared_ptr<vk::Framebuffer>         createFramebuffer(vk::FramebufferCreateInfo const&) const;
   std::shared_ptr<vk::Image>               createImage(vk::ImageCreateInfo const&) const;
   std::shared_ptr<vk::ImageView>           createImageView(vk::ImageViewCreateInfo const&) const;
@@ -97,31 +88,15 @@ class Device {
   std::shared_ptr<vk::PipelineLayout>      createPipelineLayout(vk::PipelineLayoutCreateInfo const&) const;
   std::shared_ptr<vk::RenderPass>          createRenderPass(vk::RenderPassCreateInfo const&) const;
   std::shared_ptr<vk::Sampler>             createSampler(vk::SamplerCreateInfo const&) const;
-  std::shared_ptr<vk::Semaphore>           createSemaphore(vk::SemaphoreCreateInfo const&) const;
+  std::shared_ptr<vk::Semaphore>           createSemaphore(vk::SemaphoreCreateFlags const& = {}) const;
   std::shared_ptr<vk::ShaderModule>        createShaderModule(vk::ShaderModuleCreateInfo const&) const;
   std::shared_ptr<vk::SwapchainKHR>        createSwapChainKhr(vk::SwapchainCreateInfoKHR const&) const;
   // clang-format on
 
-  // vulkan helper methods -------------------------------------------------------------------------
-  std::shared_ptr<CommandBuffer> beginSingleTimeGraphicsCommands() const;
-  void                           endSingleTimeGraphicsCommands() const;
-
-  std::shared_ptr<CommandBuffer> beginSingleTimeComputeCommands() const;
-  void                           endSingleTimeComputeCommands() const;
-
   // vulkan getters --------------------------------------------------------------------------------
   std::shared_ptr<vk::Device> const&     getHandle() const { return mDevice; }
   std::shared_ptr<PhysicalDevice> const& getPhysicalDevice() const { return mPhysicalDevice; }
-  vk::Queue const&                       getGraphicsQueue() const { return mGraphicsQueue; }
-  vk::Queue const&                       getComputeQueue() const { return mComputeQueue; }
-  vk::Queue const&                       getPresentQueue() const { return mPresentQueue; }
-
-  std::shared_ptr<vk::CommandPool> const& getGraphicsCommandPool() const {
-    return mGraphicsCommandPool;
-  }
-  std::shared_ptr<vk::CommandPool> const& getComputeCommandPool() const {
-    return mComputeCommandPool;
-  }
+  vk::Queue const&                       getQueue(QueueType type) const;
 
   // device interface forwarding -------------------------------------------------------------------
   void waitForFences(vk::ArrayProxy<const vk::Fence> const& fences, bool waitAll, uint64_t timeout);
@@ -131,14 +106,11 @@ class Device {
  private:
   std::shared_ptr<vk::Device> createDevice() const;
 
-  std::shared_ptr<PhysicalDevice>  mPhysicalDevice;
-  std::shared_ptr<vk::Device>      mDevice;
-  std::shared_ptr<vk::CommandPool> mGraphicsCommandPool;
-  std::shared_ptr<CommandBuffer>   mOneTimeGraphicsCommandBuffer;
-  std::shared_ptr<vk::CommandPool> mComputeCommandPool;
-  std::shared_ptr<CommandBuffer>   mOneTimeComputeCommandBuffer;
+  std::shared_ptr<PhysicalDevice> mPhysicalDevice;
+  std::shared_ptr<vk::Device>     mDevice;
 
-  vk::Queue mGraphicsQueue, mComputeQueue, mPresentQueue;
+  std::array<vk::Queue, 3>                        mQueues;
+  std::array<std::shared_ptr<vk::CommandPool>, 3> mCommandPools;
 };
 
 } // namespace Illusion::Graphics

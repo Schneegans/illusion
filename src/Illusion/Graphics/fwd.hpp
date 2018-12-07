@@ -15,6 +15,8 @@
 
 namespace Illusion::Graphics {
 
+enum class QueueType { eGeneric = 0, eCompute = 1, eTransfer = 2 };
+
 struct BackedBuffer;
 struct BackedImage;
 

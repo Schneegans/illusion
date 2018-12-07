@@ -20,7 +20,7 @@ namespace Illusion::Graphics {
 
 class DescriptorSet : public vk::DescriptorSet {
  public:
-  DescriptorSet(std::shared_ptr<Device> const& device, uint32_t set, vk::DescriptorSet const& base);
+  DescriptorSet(std::shared_ptr<Device> const& device, vk::DescriptorSet const& base);
 
   void bindCombinedImageSampler(std::shared_ptr<Texture> const& texture, uint32_t binding = 0);
   void bindStorageImage(std::shared_ptr<Texture> const& texture, uint32_t binding = 0);
@@ -29,8 +29,6 @@ class DescriptorSet : public vk::DescriptorSet {
     uint32_t                             binding = 0,
     vk::DeviceSize                       size    = 0,
     vk::DeviceSize                       offset  = 0);
-
-  uint32_t getSet() const;
 
  private:
   std::shared_ptr<Device> mDevice;

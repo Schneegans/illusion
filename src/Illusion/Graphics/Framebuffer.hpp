@@ -30,7 +30,7 @@ class Framebuffer {
 
   virtual ~Framebuffer();
 
-  std::shared_ptr<vk::Framebuffer> const&          getFramebuffer() const { return mFramebuffer; }
+  std::shared_ptr<vk::Framebuffer> const&          getHandle() const { return mFramebuffer; }
   std::vector<std::shared_ptr<BackedImage>> const& getImages() const { return mImageStore; }
 
  private:

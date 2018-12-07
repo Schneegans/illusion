@@ -10,9 +10,17 @@
 
 #include "GraphicsState.hpp"
 
+#include "RenderPass.hpp"
+
 #include <iostream>
 
 namespace Illusion::Graphics {
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+GraphicsState::GraphicsState(std::shared_ptr<Device> const& device)
+  : mDevice(device)
+  , mPipelineCache(device) {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -332,6 +340,14 @@ void GraphicsState::setShaderProgram(std::shared_ptr<ShaderProgram> const& val) 
 }
 std::shared_ptr<ShaderProgram> const& GraphicsState::getShaderProgram() const {
   return mShaderProgram;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::shared_ptr<vk::Pipeline> GraphicsState::getPipelineHandle(
+  std::shared_ptr<RenderPass> const& renderPass, uint32_t subPass) {
+
+  return mPipelineCache.getPipelineHandle(*this, *renderPass->getHandle(), subPass);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

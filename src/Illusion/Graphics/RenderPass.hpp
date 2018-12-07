@@ -13,7 +13,6 @@
 
 #include "Device.hpp"
 #include "Framebuffer.hpp"
-#include "PipelineCache.hpp"
 
 #include <functional>
 #include <glm/glm.hpp>
@@ -36,20 +35,15 @@ class RenderPass {
   RenderPass(std::shared_ptr<Device> const& device);
   virtual ~RenderPass();
 
-  virtual void init();
+  void init();
 
-  void begin(std::shared_ptr<CommandBuffer> const& cmd);
-  void end(std::shared_ptr<CommandBuffer> const& cmd);
-
-  virtual void                        addAttachment(vk::Format format);
-  virtual bool                        hasDepthAttachment() const;
-  virtual void                        setSubPasses(std::vector<SubPass> const& subPasses);
-  virtual void                        setExtent(glm::uvec2 const& extent);
-  virtual glm::uvec2 const&           getExtent() const;
-  std::shared_ptr<Framebuffer> const& getFramebuffer() const;
-
-  std::shared_ptr<vk::Pipeline> getPipelineHandle(
-    GraphicsState const& graphicsState, uint32_t subPass = 0);
+  void                                   addAttachment(vk::Format format);
+  bool                                   hasDepthAttachment() const;
+  void                                   setSubPasses(std::vector<SubPass> const& subPasses);
+  void                                   setExtent(glm::uvec2 const& extent);
+  glm::uvec2 const&                      getExtent() const;
+  std::shared_ptr<Framebuffer> const&    getFramebuffer() const;
+  std::shared_ptr<vk::RenderPass> const& getHandle() const;
 
  private:
   std::shared_ptr<vk::RenderPass> createRenderPass() const;
@@ -61,8 +55,6 @@ class RenderPass {
   std::vector<SubPass>            mSubPasses;
   bool                            mAttachmentsDirty = true;
   glm::uvec2                      mExtent           = {100, 100};
-
-  PipelineCache mPipelineCache;
 };
 
 } // namespace Illusion::Graphics

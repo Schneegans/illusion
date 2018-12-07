@@ -124,18 +124,10 @@ Engine::~Engine() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::shared_ptr<PhysicalDevice> Engine::getPhysicalDevice(
-  bool graphics, bool compute, bool present, std::vector<std::string> const& extensions) const {
+  std::vector<std::string> const& extensions) const {
 
   // loop through physical devices and choose a suitable one
   for (auto const& physicalDevice : mPhysicalDevices) {
-
-    // check whether all required queue types are supported
-    if (
-      (physicalDevice->getGraphicsFamily() < 0 || !graphics) ||
-      (physicalDevice->getPresentFamily() < 0 || !present) ||
-      (physicalDevice->getComputeFamily() < 0 || !compute)) {
-      continue;
-    }
 
     // check whether all required extensions are supported
     auto availableExtensions = physicalDevice->enumerateDeviceExtensionProperties();

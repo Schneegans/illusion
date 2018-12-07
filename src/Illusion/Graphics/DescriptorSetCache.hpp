@@ -21,8 +21,7 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // The DescriptorSetCache can be used to avoid frequent recreation of similar DescriptorSets. It  //
 // also simplifies the DescriptorSet management if multiple pipelines use the same                //
-// DescriptorSetLayouts. It is a good idea to use an instance of this class as part of your frame //
-// resources in a ring buffer fashion.                                                            //
+// DescriptorSetLayouts. It is used by the CommandBuffer class.                                   //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class DescriptorSetCache {

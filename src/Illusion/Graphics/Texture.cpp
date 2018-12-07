@@ -36,8 +36,8 @@ bool isFormatSupported(std::shared_ptr<Device> const& device, vk::Format format)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 std::shared_ptr<Texture> Texture::createFromFile(
   std::shared_ptr<Device> const& device,
-  std::string const&              fileName,
-  vk::SamplerCreateInfo const&    sampler) {
+  std::string const&             fileName,
+  vk::SamplerCreateInfo const&   sampler) {
 
   auto result = std::make_shared<Texture>();
 
@@ -282,7 +282,8 @@ void Texture::initData(
   subresourceRange.layerCount   = layerCount;
 
   if (data) {
-    auto cmd = device->beginSingleTimeGraphicsCommands();
+    auto cmd = std::make_shared<CommandBuffer>(device);
+    cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
     {
       cmd->transitionImageLayout(
         *mImage,
@@ -291,7 +292,9 @@ void Texture::initData(
         vk::PipelineStageFlagBits::eTransfer,
         subresourceRange);
     }
-    device->endSingleTimeGraphicsCommands();
+    cmd->end();
+    cmd->submit();
+    cmd->waitIdle();
 
     auto stagingBuffer = device->createBackedBuffer(
       size,
@@ -299,7 +302,8 @@ void Texture::initData(
       vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
       data);
 
-    cmd = device->beginSingleTimeGraphicsCommands();
+    cmd->reset();
+    cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
     {
       std::vector<vk::BufferImageCopy> infos;
       uint64_t                         offset = 0;
@@ -325,9 +329,11 @@ void Texture::initData(
       cmd->copyBufferToImage(
         *stagingBuffer->mBuffer, *mImage, vk::ImageLayout::eTransferDstOptimal, infos);
     }
-    device->endSingleTimeGraphicsCommands();
-
-    cmd = device->beginSingleTimeGraphicsCommands();
+    cmd->end();
+    cmd->submit();
+    cmd->waitIdle();
+    cmd->reset();
+    cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
     {
       cmd->transitionImageLayout(
         *mImage,
@@ -336,7 +342,9 @@ void Texture::initData(
         vk::PipelineStageFlagBits::eTransfer,
         subresourceRange);
     }
-    device->endSingleTimeGraphicsCommands();
+    cmd->end();
+    cmd->submit();
+    cmd->waitIdle();
   }
 }
 

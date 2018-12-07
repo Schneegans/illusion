@@ -14,6 +14,7 @@
 #include "fwd.hpp"
 
 #include "../Core/BitHash.hpp"
+#include "PipelineCache.hpp"
 
 #include <glm/glm.hpp>
 #include <set>
@@ -50,9 +51,10 @@ class GraphicsState {
     glm::uvec2 mExtend = glm::uvec2(0);
   };
 
-  // clang-format off
+  GraphicsState(std::shared_ptr<Device> const& device);
 
-  // Color Blend State------------------------------------------------------------------------------
+  // clang-format off
+  // Color Blend State -----------------------------------------------------------------------------
   void                                setBlendLogicOpEnable(bool val);
   bool                                getBlendLogicOpEnable() const;
   void                                setBlendLogicOp(vk::LogicOp val);
@@ -184,9 +186,14 @@ class GraphicsState {
   // clang-format on
 
   // -----------------------------------------------------------------------------------------------
+  std::shared_ptr<vk::Pipeline> getPipelineHandle(
+    std::shared_ptr<RenderPass> const& renderPass, uint32_t subPass);
+
   Core::BitHash const& getHash() const;
 
  private:
+  std::shared_ptr<Device> const& mDevice;
+
   // Color Blend State------------------------------------------------------------------------------
   bool                         mBlendLogicOpEnable = false;
   vk::LogicOp                  mBlendLogicOp       = vk::LogicOp::eAnd;
@@ -260,6 +267,8 @@ class GraphicsState {
   // Dirty State -----------------------------------------------------------------------------------
   mutable bool          mDirty = true;
   mutable Core::BitHash mHash;
+
+  PipelineCache mPipelineCache;
 };
 
 } // namespace Illusion::Graphics

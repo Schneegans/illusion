@@ -27,9 +27,6 @@ class Engine {
   virtual ~Engine();
 
   std::shared_ptr<PhysicalDevice> getPhysicalDevice(
-    bool                            graphics   = true,
-    bool                            compute    = true,
-    bool                            present    = true,
     std::vector<std::string> const& extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME}) const;
 
   std::shared_ptr<vk::SurfaceKHR> createSurface(GLFWwindow* window) const;

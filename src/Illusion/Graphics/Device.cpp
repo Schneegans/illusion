@@ -10,6 +10,7 @@
 
 #include "Device.hpp"
 
+#include "../Core/EnumCast.hpp"
 #include "../Core/Logger.hpp"
 #include "CommandBuffer.hpp"
 #include "PhysicalDevice.hpp"
@@ -31,34 +32,24 @@ const std::vector<const char*> DEVICE_EXTENSIONS{VK_KHR_SWAPCHAIN_EXTENSION_NAME
 
 Device::Device(std::shared_ptr<PhysicalDevice> const& physicalDevice)
   : mPhysicalDevice(physicalDevice)
-  , mDevice(createDevice())
-  , mGraphicsQueue(mDevice->getQueue(mPhysicalDevice->getGraphicsFamily(), 0))
-  , mComputeQueue(mDevice->getQueue(mPhysicalDevice->getComputeFamily(), 0))
-  , mPresentQueue(mDevice->getQueue(mPhysicalDevice->getPresentFamily(), 0)) {
+  , mDevice(createDevice()) {
 
   ILLUSION_TRACE << "Creating Device." << std::endl;
-  {
+
+  for (int i = 0; i < 3; ++i) {
+    QueueType type = static_cast<QueueType>(i);
+    mQueues[i]     = mDevice->getQueue(mPhysicalDevice->getQueueFamily(type), 0);
+
     vk::CommandPoolCreateInfo info;
-    info.queueFamilyIndex         = mPhysicalDevice->getGraphicsFamily();
-    info.flags                    = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
-    mGraphicsCommandPool          = createCommandPool(info);
-    mOneTimeGraphicsCommandBuffer = allocateGraphicsCommandBuffer();
-  }
-  {
-    vk::CommandPoolCreateInfo info;
-    info.queueFamilyIndex        = mPhysicalDevice->getComputeFamily();
-    info.flags                   = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
-    mComputeCommandPool          = createCommandPool(info);
-    mOneTimeComputeCommandBuffer = allocateComputeCommandBuffer();
+    info.queueFamilyIndex = mPhysicalDevice->getQueueFamily(type);
+    info.flags            = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
+    mCommandPools[i]      = createCommandPool(info);
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Device::~Device() {
-  // FIXME: Material::clearPipelineCache();
-  ILLUSION_TRACE << "Deleting Device." << std::endl;
-}
+Device::~Device() { ILLUSION_TRACE << "Deleting Device." << std::endl; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -167,9 +158,20 @@ std::shared_ptr<BackedBuffer> Device::createBackedBuffer(
         vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
         data);
 
-      auto cmd = beginSingleTimeGraphicsCommands();
-      cmd->copyBuffer(*stagingBuffer->mBuffer, *result->mBuffer, size);
-      endSingleTimeGraphicsCommands();
+      auto cmd = allocateCommandBuffer();
+      cmd->begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
+      vk::BufferCopy region;
+      region.size = size;
+      cmd->copyBuffer(*stagingBuffer->mBuffer, *result->mBuffer, 1, &region);
+      cmd->end();
+
+      vk::CommandBuffer bufs[] = {*cmd};
+      vk::SubmitInfo    info;
+      info.commandBufferCount = 1;
+      info.pCommandBuffers    = bufs;
+
+      getQueue(QueueType::eGeneric).submit(info, nullptr);
+      getQueue(QueueType::eGeneric).waitIdle();
     }
   }
 
@@ -203,69 +205,24 @@ std::shared_ptr<BackedBuffer> Device::createUniformBuffer(vk::DeviceSize size) c
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<CommandBuffer> Device::allocateGraphicsCommandBuffer() const {
+std::shared_ptr<vk::CommandBuffer> Device::allocateCommandBuffer(
+  QueueType type, vk::CommandBufferLevel level) const {
   vk::CommandBufferAllocateInfo info;
   info.level              = vk::CommandBufferLevel::ePrimary;
-  info.commandPool        = *mGraphicsCommandPool;
+  info.commandPool        = *mCommandPools[Core::enumCast(type)];
   info.commandBufferCount = 1;
 
-  ILLUSION_TRACE << "Allocating Graphics CommandBuffer." << std::endl;
+  ILLUSION_TRACE << "Allocating CommandBuffer." << std::endl;
 
   auto device{mDevice};
-  auto pool{mGraphicsCommandPool};
-  auto commandBuffer = std::shared_ptr<CommandBuffer>(
-    new CommandBuffer(mDevice->allocateCommandBuffers(info)[0]),
-    [device, pool](CommandBuffer* obj) {
-      ILLUSION_TRACE << "Freeing Graphics CommandBuffer." << std::endl;
+  auto pool{mCommandPools[Core::enumCast(type)]};
+
+  return Utils::makeVulkanPtr(
+    mDevice->allocateCommandBuffers(info)[0], [device, pool](vk::CommandBuffer* obj) {
+      ILLUSION_TRACE << "Freeing CommandBuffer." << std::endl;
       device->freeCommandBuffers(*pool, *obj);
       delete obj;
     });
-
-  return commandBuffer;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-std::shared_ptr<CommandBuffer> Device::allocateComputeCommandBuffer() const {
-  vk::CommandBufferAllocateInfo info;
-  info.level              = vk::CommandBufferLevel::ePrimary;
-  info.commandPool        = *mComputeCommandPool;
-  info.commandBufferCount = 1;
-
-  ILLUSION_TRACE << "Allocating Compute CommandBuffer." << std::endl;
-
-  auto device{mDevice};
-  auto pool{mComputeCommandPool};
-  auto commandBuffer = std::shared_ptr<CommandBuffer>(
-    new CommandBuffer(mDevice->allocateCommandBuffers(info)[0]),
-    [device, pool](CommandBuffer* obj) {
-      ILLUSION_TRACE << "Freeing Compute CommandBuffer." << std::endl;
-      device->freeCommandBuffers(*pool, *obj);
-      delete obj;
-    });
-
-  return commandBuffer;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void Device::submit(
-  std::vector<CommandBuffer> const&          commandBuffers,
-  std::vector<vk::Semaphore> const&          waitSemaphores,
-  std::vector<vk::PipelineStageFlags> const& waitStages,
-  std::vector<vk::Semaphore> const&          signalSemaphores,
-  vk::Fence const&                           fence) const {
-
-  vk::SubmitInfo info;
-  info.pWaitDstStageMask    = waitStages.data();
-  info.commandBufferCount   = commandBuffers.size();
-  info.pCommandBuffers      = commandBuffers.data();
-  info.signalSemaphoreCount = signalSemaphores.size();
-  info.pSignalSemaphores    = signalSemaphores.data();
-  info.waitSemaphoreCount   = waitSemaphores.size();
-  info.pWaitSemaphores      = waitSemaphores.data();
-
-  mGraphicsQueue.submit(info, fence);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -335,10 +292,10 @@ std::shared_ptr<vk::DeviceMemory> Device::createMemory(vk::MemoryAllocateInfo co
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::Fence> Device::createFence(vk::FenceCreateInfo const& info) const {
+std::shared_ptr<vk::Fence> Device::createFence(vk::FenceCreateFlags const& flags) const {
   ILLUSION_TRACE << "Creating vk::Fence." << std::endl;
   auto device{mDevice};
-  return Utils::makeVulkanPtr(device->createFence(info), [device](vk::Fence* obj) {
+  return Utils::makeVulkanPtr(device->createFence({flags}), [device](vk::Fence* obj) {
     ILLUSION_TRACE << "Deleting vk::Fence." << std::endl;
     device->destroyFence(*obj);
     delete obj;
@@ -451,10 +408,11 @@ std::shared_ptr<vk::Sampler> Device::createSampler(vk::SamplerCreateInfo const& 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::Semaphore> Device::createSemaphore(vk::SemaphoreCreateInfo const& info) const {
+std::shared_ptr<vk::Semaphore> Device::createSemaphore(
+  vk::SemaphoreCreateFlags const& flags) const {
   ILLUSION_TRACE << "Creating vk::Semaphore." << std::endl;
   auto device{mDevice};
-  return Utils::makeVulkanPtr(device->createSemaphore(info), [device](vk::Semaphore* obj) {
+  return Utils::makeVulkanPtr(device->createSemaphore({flags}), [device](vk::Semaphore* obj) {
     ILLUSION_TRACE << "Deleting vk::Semaphore." << std::endl;
     device->destroySemaphore(*obj);
     delete obj;
@@ -489,45 +447,29 @@ std::shared_ptr<vk::SwapchainKHR> Device::createSwapChainKhr(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<CommandBuffer> Device::beginSingleTimeGraphicsCommands() const {
-  mOneTimeGraphicsCommandBuffer->reset({});
-  mOneTimeGraphicsCommandBuffer->begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
-  return mOneTimeGraphicsCommandBuffer;
-}
+// std::shared_ptr<CommandBuffer> Device::beginSingleTimeCommands(QueueType type) const {
+//   mOneTimeCommandBuffers[Core::enumCast(type)]->reset({});
+//   mOneTimeCommandBuffers[Core::enumCast(type)]->begin(
+//     {vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
+//   return mOneTimeCommandBuffers[Core::enumCast(type)];
+// }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Device::endSingleTimeGraphicsCommands() const {
-  mOneTimeGraphicsCommandBuffer->end();
+// void Device::endSingleTimeCommands(QueueType type) const {
+//   mOneTimeCommandBuffers[Core::enumCast(type)]->end();
 
-  vk::SubmitInfo info;
-  info.commandBufferCount = 1;
-  info.pCommandBuffers    = mOneTimeGraphicsCommandBuffer.get();
+//   vk::SubmitInfo info;
+//   info.commandBufferCount = 1;
+//   info.pCommandBuffers    = mOneTimeCommandBuffers[Core::enumCast(type)].get();
 
-  mGraphicsQueue.submit(info, nullptr);
-  mGraphicsQueue.waitIdle();
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-std::shared_ptr<CommandBuffer> Device::beginSingleTimeComputeCommands() const {
-  mOneTimeComputeCommandBuffer->reset({});
-  mOneTimeComputeCommandBuffer->begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
-  return mOneTimeComputeCommandBuffer;
-}
+//   getQueue(type).submit(info, nullptr);
+//   getQueue(type).waitIdle();
+// }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Device::endSingleTimeComputeCommands() const {
-  mOneTimeComputeCommandBuffer->end();
-
-  vk::SubmitInfo info;
-  info.commandBufferCount = 1;
-  info.pCommandBuffers    = mOneTimeComputeCommandBuffer.get();
-
-  mComputeQueue.submit(info, nullptr);
-  mComputeQueue.waitIdle();
-}
+vk::Queue const& Device::getQueue(QueueType type) const { return mQueues[Core::enumCast(type)]; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -549,9 +491,10 @@ std::shared_ptr<vk::Device> Device::createDevice() const {
   std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
 
   const float              queuePriority{1.0f};
-  const std::set<uint32_t> uniqueQueueFamilies{(uint32_t)mPhysicalDevice->getGraphicsFamily(),
-                                               (uint32_t)mPhysicalDevice->getComputeFamily(),
-                                               (uint32_t)mPhysicalDevice->getPresentFamily()};
+  const std::set<uint32_t> uniqueQueueFamilies{
+    (uint32_t)mPhysicalDevice->getQueueFamily(QueueType::eGeneric),
+    (uint32_t)mPhysicalDevice->getQueueFamily(QueueType::eCompute),
+    (uint32_t)mPhysicalDevice->getQueueFamily(QueueType::eTransfer)};
 
   for (uint32_t queueFamily : uniqueQueueFamilies) {
     vk::DeviceQueueCreateInfo queueCreateInfo;

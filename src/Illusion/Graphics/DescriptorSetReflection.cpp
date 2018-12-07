@@ -90,7 +90,9 @@ std::map<std::string, PipelineResource> DescriptorSetReflection::getResources(
   std::map<std::string, PipelineResource> result;
 
   for (auto const& r : mResources) {
-    if (r.second.mResourceType == type) { result[r.second.mName] = r.second; }
+    if (r.second.mResourceType == type) {
+      result[r.second.mName] = r.second;
+    }
   }
 
   return result;
@@ -183,7 +185,7 @@ void DescriptorSetReflection::printInfo() const {
 
 Core::BitHash const& DescriptorSetReflection::getHash() const {
   if (mHash.size() == 0) {
-    mHash.push<32>(mSet);
+    mHash.push<16>(mSet);
 
     for (auto const& r : mResources) {
       mHash.push<6>(r.second.mStages);
