@@ -20,6 +20,11 @@ namespace Illusion::Graphics {
 
 class PhysicalDevice : public vk::PhysicalDevice {
  public:
+  template <typename... Args>
+  static PhysicalDevicePtr create(Args&&... args) {
+    return std::make_shared<PhysicalDevice>(args...);
+  };
+
   PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice const& device);
 
   uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) const;

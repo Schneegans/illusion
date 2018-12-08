@@ -17,7 +17,9 @@ namespace Illusion::Core {
 FPSCounter::FPSCounter(unsigned t, bool autoStart)
   : mDelay(t) {
 
-  if (autoStart) { start(); }
+  if (autoStart) {
+    start();
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

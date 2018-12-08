@@ -23,24 +23,28 @@ namespace Illusion::Graphics {
 class Engine {
 
  public:
+  template <typename... Args>
+  static EnginePtr create(Args&&... args) {
+    return std::make_shared<Engine>(args...);
+  };
+
   explicit Engine(std::string const& appName, bool debugMode = true);
   virtual ~Engine();
 
-  std::shared_ptr<PhysicalDevice> getPhysicalDevice(
+  PhysicalDevicePtr getPhysicalDevice(
     std::vector<std::string> const& extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME}) const;
 
-  std::shared_ptr<vk::SurfaceKHR> createSurface(GLFWwindow* window) const;
+  vk::SurfaceKHRPtr createSurface(GLFWwindow* window) const;
 
  private:
-  std::shared_ptr<vk::Instance> createInstance(
-    std::string const& engine, std::string const& app) const;
-  std::shared_ptr<vk::DebugReportCallbackEXT> createDebugCallback() const;
+  vk::InstancePtr createInstance(std::string const& engine, std::string const& app) const;
+  vk::DebugReportCallbackEXTPtr createDebugCallback() const;
 
   bool mDebugMode{false};
 
-  std::shared_ptr<vk::Instance>                mInstance;
-  std::shared_ptr<vk::DebugReportCallbackEXT>  mDebugCallback;
-  std::vector<std::shared_ptr<PhysicalDevice>> mPhysicalDevices;
+  vk::InstancePtr                mInstance;
+  vk::DebugReportCallbackEXTPtr  mDebugCallback;
+  std::vector<PhysicalDevicePtr> mPhysicalDevices;
 };
 
 } // namespace Illusion::Graphics

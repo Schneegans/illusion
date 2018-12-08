@@ -10,16 +10,16 @@
 
 #version 450
 
-// inputs ------------------------------------------------------------------------------------------
+// inputs
 layout(location = 0) in vec2 vTexcoords;
 
-// uniforms ----------------------------------------------------------------------------------------
+// uniforms
 layout(binding = 0) uniform sampler2D texSampler;
 
-// outputs -----------------------------------------------------------------------------------------
+// outputs
 layout(location = 0) out vec4 outColor;
 
-// methods -----------------------------------------------------------------------------------------
+// methods
 void main() {
     outColor = texture(texSampler, vTexcoords);
 }

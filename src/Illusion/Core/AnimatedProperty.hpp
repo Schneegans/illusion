@@ -47,14 +47,9 @@ class AnimatedProperty : public Property<T> {
     , mStart(val)
     , mEnd(val) {}
 
-  AnimatedProperty(
-    T const&           start,
-    T const&           end,
-    double             dur   = 1.0,
-    AnimationDirection dir   = AnimationDirection::eInOut,
-    AnimationLoop      loop  = AnimationLoop::eNone,
-    double             exp   = 0.0,
-    double             delay = 0.0)
+  AnimatedProperty(T const& start, T const& end, double dur = 1.0,
+    AnimationDirection dir = AnimationDirection::eInOut, AnimationLoop loop = AnimationLoop::eNone,
+    double exp = 0.0, double delay = 0.0)
     : Property<T>(start)
     , mDirection(dir)
     , mLoop(loop)
@@ -82,7 +77,9 @@ class AnimatedProperty : public Property<T> {
   }
 
   void update(double time) {
-    if (mDuration == 0.0 && mState != -1.0) { mState = 1.0; }
+    if (mDuration == 0.0 && mState != -1.0) {
+      mState = 1.0;
+    }
 
     if (mState < 1 && mState >= 0.0) {
       if (mDelay > 0) {
@@ -180,14 +177,9 @@ class AnimatedFloat : public AnimatedProperty<float> {
     : AnimatedProperty<float>(0.f) {}
   AnimatedFloat(float val)
     : AnimatedProperty<float>(val) {}
-  AnimatedFloat(
-    float const&       start,
-    float const&       end,
-    double             duration  = 1.0,
+  AnimatedFloat(float const& start, float const& end, double duration = 1.0,
     AnimationDirection direction = AnimationDirection::eInOut,
-    AnimationLoop      loop      = AnimationLoop::eNone,
-    double             exponent  = 0.0,
-    double             delay     = 0.0)
+    AnimationLoop loop = AnimationLoop::eNone, double exponent = 0.0, double delay = 0.0)
     : AnimatedProperty<float>(start, end, duration, direction, loop, exponent, delay) {}
 
   AnimatedFloat& operator=(AnimatedFloat const& other) {
@@ -214,14 +206,9 @@ class AnimatedDouble : public AnimatedProperty<double> {
     : AnimatedProperty<double>(0.0) {}
   AnimatedDouble(double val)
     : AnimatedProperty<double>(val) {}
-  AnimatedDouble(
-    double const&      start,
-    double const&      end,
-    double             duration  = 1.0,
+  AnimatedDouble(double const& start, double const& end, double duration = 1.0,
     AnimationDirection direction = AnimationDirection::eInOut,
-    AnimationLoop      loop      = AnimationLoop::eNone,
-    double             exponent  = 0.0,
-    double             delay     = 0.0)
+    AnimationLoop loop = AnimationLoop::eNone, double exponent = 0.0, double delay = 0.0)
     : AnimatedProperty<double>(start, end, duration, direction, loop, exponent, delay) {}
 
   AnimatedDouble& operator=(AnimatedDouble const& other) {

@@ -23,17 +23,20 @@ namespace Illusion::Graphics {
 class Swapchain {
 
  public:
-  Swapchain(std::shared_ptr<Device> const& device, std::shared_ptr<vk::SurfaceKHR> const& surface);
+  template <typename... Args>
+  static SwapchainPtr create(Args&&... args) {
+    return std::make_shared<Swapchain>(args...);
+  };
+
+  Swapchain(DevicePtr const& device, vk::SurfaceKHRPtr const& surface);
   virtual ~Swapchain();
 
   void              setEnableVsync(bool enable);
   void              markDirty();
   glm::uvec2 const& getExtent() const;
 
-  void present(
-    std::shared_ptr<BackedImage> const&   image,
-    std::shared_ptr<vk::Semaphore> const& renderFinishedSemaphore,
-    std::shared_ptr<vk::Fence> const&     signalFence);
+  void present(BackedImagePtr const& image, vk::SemaphorePtr const& renderFinishedSemaphore,
+    vk::FencePtr const& signalFence);
 
  private:
   void chooseExtent();
@@ -42,19 +45,19 @@ class Swapchain {
   void createSemaphores();
   void createCommandBuffers();
 
-  std::shared_ptr<Device>           mDevice;
-  std::shared_ptr<vk::SurfaceKHR>   mSurface;
-  glm::uvec2                        mExtent;
-  vk::SurfaceFormatKHR              mFormat;
-  std::shared_ptr<vk::SwapchainKHR> mSwapchain;
+  DevicePtr            mDevice;
+  vk::SurfaceKHRPtr    mSurface;
+  glm::uvec2           mExtent;
+  vk::SurfaceFormatKHR mFormat;
+  vk::SwapchainKHRPtr  mSwapchain;
 
   std::vector<vk::Image> mImages;
   uint32_t               mCurrentImageIndex = 0;
 
-  std::vector<std::shared_ptr<vk::Semaphore>> mImageAvailableSemaphores;
-  std::vector<std::shared_ptr<vk::Semaphore>> mCopyFinishedSemaphores;
-  std::vector<std::shared_ptr<CommandBuffer>> mPresentCommandBuffers;
-  uint32_t                                    mCurrentPresentIndex = 0;
+  std::vector<vk::SemaphorePtr> mImageAvailableSemaphores;
+  std::vector<vk::SemaphorePtr> mCopyFinishedSemaphores;
+  std::vector<CommandBufferPtr> mPresentCommandBuffers;
+  uint32_t                      mCurrentPresentIndex = 0;
 
   bool mEnableVsync = true;
   bool mDirty       = true;

@@ -16,12 +16,9 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-CoherentUniformBuffer::CoherentUniformBuffer(
-  std::shared_ptr<Device> const& device, vk::DeviceSize size)
+CoherentUniformBuffer::CoherentUniformBuffer(DevicePtr const& device, vk::DeviceSize size)
   : mDevice(device)
-  , mBuffer(device->createBackedBuffer(
-      size,
-      vk::BufferUsageFlagBits::eUniformBuffer,
+  , mBuffer(device->createBackedBuffer(size, vk::BufferUsageFlagBits::eUniformBuffer,
       vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible)) {
 
   mMappedData = (uint8_t*)mDevice->getHandle()->mapMemory(*mBuffer->mMemory, 0, mBuffer->mSize);
@@ -56,7 +53,7 @@ vk::DeviceSize CoherentUniformBuffer::updateData(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<BackedBuffer> const& CoherentUniformBuffer::getBuffer() const { return mBuffer; }
+BackedBufferPtr const& CoherentUniformBuffer::getBuffer() const { return mBuffer; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

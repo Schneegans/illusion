@@ -22,7 +22,7 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Window::Window(std::shared_ptr<Engine> const& engine, std::shared_ptr<Device> const& device)
+Window::Window(EnginePtr const& engine, DevicePtr const& device)
   : mEngine(engine)
   , mDevice(device) {
 
@@ -234,9 +234,8 @@ bool Window::buttonPressed(Input::Button button) const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 float Window::joyAxis(int joyStick, int axis) {
-  if (
-    joyStick >= Core::enumCast(Input::JoystickId::eJoystickNum) ||
-    axis >= Core::enumCast(Input::JoystickAxisId::eJoystickAxisNum)) {
+  if (joyStick >= Core::enumCast(Input::JoystickId::eJoystickNum) ||
+      axis >= Core::enumCast(Input::JoystickAxisId::eJoystickAxisNum)) {
     return 0;
   }
   if (!glfwJoystickPresent(joyStick)) {
@@ -258,10 +257,8 @@ glm::vec2 Window::getCursorPos() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Window::present(
-  std::shared_ptr<BackedImage> const&   image,
-  std::shared_ptr<vk::Semaphore> const& renderFinishedSemaphore,
-  std::shared_ptr<vk::Fence> const&     signalFence) {
+void Window::present(BackedImagePtr const& image, vk::SemaphorePtr const& renderFinishedSemaphore,
+  vk::FencePtr const& signalFence) {
   mSwapchain->present(image, renderFinishedSemaphore, signalFence);
 }
 

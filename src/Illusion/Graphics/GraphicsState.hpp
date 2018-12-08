@@ -14,9 +14,9 @@
 #include "fwd.hpp"
 
 #include "../Core/BitHash.hpp"
-#include "PipelineCache.hpp"
 
 #include <glm/glm.hpp>
+#include <map>
 #include <set>
 
 namespace Illusion::Graphics {
@@ -51,7 +51,7 @@ class GraphicsState {
     glm::uvec2 mExtend = glm::uvec2(0);
   };
 
-  GraphicsState(std::shared_ptr<Device> const& device);
+  GraphicsState(DevicePtr const& device);
 
   // clang-format off
   // Color Blend State -----------------------------------------------------------------------------
@@ -180,19 +180,18 @@ class GraphicsState {
   std::set<vk::DynamicState> const&   getDynamicState() const;
 
   // Shader State ----------------------------------------------------------------------------------
-  void                                setShaderProgram(std::shared_ptr<ShaderProgram> const& val);
-  std::shared_ptr<ShaderProgram> const& getShaderProgram() const;
+  void                                setShaderProgram(ShaderProgramPtr const& val);
+  ShaderProgramPtr const& getShaderProgram() const;
 
   // clang-format on
 
   // -----------------------------------------------------------------------------------------------
-  std::shared_ptr<vk::Pipeline> getPipelineHandle(
-    std::shared_ptr<RenderPass> const& renderPass, uint32_t subPass);
+  vk::PipelinePtr getPipelineHandle(RenderPassPtr const& renderPass, uint32_t subPass);
 
   Core::BitHash const& getHash() const;
 
  private:
-  std::shared_ptr<Device> const& mDevice;
+  DevicePtr const& mDevice;
 
   // Color Blend State------------------------------------------------------------------------------
   bool                         mBlendLogicOpEnable = false;
@@ -262,13 +261,13 @@ class GraphicsState {
   std::set<vk::DynamicState> mDynamicState;
 
   // Shader State ----------------------------------------------------------------------------------
-  std::shared_ptr<ShaderProgram> mShaderProgram;
+  ShaderProgramPtr mShaderProgram;
 
   // Dirty State -----------------------------------------------------------------------------------
   mutable bool          mDirty = true;
   mutable Core::BitHash mHash;
 
-  PipelineCache mPipelineCache;
+  std::map<Core::BitHash, vk::PipelinePtr> mPipelineCache;
 };
 
 } // namespace Illusion::Graphics

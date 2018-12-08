@@ -24,7 +24,7 @@ namespace Illusion::Graphics {
 
 const std::unordered_map<PipelineResource::ResourceType, vk::DescriptorType> resourceTypeMapping = {
   {PipelineResource::ResourceType::eCombinedImageSampler,
-   vk::DescriptorType::eCombinedImageSampler},
+    vk::DescriptorType::eCombinedImageSampler},
   {PipelineResource::ResourceType::eInputAttachment, vk::DescriptorType::eInputAttachment},
   {PipelineResource::ResourceType::eSampledImage, vk::DescriptorType::eSampledImage},
   {PipelineResource::ResourceType::eSampler, vk::DescriptorType::eSampler},
@@ -38,7 +38,7 @@ const std::unordered_map<PipelineResource::ResourceType, vk::DescriptorType> res
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 DescriptorPool::DescriptorPool(
-  std::shared_ptr<Device> const& device, std::shared_ptr<DescriptorSetReflection> const& reflection)
+  DevicePtr const& device, DescriptorSetReflectionPtr const& reflection)
   : mDevice(device)
   , mReflection(reflection) {
 
@@ -64,7 +64,7 @@ DescriptorPool::~DescriptorPool() { ILLUSION_TRACE << "Deleting DescriptorPool."
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::DescriptorSet> DescriptorPool::allocateDescriptorSet() {
+vk::DescriptorSetPtr DescriptorPool::allocateDescriptorSet() {
 
   if (mPoolSizes.size() == 0) {
     throw std::runtime_error(

@@ -10,17 +10,17 @@
 
 #version 450
 
-// inputs ------------------------------------------------------------------------------------------
+// inputs
 layout (local_size_x = 16, local_size_y = 16) in;
 
-// outputs -----------------------------------------------------------------------------------------
+// outputs
 layout (binding = 0)  uniform sampler2D inputImage;
 layout (rgba32f, binding = 1) writeonly uniform imageCube outputImage;
 
-// constants ---------------------------------------------------------------------------------------
+// constants
 #define PI 3.14159265359
 
-// methods -----------------------------------------------------------------------------------------
+// methods
 void main()
 {
   uvec2 cubeFaceSize = imageSize(outputImage);

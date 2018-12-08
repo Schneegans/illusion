@@ -21,40 +21,37 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct StorageImageBinding {
-  std::shared_ptr<Texture> mImage;
+  TexturePtr mImage;
 
   bool operator==(StorageImageBinding const& other) const;
   bool operator!=(StorageImageBinding const& other) const;
 };
 
 struct CombinedImageSamplerBinding {
-  std::shared_ptr<Texture> mTexture;
+  TexturePtr mTexture;
 
   bool operator==(CombinedImageSamplerBinding const& other) const;
   bool operator!=(CombinedImageSamplerBinding const& other) const;
 };
 
 struct DynamicUniformBufferBinding {
-  std::shared_ptr<BackedBuffer> mBuffer;
-  vk::DeviceSize                mSize;
+  BackedBufferPtr mBuffer;
+  vk::DeviceSize  mSize;
 
   bool operator==(DynamicUniformBufferBinding const& other) const;
   bool operator!=(DynamicUniformBufferBinding const& other) const;
 };
 
 struct UniformBufferBinding {
-  std::shared_ptr<BackedBuffer> mBuffer;
-  vk::DeviceSize                mSize;
-  vk::DeviceSize                mOffset;
+  BackedBufferPtr mBuffer;
+  vk::DeviceSize  mSize;
+  vk::DeviceSize  mOffset;
 
   bool operator==(UniformBufferBinding const& other) const;
   bool operator!=(UniformBufferBinding const& other) const;
 };
 
-typedef std::variant<
-  StorageImageBinding,
-  CombinedImageSamplerBinding,
-  DynamicUniformBufferBinding,
+typedef std::variant<StorageImageBinding, CombinedImageSamplerBinding, DynamicUniformBufferBinding,
   UniformBufferBinding>
   BindingType;
 

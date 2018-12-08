@@ -72,15 +72,20 @@ NullBuffer   nullBuffer;
 std::ostream devNull(&nullBuffer);
 
 std::string locationString(const char* f, int l) {
-  if (!Logger::printFile && !Logger::printLine) { return ""; }
+  if (!Logger::printFile && !Logger::printLine) {
+    return "";
+  }
 
   std::stringstream sstr;
 
   sstr << "[";
 
-  if (Logger::printFile) sstr << std::string(f);
-  if (Logger::printFile && Logger::printLine) sstr << ":";
-  if (Logger::printLine) sstr << l;
+  if (Logger::printFile)
+    sstr << std::string(f);
+  if (Logger::printFile && Logger::printLine)
+    sstr << ":";
+  if (Logger::printLine)
+    sstr << l;
 
   sstr << "]";
   return sstr.str();

@@ -23,27 +23,29 @@ class ShaderModule {
  public:
   static std::vector<uint32_t> compileGlsl(std::string const& glsl, vk::ShaderStageFlagBits stage);
 
-  ShaderModule(
-    std::shared_ptr<Device> const& device, std::string const& glsl, vk::ShaderStageFlagBits stage);
+  template <typename... Args>
+  static EnginePtr create(Args&&... args) {
+    return std::make_shared<Engine>(args...);
+  };
+
+  ShaderModule(DevicePtr const& device, std::string const& glsl, vk::ShaderStageFlagBits stage);
 
   ShaderModule(
-    std::shared_ptr<Device> const& device,
-    std::vector<uint32_t>&&        spirv,
-    vk::ShaderStageFlagBits        stage);
+    DevicePtr const& device, std::vector<uint32_t>&& spirv, vk::ShaderStageFlagBits stage);
 
   virtual ~ShaderModule();
 
   vk::ShaderStageFlagBits              getStage() const;
-  std::shared_ptr<vk::ShaderModule>    getModule() const;
+  vk::ShaderModulePtr                  getModule() const;
   std::vector<PipelineResource> const& getResources() const;
 
  private:
   void createReflection();
 
-  std::vector<uint32_t>             mSpirv;
-  vk::ShaderStageFlagBits           mStage;
-  std::shared_ptr<vk::ShaderModule> mModule;
-  std::vector<PipelineResource>     mResources;
+  std::vector<uint32_t>         mSpirv;
+  vk::ShaderStageFlagBits       mStage;
+  vk::ShaderModulePtr           mModule;
+  std::vector<PipelineResource> mResources;
 };
 
 } // namespace Illusion::Graphics

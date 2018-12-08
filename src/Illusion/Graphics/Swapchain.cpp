@@ -21,8 +21,7 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Swapchain::Swapchain(
-  std::shared_ptr<Device> const& device, std::shared_ptr<vk::SurfaceKHR> const& surface)
+Swapchain::Swapchain(DevicePtr const& device, vk::SurfaceKHRPtr const& surface)
   : mDevice(device)
   , mSurface(surface) {
 
@@ -52,10 +51,8 @@ glm::uvec2 const& Swapchain::getExtent() const { return mExtent; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Swapchain::present(
-  std::shared_ptr<BackedImage> const&   image,
-  std::shared_ptr<vk::Semaphore> const& renderFinishedSemaphore,
-  std::shared_ptr<vk::Fence> const&     signalFence) {
+void Swapchain::present(BackedImagePtr const& image,
+  vk::SemaphorePtr const& renderFinishedSemaphore, vk::FencePtr const& signalFence) {
 
   if (mDirty) {
     mDevice->waitIdle();
@@ -91,12 +88,9 @@ void Swapchain::present(
 
   mCurrentPresentIndex = (mCurrentPresentIndex + 1) % mImages.size();
 
-  auto result = mDevice->getHandle()->acquireNextImageKHR(
-    *mSwapchain,
-    std::numeric_limits<uint64_t>::max(),
-    *mImageAvailableSemaphores[mCurrentPresentIndex],
-    nullptr,
-    &mCurrentImageIndex);
+  auto result =
+    mDevice->getHandle()->acquireNextImageKHR(*mSwapchain, std::numeric_limits<uint64_t>::max(),
+      *mImageAvailableSemaphores[mCurrentPresentIndex], nullptr, &mCurrentImageIndex);
 
   if (result == vk::Result::eErrorOutOfDateKHR) {
     // mark dirty and call this method again
@@ -131,51 +125,29 @@ void Swapchain::present(
       region.extent.height  = image->mInfo.extent.height;
       region.extent.depth   = 1;
 
-      cmd->resolveImage(
-        *image->mImage,
-        vk::ImageLayout::eTransferSrcOptimal,
-        mImages[mCurrentImageIndex],
-        vk::ImageLayout::eTransferDstOptimal,
-        region);
+      cmd->resolveImage(*image->mImage, vk::ImageLayout::eTransferSrcOptimal,
+        mImages[mCurrentImageIndex], vk::ImageLayout::eTransferDstOptimal, region);
     }
     // Else do an image blit.
     else {
-      cmd->transitionImageLayout(
-        *image->mImage,
-        vk::ImageLayout::eColorAttachmentOptimal,
-        vk::ImageLayout::eTransferSrcOptimal,
-        vk::PipelineStageFlagBits::eTransfer);
-      cmd->transitionImageLayout(
-        mImages[mCurrentImageIndex],
-        vk::ImageLayout::ePresentSrcKHR,
-        vk::ImageLayout::eTransferDstOptimal,
-        vk::PipelineStageFlagBits::eTransfer);
+      cmd->transitionImageLayout(*image->mImage, vk::ImageLayout::eColorAttachmentOptimal,
+        vk::ImageLayout::eTransferSrcOptimal, vk::PipelineStageFlagBits::eTransfer);
+      cmd->transitionImageLayout(mImages[mCurrentImageIndex], vk::ImageLayout::ePresentSrcKHR,
+        vk::ImageLayout::eTransferDstOptimal, vk::PipelineStageFlagBits::eTransfer);
       vk::ImageBlit info;
-      cmd->blitImage(
-        *image->mImage,
-        mImages[mCurrentImageIndex],
-        {image->mInfo.extent.width, image->mInfo.extent.height},
-        mExtent,
-        vk::Filter::eNearest);
-      cmd->transitionImageLayout(
-        *image->mImage,
-        vk::ImageLayout::eTransferSrcOptimal,
-        vk::ImageLayout::eColorAttachmentOptimal,
-        vk::PipelineStageFlagBits::eTransfer);
-      cmd->transitionImageLayout(
-        mImages[mCurrentImageIndex],
-        vk::ImageLayout::eTransferDstOptimal,
-        vk::ImageLayout::ePresentSrcKHR,
-        vk::PipelineStageFlagBits::eTransfer);
+      cmd->blitImage(*image->mImage, mImages[mCurrentImageIndex],
+        {image->mInfo.extent.width, image->mInfo.extent.height}, mExtent, vk::Filter::eNearest);
+      cmd->transitionImageLayout(*image->mImage, vk::ImageLayout::eTransferSrcOptimal,
+        vk::ImageLayout::eColorAttachmentOptimal, vk::PipelineStageFlagBits::eTransfer);
+      cmd->transitionImageLayout(mImages[mCurrentImageIndex], vk::ImageLayout::eTransferDstOptimal,
+        vk::ImageLayout::ePresentSrcKHR, vk::PipelineStageFlagBits::eTransfer);
     }
 
     cmd->end();
 
-    cmd->submit(
-      {*renderFinishedSemaphore, *mImageAvailableSemaphores[mCurrentPresentIndex]},
+    cmd->submit({*renderFinishedSemaphore, *mImageAvailableSemaphores[mCurrentPresentIndex]},
       {2, vk::PipelineStageFlagBits::eColorAttachmentOutput},
-      {*mCopyFinishedSemaphores[mCurrentPresentIndex]},
-      *signalFence);
+      {*mCopyFinishedSemaphores[mCurrentPresentIndex]}, *signalFence);
   }
 
   // present on mOutputWindow ----------------------------------------------------------------------
@@ -236,9 +208,8 @@ void Swapchain::chooseFormat() {
   }
 
   for (const auto& format : formats) {
-    if (
-      format.format == vk::Format::eB8G8R8A8Unorm &&
-      format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
+    if (format.format == vk::Format::eB8G8R8A8Unorm &&
+        format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
       mFormat = format;
       return;
     }

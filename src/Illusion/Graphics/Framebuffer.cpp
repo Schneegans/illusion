@@ -20,11 +20,8 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Framebuffer::Framebuffer(
-  std::shared_ptr<Device> const&         device,
-  std::shared_ptr<vk::RenderPass> const& renderPass,
-  glm::uvec2 const&                      extent,
-  std::vector<vk::Format> const&         attachments)
+Framebuffer::Framebuffer(DevicePtr const& device, vk::RenderPassPtr const& renderPass,
+  glm::uvec2 const& extent, std::vector<vk::Format> const& attachments)
   : mDevice(device)
   , mRenderPass(renderPass)
   , mExtent(extent) {
@@ -52,17 +49,9 @@ Framebuffer::Framebuffer(
       usage = vk::ImageUsageFlagBits::eDepthStencilAttachment;
     }
 
-    auto image = mDevice->createBackedImage(
-      extent.x,
-      extent.y,
-      1,
-      1,
-      1,
-      attachment,
-      vk::ImageTiling::eOptimal,
-      usage,
-      vk::MemoryPropertyFlagBits::eDeviceLocal,
-      vk::SampleCountFlagBits::e1);
+    auto image =
+      mDevice->createBackedImage(extent.x, extent.y, 1, 1, 1, attachment, vk::ImageTiling::eOptimal,
+        usage, vk::MemoryPropertyFlagBits::eDeviceLocal, vk::SampleCountFlagBits::e1);
 
     vk::ImageViewCreateInfo info;
     info.image                           = *image->mImage;

@@ -91,9 +91,8 @@ PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice 
     vk::QueueFlags required(
       vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute | vk::QueueFlagBits::eTransfer);
 
-    if (
-      available[i].queueCount > 0 && (available[i].queueFlags & required) == required &&
-      glfwGetPhysicalDevicePresentationSupport(instance, *this, i)) {
+    if (available[i].queueCount > 0 && (available[i].queueFlags & required) == required &&
+        glfwGetPhysicalDevicePresentationSupport(instance, *this, i)) {
 
       mQueueFamilies[Core::enumCast(QueueType::eGeneric)] = i;
       break;
@@ -104,9 +103,8 @@ PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice 
   for (size_t i{0}; i < available.size(); ++i) {
     vk::QueueFlags required(vk::QueueFlagBits::eCompute);
 
-    if (
-      available[i].queueCount > 0 && (available[i].queueFlags & required) == required &&
-      i != mQueueFamilies[Core::enumCast(QueueType::eGeneric)]) {
+    if (available[i].queueCount > 0 && (available[i].queueFlags & required) == required &&
+        i != mQueueFamilies[Core::enumCast(QueueType::eGeneric)]) {
 
       mQueueFamilies[Core::enumCast(QueueType::eCompute)] = i;
       break;
@@ -117,10 +115,9 @@ PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice 
   for (size_t i{0}; i < available.size(); ++i) {
     vk::QueueFlags required(vk::QueueFlagBits::eTransfer);
 
-    if (
-      available[i].queueCount > 0 && (available[i].queueFlags & required) == required &&
-      i != mQueueFamilies[Core::enumCast(QueueType::eGeneric)] &&
-      i != mQueueFamilies[Core::enumCast(QueueType::eCompute)]) {
+    if (available[i].queueCount > 0 && (available[i].queueFlags & required) == required &&
+        i != mQueueFamilies[Core::enumCast(QueueType::eGeneric)] &&
+        i != mQueueFamilies[Core::enumCast(QueueType::eCompute)]) {
 
       mQueueFamilies[Core::enumCast(QueueType::eTransfer)] = i;
       break;
@@ -132,9 +129,8 @@ PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice 
   for (size_t i{0}; i < available.size(); ++i) {
     vk::QueueFlags required(vk::QueueFlagBits::eTransfer);
 
-    if (
-      available[i].queueCount > 0 && (available[i].queueFlags & required) == required &&
-      i != mQueueFamilies[Core::enumCast(QueueType::eGeneric)]) {
+    if (available[i].queueCount > 0 && (available[i].queueFlags & required) == required &&
+        i != mQueueFamilies[Core::enumCast(QueueType::eGeneric)]) {
 
       mQueueFamilies[Core::enumCast(QueueType::eTransfer)] = i;
       break;
@@ -147,9 +143,9 @@ PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice 
 
     mQueueFamilies[Core::enumCast(QueueType::eCompute)] =
       mQueueFamilies[Core::enumCast(QueueType::eGeneric)];
-    mQueueIndices[Core::enumCast(QueueType::eCompute)] = std::min(
-      available[mQueueFamilies[Core::enumCast(QueueType::eCompute)]].queueCount - 1,
-      mQueueIndices[Core::enumCast(QueueType::eGeneric)] + 1);
+    mQueueIndices[Core::enumCast(QueueType::eCompute)] =
+      std::min(available[mQueueFamilies[Core::enumCast(QueueType::eCompute)]].queueCount - 1,
+        mQueueIndices[Core::enumCast(QueueType::eGeneric)] + 1);
   }
 
   // if we did not find a transfer queue different from the generic one, we will use the same but
@@ -157,9 +153,9 @@ PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice 
   if (mQueueFamilies[Core::enumCast(QueueType::eTransfer)] == -1) {
     mQueueFamilies[Core::enumCast(QueueType::eTransfer)] =
       mQueueFamilies[Core::enumCast(QueueType::eGeneric)];
-    mQueueIndices[Core::enumCast(QueueType::eTransfer)] = std::min(
-      available[mQueueFamilies[Core::enumCast(QueueType::eTransfer)]].queueCount - 1,
-      mQueueIndices[Core::enumCast(QueueType::eCompute)] + 1);
+    mQueueIndices[Core::enumCast(QueueType::eTransfer)] =
+      std::min(available[mQueueFamilies[Core::enumCast(QueueType::eTransfer)]].queueCount - 1,
+        mQueueIndices[Core::enumCast(QueueType::eCompute)] + 1);
   }
 }
 
@@ -171,9 +167,8 @@ uint32_t PhysicalDevice::findMemoryType(
   auto memProperties{getMemoryProperties()};
 
   for (uint32_t i{0}; i < memProperties.memoryTypeCount; i++) {
-    if (
-      (typeFilter & (1 << i)) &&
-      (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
+    if ((typeFilter & (1 << i)) &&
+        (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
       return i;
     }
   }
@@ -212,16 +207,14 @@ void PhysicalDevice::printInfo() {
   ILLUSION_MESSAGE << Core::Logger::PRINT_BOLD << "Memory Information " << Core::Logger::PRINT_RESET
                    << std::endl;
   for (unsigned i{0}; i < memoryProperties.memoryTypeCount; ++i) {
-    printVal(
-      "Memory type " + std::to_string(i),
+    printVal("Memory type " + std::to_string(i),
       {vk::to_string(memoryProperties.memoryTypes[i].propertyFlags)});
   }
 
   for (unsigned i{0}; i < memoryProperties.memoryHeapCount; ++i) {
-    printVal(
-      "Memory heap " + std::to_string(i),
+    printVal("Memory heap " + std::to_string(i),
       {std::to_string(memoryProperties.memoryHeaps[i].size / (1024 * 1024)) + " MB " +
-       vk::to_string(memoryProperties.memoryHeaps[i].flags)});
+        vk::to_string(memoryProperties.memoryHeaps[i].flags)});
   }
 
   // clang-format off

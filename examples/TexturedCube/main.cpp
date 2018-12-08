@@ -13,7 +13,6 @@
 #include <Illusion/Graphics/CoherentUniformBuffer.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/Engine.hpp>
-#include <Illusion/Graphics/GraphicsState.hpp>
 #include <Illusion/Graphics/PipelineReflection.hpp>
 #include <Illusion/Graphics/RenderPass.hpp>
 #include <Illusion/Graphics/ShaderProgram.hpp>
@@ -56,65 +55,60 @@ const std::array<uint32_t, 36> INDICES = {
 };
 // clang-format on
 
-struct CameraUniforms {
-  glm::mat4 projection;
-};
-
-struct PushConstants {
-  glm::mat4 modelView;
-};
-
 struct FrameResources {
-  FrameResources(std::shared_ptr<Illusion::Graphics::Device> const& device)
-    : mRenderPass(std::make_shared<Illusion::Graphics::RenderPass>(device))
-    , mUniformBuffer(
-        std::make_shared<Illusion::Graphics::CoherentUniformBuffer>(device, sizeof(CameraUniforms)))
-    , mCmd(std::make_shared<Illusion::Graphics::CommandBuffer>(device))
-    , mRenderFinishedFence(device->createFence({vk::FenceCreateFlagBits::eSignaled}))
-    , mRenderFinishedSemaphore(device->createSemaphore({})) {
+  FrameResources(Illusion::Graphics::DevicePtr const& device)
+    : mCmd(Illusion::Graphics::CommandBuffer::create(device))
+    , mRenderPass(Illusion::Graphics::RenderPass::create(device))
+    , mUniformBuffer(Illusion::Graphics::CoherentUniformBuffer::create(device, sizeof(glm::mat4)))
+    , mRenderFinishedFence(device->createFence())
+    , mRenderFinishedSemaphore(device->createSemaphore()) {
 
     mRenderPass->addAttachment(vk::Format::eR8G8B8A8Unorm);
     mRenderPass->addAttachment(vk::Format::eD32Sfloat);
 
     mCmd->graphicsState().addBlendAttachment({});
+    mCmd->graphicsState().setTopology(vk::PrimitiveTopology::eTriangleList);
+    mCmd->graphicsState().setVertexInputBindings(
+      {{0, sizeof(glm::vec3), vk::VertexInputRate::eVertex},
+        {1, sizeof(glm::vec3), vk::VertexInputRate::eVertex},
+        {2, sizeof(glm::vec2), vk::VertexInputRate::eVertex}});
+    mCmd->graphicsState().setVertexInputAttributes({{0, 0, vk::Format::eR32G32B32Sfloat, 0},
+      {1, 1, vk::Format::eR32G32B32Sfloat, 0}, {2, 2, vk::Format::eR32G32Sfloat, 0}});
   }
 
-  std::shared_ptr<Illusion::Graphics::RenderPass>            mRenderPass;
-  std::shared_ptr<Illusion::Graphics::CoherentUniformBuffer> mUniformBuffer;
-  std::shared_ptr<Illusion::Graphics::CommandBuffer>         mCmd;
-  std::shared_ptr<vk::Fence>                                 mRenderFinishedFence;
-  std::shared_ptr<vk::Semaphore>                             mRenderFinishedSemaphore;
+  Illusion::Graphics::CommandBufferPtr         mCmd;
+  Illusion::Graphics::RenderPassPtr            mRenderPass;
+  Illusion::Graphics::CoherentUniformBufferPtr mUniformBuffer;
+  vk::FencePtr                                 mRenderFinishedFence;
+  vk::SemaphorePtr                             mRenderFinishedSemaphore;
 };
 
 int main(int argc, char* argv[]) {
 
   Illusion::Core::Logger::enableTrace = true;
 
-  auto engine = std::make_shared<Illusion::Graphics::Engine>("Textured Cube Demo");
-  auto device = std::make_shared<Illusion::Graphics::Device>(engine->getPhysicalDevice());
-  auto window = std::make_shared<Illusion::Graphics::Window>(engine, device);
+  auto engine = Illusion::Graphics::Engine::create("Textured Cube Demo");
+  auto device = Illusion::Graphics::Device::create(engine->getPhysicalDevice());
+  auto window = Illusion::Graphics::Window::create(engine, device);
 
-  auto shader = Illusion::Graphics::ShaderProgram::createFromGlslFiles(
-    device,
-    {{vk::ShaderStageFlagBits::eVertex, "data/shaders/TexturedCube.vert"},
-     {vk::ShaderStageFlagBits::eFragment, "data/shaders/TexturedCube.frag"}});
   auto texture = Illusion::Graphics::Texture::createFromFile(device, "data/textures/box.dds");
+  auto shader  = Illusion::Graphics::ShaderProgram::createFromFiles(
+    device, {"data/shaders/TexturedCube.vert", "data/shaders/TexturedCube.frag"});
 
-  auto positionBuffer =
-    device->createVertexBuffer(sizeof(glm::vec3) * POSITIONS.size(), POSITIONS.data());
-  auto normalBuffer =
-    device->createVertexBuffer(sizeof(glm::vec3) * NORMALS.size(), NORMALS.data());
-  auto texcoordBuffer =
-    device->createVertexBuffer(sizeof(glm::vec2) * TEXCOORDS.size(), TEXCOORDS.data());
-  auto indexBuffer = device->createIndexBuffer(sizeof(uint32_t) * INDICES.size(), INDICES.data());
+  auto positionBuffer = device->createVertexBuffer(POSITIONS);
+  auto normalBuffer   = device->createVertexBuffer(NORMALS);
+  auto texcoordBuffer = device->createVertexBuffer(TEXCOORDS);
+  auto indexBuffer    = device->createIndexBuffer(INDICES);
 
-  Illusion::Core::RingBuffer<FrameResources, 2> frameResources{FrameResources(device),
-                                                               FrameResources(device)};
+  Illusion::Core::RingBuffer<FrameResources, 2> frameResources{
+    FrameResources(device), FrameResources(device)};
 
   float time = 0.f;
 
   window->open();
+
   while (!window->shouldClose()) {
+
     window->processInput();
 
     auto& res = frameResources.next();
@@ -125,58 +119,38 @@ int main(int argc, char* argv[]) {
     res.mCmd->reset();
     res.mCmd->begin();
 
-    res.mRenderPass->setExtent(window->pExtent.get());
     res.mCmd->graphicsState().setShaderProgram(shader);
+    res.mRenderPass->setExtent(window->pExtent.get());
     res.mCmd->graphicsState().setViewports(
       {{glm::vec2(0), glm::vec2(window->pExtent.get()), 0.f, 1.f}});
-    res.mCmd->graphicsState().setTopology(vk::PrimitiveTopology::eTriangleList);
-    res.mCmd->graphicsState().setVertexInputBindings(
-      {{0, sizeof(glm::vec3), vk::VertexInputRate::eVertex},
-       {1, sizeof(glm::vec3), vk::VertexInputRate::eVertex},
-       {2, sizeof(glm::vec2), vk::VertexInputRate::eVertex}});
-    res.mCmd->graphicsState().setVertexInputAttributes({{0, 0, vk::Format::eR32G32B32Sfloat, 0},
-                                                        {1, 1, vk::Format::eR32G32B32Sfloat, 0},
-                                                        {2, 2, vk::Format::eR32G32Sfloat, 0}});
-
-    time += 0.01;
 
     res.mCmd->bindingState().setUniformBuffer(
-      res.mUniformBuffer->getBuffer(), sizeof(CameraUniforms), 0, 0, 0);
+      res.mUniformBuffer->getBuffer(), sizeof(glm::mat4), 0, 0, 0);
     res.mCmd->bindingState().setTexture(texture, 1, 0);
 
-    CameraUniforms cameraUniforms;
-    cameraUniforms.projection = glm::perspective(
-      glm::radians(60.f),
+    glm::mat4 projection = glm::perspective(glm::radians(60.f),
       static_cast<float>(window->pExtent.get().x) / static_cast<float>(window->pExtent.get().y),
-      0.1f,
-      100.0f);
-    res.mUniformBuffer->updateData(cameraUniforms);
+      0.1f, 100.0f);
+    res.mUniformBuffer->updateData(projection);
 
     res.mCmd->beginRenderPass(res.mRenderPass);
 
-    PushConstants pushConstants;
-    pushConstants.modelView = glm::mat4(1.f);
-    pushConstants.modelView = glm::translate(pushConstants.modelView, glm::vec3(0, 0, -3));
-    pushConstants.modelView =
-      glm::rotate(pushConstants.modelView, -time * 0.5f, glm::vec3(0, 1, 0));
-    pushConstants.modelView =
-      glm::rotate(pushConstants.modelView, time * 0.314f, glm::vec3(1, 0, 0));
+    time += 0.01;
+    glm::mat4 modelView(1.f);
+    modelView = glm::translate(modelView, glm::vec3(0, 0, -3));
+    modelView = glm::rotate(modelView, -time * 0.5f, glm::vec3(0, 1, 0));
+    modelView = glm::rotate(modelView, time * 0.3f, glm::vec3(1, 0, 0));
 
-    res.mCmd->pushConstants(vk::ShaderStageFlagBits::eVertex, pushConstants);
-    res.mCmd->bindVertexBuffers(
-      0,
-      {*positionBuffer->mBuffer, *normalBuffer->mBuffer, *texcoordBuffer->mBuffer},
-      {0uL, 0uL, 0uL});
-    res.mCmd->bindIndexBuffer(*indexBuffer->mBuffer, 0, vk::IndexType::eUint32);
+    res.mCmd->pushConstants(modelView);
+    res.mCmd->bindVertexBuffers(0, {positionBuffer, normalBuffer, texcoordBuffer});
+    res.mCmd->bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
     res.mCmd->drawIndexed(INDICES.size(), 1, 0, 0, 0);
     res.mCmd->endRenderPass();
     res.mCmd->end();
 
     res.mCmd->submit({}, {}, {*res.mRenderFinishedSemaphore});
 
-    window->present(
-      res.mRenderPass->getFramebuffer()->getImages()[0],
-      res.mRenderFinishedSemaphore,
+    window->present(res.mRenderPass->getFramebuffer()->getImages()[0], res.mRenderFinishedSemaphore,
       res.mRenderFinishedFence);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(5));

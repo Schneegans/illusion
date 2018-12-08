@@ -23,16 +23,14 @@ void BindingState::setBinding(BindingType const& value, uint32_t set, uint32_t b
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void BindingState::setTexture(
-  std::shared_ptr<Texture> const& texture, uint32_t set, uint32_t binding) {
+void BindingState::setTexture(TexturePtr const& texture, uint32_t set, uint32_t binding) {
 
   setBinding(CombinedImageSamplerBinding{texture}, set, binding);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void BindingState::setStorageImage(
-  std::shared_ptr<Texture> const& image, uint32_t set, uint32_t binding) {
+void BindingState::setStorageImage(TexturePtr const& image, uint32_t set, uint32_t binding) {
 
   setBinding(StorageImageBinding{image}, set, binding);
 }
@@ -40,22 +38,15 @@ void BindingState::setStorageImage(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void BindingState::setDynamicUniformBuffer(
-  std::shared_ptr<BackedBuffer> const& buffer,
-  vk::DeviceSize                       size,
-  uint32_t                             set,
-  uint32_t                             binding) {
+  BackedBufferPtr const& buffer, vk::DeviceSize size, uint32_t set, uint32_t binding) {
 
   setBinding(DynamicUniformBufferBinding{buffer, size}, set, binding);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void BindingState::setUniformBuffer(
-  std::shared_ptr<BackedBuffer> const& buffer,
-  vk::DeviceSize                       size,
-  vk::DeviceSize                       offset,
-  uint32_t                             set,
-  uint32_t                             binding) {
+void BindingState::setUniformBuffer(BackedBufferPtr const& buffer, vk::DeviceSize size,
+  vk::DeviceSize offset, uint32_t set, uint32_t binding) {
 
   setBinding(UniformBufferBinding{buffer, size, offset}, set, binding);
 }

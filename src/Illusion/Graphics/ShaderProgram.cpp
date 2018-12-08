@@ -23,24 +23,38 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<ShaderProgram> ShaderProgram::createFromGlslFiles(
-  std::shared_ptr<Device> const&                                  device,
-  std::unordered_map<vk::ShaderStageFlagBits, std::string> const& files) {
+const std::unordered_map<std::string, vk::ShaderStageFlagBits> extensionMapping = {
+  {"frag", vk::ShaderStageFlagBits::eFragment}, {"vert", vk::ShaderStageFlagBits::eVertex},
+  {"geom", vk::ShaderStageFlagBits::eGeometry}, {"comp", vk::ShaderStageFlagBits::eCompute},
+  {"tesc", vk::ShaderStageFlagBits::eTessellationControl},
+  {"tese", vk::ShaderStageFlagBits::eTessellationEvaluation}};
 
-  std::vector<std::shared_ptr<Illusion::Graphics::ShaderModule>> modules;
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+ShaderProgramPtr ShaderProgram::createFromFiles(
+  DevicePtr const& device, std::vector<std::string> const& files) {
+
+  std::vector<ShaderModulePtr> modules;
 
   for (auto const& file : files) {
-    auto glsl = Illusion::Core::File<std::string>(file.second).getContent();
-    modules.push_back(std::make_shared<Illusion::Graphics::ShaderModule>(device, glsl, file.first));
+    auto extension = file.substr(file.size() - 4);
+
+    auto stage = extensionMapping.find(extension);
+    if (stage == extensionMapping.end()) {
+      throw std::runtime_error(
+        "Failed to add shader stage: File " + file + " has an unknown extension!");
+    }
+
+    auto glsl = Illusion::Core::File<std::string>(file).getContent();
+    modules.push_back(std::make_shared<ShaderModule>(device, glsl, stage->second));
   }
 
-  return std::make_shared<Illusion::Graphics::ShaderProgram>(device, modules);
+  return std::make_shared<ShaderProgram>(device, modules);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ShaderProgram::ShaderProgram(
-  std::shared_ptr<Device> const& device, std::vector<std::shared_ptr<ShaderModule>> const& modules)
+ShaderProgram::ShaderProgram(DevicePtr const& device, std::vector<ShaderModulePtr> const& modules)
   : mDevice(device)
   , mModules(modules) {
 
@@ -55,27 +69,23 @@ ShaderProgram::~ShaderProgram() { ILLUSION_TRACE << "Deleting ShaderProgram." <<
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<std::shared_ptr<ShaderModule>> const& ShaderProgram::getModules() const {
-  return mModules;
-}
+std::vector<ShaderModulePtr> const& ShaderProgram::getModules() const { return mModules; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<PipelineReflection> const& ShaderProgram::getReflection() const {
-  return mReflection;
-}
+PipelineReflectionPtr const& ShaderProgram::getReflection() const { return mReflection; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::map<uint32_t, std::shared_ptr<DescriptorSetReflection>> const& ShaderProgram::
-  getDescriptorSetReflections() const {
+std::map<uint32_t, DescriptorSetReflectionPtr> const&
+ShaderProgram::getDescriptorSetReflections() const {
   return mReflection->getDescriptorSetReflections();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ShaderProgram::createReflection() {
-  mReflection = std::make_shared<Illusion::Graphics::PipelineReflection>(mDevice);
+  mReflection = std::make_shared<PipelineReflection>(mDevice);
 
   for (auto const& module : mModules) {
     for (auto const& resource : module->getResources()) {

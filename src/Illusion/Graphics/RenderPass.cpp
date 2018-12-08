@@ -22,7 +22,7 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-RenderPass::RenderPass(std::shared_ptr<Device> const& device)
+RenderPass::RenderPass(DevicePtr const& device)
   : mDevice(device) {
 
   ILLUSION_TRACE << "Creating RenderPass." << std::endl;
@@ -78,11 +78,11 @@ glm::uvec2 const& RenderPass::getExtent() const { return mExtent; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<Framebuffer> const& RenderPass::getFramebuffer() const { return mFramebuffer; }
+FramebufferPtr const& RenderPass::getFramebuffer() const { return mFramebuffer; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::RenderPass> const& RenderPass::getHandle() const { return mRenderPass; }
+vk::RenderPassPtr const& RenderPass::getHandle() const { return mRenderPass; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -97,7 +97,7 @@ bool RenderPass::hasDepthAttachment() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::RenderPass> RenderPass::createRenderPass() const {
+vk::RenderPassPtr RenderPass::createRenderPass() const {
 
   std::vector<vk::AttachmentDescription> attachments;
   std::vector<vk::AttachmentReference>   attachmentRefs;

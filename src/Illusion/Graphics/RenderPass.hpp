@@ -32,29 +32,34 @@ class RenderPass {
     std::vector<uint32_t> mOutputAttachments;
   };
 
-  RenderPass(std::shared_ptr<Device> const& device);
+  template <typename... Args>
+  static RenderPassPtr create(Args&&... args) {
+    return std::make_shared<RenderPass>(args...);
+  };
+
+  RenderPass(DevicePtr const& device);
   virtual ~RenderPass();
 
   void init();
 
-  void                                   addAttachment(vk::Format format);
-  bool                                   hasDepthAttachment() const;
-  void                                   setSubPasses(std::vector<SubPass> const& subPasses);
-  void                                   setExtent(glm::uvec2 const& extent);
-  glm::uvec2 const&                      getExtent() const;
-  std::shared_ptr<Framebuffer> const&    getFramebuffer() const;
-  std::shared_ptr<vk::RenderPass> const& getHandle() const;
+  void                     addAttachment(vk::Format format);
+  bool                     hasDepthAttachment() const;
+  void                     setSubPasses(std::vector<SubPass> const& subPasses);
+  void                     setExtent(glm::uvec2 const& extent);
+  glm::uvec2 const&        getExtent() const;
+  FramebufferPtr const&    getFramebuffer() const;
+  vk::RenderPassPtr const& getHandle() const;
 
  private:
-  std::shared_ptr<vk::RenderPass> createRenderPass() const;
+  vk::RenderPassPtr createRenderPass() const;
 
-  std::shared_ptr<Device>         mDevice;
-  std::shared_ptr<vk::RenderPass> mRenderPass;
-  std::shared_ptr<Framebuffer>    mFramebuffer;
-  std::vector<vk::Format>         mFrameBufferAttachmentFormats;
-  std::vector<SubPass>            mSubPasses;
-  bool                            mAttachmentsDirty = true;
-  glm::uvec2                      mExtent           = {100, 100};
+  DevicePtr               mDevice;
+  vk::RenderPassPtr       mRenderPass;
+  FramebufferPtr          mFramebuffer;
+  std::vector<vk::Format> mFrameBufferAttachmentFormats;
+  std::vector<SubPass>    mSubPasses;
+  bool                    mAttachmentsDirty = true;
+  glm::uvec2              mExtent           = {100, 100};
 };
 
 } // namespace Illusion::Graphics

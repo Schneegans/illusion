@@ -23,8 +23,7 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-CommandBuffer::CommandBuffer(
-  std::shared_ptr<Device> const& device, QueueType type, vk::CommandBufferLevel level)
+CommandBuffer::CommandBuffer(DevicePtr const& device, QueueType type, vk::CommandBufferLevel level)
   : mDevice(device)
   , mVkCmd(device->allocateCommandBuffer(type, level))
   , mType(type)
@@ -50,11 +49,9 @@ void CommandBuffer::end() const { mVkCmd->end(); }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::submit(
-  std::vector<vk::Semaphore> const&          waitSemaphores,
-  std::vector<vk::PipelineStageFlags> const& waitStages,
-  std::vector<vk::Semaphore> const&          signalSemaphores,
-  vk::Fence const&                           fence) const {
+void CommandBuffer::submit(std::vector<vk::Semaphore> const& waitSemaphores,
+  std::vector<vk::PipelineStageFlags> const&                 waitStages,
+  std::vector<vk::Semaphore> const& signalSemaphores, vk::Fence const& fence) const {
 
   vk::CommandBuffer bufs[] = {*mVkCmd};
 
@@ -76,7 +73,7 @@ void CommandBuffer::waitIdle() const { mDevice->getQueue(mType).waitIdle(); }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::beginRenderPass(std::shared_ptr<RenderPass> const& renderPass) {
+void CommandBuffer::beginRenderPass(RenderPassPtr const& renderPass) {
   renderPass->init();
 
   vk::RenderPassBeginInfo passInfo;
@@ -112,23 +109,46 @@ void CommandBuffer::endRenderPass() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::bindIndexBuffer(
-  vk::Buffer buffer, vk::DeviceSize offset, vk::IndexType indexType) const {
-  mVkCmd->bindIndexBuffer(buffer, offset, indexType);
+  BackedBufferPtr const& buffer, vk::DeviceSize offset, vk::IndexType indexType) const {
+  mVkCmd->bindIndexBuffer(*buffer->mBuffer, offset, indexType);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CommandBuffer::bindVertexBuffers(uint32_t                   firstBinding,
+  std::vector<std::pair<BackedBufferPtr, vk::DeviceSize>> const& buffersAndOffsets) const {
+
+  std::vector<vk::Buffer>     buffers;
+  std::vector<vk::DeviceSize> offsets;
+
+  for (auto const& v : buffersAndOffsets) {
+    buffers.emplace_back(*v.first->mBuffer);
+    offsets.emplace_back(v.second);
+  }
+
+  mVkCmd->bindVertexBuffers(firstBinding, buffers, offsets);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::bindVertexBuffers(
-  uint32_t                             firstBinding,
-  vk::ArrayProxy<const vk::Buffer>     buffers,
-  vk::ArrayProxy<const vk::DeviceSize> offsets) const {
+  uint32_t firstBinding, std::vector<BackedBufferPtr> const& buffs) const {
+
+  std::vector<vk::Buffer>     buffers;
+  std::vector<vk::DeviceSize> offsets;
+
+  for (auto const& v : buffs) {
+    buffers.emplace_back(*v->mBuffer);
+    offsets.emplace_back(0uL);
+  }
+
   mVkCmd->bindVertexBuffers(firstBinding, buffers, offsets);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::bindCombinedImageSampler(
-  std::shared_ptr<Texture> const& texture, uint32_t set, uint32_t binding) const {}
+  TexturePtr const& texture, uint32_t set, uint32_t binding) const {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -141,12 +161,8 @@ void CommandBuffer::draw(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::drawIndexed(
-  uint32_t indexCount,
-  uint32_t instanceCount,
-  uint32_t firstIndex,
-  int32_t  vertexOffset,
-  uint32_t firstInstance) {
+void CommandBuffer::drawIndexed(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex,
+  int32_t vertexOffset, uint32_t firstInstance) {
 
   flush();
   mVkCmd->drawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
@@ -162,20 +178,23 @@ BindingState& CommandBuffer::bindingState() { return mBindingState; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::pushConstants(
-  vk::ShaderStageFlags stages, const void* data, uint32_t size, uint32_t offset) const {
+void CommandBuffer::pushConstants(const void* data, uint32_t size, uint32_t offset) const {
+  auto const& reflection = mGraphicsState.getShaderProgram()->getReflection();
+  auto constants = reflection->getResources(PipelineResource::ResourceType::ePushConstantBuffer);
+
+  if (constants.size() != 1) {
+    throw std::runtime_error("Failed to set push constants: There must be exactly one "
+                             "PushConstantBuffer defined in the pipeline reflection!");
+  }
 
   mVkCmd->pushConstants(
-    *mGraphicsState.getShaderProgram()->getReflection()->getLayout(), stages, offset, size, data);
+    *reflection->getLayout(), constants.begin()->second.mStages, offset, size, data);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::transitionImageLayout(
-  vk::Image                 image,
-  vk::ImageLayout           oldLayout,
-  vk::ImageLayout           newLayout,
-  vk::PipelineStageFlagBits stage,
+void CommandBuffer::transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout,
+  vk::ImageLayout newLayout, vk::PipelineStageFlagBits stage,
   vk::ImageSubresourceRange range) const {
 
   vk::ImageMemoryBarrier barrier;
@@ -214,12 +233,8 @@ void CommandBuffer::copyImage(vk::Image src, vk::Image dst, glm::uvec2 const& si
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::blitImage(
-  vk::Image         src,
-  vk::Image         dst,
-  glm::uvec2 const& srcSize,
-  glm::uvec2 const& dstSize,
-  vk::Filter        filter) const {
+void CommandBuffer::blitImage(vk::Image src, vk::Image dst, glm::uvec2 const& srcSize,
+  glm::uvec2 const& dstSize, vk::Filter filter) const {
 
   vk::ImageBlit info;
   info.srcSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
@@ -231,23 +246,14 @@ void CommandBuffer::blitImage(
   info.dstOffsets[0]             = vk::Offset3D(0, 0, 0);
   info.dstOffsets[1]             = vk::Offset3D(dstSize.x, dstSize.y, 1);
 
-  mVkCmd->blitImage(
-    src,
-    vk::ImageLayout::eTransferSrcOptimal,
-    dst,
-    vk::ImageLayout::eTransferDstOptimal,
-    info,
-    filter);
+  mVkCmd->blitImage(src, vk::ImageLayout::eTransferSrcOptimal, dst,
+    vk::ImageLayout::eTransferDstOptimal, info, filter);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::resolveImage(
-  vk::Image        src,
-  vk::ImageLayout  srcLayout,
-  vk::Image        dst,
-  vk::ImageLayout  dstLayout,
-  vk::ImageResolve region) const {
+void CommandBuffer::resolveImage(vk::Image src, vk::ImageLayout srcLayout, vk::Image dst,
+  vk::ImageLayout dstLayout, vk::ImageResolve region) const {
   mVkCmd->resolveImage(src, srcLayout, dst, dstLayout, region);
 }
 
@@ -262,10 +268,7 @@ void CommandBuffer::copyBuffer(vk::Buffer src, vk::Buffer dst, vk::DeviceSize si
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::copyBufferToImage(
-  vk::Buffer                              src,
-  vk::Image                               dst,
-  vk::ImageLayout                         dstLayout,
+void CommandBuffer::copyBufferToImage(vk::Buffer src, vk::Image dst, vk::ImageLayout dstLayout,
   std::vector<vk::BufferImageCopy> const& infos) const {
 
   mVkCmd->copyBufferToImage(src, dst, dstLayout, infos);
@@ -292,10 +295,9 @@ void CommandBuffer::flush() {
 
     auto currentHashIt = mCurrentDescriptorSetLayoutHashes.find(setNum);
 
-    if (
-      mBindingState.getDirtySets().find(setNum) == mBindingState.getDirtySets().end() ||
-      currentHashIt == mCurrentDescriptorSetLayoutHashes.end() ||
-      currentHashIt->second != setReflection.second->getHash()) {
+    if (mBindingState.getDirtySets().find(setNum) == mBindingState.getDirtySets().end() ||
+        currentHashIt == mCurrentDescriptorSetLayoutHashes.end() ||
+        currentHashIt->second != setReflection.second->getHash()) {
 
       auto descriptorSet = mDescriptorSetCache.acquireHandle(
         mGraphicsState.getShaderProgram()->getDescriptorSetReflections().at(setNum));
@@ -358,11 +360,8 @@ void CommandBuffer::flush() {
         }
       }
 
-      mVkCmd->bindDescriptorSets(
-        vk::PipelineBindPoint::eGraphics,
-        *mGraphicsState.getShaderProgram()->getReflection()->getLayout(),
-        setNum,
-        *descriptorSet,
+      mVkCmd->bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
+        *mGraphicsState.getShaderProgram()->getReflection()->getLayout(), setNum, *descriptorSet,
         {});
 
       mCurrentDescriptorSetLayoutHashes[setNum] = setReflection.second->getHash();

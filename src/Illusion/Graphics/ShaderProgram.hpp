@@ -23,27 +23,28 @@ namespace Illusion::Graphics {
 class ShaderProgram {
 
  public:
-  static std::shared_ptr<ShaderProgram> createFromGlslFiles(
-    std::shared_ptr<Device> const&                                  device,
-    std::unordered_map<vk::ShaderStageFlagBits, std::string> const& files);
+  static ShaderProgramPtr createFromFiles(
+    DevicePtr const& device, std::vector<std::string> const& files);
 
-  ShaderProgram(
-    std::shared_ptr<Device> const&                    device,
-    std::vector<std::shared_ptr<ShaderModule>> const& modules);
+  template <typename... Args>
+  static ShaderProgramPtr create(Args&&... args) {
+    return std::make_shared<ShaderProgram>(args...);
+  };
+
+  ShaderProgram(DevicePtr const& device, std::vector<ShaderModulePtr> const& modules);
   virtual ~ShaderProgram();
 
-  std::vector<std::shared_ptr<ShaderModule>> const& getModules() const;
+  std::vector<ShaderModulePtr> const& getModules() const;
 
-  std::shared_ptr<PipelineReflection> const&                          getReflection() const;
-  std::map<uint32_t, std::shared_ptr<DescriptorSetReflection>> const& getDescriptorSetReflections()
-    const;
+  PipelineReflectionPtr const&                          getReflection() const;
+  std::map<uint32_t, DescriptorSetReflectionPtr> const& getDescriptorSetReflections() const;
 
  private:
   void createReflection();
 
-  std::shared_ptr<Device>                    mDevice;
-  std::vector<std::shared_ptr<ShaderModule>> mModules;
-  std::shared_ptr<PipelineReflection>        mReflection;
+  DevicePtr                    mDevice;
+  std::vector<ShaderModulePtr> mModules;
+  PipelineReflectionPtr        mReflection;
 };
 } // namespace Illusion::Graphics
 

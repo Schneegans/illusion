@@ -89,17 +89,24 @@ EShLanguage MapShaderStage(vk::ShaderStageFlagBits stage) {
 }
 
 void SetMessageOptions(int options, EShMessages& messages) {
-  if (options & EOptionRelaxedErrors) messages = (EShMessages)(messages | EShMsgRelaxedErrors);
-  if (options & EOptionIntermediate) messages = (EShMessages)(messages | EShMsgAST);
+  if (options & EOptionRelaxedErrors)
+    messages = (EShMessages)(messages | EShMsgRelaxedErrors);
+  if (options & EOptionIntermediate)
+    messages = (EShMessages)(messages | EShMsgAST);
   if (options & EOptionSuppressWarnings)
     messages = (EShMessages)(messages | EShMsgSuppressWarnings);
-  if (options & EOptionSpv) messages = (EShMessages)(messages | EShMsgSpvRules);
-  if (options & EOptionVulkanRules) messages = (EShMessages)(messages | EShMsgVulkanRules);
+  if (options & EOptionSpv)
+    messages = (EShMessages)(messages | EShMsgSpvRules);
+  if (options & EOptionVulkanRules)
+    messages = (EShMessages)(messages | EShMsgVulkanRules);
   if (options & EOptionOutputPreprocessed)
     messages = (EShMessages)(messages | EShMsgOnlyPreprocessor);
-  if (options & EOptionReadHlsl) messages = (EShMessages)(messages | EShMsgReadHlsl);
-  if (options & EOptionCascadingErrors) messages = (EShMessages)(messages | EShMsgCascadingErrors);
-  if (options & EOptionKeepUncalled) messages = (EShMessages)(messages | EShMsgKeepUncalled);
+  if (options & EOptionReadHlsl)
+    messages = (EShMessages)(messages | EShMsgReadHlsl);
+  if (options & EOptionCascadingErrors)
+    messages = (EShMessages)(messages | EShMsgCascadingErrors);
+  if (options & EOptionKeepUncalled)
+    messages = (EShMessages)(messages | EShMsgKeepUncalled);
 }
 
 static std::unordered_map<spirv_cross::SPIRType::BaseType, PipelineResource::BaseType>
@@ -122,7 +129,8 @@ static std::vector<PipelineResource::Member> ParseMembers(
   for (auto i = 0U; i < spirType.member_types.size(); ++i) {
     // Validate member is of a supported type.
     const auto& memberType = compiler.get_type(spirType.member_types[i]);
-    if (spirvTypeToBaseType.find(memberType.basetype) == spirvTypeToBaseType.end()) continue;
+    if (spirvTypeToBaseType.find(memberType.basetype) == spirvTypeToBaseType.end())
+      continue;
 
     // Create a new VezMemberInfo entry.
     PipelineResource::Member member;
@@ -246,9 +254,7 @@ std::vector<uint32_t> ShaderModule::compileGlsl(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ShaderModule::ShaderModule(
-  std::shared_ptr<Device> const& device,
-  std::vector<uint32_t>&&        spirv,
-  vk::ShaderStageFlagBits        stage)
+  DevicePtr const& device, std::vector<uint32_t>&& spirv, vk::ShaderStageFlagBits stage)
   : mSpirv(spirv)
   , mStage(stage) {
   createReflection();
@@ -262,7 +268,7 @@ ShaderModule::ShaderModule(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ShaderModule::ShaderModule(
-  std::shared_ptr<Device> const& device, std::string const& glsl, vk::ShaderStageFlagBits stage)
+  DevicePtr const& device, std::string const& glsl, vk::ShaderStageFlagBits stage)
   : mSpirv(compileGlsl(glsl, stage))
   , mStage(stage) {
 
@@ -284,7 +290,7 @@ vk::ShaderStageFlagBits ShaderModule::getStage() const { return mStage; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::ShaderModule> ShaderModule::getModule() const { return mModule; }
+vk::ShaderModulePtr ShaderModule::getModule() const { return mModule; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -316,7 +322,8 @@ void ShaderModule::createReflection() {
     pipelineResource.mArraySize    = (spirType.array.size() == 0) ? 1 : spirType.array[0];
 
     auto it = spirvTypeToBaseType.find(spirType.basetype);
-    if (it == spirvTypeToBaseType.end()) continue;
+    if (it == spirvTypeToBaseType.end())
+      continue;
 
     pipelineResource.mBaseType = it->second;
     pipelineResource.mName     = resource.name;
@@ -337,7 +344,8 @@ void ShaderModule::createReflection() {
     pipelineResource.mArraySize    = (spirType.array.size() == 0) ? 1 : spirType.array[0];
 
     auto it = spirvTypeToBaseType.find(spirType.basetype);
-    if (it == spirvTypeToBaseType.end()) continue;
+    if (it == spirvTypeToBaseType.end())
+      continue;
 
     pipelineResource.mBaseType = it->second;
     pipelineResource.mName     = resource.name;

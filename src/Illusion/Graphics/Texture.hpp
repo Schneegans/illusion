@@ -27,63 +27,43 @@ class Texture {
     uint64_t mSize;
   };
 
-  static std::shared_ptr<Texture> createFromFile(
-    std::shared_ptr<Device> const& device,
-    std::string const&             fileName,
-    vk::SamplerCreateInfo const&   sampler = vk::SamplerCreateInfo());
+  static TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
+    vk::SamplerCreateInfo const& sampler = vk::SamplerCreateInfo());
 
-  static std::shared_ptr<Texture> create2D(
-    std::shared_ptr<Device> const& device,
-    int32_t                        width,
-    int32_t                        height,
-    vk::Format                     format,
-    vk::ImageUsageFlags const&     usage,
-    vk::SamplerCreateInfo const&   sampler,
-    size_t                         dataSize = 0,
-    void*                          data     = nullptr);
+  template <typename... Args>
+  static TexturePtr create(Args&&... args) {
+    return std::make_shared<Texture>(args...);
+  };
 
-  static std::shared_ptr<Texture> create2DMipMap(
-    std::shared_ptr<Device> const& device,
-    std::vector<TextureLevel>      levels,
-    vk::Format                     format,
-    vk::ImageUsageFlags const&     usage,
-    vk::ImageViewType              type,
-    vk::SamplerCreateInfo const&   sampler,
-    size_t                         dataSize = 0,
-    void*                          data     = nullptr);
+  static TexturePtr create2D(DevicePtr const& device, int32_t width, int32_t height,
+    vk::Format format, vk::ImageUsageFlags const& usage, vk::SamplerCreateInfo const& sampler,
+    size_t dataSize = 0, void* data = nullptr);
 
-  static std::shared_ptr<Texture> createCubemap(
-    std::shared_ptr<Device> const& device,
-    int32_t                        size,
-    vk::Format                     format,
-    vk::ImageUsageFlags const&     usage,
-    vk::SamplerCreateInfo const&   sampler,
-    size_t                         dataSize = 0,
-    void*                          data     = nullptr);
+  static TexturePtr create2DMipMap(DevicePtr const& device, std::vector<TextureLevel> levels,
+    vk::Format format, vk::ImageUsageFlags const& usage, vk::ImageViewType type,
+    vk::SamplerCreateInfo const& sampler, size_t dataSize = 0, void* data = nullptr);
+
+  static TexturePtr createCubemap(DevicePtr const& device, int32_t size, vk::Format format,
+    vk::ImageUsageFlags const& usage, vk::SamplerCreateInfo const& sampler, size_t dataSize = 0,
+    void* data = nullptr);
 
   Texture();
   virtual ~Texture();
 
-  std::shared_ptr<vk::Image> const&        getImage() const { return mImage; }
-  std::shared_ptr<vk::DeviceMemory> const& getMemory() const { return mMemory; }
-  std::shared_ptr<vk::ImageView> const&    getImageView() const { return mImageView; }
-  std::shared_ptr<vk::Sampler> const&      getSampler() const { return mSampler; }
+  vk::ImagePtr const&        getImage() const { return mImage; }
+  vk::DeviceMemoryPtr const& getMemory() const { return mMemory; }
+  vk::ImageViewPtr const&    getImageView() const { return mImageView; }
+  vk::SamplerPtr const&      getSampler() const { return mSampler; }
 
  protected:
-  void initData(
-    std::shared_ptr<Device> const& device,
-    std::vector<TextureLevel>      levels,
-    vk::Format                     format,
-    vk::ImageUsageFlags            usage,
-    vk::ImageViewType              type,
-    vk::SamplerCreateInfo const&   sampler,
-    size_t                         size,
-    void*                          data);
+  void initData(DevicePtr const& device, std::vector<TextureLevel> levels, vk::Format format,
+    vk::ImageUsageFlags usage, vk::ImageViewType type, vk::SamplerCreateInfo const& sampler,
+    size_t size, void* data);
 
-  std::shared_ptr<vk::Image>        mImage;
-  std::shared_ptr<vk::DeviceMemory> mMemory;
-  std::shared_ptr<vk::ImageView>    mImageView;
-  std::shared_ptr<vk::Sampler>      mSampler;
+  vk::ImagePtr        mImage;
+  vk::DeviceMemoryPtr mMemory;
+  vk::ImageViewPtr    mImageView;
+  vk::SamplerPtr      mSampler;
 };
 
 } // namespace Illusion::Graphics

@@ -22,25 +22,27 @@ namespace Illusion::Graphics {
 
 class Framebuffer {
  public:
-  Framebuffer(
-    std::shared_ptr<Device> const&         device,
-    std::shared_ptr<vk::RenderPass> const& renderPass,
-    glm::uvec2 const&                      extent,
-    std::vector<vk::Format> const&         attachments);
+  template <typename... Args>
+  static FramebufferPtr create(Args&&... args) {
+    return std::make_shared<Framebuffer>(args...);
+  };
+
+  Framebuffer(DevicePtr const& device, vk::RenderPassPtr const& renderPass,
+    glm::uvec2 const& extent, std::vector<vk::Format> const& attachments);
 
   virtual ~Framebuffer();
 
-  std::shared_ptr<vk::Framebuffer> const&          getHandle() const { return mFramebuffer; }
-  std::vector<std::shared_ptr<BackedImage>> const& getImages() const { return mImageStore; }
+  vk::FramebufferPtr const&          getHandle() const { return mFramebuffer; }
+  std::vector<BackedImagePtr> const& getImages() const { return mImageStore; }
 
  private:
-  std::shared_ptr<Device>         mDevice;
-  std::shared_ptr<vk::RenderPass> mRenderPass;
-  glm::uvec2                      mExtent;
+  DevicePtr         mDevice;
+  vk::RenderPassPtr mRenderPass;
+  glm::uvec2        mExtent;
 
-  std::shared_ptr<vk::Framebuffer>            mFramebuffer;
-  std::vector<std::shared_ptr<vk::ImageView>> mImageViewStore;
-  std::vector<std::shared_ptr<BackedImage>>   mImageStore;
+  vk::FramebufferPtr            mFramebuffer;
+  std::vector<vk::ImageViewPtr> mImageViewStore;
+  std::vector<BackedImagePtr>   mImageStore;
 };
 
 } // namespace Illusion::Graphics

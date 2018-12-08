@@ -30,7 +30,7 @@ const std::vector<const char*> DEVICE_EXTENSIONS{VK_KHR_SWAPCHAIN_EXTENSION_NAME
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Device::Device(std::shared_ptr<PhysicalDevice> const& physicalDevice)
+Device::Device(PhysicalDevicePtr const& physicalDevice)
   : mPhysicalDevice(physicalDevice)
   , mDevice(createDevice()) {
 
@@ -53,18 +53,10 @@ Device::~Device() { ILLUSION_TRACE << "Deleting Device." << std::endl; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<BackedImage> Device::createBackedImage(
-  uint32_t                width,
-  uint32_t                height,
-  uint32_t                depth,
-  uint32_t                levels,
-  uint32_t                layers,
-  vk::Format              format,
-  vk::ImageTiling         tiling,
-  vk::ImageUsageFlags     usage,
-  vk::MemoryPropertyFlags properties,
-  vk::SampleCountFlagBits samples,
-  vk::ImageCreateFlags    flags) const {
+BackedImagePtr Device::createBackedImage(uint32_t width, uint32_t height, uint32_t depth,
+  uint32_t levels, uint32_t layers, vk::Format format, vk::ImageTiling tiling,
+  vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties, vk::SampleCountFlagBits samples,
+  vk::ImageCreateFlags flags) const {
 
   auto result = std::make_shared<BackedImage>();
 
@@ -101,11 +93,8 @@ std::shared_ptr<BackedImage> Device::createBackedImage(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<BackedBuffer> Device::createBackedBuffer(
-  vk::DeviceSize          size,
-  vk::BufferUsageFlags    usage,
-  vk::MemoryPropertyFlags properties,
-  const void*             data) const {
+BackedBufferPtr Device::createBackedBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage,
+  vk::MemoryPropertyFlags properties, const void* data) const {
 
   auto result   = std::make_shared<BackedBuffer>();
   result->mSize = size;
@@ -117,9 +106,8 @@ std::shared_ptr<BackedBuffer> Device::createBackedBuffer(
     info.sharingMode = vk::SharingMode::eExclusive;
 
     // if data upload will use a staging buffer, we need to make sure transferDst is set!
-    if (
-      data && (!(properties & vk::MemoryPropertyFlagBits::eHostVisible) ||
-               !(properties & vk::MemoryPropertyFlagBits::eHostCoherent))) {
+    if (data && (!(properties & vk::MemoryPropertyFlagBits::eHostVisible) ||
+                  !(properties & vk::MemoryPropertyFlagBits::eHostCoherent))) {
       info.usage |= vk::BufferUsageFlagBits::eTransferDst;
     }
 
@@ -140,9 +128,8 @@ std::shared_ptr<BackedBuffer> Device::createBackedBuffer(
 
   if (data) {
     // data was provided, we need to upload it!
-    if (
-      (properties & vk::MemoryPropertyFlagBits::eHostVisible) &&
-      (properties & vk::MemoryPropertyFlagBits::eHostCoherent)) {
+    if ((properties & vk::MemoryPropertyFlagBits::eHostVisible) &&
+        (properties & vk::MemoryPropertyFlagBits::eHostCoherent)) {
 
       // simple case - memory is host visible and coherent;
       // we can simply map it and upload the data
@@ -152,11 +139,8 @@ std::shared_ptr<BackedBuffer> Device::createBackedBuffer(
     } else {
 
       // more difficult case, we need a staging buffer!
-      auto stagingBuffer = createBackedBuffer(
-        size,
-        vk::BufferUsageFlagBits::eTransferSrc,
-        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-        data);
+      auto stagingBuffer = createBackedBuffer(size, vk::BufferUsageFlagBits::eTransferSrc,
+        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, data);
 
       auto cmd = allocateCommandBuffer();
       cmd->begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
@@ -180,32 +164,29 @@ std::shared_ptr<BackedBuffer> Device::createBackedBuffer(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<BackedBuffer> Device::createVertexBuffer(
-  vk::DeviceSize size, const void* data) const {
+BackedBufferPtr Device::createVertexBuffer(vk::DeviceSize size, const void* data) const {
   return createBackedBuffer(
     size, vk::BufferUsageFlagBits::eVertexBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal, data);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<BackedBuffer> Device::createIndexBuffer(
-  vk::DeviceSize size, const void* data) const {
+BackedBufferPtr Device::createIndexBuffer(vk::DeviceSize size, const void* data) const {
   return createBackedBuffer(
     size, vk::BufferUsageFlagBits::eIndexBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal, data);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<BackedBuffer> Device::createUniformBuffer(vk::DeviceSize size) const {
-  return createBackedBuffer(
-    size,
+BackedBufferPtr Device::createUniformBuffer(vk::DeviceSize size) const {
+  return createBackedBuffer(size,
     vk::BufferUsageFlagBits::eUniformBuffer | vk::BufferUsageFlagBits::eTransferDst,
     vk::MemoryPropertyFlagBits::eDeviceLocal);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::CommandBuffer> Device::allocateCommandBuffer(
+vk::CommandBufferPtr Device::allocateCommandBuffer(
   QueueType type, vk::CommandBufferLevel level) const {
   vk::CommandBufferAllocateInfo info;
   info.level              = vk::CommandBufferLevel::ePrimary;
@@ -227,7 +208,7 @@ std::shared_ptr<vk::CommandBuffer> Device::allocateCommandBuffer(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::Buffer> Device::createBuffer(vk::BufferCreateInfo const& info) const {
+vk::BufferPtr Device::createBuffer(vk::BufferCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::Buffer." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(device->createBuffer(info), [device](vk::Buffer* obj) {
@@ -239,8 +220,7 @@ std::shared_ptr<vk::Buffer> Device::createBuffer(vk::BufferCreateInfo const& inf
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::CommandPool> Device::createCommandPool(
-  vk::CommandPoolCreateInfo const& info) const {
+vk::CommandPoolPtr Device::createCommandPool(vk::CommandPoolCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::CommandPool." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(device->createCommandPool(info), [device](vk::CommandPool* obj) {
@@ -252,8 +232,7 @@ std::shared_ptr<vk::CommandPool> Device::createCommandPool(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::DescriptorPool> Device::createDescriptorPool(
-  vk::DescriptorPoolCreateInfo const& info) const {
+vk::DescriptorPoolPtr Device::createDescriptorPool(vk::DescriptorPoolCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::DescriptorPool." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(
@@ -266,7 +245,7 @@ std::shared_ptr<vk::DescriptorPool> Device::createDescriptorPool(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::DescriptorSetLayout> Device::createDescriptorSetLayout(
+vk::DescriptorSetLayoutPtr Device::createDescriptorSetLayout(
   vk::DescriptorSetLayoutCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::DescriptorSetLayout." << std::endl;
   auto device{mDevice};
@@ -280,7 +259,7 @@ std::shared_ptr<vk::DescriptorSetLayout> Device::createDescriptorSetLayout(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::DeviceMemory> Device::createMemory(vk::MemoryAllocateInfo const& info) const {
+vk::DeviceMemoryPtr Device::createMemory(vk::MemoryAllocateInfo const& info) const {
   ILLUSION_TRACE << "Allocating vk::DeviceMemory." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(device->allocateMemory(info), [device](vk::DeviceMemory* obj) {
@@ -292,7 +271,7 @@ std::shared_ptr<vk::DeviceMemory> Device::createMemory(vk::MemoryAllocateInfo co
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::Fence> Device::createFence(vk::FenceCreateFlags const& flags) const {
+vk::FencePtr Device::createFence(vk::FenceCreateFlags const& flags) const {
   ILLUSION_TRACE << "Creating vk::Fence." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(device->createFence({flags}), [device](vk::Fence* obj) {
@@ -304,8 +283,7 @@ std::shared_ptr<vk::Fence> Device::createFence(vk::FenceCreateFlags const& flags
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::Framebuffer> Device::createFramebuffer(
-  vk::FramebufferCreateInfo const& info) const {
+vk::FramebufferPtr Device::createFramebuffer(vk::FramebufferCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::Framebuffer." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(device->createFramebuffer(info), [device](vk::Framebuffer* obj) {
@@ -317,7 +295,7 @@ std::shared_ptr<vk::Framebuffer> Device::createFramebuffer(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::Image> Device::createImage(vk::ImageCreateInfo const& info) const {
+vk::ImagePtr Device::createImage(vk::ImageCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::Image." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(device->createImage(info), [device](vk::Image* obj) {
@@ -329,7 +307,7 @@ std::shared_ptr<vk::Image> Device::createImage(vk::ImageCreateInfo const& info) 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::ImageView> Device::createImageView(vk::ImageViewCreateInfo const& info) const {
+vk::ImageViewPtr Device::createImageView(vk::ImageViewCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::ImageView." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(device->createImageView(info), [device](vk::ImageView* obj) {
@@ -341,8 +319,7 @@ std::shared_ptr<vk::ImageView> Device::createImageView(vk::ImageViewCreateInfo c
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::Pipeline> Device::createComputePipeline(
-  vk::ComputePipelineCreateInfo const& info) const {
+vk::PipelinePtr Device::createComputePipeline(vk::ComputePipelineCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::ComputePipeline." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(
@@ -355,8 +332,7 @@ std::shared_ptr<vk::Pipeline> Device::createComputePipeline(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::Pipeline> Device::createPipeline(
-  vk::GraphicsPipelineCreateInfo const& info) const {
+vk::PipelinePtr Device::createPipeline(vk::GraphicsPipelineCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::Pipeline." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(
@@ -369,8 +345,7 @@ std::shared_ptr<vk::Pipeline> Device::createPipeline(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::PipelineLayout> Device::createPipelineLayout(
-  vk::PipelineLayoutCreateInfo const& info) const {
+vk::PipelineLayoutPtr Device::createPipelineLayout(vk::PipelineLayoutCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::PipelineLayout." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(
@@ -383,8 +358,7 @@ std::shared_ptr<vk::PipelineLayout> Device::createPipelineLayout(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::RenderPass> Device::createRenderPass(
-  vk::RenderPassCreateInfo const& info) const {
+vk::RenderPassPtr Device::createRenderPass(vk::RenderPassCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::RenderPass." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(device->createRenderPass(info), [device](vk::RenderPass* obj) {
@@ -396,7 +370,7 @@ std::shared_ptr<vk::RenderPass> Device::createRenderPass(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::Sampler> Device::createSampler(vk::SamplerCreateInfo const& info) const {
+vk::SamplerPtr Device::createSampler(vk::SamplerCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::Sampler." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(device->createSampler(info), [device](vk::Sampler* obj) {
@@ -408,8 +382,7 @@ std::shared_ptr<vk::Sampler> Device::createSampler(vk::SamplerCreateInfo const& 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::Semaphore> Device::createSemaphore(
-  vk::SemaphoreCreateFlags const& flags) const {
+vk::SemaphorePtr Device::createSemaphore(vk::SemaphoreCreateFlags const& flags) const {
   ILLUSION_TRACE << "Creating vk::Semaphore." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(device->createSemaphore({flags}), [device](vk::Semaphore* obj) {
@@ -421,8 +394,7 @@ std::shared_ptr<vk::Semaphore> Device::createSemaphore(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::ShaderModule> Device::createShaderModule(
-  vk::ShaderModuleCreateInfo const& info) const {
+vk::ShaderModulePtr Device::createShaderModule(vk::ShaderModuleCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::ShaderModule." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(device->createShaderModule(info), [device](vk::ShaderModule* obj) {
@@ -434,8 +406,7 @@ std::shared_ptr<vk::ShaderModule> Device::createShaderModule(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::SwapchainKHR> Device::createSwapChainKhr(
-  vk::SwapchainCreateInfoKHR const& info) const {
+vk::SwapchainKHRPtr Device::createSwapChainKhr(vk::SwapchainCreateInfoKHR const& info) const {
   ILLUSION_TRACE << "Creating vk::SwapchainKHR." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(device->createSwapchainKHR(info), [device](vk::SwapchainKHR* obj) {
@@ -447,7 +418,7 @@ std::shared_ptr<vk::SwapchainKHR> Device::createSwapChainKhr(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// std::shared_ptr<CommandBuffer> Device::beginSingleTimeCommands(QueueType type) const {
+// CommandBufferPtr Device::beginSingleTimeCommands(QueueType type) const {
 //   mOneTimeCommandBuffers[Core::enumCast(type)]->reset({});
 //   mOneTimeCommandBuffers[Core::enumCast(type)]->begin(
 //     {vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
@@ -486,7 +457,7 @@ void Device::waitIdle() { mDevice->waitIdle(); }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::Device> Device::createDevice() const {
+vk::DevicePtr Device::createDevice() const {
 
   std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
 

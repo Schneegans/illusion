@@ -40,11 +40,11 @@ class GltfModel {
     float     mAlphaCutoff       = 0.f;
     AlphaMode mAlphaMode         = AlphaMode::eOpaque;
 
-    std::shared_ptr<Illusion::Graphics::Texture> mBaseColorTexture;
-    std::shared_ptr<Illusion::Graphics::Texture> mMetallicRoughnessTexture;
-    std::shared_ptr<Illusion::Graphics::Texture> mNormalTexture;
-    std::shared_ptr<Illusion::Graphics::Texture> mOcclusionTexture;
-    std::shared_ptr<Illusion::Graphics::Texture> mEmissiveTexture;
+    TexturePtr mBaseColorTexture;
+    TexturePtr mMetallicRoughnessTexture;
+    TexturePtr mNormalTexture;
+    TexturePtr mOcclusionTexture;
+    TexturePtr mEmissiveTexture;
 
     std::string mName;
   };
@@ -75,24 +75,29 @@ class GltfModel {
     std::string            mName;
   };
 
-  GltfModel(std::shared_ptr<Illusion::Graphics::Device> const& device, std::string const& file);
+  template <typename... Args>
+  static GltfModelPtr create(Args&&... args) {
+    return std::make_shared<GltfModel>(args...);
+  };
+
+  GltfModel(DevicePtr const& device, std::string const& file);
 
   std::vector<Node> const&                      getNodes() const;
   std::vector<std::shared_ptr<Material>> const& getMaterials() const;
 
-  void bindIndexBuffer(std::shared_ptr<CommandBuffer> const& cmd) const;
-  void bindVertexBuffer(std::shared_ptr<CommandBuffer> const& cmd) const;
+  BackedBufferPtr const& getIndexBuffer() const;
+  BackedBufferPtr const& getVertexBuffer() const;
 
   static std::vector<vk::VertexInputBindingDescription>   getVertexInputBindings();
   static std::vector<vk::VertexInputAttributeDescription> getVertexInputAttributes();
 
  private:
-  std::shared_ptr<Illusion::Graphics::Device> mDevice;
+  DevicePtr mDevice;
 
   Node                                   mRootNode;
   std::vector<std::shared_ptr<Material>> mMaterials;
-  std::shared_ptr<BackedBuffer>          mIndexBuffer;
-  std::shared_ptr<BackedBuffer>          mVertexBuffer;
+  BackedBufferPtr                        mIndexBuffer;
+  BackedBufferPtr                        mVertexBuffer;
 };
 
 } // namespace Illusion::Graphics

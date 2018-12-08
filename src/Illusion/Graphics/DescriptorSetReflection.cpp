@@ -22,7 +22,7 @@ namespace Illusion::Graphics {
 
 const std::unordered_map<PipelineResource::ResourceType, vk::DescriptorType> resourceTypeMapping = {
   {PipelineResource::ResourceType::eCombinedImageSampler,
-   vk::DescriptorType::eCombinedImageSampler},
+    vk::DescriptorType::eCombinedImageSampler},
   {PipelineResource::ResourceType::eInputAttachment, vk::DescriptorType::eInputAttachment},
   {PipelineResource::ResourceType::eSampledImage, vk::DescriptorType::eSampledImage},
   {PipelineResource::ResourceType::eSampler, vk::DescriptorType::eSampler},
@@ -35,8 +35,7 @@ const std::unordered_map<PipelineResource::ResourceType, vk::DescriptorType> res
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-DescriptorSetReflection::DescriptorSetReflection(
-  std::shared_ptr<Device> const& device, uint32_t set)
+DescriptorSetReflection::DescriptorSetReflection(DevicePtr const& device, uint32_t set)
   : mDevice(device)
   , mSet(set) {}
 
@@ -48,10 +47,9 @@ DescriptorSetReflection::~DescriptorSetReflection() {}
 
 void DescriptorSetReflection::addResource(PipelineResource const& resource) {
   // sanity checks
-  if (
-    resource.mResourceType == PipelineResource::ResourceType::eInput ||
-    resource.mResourceType == PipelineResource::ResourceType::eOutput ||
-    resource.mResourceType == PipelineResource::ResourceType::ePushConstantBuffer) {
+  if (resource.mResourceType == PipelineResource::ResourceType::eInput ||
+      resource.mResourceType == PipelineResource::ResourceType::eOutput ||
+      resource.mResourceType == PipelineResource::ResourceType::ePushConstantBuffer) {
 
     throw std::runtime_error(
       "Failed to add resource to DescriptorSetReflection: Types Input, Output and "
@@ -104,7 +102,7 @@ uint32_t DescriptorSetReflection::getSet() const { return mSet; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::DescriptorSetLayout> DescriptorSetReflection::getLayout() const {
+vk::DescriptorSetLayoutPtr DescriptorSetReflection::getLayout() const {
   if (!mLayout) {
 
     std::vector<vk::DescriptorSetLayoutBinding> bindings;
@@ -129,16 +127,11 @@ std::shared_ptr<vk::DescriptorSetLayout> DescriptorSetReflection::getLayout() co
 
 void DescriptorSetReflection::printInfo() const {
   const std::unordered_map<PipelineResource::BaseType, std::string> baseTypes = {
-    {PipelineResource::BaseType::eBool, "bool"},
-    {PipelineResource::BaseType::eChar, "char"},
-    {PipelineResource::BaseType::eInt, "int"},
-    {PipelineResource::BaseType::eUint, "uint"},
-    {PipelineResource::BaseType::eUint64, "uint64"},
-    {PipelineResource::BaseType::eHalf, "half"},
-    {PipelineResource::BaseType::eFloat, "float"},
-    {PipelineResource::BaseType::eDouble, "double"},
-    {PipelineResource::BaseType::eStruct, "struct"},
-    {PipelineResource::BaseType::eNone, "none"}};
+    {PipelineResource::BaseType::eBool, "bool"}, {PipelineResource::BaseType::eChar, "char"},
+    {PipelineResource::BaseType::eInt, "int"}, {PipelineResource::BaseType::eUint, "uint"},
+    {PipelineResource::BaseType::eUint64, "uint64"}, {PipelineResource::BaseType::eHalf, "half"},
+    {PipelineResource::BaseType::eFloat, "float"}, {PipelineResource::BaseType::eDouble, "double"},
+    {PipelineResource::BaseType::eStruct, "struct"}, {PipelineResource::BaseType::eNone, "none"}};
 
   const std::unordered_map<PipelineResource::ResourceType, std::string> resourceTypes = {
     {PipelineResource::ResourceType::eInput, "input"},

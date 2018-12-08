@@ -29,27 +29,30 @@ namespace Illusion::Graphics {
 
 class DescriptorPool {
  public:
-  DescriptorPool(
-    std::shared_ptr<Device> const&                  device,
-    std::shared_ptr<DescriptorSetReflection> const& reflection);
+  template <typename... Args>
+  static DescriptorPoolPtr create(Args&&... args) {
+    return std::make_shared<DescriptorPool>(args...);
+  };
+
+  DescriptorPool(DevicePtr const& device, DescriptorSetReflectionPtr const& reflection);
   virtual ~DescriptorPool();
 
   // Allocates a fresh vk::DescriptorSet, may create a vk::DescriptorPool if no free pool is
   // available. Once the reference count on this handle runs out of scope, the vk::DescriptorSet
   // will be freed.
-  std::shared_ptr<vk::DescriptorSet> allocateDescriptorSet();
+  vk::DescriptorSetPtr allocateDescriptorSet();
 
  private:
-  const uint32_t                           mMaxSetsPerPool = 64;
-  std::shared_ptr<Device>                  mDevice;
-  std::shared_ptr<DescriptorSetReflection> mReflection;
-  std::vector<vk::DescriptorPoolSize>      mPoolSizes;
+  const uint32_t                      mMaxSetsPerPool = 64;
+  DevicePtr                           mDevice;
+  DescriptorSetReflectionPtr          mReflection;
+  std::vector<vk::DescriptorPoolSize> mPoolSizes;
 
   // The cache stores all vk::DescriptorPools and the number of descriptor sets which have been
   // allocated from those pools.
   struct PoolInfo {
-    std::shared_ptr<vk::DescriptorPool> mPool;
-    uint32_t                            mAllocationCount = 0;
+    vk::DescriptorPoolPtr mPool;
+    uint32_t              mAllocationCount = 0;
   };
 
   std::vector<std::shared_ptr<PoolInfo>> mDescriptorPools;

@@ -106,7 +106,7 @@ vk::PrimitiveTopology convertPrimitiveTopology(int value) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-GltfModel::GltfModel(std::shared_ptr<Device> const& device, std::string const& file)
+GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
   : mDevice(device) {
 
   // load the file ---------------------------------------------------------------------------------
@@ -137,7 +137,7 @@ GltfModel::GltfModel(std::shared_ptr<Device> const& device, std::string const& f
   }
 
   // create textures -------------------------------------------------------------------------------
-  std::vector<std::shared_ptr<Texture>> textures;
+  std::vector<TexturePtr> textures;
   for (size_t i{0}; i < model.textures.size(); ++i) {
 
     tinygltf::Sampler sampler;
@@ -184,15 +184,9 @@ GltfModel::GltfModel(std::shared_ptr<Device> const& device, std::string const& f
       // if there is image data, create an appropriate texture object for it
       uint32_t channels = image.image.size() / image.width / image.height;
 
-      textures.push_back(Texture::create2D(
-        mDevice,
-        image.width,
-        image.height,
+      textures.push_back(Texture::create2D(mDevice, image.width, image.height,
         channels == 3 ? vk::Format::eR8G8B8Unorm : vk::Format::eR8G8B8A8Unorm,
-        vk::ImageUsageFlagBits::eSampled,
-        info,
-        image.image.size(),
-        (void*)image.image.data()));
+        vk::ImageUsageFlagBits::eSampled, info, image.image.size(), (void*)image.image.data()));
     }
   }
 
@@ -253,160 +247,160 @@ GltfModel::GltfModel(std::shared_ptr<Device> const& device, std::string const& f
     std::vector<uint32_t> indexBuffer;
     std::vector<Vertex>   vertexBuffer;
 
-    std::function<void(Node&, tinygltf::Node const&)> addNode =
-      [&](Node& parent, tinygltf::Node const& n) {
+    std::function<void(Node&, tinygltf::Node const&)> addNode = [&](Node&               parent,
+                                                                  tinygltf::Node const& n) {
 
-        Node node;
-        node.mModelMatrix = parent.mModelMatrix;
-        node.mName        = n.name;
+      Node node;
+      node.mModelMatrix = parent.mModelMatrix;
+      node.mName        = n.name;
 
-        if (n.matrix.size() > 0) {
-          node.mModelMatrix *= glm::make_mat4(n.matrix.data());
-        } else {
-          if (n.translation.size() > 0) {
-            node.mModelMatrix =
-              glm::translate(node.mModelMatrix, glm::make_vec3(n.translation.data()));
-          }
-          if (n.rotation.size() > 0) {
-            glm::dquat quaternion(glm::make_quat(n.rotation.data()));
-            node.mModelMatrix =
-              glm::rotate(node.mModelMatrix, glm::angle(quaternion), glm::axis(quaternion));
-          }
-          if (n.scale.size() > 0) {
-            node.mModelMatrix = glm::scale(node.mModelMatrix, glm::make_vec3(n.scale.data()));
-          }
+      if (n.matrix.size() > 0) {
+        node.mModelMatrix *= glm::make_mat4(n.matrix.data());
+      } else {
+        if (n.translation.size() > 0) {
+          node.mModelMatrix =
+            glm::translate(node.mModelMatrix, glm::make_vec3(n.translation.data()));
         }
+        if (n.rotation.size() > 0) {
+          glm::dquat quaternion(glm::make_quat(n.rotation.data()));
+          node.mModelMatrix =
+            glm::rotate(node.mModelMatrix, glm::angle(quaternion), glm::axis(quaternion));
+        }
+        if (n.scale.size() > 0) {
+          node.mModelMatrix = glm::scale(node.mModelMatrix, glm::make_vec3(n.scale.data()));
+        }
+      }
 
-        if (n.mesh >= 0) {
-          auto const& mesh = model.meshes[n.mesh];
+      if (n.mesh >= 0) {
+        auto const& mesh = model.meshes[n.mesh];
 
-          for (auto const& p : mesh.primitives) {
-            Primitive primitve;
+        for (auto const& p : mesh.primitives) {
+          Primitive primitve;
 
-            primitve.mMaterial = mMaterials[p.material];
-            primitve.mTopology = convertPrimitiveTopology(p.mode);
+          primitve.mMaterial = mMaterials[p.material];
+          primitve.mTopology = convertPrimitiveTopology(p.mode);
 
-            uint32_t vertexStart = static_cast<uint32_t>(vertexBuffer.size());
+          uint32_t vertexStart = static_cast<uint32_t>(vertexBuffer.size());
 
-            // append all vertices to our vertex buffer
-            const float*    vertexPositions = nullptr;
-            const float*    vertexNormals   = nullptr;
-            const float*    vertexTexcoords = nullptr;
-            const uint16_t* vertexJoints    = nullptr;
-            const float*    vertexWeights   = nullptr;
-            uint32_t        vertexCount     = 0;
+          // append all vertices to our vertex buffer
+          const float*    vertexPositions = nullptr;
+          const float*    vertexNormals   = nullptr;
+          const float*    vertexTexcoords = nullptr;
+          const uint16_t* vertexJoints    = nullptr;
+          const float*    vertexWeights   = nullptr;
+          uint32_t        vertexCount     = 0;
 
-            auto it = p.attributes.find("POSITION");
-            if (it != p.attributes.end()) {
-              auto const& a   = model.accessors[it->second];
-              auto const& v   = model.bufferViews[a.bufferView];
-              vertexPositions = reinterpret_cast<const float*>(
-                &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]));
-              primitve.mMinPosition = glm::make_vec3(&vertexPositions[0]);
-              primitve.mMaxPosition = glm::make_vec3(&vertexPositions[0]);
-              vertexCount           = a.count;
-            } else {
-              throw std::runtime_error("Failed to load GLTF model: Primitve has no vertex data!");
-            }
+          auto it = p.attributes.find("POSITION");
+          if (it != p.attributes.end()) {
+            auto const& a   = model.accessors[it->second];
+            auto const& v   = model.bufferViews[a.bufferView];
+            vertexPositions = reinterpret_cast<const float*>(
+              &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]));
+            primitve.mMinPosition = glm::make_vec3(&vertexPositions[0]);
+            primitve.mMaxPosition = glm::make_vec3(&vertexPositions[0]);
+            vertexCount           = a.count;
+          } else {
+            throw std::runtime_error("Failed to load GLTF model: Primitve has no vertex data!");
+          }
 
-            if ((it = p.attributes.find("NORMAL")) != p.attributes.end()) {
-              auto const& a = model.accessors[it->second];
-              auto const& v = model.bufferViews[a.bufferView];
-              vertexNormals = reinterpret_cast<const float*>(
-                &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]));
-            }
-
-            if ((it = p.attributes.find("TEXCOORD_0")) != p.attributes.end()) {
-              auto const& a   = model.accessors[it->second];
-              auto const& v   = model.bufferViews[a.bufferView];
-              vertexTexcoords = reinterpret_cast<const float*>(
-                &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]));
-            }
-
-            if ((it = p.attributes.find("JOINTS_0")) != p.attributes.end()) {
-              auto const& a = model.accessors[it->second];
-              auto const& v = model.bufferViews[a.bufferView];
-              vertexJoints  = reinterpret_cast<const uint16_t*>(
-                &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]));
-            }
-
-            if ((it = p.attributes.find("WEIGHTS_0")) != p.attributes.end()) {
-              auto const& a = model.accessors[it->second];
-              auto const& v = model.bufferViews[a.bufferView];
-              vertexWeights = reinterpret_cast<const float*>(
-                &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]));
-            }
-
-            for (uint32_t v = 0; v < vertexCount; ++v) {
-              Vertex vertex;
-              vertex.mPosition = glm::make_vec3(&vertexPositions[v * 3]);
-
-              primitve.mMinPosition = glm::min(primitve.mMinPosition, vertex.mPosition);
-              primitve.mMaxPosition = glm::max(primitve.mMaxPosition, vertex.mPosition);
-
-              if (vertexNormals) {
-                vertex.mNormal = glm::normalize(glm::make_vec3(&vertexNormals[v * 3]));
-              }
-              if (vertexTexcoords) {
-                vertex.mTexcoords = glm::make_vec2(&vertexTexcoords[v * 2]);
-              }
-              if (vertexJoints && vertexWeights) {
-                vertex.mJoint0  = glm::vec4(glm::make_vec4(&vertexJoints[v * 4]));
-                vertex.mWeight0 = glm::make_vec4(&vertexWeights[v * 4]);
-              }
-
-              vertexBuffer.emplace_back(vertex);
-            }
-
-            // append all indices to our index buffer
-            auto const& a = model.accessors[p.indices];
+          if ((it = p.attributes.find("NORMAL")) != p.attributes.end()) {
+            auto const& a = model.accessors[it->second];
             auto const& v = model.bufferViews[a.bufferView];
-
-            primitve.mIndexOffset = static_cast<uint32_t>(indexBuffer.size());
-            primitve.mIndexCount  = static_cast<uint32_t>(a.count);
-
-            switch (a.componentType) {
-            case TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT: {
-              auto data = reinterpret_cast<const uint32_t*>(
-                &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
-              for (uint32_t i = 0; i < primitve.mIndexCount; ++i) {
-                indexBuffer.push_back(data[i] + vertexStart);
-              }
-              break;
-            }
-            case TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT: {
-              auto data = reinterpret_cast<const uint16_t*>(
-                &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
-              for (uint32_t i = 0; i < primitve.mIndexCount; ++i) {
-                indexBuffer.push_back(data[i] + vertexStart);
-              }
-              break;
-            }
-            case TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE: {
-              auto data = reinterpret_cast<const uint8_t*>(
-                &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
-              for (uint32_t i = 0; i < primitve.mIndexCount; ++i) {
-                indexBuffer.push_back(data[i] + vertexStart);
-              }
-              break;
-            }
-            default:
-              throw std::runtime_error("Failed to load GLTF model: Unsupported index type!");
-            }
-
-            node.mMinPosition = glm::min(node.mMinPosition, primitve.mMinPosition);
-            node.mMaxPosition = glm::max(node.mMaxPosition, primitve.mMaxPosition);
-            node.mPrimitives.emplace_back(primitve);
+            vertexNormals = reinterpret_cast<const float*>(
+              &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]));
           }
-        }
 
-        // add children
-        for (int c : n.children) {
-          addNode(node, model.nodes[c]);
-        }
+          if ((it = p.attributes.find("TEXCOORD_0")) != p.attributes.end()) {
+            auto const& a   = model.accessors[it->second];
+            auto const& v   = model.bufferViews[a.bufferView];
+            vertexTexcoords = reinterpret_cast<const float*>(
+              &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]));
+          }
 
-        parent.mChildren.emplace_back(node);
-      };
+          if ((it = p.attributes.find("JOINTS_0")) != p.attributes.end()) {
+            auto const& a = model.accessors[it->second];
+            auto const& v = model.bufferViews[a.bufferView];
+            vertexJoints  = reinterpret_cast<const uint16_t*>(
+              &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]));
+          }
+
+          if ((it = p.attributes.find("WEIGHTS_0")) != p.attributes.end()) {
+            auto const& a = model.accessors[it->second];
+            auto const& v = model.bufferViews[a.bufferView];
+            vertexWeights = reinterpret_cast<const float*>(
+              &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]));
+          }
+
+          for (uint32_t v = 0; v < vertexCount; ++v) {
+            Vertex vertex;
+            vertex.mPosition = glm::make_vec3(&vertexPositions[v * 3]);
+
+            primitve.mMinPosition = glm::min(primitve.mMinPosition, vertex.mPosition);
+            primitve.mMaxPosition = glm::max(primitve.mMaxPosition, vertex.mPosition);
+
+            if (vertexNormals) {
+              vertex.mNormal = glm::normalize(glm::make_vec3(&vertexNormals[v * 3]));
+            }
+            if (vertexTexcoords) {
+              vertex.mTexcoords = glm::make_vec2(&vertexTexcoords[v * 2]);
+            }
+            if (vertexJoints && vertexWeights) {
+              vertex.mJoint0  = glm::vec4(glm::make_vec4(&vertexJoints[v * 4]));
+              vertex.mWeight0 = glm::make_vec4(&vertexWeights[v * 4]);
+            }
+
+            vertexBuffer.emplace_back(vertex);
+          }
+
+          // append all indices to our index buffer
+          auto const& a = model.accessors[p.indices];
+          auto const& v = model.bufferViews[a.bufferView];
+
+          primitve.mIndexOffset = static_cast<uint32_t>(indexBuffer.size());
+          primitve.mIndexCount  = static_cast<uint32_t>(a.count);
+
+          switch (a.componentType) {
+          case TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT: {
+            auto data = reinterpret_cast<const uint32_t*>(
+              &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+            for (uint32_t i = 0; i < primitve.mIndexCount; ++i) {
+              indexBuffer.push_back(data[i] + vertexStart);
+            }
+            break;
+          }
+          case TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT: {
+            auto data = reinterpret_cast<const uint16_t*>(
+              &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+            for (uint32_t i = 0; i < primitve.mIndexCount; ++i) {
+              indexBuffer.push_back(data[i] + vertexStart);
+            }
+            break;
+          }
+          case TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE: {
+            auto data = reinterpret_cast<const uint8_t*>(
+              &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+            for (uint32_t i = 0; i < primitve.mIndexCount; ++i) {
+              indexBuffer.push_back(data[i] + vertexStart);
+            }
+            break;
+          }
+          default:
+            throw std::runtime_error("Failed to load GLTF model: Unsupported index type!");
+          }
+
+          node.mMinPosition = glm::min(node.mMinPosition, primitve.mMinPosition);
+          node.mMaxPosition = glm::max(node.mMaxPosition, primitve.mMaxPosition);
+          node.mPrimitives.emplace_back(primitve);
+        }
+      }
+
+      // add children
+      for (int c : n.children) {
+        addNode(node, model.nodes[c]);
+      }
+
+      parent.mChildren.emplace_back(node);
+    };
 
     // add all default scene nodes
     for (int n : model.scenes[model.defaultScene].nodes) {
@@ -426,15 +420,11 @@ std::vector<GltfModel::Node> const& GltfModel::getNodes() const { return mRootNo
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void GltfModel::bindIndexBuffer(std::shared_ptr<CommandBuffer> const& cmd) const {
-  cmd->bindIndexBuffer(*mIndexBuffer->mBuffer, 0, vk::IndexType::eUint32);
-}
+BackedBufferPtr const& GltfModel::getIndexBuffer() const { return mIndexBuffer; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void GltfModel::bindVertexBuffer(std::shared_ptr<CommandBuffer> const& cmd) const {
-  cmd->bindVertexBuffers(0, *mVertexBuffer->mBuffer, vk::DeviceSize(0));
-}
+BackedBufferPtr const& GltfModel::getVertexBuffer() const { return mVertexBuffer; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -446,10 +436,10 @@ std::vector<vk::VertexInputBindingDescription> GltfModel::getVertexInputBindings
 
 std::vector<vk::VertexInputAttributeDescription> GltfModel::getVertexInputAttributes() {
   return {{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(struct Vertex, mPosition)},
-          {1, 0, vk::Format::eR32G32B32Sfloat, offsetof(struct Vertex, mNormal)},
-          {2, 0, vk::Format::eR32G32Sfloat, offsetof(struct Vertex, mTexcoords)},
-          {3, 0, vk::Format::eR32G32B32A32Sfloat, offsetof(struct Vertex, mJoint0)},
-          {4, 0, vk::Format::eR32G32B32A32Sfloat, offsetof(struct Vertex, mWeight0)}};
+    {1, 0, vk::Format::eR32G32B32Sfloat, offsetof(struct Vertex, mNormal)},
+    {2, 0, vk::Format::eR32G32Sfloat, offsetof(struct Vertex, mTexcoords)},
+    {3, 0, vk::Format::eR32G32B32A32Sfloat, offsetof(struct Vertex, mJoint0)},
+    {4, 0, vk::Format::eR32G32B32A32Sfloat, offsetof(struct Vertex, mWeight0)}};
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

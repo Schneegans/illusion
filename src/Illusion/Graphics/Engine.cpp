@@ -33,15 +33,9 @@ bool glfwInitialized{false};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-VkBool32 messageCallback(
-  VkDebugReportFlagsEXT      flags,
-  VkDebugReportObjectTypeEXT type,
-  uint64_t                   object,
-  size_t                     location,
-  int32_t                    code,
-  const char*                layer,
-  const char*                message,
-  void*                      userData) {
+VkBool32 messageCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT type,
+  uint64_t object, size_t location, int32_t code, const char* layer, const char* message,
+  void* userData) {
 
   std::stringstream buf;
   buf << "[" << layer << "] " << message << " (code: " << code << ")" << std::endl;
@@ -123,8 +117,7 @@ Engine::~Engine() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<PhysicalDevice> Engine::getPhysicalDevice(
-  std::vector<std::string> const& extensions) const {
+PhysicalDevicePtr Engine::getPhysicalDevice(std::vector<std::string> const& extensions) const {
 
   // loop through physical devices and choose a suitable one
   for (auto const& physicalDevice : mPhysicalDevices) {
@@ -149,7 +142,7 @@ std::shared_ptr<PhysicalDevice> Engine::getPhysicalDevice(
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::SurfaceKHR> Engine::createSurface(GLFWwindow* window) const {
+vk::SurfaceKHRPtr Engine::createSurface(GLFWwindow* window) const {
   VkSurfaceKHR tmp;
   if (glfwCreateWindowSurface(*mInstance, window, nullptr, &tmp) != VK_SUCCESS) {
     throw std::runtime_error("Failed to create window surface!");
@@ -168,8 +161,7 @@ std::shared_ptr<vk::SurfaceKHR> Engine::createSurface(GLFWwindow* window) const 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::Instance> Engine::createInstance(
-  std::string const& engine, std::string const& app) const {
+vk::InstancePtr Engine::createInstance(std::string const& engine, std::string const& app) const {
 
   if (!glfwInitialized) {
     if (!glfwInit()) {
@@ -221,7 +213,7 @@ std::shared_ptr<vk::Instance> Engine::createInstance(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::DebugReportCallbackEXT> Engine::createDebugCallback() const {
+vk::DebugReportCallbackEXTPtr Engine::createDebugCallback() const {
   if (!mDebugMode) {
     return nullptr;
   }

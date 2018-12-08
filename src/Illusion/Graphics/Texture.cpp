@@ -24,7 +24,7 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 namespace {
-bool isFormatSupported(std::shared_ptr<Device> const& device, vk::Format format) {
+bool isFormatSupported(DevicePtr const& device, vk::Format format) {
   auto const& features =
     device->getPhysicalDevice()->getFormatProperties(format).optimalTilingFeatures;
 
@@ -34,10 +34,8 @@ bool isFormatSupported(std::shared_ptr<Device> const& device, vk::Format format)
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-std::shared_ptr<Texture> Texture::createFromFile(
-  std::shared_ptr<Device> const& device,
-  std::string const&             fileName,
-  vk::SamplerCreateInfo const&   sampler) {
+TexturePtr Texture::createFromFile(
+  DevicePtr const& device, std::string const& fileName, vk::SamplerCreateInfo const& sampler) {
 
   auto result = std::make_shared<Texture>();
 
@@ -54,8 +52,8 @@ std::shared_ptr<Texture> Texture::createFromFile(
     } else if (texture.target() == gli::target::TARGET_CUBE) {
       type = vk::ImageViewType::eCube;
     } else {
-      throw std::runtime_error{"Failed to load texture " + fileName +
-                               ": Unsuppoerted texture target!"};
+      throw std::runtime_error{
+        "Failed to load texture " + fileName + ": Unsuppoerted texture target!"};
     }
 
     vk::Format format(static_cast<vk::Format>(texture.format()));
@@ -70,15 +68,8 @@ std::shared_ptr<Texture> Texture::createFromFile(
       levels.push_back({texture.extent(i).x, texture.extent(i).y, texture.size(i)});
     }
 
-    result->initData(
-      device,
-      levels,
-      format,
-      vk::ImageUsageFlagBits::eSampled,
-      type,
-      sampler,
-      texture.size(),
-      texture.data());
+    result->initData(device, levels, format, vk::ImageUsageFlagBits::eSampled, type, sampler,
+      texture.size(), texture.data());
 
     return result;
   }
@@ -125,15 +116,8 @@ std::shared_ptr<Texture> Texture::createFromFile(
         format = vk::Format::eR32G32B32A32Sfloat;
     }
 
-    result->initData(
-      device,
-      levels,
-      format,
-      vk::ImageUsageFlagBits::eSampled,
-      vk::ImageViewType::e2D,
-      sampler,
-      size,
-      data);
+    result->initData(device, levels, format, vk::ImageUsageFlagBits::eSampled,
+      vk::ImageViewType::e2D, sampler, size, data);
 
     stbi_image_free(data);
 
@@ -147,15 +131,9 @@ std::shared_ptr<Texture> Texture::createFromFile(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<Texture> Texture::create2D(
-  std::shared_ptr<Device> const& device,
-  int32_t                        width,
-  int32_t                        height,
-  vk::Format                     format,
-  vk::ImageUsageFlags const&     usage,
-  vk::SamplerCreateInfo const&   sampler,
-  size_t                         dataSize,
-  void*                          data) {
+TexturePtr Texture::create2D(DevicePtr const& device, int32_t width, int32_t height,
+  vk::Format format, vk::ImageUsageFlags const& usage, vk::SamplerCreateInfo const& sampler,
+  size_t dataSize, void* data) {
 
   TextureLevel level;
   level.mWidth  = width;
@@ -169,15 +147,9 @@ std::shared_ptr<Texture> Texture::create2D(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<Texture> Texture::create2DMipMap(
-  std::shared_ptr<Device> const& device,
-  std::vector<TextureLevel>      levels,
-  vk::Format                     format,
-  vk::ImageUsageFlags const&     usage,
-  vk::ImageViewType              type,
-  vk::SamplerCreateInfo const&   sampler,
-  size_t                         dataSize,
-  void*                          data) {
+TexturePtr Texture::create2DMipMap(DevicePtr const& device, std::vector<TextureLevel> levels,
+  vk::Format format, vk::ImageUsageFlags const& usage, vk::ImageViewType type,
+  vk::SamplerCreateInfo const& sampler, size_t dataSize, void* data) {
 
   auto result = std::make_shared<Texture>();
   result->initData(device, levels, format, usage, type, sampler, dataSize, data);
@@ -186,14 +158,9 @@ std::shared_ptr<Texture> Texture::create2DMipMap(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<Texture> Texture::createCubemap(
-  std::shared_ptr<Device> const& device,
-  int32_t                        size,
-  vk::Format                     format,
-  vk::ImageUsageFlags const&     usage,
-  vk::SamplerCreateInfo const&   sampler,
-  size_t                         dataSize,
-  void*                          data) {
+TexturePtr Texture::createCubemap(DevicePtr const& device, int32_t size, vk::Format format,
+  vk::ImageUsageFlags const& usage, vk::SamplerCreateInfo const& sampler, size_t dataSize,
+  void* data) {
 
   TextureLevel level;
   level.mWidth  = size;
@@ -216,15 +183,9 @@ Texture::~Texture() { ILLUSION_TRACE << "Deleting Texture." << std::endl; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Texture::initData(
-  std::shared_ptr<Device> const& device,
-  std::vector<TextureLevel>      levels,
-  vk::Format                     format,
-  vk::ImageUsageFlags            usage,
-  vk::ImageViewType              type,
-  vk::SamplerCreateInfo const&   sampler,
-  size_t                         size,
-  void*                          data) {
+void Texture::initData(DevicePtr const& device, std::vector<TextureLevel> levels, vk::Format format,
+  vk::ImageUsageFlags usage, vk::ImageViewType type, vk::SamplerCreateInfo const& sampler,
+  size_t size, void* data) {
 
   if (data) {
     usage |= vk::ImageUsageFlagBits::eTransferDst;
@@ -238,18 +199,9 @@ void Texture::initData(
     flags      = vk::ImageCreateFlagBits::eCubeCompatible;
   }
 
-  auto image = device->createBackedImage(
-    levels[0].mWidth,
-    levels[0].mHeight,
-    1,
-    levels.size(),
-    layerCount,
-    format,
-    vk::ImageTiling::eOptimal,
-    usage,
-    vk::MemoryPropertyFlagBits::eDeviceLocal,
-    vk::SampleCountFlagBits::e1,
-    flags);
+  auto image = device->createBackedImage(levels[0].mWidth, levels[0].mHeight, 1, levels.size(),
+    layerCount, format, vk::ImageTiling::eOptimal, usage, vk::MemoryPropertyFlagBits::eDeviceLocal,
+    vk::SampleCountFlagBits::e1, flags);
 
   mImage  = image->mImage;
   mMemory = image->mMemory;
@@ -285,22 +237,16 @@ void Texture::initData(
     auto cmd = std::make_shared<CommandBuffer>(device);
     cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
     {
-      cmd->transitionImageLayout(
-        *mImage,
-        vk::ImageLayout::eUndefined,
-        vk::ImageLayout::eTransferDstOptimal,
-        vk::PipelineStageFlagBits::eTransfer,
+      cmd->transitionImageLayout(*mImage, vk::ImageLayout::eUndefined,
+        vk::ImageLayout::eTransferDstOptimal, vk::PipelineStageFlagBits::eTransfer,
         subresourceRange);
     }
     cmd->end();
     cmd->submit();
     cmd->waitIdle();
 
-    auto stagingBuffer = device->createBackedBuffer(
-      size,
-      vk::BufferUsageFlagBits::eTransferSrc,
-      vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-      data);
+    auto stagingBuffer = device->createBackedBuffer(size, vk::BufferUsageFlagBits::eTransferSrc,
+      vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, data);
 
     cmd->reset();
     cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
@@ -335,11 +281,8 @@ void Texture::initData(
     cmd->reset();
     cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
     {
-      cmd->transitionImageLayout(
-        *mImage,
-        vk::ImageLayout::eTransferDstOptimal,
-        vk::ImageLayout::eShaderReadOnlyOptimal,
-        vk::PipelineStageFlagBits::eTransfer,
+      cmd->transitionImageLayout(*mImage, vk::ImageLayout::eTransferDstOptimal,
+        vk::ImageLayout::eShaderReadOnlyOptimal, vk::PipelineStageFlagBits::eTransfer,
         subresourceRange);
     }
     cmd->end();

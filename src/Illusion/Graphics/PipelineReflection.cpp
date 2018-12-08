@@ -20,7 +20,7 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-PipelineReflection::PipelineReflection(std::shared_ptr<Device> const& device)
+PipelineReflection::PipelineReflection(DevicePtr const& device)
   : mDevice(device) {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -37,17 +37,15 @@ void PipelineReflection::addResource(PipelineResource const& resource) {
   // outputs, since its legal to have separate outputs and inputs with the same name across
   // shader stages.
   auto key = resource.mName;
-  if (
-    resource.mResourceType == PipelineResource::ResourceType::eOutput ||
-    resource.mResourceType == PipelineResource::ResourceType::eInput) {
+  if (resource.mResourceType == PipelineResource::ResourceType::eOutput ||
+      resource.mResourceType == PipelineResource::ResourceType::eInput) {
 
     key = std::to_string(static_cast<VkShaderStageFlags>(resource.mStages)) + ":" + key;
   }
 
-  if (
-    resource.mResourceType == PipelineResource::ResourceType::eInput ||
-    resource.mResourceType == PipelineResource::ResourceType::eOutput ||
-    resource.mResourceType == PipelineResource::ResourceType::ePushConstantBuffer) {
+  if (resource.mResourceType == PipelineResource::ResourceType::eInput ||
+      resource.mResourceType == PipelineResource::ResourceType::eOutput ||
+      resource.mResourceType == PipelineResource::ResourceType::ePushConstantBuffer) {
 
     std::map<std::string, PipelineResource>* map;
 
@@ -81,8 +79,8 @@ void PipelineReflection::addResource(PipelineResource const& resource) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::map<uint32_t, std::shared_ptr<DescriptorSetReflection>> const& PipelineReflection::
-  getDescriptorSetReflections() const {
+std::map<uint32_t, DescriptorSetReflectionPtr> const&
+PipelineReflection::getDescriptorSetReflections() const {
   return mDescriptorSetReflections;
 };
 
@@ -129,7 +127,7 @@ std::map<std::string, PipelineResource> PipelineReflection::getResources() const
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::PipelineLayout> const& PipelineReflection::getLayout() const {
+vk::PipelineLayoutPtr const& PipelineReflection::getLayout() const {
   if (!mLayout) {
     std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
     for (auto const& r : mDescriptorSetReflections) {

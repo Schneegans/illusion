@@ -25,102 +25,83 @@ namespace Illusion::Graphics {
 
 class CommandBuffer {
  public:
-  CommandBuffer(
-    std::shared_ptr<Device> const& device,
-    QueueType                      type  = QueueType::eGeneric,
-    vk::CommandBufferLevel         level = vk::CommandBufferLevel::ePrimary);
+  template <typename... Args>
+  static CommandBufferPtr create(Args&&... args) {
+    return std::make_shared<CommandBuffer>(args...);
+  };
+
+  CommandBuffer(DevicePtr const& device, QueueType type = QueueType::eGeneric,
+    vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);
 
   void reset();
   void begin(
     vk::CommandBufferUsageFlagBits usage = vk::CommandBufferUsageFlagBits::eSimultaneousUse) const;
   void end() const;
-  void submit(
-    std::vector<vk::Semaphore> const&          waitSemaphores   = {},
-    std::vector<vk::PipelineStageFlags> const& waitStages       = {},
-    std::vector<vk::Semaphore> const&          signalSemaphores = {},
-    vk::Fence const&                           fence            = nullptr) const;
+  void submit(std::vector<vk::Semaphore> const& waitSemaphores   = {},
+    std::vector<vk::PipelineStageFlags> const&  waitStages       = {},
+    std::vector<vk::Semaphore> const&           signalSemaphores = {},
+    vk::Fence const&                            fence            = nullptr) const;
 
   void waitIdle() const;
 
-  void beginRenderPass(std::shared_ptr<RenderPass> const& renderPass);
+  void beginRenderPass(RenderPassPtr const& renderPass);
   void endRenderPass();
 
-  void bindIndexBuffer(vk::Buffer buffer, vk::DeviceSize offset, vk::IndexType indexType) const;
-  void bindVertexBuffers(
-    uint32_t                             firstBinding,
-    vk::ArrayProxy<const vk::Buffer>     buffers,
-    vk::ArrayProxy<const vk::DeviceSize> offsets) const;
+  void bindIndexBuffer(
+    BackedBufferPtr const& buffer, vk::DeviceSize offset, vk::IndexType indexType) const;
 
-  void bindCombinedImageSampler(
-    std::shared_ptr<Texture> const& texture, uint32_t set, uint32_t binding) const;
+  void bindVertexBuffers(uint32_t                                  firstBinding,
+    std::vector<std::pair<BackedBufferPtr, vk::DeviceSize>> const& buffersAndOffsets) const;
 
-  void draw(
-    uint32_t vertexCount,
-    uint32_t instanceCount = 1,
-    uint32_t firstVertex   = 0,
+  void bindVertexBuffers(uint32_t firstBinding, std::vector<BackedBufferPtr> const& buffers) const;
+
+  void bindCombinedImageSampler(TexturePtr const& texture, uint32_t set, uint32_t binding) const;
+
+  void draw(uint32_t vertexCount, uint32_t instanceCount = 1, uint32_t firstVertex = 0,
     uint32_t firstInstance = 0);
 
-  void drawIndexed(
-    uint32_t indexCount,
-    uint32_t instanceCount = 1,
-    uint32_t firstIndex    = 0,
-    int32_t  vertexOffset  = 0,
-    uint32_t firstInstance = 0);
+  void drawIndexed(uint32_t indexCount, uint32_t instanceCount = 1, uint32_t firstIndex = 0,
+    int32_t vertexOffset = 0, uint32_t firstInstance = 0);
 
   GraphicsState& graphicsState();
   BindingState&  bindingState();
 
-  void pushConstants(
-    vk::ShaderStageFlags stages, const void* data, uint32_t size, uint32_t offset = 0) const;
+  void pushConstants(const void* data, uint32_t size, uint32_t offset = 0) const;
 
   template <typename T>
-  void pushConstants(vk::ShaderStageFlags stages, T const& data, uint32_t offset = 0) const {
-    pushConstants(stages, &data, sizeof(T), offset);
+  void pushConstants(T const& data, uint32_t offset = 0) const {
+    pushConstants(&data, sizeof(T), offset);
   }
 
-  void transitionImageLayout(
-    vk::Image                 image,
-    vk::ImageLayout           oldLayout,
-    vk::ImageLayout           newLayout,
+  void transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout,
     vk::PipelineStageFlagBits stage = vk::PipelineStageFlagBits::eTopOfPipe,
     vk::ImageSubresourceRange range = {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}) const;
 
   void copyImage(vk::Image src, vk::Image dst, glm::uvec2 const& size) const;
 
-  void blitImage(
-    vk::Image         src,
-    vk::Image         dst,
-    glm::uvec2 const& srcSize,
-    glm::uvec2 const& dstSize,
-    vk::Filter        filter) const;
+  void blitImage(vk::Image src, vk::Image dst, glm::uvec2 const& srcSize, glm::uvec2 const& dstSize,
+    vk::Filter filter) const;
 
-  void resolveImage(
-    vk::Image        src,
-    vk::ImageLayout  srcLayout,
-    vk::Image        dst,
-    vk::ImageLayout  dstLayout,
-    vk::ImageResolve region) const;
+  void resolveImage(vk::Image src, vk::ImageLayout srcLayout, vk::Image dst,
+    vk::ImageLayout dstLayout, vk::ImageResolve region) const;
 
   void copyBuffer(vk::Buffer src, vk::Buffer dst, vk::DeviceSize size) const;
-  void copyBufferToImage(
-    vk::Buffer                              src,
-    vk::Image                               dst,
-    vk::ImageLayout                         dstLayout,
+  void copyBufferToImage(vk::Buffer src, vk::Image dst, vk::ImageLayout dstLayout,
     std::vector<vk::BufferImageCopy> const& infos) const;
 
  private:
   void flush();
 
-  std::shared_ptr<Device>            mDevice;
-  std::shared_ptr<vk::CommandBuffer> mVkCmd;
-  QueueType                          mType;
-  vk::CommandBufferLevel             mLevel;
+  DevicePtr              mDevice;
+  vk::CommandBufferPtr   mVkCmd;
+  QueueType              mType;
+  vk::CommandBufferLevel mLevel;
 
   GraphicsState      mGraphicsState;
   BindingState       mBindingState;
   DescriptorSetCache mDescriptorSetCache;
 
-  std::shared_ptr<RenderPass>       mCurrentRenderPass;
+  RenderPassPtr                     mCurrentRenderPass;
   uint32_t                          mCurrentSubPass = 0;
   std::map<uint32_t, Core::BitHash> mCurrentDescriptorSetLayoutHashes;
 };

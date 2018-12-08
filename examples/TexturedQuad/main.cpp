@@ -11,7 +11,6 @@
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/Engine.hpp>
-#include <Illusion/Graphics/GraphicsState.hpp>
 #include <Illusion/Graphics/PipelineReflection.hpp>
 #include <Illusion/Graphics/RenderPass.hpp>
 #include <Illusion/Graphics/ShaderProgram.hpp>
@@ -24,22 +23,19 @@ int main(int argc, char* argv[]) {
 
   Illusion::Core::Logger::enableTrace = true;
 
-  auto engine = std::make_shared<Illusion::Graphics::Engine>("Textured Quad Demo");
-  auto device = std::make_shared<Illusion::Graphics::Device>(engine->getPhysicalDevice());
-  auto window = std::make_shared<Illusion::Graphics::Window>(engine, device);
-
-  auto shader = Illusion::Graphics::ShaderProgram::createFromGlslFiles(
-    device,
-    {{vk::ShaderStageFlagBits::eVertex, "data/shaders/TexturedQuad.vert"},
-     {vk::ShaderStageFlagBits::eFragment, "data/shaders/TexturedQuad.frag"}});
+  auto engine = Illusion::Graphics::Engine::create("Textured Quad Demo");
+  auto device = Illusion::Graphics::Device::create(engine->getPhysicalDevice());
+  auto window = Illusion::Graphics::Window::create(engine, device);
 
   auto texture = Illusion::Graphics::Texture::createFromFile(device, "data/textures/box.dds");
+  auto shader  = Illusion::Graphics::ShaderProgram::createFromFiles(
+    device, {"data/shaders/TexturedQuad.vert", "data/shaders/TexturedQuad.frag"});
 
-  auto renderPass = std::make_shared<Illusion::Graphics::RenderPass>(device);
+  auto renderPass = Illusion::Graphics::RenderPass::create(device);
   renderPass->addAttachment(vk::Format::eR8G8B8A8Unorm);
   renderPass->setExtent(window->pExtent.get());
 
-  auto cmd = std::make_shared<Illusion::Graphics::CommandBuffer>(device);
+  auto cmd = Illusion::Graphics::CommandBuffer::create(device);
   cmd->graphicsState().setShaderProgram(shader);
   cmd->graphicsState().addBlendAttachment({});
   cmd->graphicsState().addViewport({glm::vec2(0), glm::vec2(window->pExtent.get()), 0.f, 1.f});

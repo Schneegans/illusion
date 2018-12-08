@@ -11,8 +11,6 @@
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/Engine.hpp>
-#include <Illusion/Graphics/GraphicsState.hpp>
-#include <Illusion/Graphics/PhysicalDevice.hpp>
 #include <Illusion/Graphics/RenderPass.hpp>
 #include <Illusion/Graphics/ShaderProgram.hpp>
 #include <Illusion/Graphics/Window.hpp>
@@ -23,21 +21,17 @@ int main(int argc, char* argv[]) {
 
   Illusion::Core::Logger::enableTrace = true;
 
-  auto engine = std::make_shared<Illusion::Graphics::Engine>("Triangle Demo");
-  auto device = std::make_shared<Illusion::Graphics::Device>(engine->getPhysicalDevice());
-  auto window = std::make_shared<Illusion::Graphics::Window>(engine, device);
-  engine->getPhysicalDevice()->printInfo();
+  auto engine = Illusion::Graphics::Engine::create("Triangle Demo");
+  auto device = Illusion::Graphics::Device::create(engine->getPhysicalDevice());
+  auto window = Illusion::Graphics::Window::create(engine, device);
+  auto shader = Illusion::Graphics::ShaderProgram::createFromFiles(
+    device, {"data/shaders/Triangle.vert", "data/shaders/Triangle.frag"});
 
-  auto shader = Illusion::Graphics::ShaderProgram::createFromGlslFiles(
-    device,
-    {{vk::ShaderStageFlagBits::eVertex, "data/shaders/Triangle.vert"},
-     {vk::ShaderStageFlagBits::eFragment, "data/shaders/Triangle.frag"}});
-
-  auto renderPass = std::make_shared<Illusion::Graphics::RenderPass>(device);
+  auto renderPass = Illusion::Graphics::RenderPass::create(device);
   renderPass->addAttachment(vk::Format::eR8G8B8A8Unorm);
   renderPass->setExtent(window->pExtent.get());
 
-  auto cmd = std::make_shared<Illusion::Graphics::CommandBuffer>(device);
+  auto cmd = Illusion::Graphics::CommandBuffer::create(device);
   cmd->graphicsState().setShaderProgram(shader);
   cmd->graphicsState().addBlendAttachment({});
   cmd->graphicsState().addViewport({glm::vec2(0), glm::vec2(window->pExtent.get()), 0.f, 1.f});

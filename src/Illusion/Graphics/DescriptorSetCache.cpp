@@ -17,7 +17,7 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-DescriptorSetCache::DescriptorSetCache(std::shared_ptr<Device> const& device)
+DescriptorSetCache::DescriptorSetCache(DevicePtr const& device)
   : mDevice(device) {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26,8 +26,8 @@ DescriptorSetCache::~DescriptorSetCache() {}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<vk::DescriptorSet> DescriptorSetCache::acquireHandle(
-  std::shared_ptr<DescriptorSetReflection> const& reflection) {
+vk::DescriptorSetPtr DescriptorSetCache::acquireHandle(
+  DescriptorSetReflectionPtr const& reflection) {
 
   auto const& hash       = reflection->getHash();
   auto        cacheEntry = mCache.find(hash);
@@ -62,7 +62,7 @@ std::shared_ptr<vk::DescriptorSet> DescriptorSetCache::acquireHandle(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void DescriptorSetCache::releaseHandle(std::shared_ptr<vk::DescriptorSet> const& handle) {
+void DescriptorSetCache::releaseHandle(vk::DescriptorSetPtr const& handle) {
 
   // Search the cache entry which created this handle
   for (auto& p : mCache) {

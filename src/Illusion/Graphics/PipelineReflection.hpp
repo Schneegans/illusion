@@ -28,8 +28,13 @@ namespace Illusion::Graphics {
 
 class PipelineReflection {
  public:
+  template <typename... Args>
+  static PipelineReflectionPtr create(Args&&... args) {
+    return std::make_shared<PipelineReflection>(args...);
+  };
+
   // Initially, the PipelineReflection is empty. Resources can be added with addResource()
-  PipelineReflection(std::shared_ptr<Device> const& device);
+  PipelineReflection(DevicePtr const& device);
   virtual ~PipelineReflection();
 
   // Adds a new resource to this PipelineReflection. If the mResourceType is eInput, eOutput or
@@ -41,8 +46,7 @@ class PipelineReflection {
 
   // Returns a reference to a map which can be used to access the individual
   // DescriptorSetReflections of this PipelineReflection.
-  std::map<uint32_t, std::shared_ptr<DescriptorSetReflection>> const& getDescriptorSetReflections()
-    const;
+  std::map<uint32_t, DescriptorSetReflectionPtr> const& getDescriptorSetReflections() const;
 
   // Returns all resources which have been added to this PipelineReflection. The returned map is
   // created on-the-fly, hence this operation is quite costly. If this becomes a bottleneck, storing
@@ -56,18 +60,18 @@ class PipelineReflection {
 
   // Creates a vk::PipelineLayout for this reflection. It is created lazily; the first call to
   // this method will cause the allocation.
-  std::shared_ptr<vk::PipelineLayout> const& getLayout() const;
+  vk::PipelineLayoutPtr const& getLayout() const;
 
   // Prints some reflection information to std::cout for debugging purposes.
   void printInfo() const;
 
  private:
-  std::shared_ptr<Device>                                      mDevice;
-  std::map<uint32_t, std::shared_ptr<DescriptorSetReflection>> mDescriptorSetReflections;
-  std::map<std::string, PipelineResource>                      mInputs;
-  std::map<std::string, PipelineResource>                      mOutputs;
-  std::map<std::string, PipelineResource>                      mPushConstantBuffers;
-  mutable std::shared_ptr<vk::PipelineLayout>                  mLayout;
+  DevicePtr                                      mDevice;
+  std::map<uint32_t, DescriptorSetReflectionPtr> mDescriptorSetReflections;
+  std::map<std::string, PipelineResource>        mInputs;
+  std::map<std::string, PipelineResource>        mOutputs;
+  std::map<std::string, PipelineResource>        mPushConstantBuffers;
+  mutable vk::PipelineLayoutPtr                  mLayout;
 };
 
 } // namespace Illusion::Graphics

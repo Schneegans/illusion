@@ -46,7 +46,12 @@ class Window {
   Core::Signal<Input::JoystickId, Input::JoystickButtonId>      sOnJoystickButtonPressed;
   Core::Signal<Input::JoystickId, Input::JoystickButtonId>      sOnJoystickButtonReleased;
 
-  Window(std::shared_ptr<Engine> const& engine, std::shared_ptr<Device> const& device);
+  template <typename... Args>
+  static WindowPtr create(Args&&... args) {
+    return std::make_shared<Window>(args...);
+  };
+
+  Window(EnginePtr const& engine, DevicePtr const& device);
   virtual ~Window();
 
   void open();
@@ -59,29 +64,25 @@ class Window {
   float     joyAxis(int joyStick, int axis);
   glm::vec2 getCursorPos() const;
 
-  void present(
-    std::shared_ptr<BackedImage> const&   image,
-    std::shared_ptr<vk::Semaphore> const& renderFinishedSemaphore,
-    std::shared_ptr<vk::Fence> const&     signalFence);
+  void present(BackedImagePtr const& image, vk::SemaphorePtr const& renderFinishedSemaphore,
+    vk::FencePtr const& signalFence);
 
  private:
   void updateJoysticks();
 
-  std::shared_ptr<Engine> mEngine;
-  std::shared_ptr<Device> mDevice;
-  GLFWwindow*             mWindow = nullptr;
-  GLFWcursor*             mCursor = nullptr;
+  EnginePtr   mEngine;
+  DevicePtr   mDevice;
+  GLFWwindow* mWindow = nullptr;
+  GLFWcursor* mCursor = nullptr;
 
-  std::shared_ptr<vk::SurfaceKHR> mSurface;
-  std::shared_ptr<Swapchain>      mSwapchain;
+  vk::SurfaceKHRPtr mSurface;
+  SwapchainPtr      mSwapchain;
 
-  std::array<
-    std::array<float, Core::enumCast(Input::JoystickAxisId::eJoystickAxisNum)>,
+  std::array<std::array<float, Core::enumCast(Input::JoystickAxisId::eJoystickAxisNum)>,
     Core::enumCast(Input::JoystickId::eJoystickNum)>
     mJoystickAxisCache;
 
-  std::array<
-    std::array<int, Core::enumCast(Input::JoystickButtonId::eJoystickButtonNum)>,
+  std::array<std::array<int, Core::enumCast(Input::JoystickButtonId::eJoystickButtonNum)>,
     Core::enumCast(Input::JoystickId::eJoystickNum)>
     mJoystickButtonCache;
 

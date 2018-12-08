@@ -51,7 +51,8 @@ class Queue {
   bool pop(T& val) {
     std::unique_lock<std::mutex> lock(mMutex);
 
-    if (mQueue.empty()) return false;
+    if (mQueue.empty())
+      return false;
 
     val = mQueue.front();
     mQueue.pop();

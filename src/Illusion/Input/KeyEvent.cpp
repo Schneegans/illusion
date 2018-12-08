@@ -410,10 +410,14 @@ KeyEvent::KeyEvent(unsigned int key, int mods) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void KeyEvent::SetMods(int mods) {
-  if (mods & GLFW_MOD_SHIFT) mModifiers |= (int)Modifier::eShift;
-  if (mods & GLFW_MOD_CONTROL) mModifiers |= (int)Modifier::eControl;
-  if (mods & GLFW_MOD_ALT) mModifiers |= (int)Modifier::eAlt;
-  if (mods & GLFW_MOD_SUPER) mModifiers |= (int)Modifier::eCommand;
+  if (mods & GLFW_MOD_SHIFT)
+    mModifiers |= (int)Modifier::eShift;
+  if (mods & GLFW_MOD_CONTROL)
+    mModifiers |= (int)Modifier::eControl;
+  if (mods & GLFW_MOD_ALT)
+    mModifiers |= (int)Modifier::eAlt;
+  if (mods & GLFW_MOD_SUPER)
+    mModifiers |= (int)Modifier::eCommand;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -10,7 +10,7 @@
 
 #version 450
 
-// inputs ------------------------------------------------------------------------------------------
+// inputs
 vec2 positions[4] = vec2[](
     vec2(-0.5, -0.5),
     vec2(0.5, -0.5),
@@ -18,10 +18,10 @@ vec2 positions[4] = vec2[](
     vec2(0.5, 0.5)
 );
 
-// outputs -----------------------------------------------------------------------------------------
+// outputs
 layout(location = 0) out vec2 vTexcoords;
 
-// methods -----------------------------------------------------------------------------------------
+// methods
 void main() {
     vTexcoords = positions[gl_VertexIndex] + 0.5;
     gl_Position = vec4(positions[gl_VertexIndex], 0.0, 1.0);

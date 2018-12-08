@@ -27,8 +27,13 @@ namespace Illusion::Graphics {
 
 class DescriptorSetReflection {
  public:
+  template <typename... Args>
+  static DescriptorSetReflectionPtr create(Args&&... args) {
+    return std::make_shared<DescriptorSetReflection>(args...);
+  };
+
   // Initially, the DescriptorSetReflection is empty. Resources can be added with addResource()
-  DescriptorSetReflection(std::shared_ptr<Device> const& device, uint32_t set);
+  DescriptorSetReflection(DevicePtr const& device, uint32_t set);
   virtual ~DescriptorSetReflection();
 
   // Adds a new resource to this DescriptorSetReflection. The mName of the resource is used as a key
@@ -53,7 +58,7 @@ class DescriptorSetReflection {
 
   // Creates a vk::DescriptorSetLayout for this reflection. It is created lazily; the first call to
   // this method will cause the allocation.
-  std::shared_ptr<vk::DescriptorSetLayout> getLayout() const;
+  vk::DescriptorSetLayoutPtr getLayout() const;
 
   // Prints some reflection information to std::cout for debugging purposes.
   void printInfo() const;
@@ -64,11 +69,11 @@ class DescriptorSetReflection {
   Core::BitHash const& getHash() const;
 
  private:
-  std::shared_ptr<Device>                          mDevice;
-  std::map<std::string, PipelineResource>          mResources;
-  uint32_t                                         mSet;
-  mutable std::shared_ptr<vk::DescriptorSetLayout> mLayout;
-  mutable Core::BitHash                            mHash;
+  DevicePtr                               mDevice;
+  std::map<std::string, PipelineResource> mResources;
+  uint32_t                                mSet;
+  mutable vk::DescriptorSetLayoutPtr      mLayout;
+  mutable Core::BitHash                   mHash;
 };
 
 } // namespace Illusion::Graphics
