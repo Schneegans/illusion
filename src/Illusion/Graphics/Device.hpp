@@ -89,7 +89,7 @@ class Device {
   vk::ImagePtr               createImage(vk::ImageCreateInfo const&) const;
   vk::ImageViewPtr           createImageView(vk::ImageViewCreateInfo const&) const;
   vk::PipelinePtr            createComputePipeline(vk::ComputePipelineCreateInfo const&) const;
-  vk::PipelinePtr            createPipeline(vk::GraphicsPipelineCreateInfo const&) const;
+  vk::PipelinePtr            createGraphicsPipeline(vk::GraphicsPipelineCreateInfo const&) const;
   vk::PipelineLayoutPtr      createPipelineLayout(vk::PipelineLayoutCreateInfo const&) const;
   vk::RenderPassPtr          createRenderPass(vk::RenderPassCreateInfo const&) const;
   vk::SamplerPtr             createSampler(vk::SamplerCreateInfo const&) const;

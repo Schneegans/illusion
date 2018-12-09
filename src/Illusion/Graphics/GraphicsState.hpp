@@ -179,16 +179,10 @@ class GraphicsState {
   void                                setDynamicState(std::set<vk::DynamicState> const& val);
   std::set<vk::DynamicState> const&   getDynamicState() const;
 
-  // Shader State ----------------------------------------------------------------------------------
-  void                                setShaderProgram(ShaderProgramPtr const& val);
-  ShaderProgramPtr const& getShaderProgram() const;
-
   // clang-format on
 
   // -----------------------------------------------------------------------------------------------
-  vk::PipelinePtr getPipelineHandle(RenderPassPtr const& renderPass, uint32_t subPass);
-
-  Core::BitHash const& getHash() const;
+  Core::BitHash getHash() const;
 
  private:
   DevicePtr const& mDevice;
@@ -260,14 +254,9 @@ class GraphicsState {
   // Dynamic State ---------------------------------------------------------------------------------
   std::set<vk::DynamicState> mDynamicState;
 
-  // Shader State ----------------------------------------------------------------------------------
-  ShaderProgramPtr mShaderProgram;
-
   // Dirty State -----------------------------------------------------------------------------------
   mutable bool          mDirty = true;
   mutable Core::BitHash mHash;
-
-  std::map<Core::BitHash, vk::PipelinePtr> mPipelineCache;
 };
 
 } // namespace Illusion::Graphics

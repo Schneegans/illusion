@@ -119,7 +119,7 @@ int main(int argc, char* argv[]) {
     res.mCmd->reset();
     res.mCmd->begin();
 
-    res.mCmd->graphicsState().setShaderProgram(shader);
+    res.mCmd->setShaderProgram(shader);
     res.mRenderPass->setExtent(window->pExtent.get());
     res.mCmd->graphicsState().setViewports(
       {{glm::vec2(0), glm::vec2(window->pExtent.get()), 0.f, 1.f}});

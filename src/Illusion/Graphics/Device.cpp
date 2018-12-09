@@ -320,11 +320,11 @@ vk::ImageViewPtr Device::createImageView(vk::ImageViewCreateInfo const& info) co
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 vk::PipelinePtr Device::createComputePipeline(vk::ComputePipelineCreateInfo const& info) const {
-  ILLUSION_TRACE << "Creating vk::ComputePipeline." << std::endl;
+  ILLUSION_TRACE << "Creating vk::Pipeline (compute)." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(
     device->createComputePipeline(nullptr, info), [device](vk::Pipeline* obj) {
-      ILLUSION_TRACE << "Deleting vk::ComputePipeline." << std::endl;
+      ILLUSION_TRACE << "Deleting vk::Pipeline (compute)." << std::endl;
       device->destroyPipeline(*obj);
       delete obj;
     });
@@ -332,12 +332,12 @@ vk::PipelinePtr Device::createComputePipeline(vk::ComputePipelineCreateInfo cons
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::PipelinePtr Device::createPipeline(vk::GraphicsPipelineCreateInfo const& info) const {
-  ILLUSION_TRACE << "Creating vk::Pipeline." << std::endl;
+vk::PipelinePtr Device::createGraphicsPipeline(vk::GraphicsPipelineCreateInfo const& info) const {
+  ILLUSION_TRACE << "Creating vk::Pipeline (graphics)." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(
     device->createGraphicsPipeline(nullptr, info), [device](vk::Pipeline* obj) {
-      ILLUSION_TRACE << "Deleting vk::Pipeline." << std::endl;
+      ILLUSION_TRACE << "Deleting vk::Pipeline (graphics)." << std::endl;
       device->destroyPipeline(*obj);
       delete obj;
     });

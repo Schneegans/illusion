@@ -8,6 +8,7 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#include <Illusion/Core/CommandLineOptions.hpp>
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Core/RingBuffer.hpp>
 #include <Illusion/Graphics/CoherentUniformBuffer.hpp>
@@ -50,11 +51,25 @@ int main(int argc, char* argv[]) {
 
   Illusion::Core::Logger::enableTrace = true;
 
-  auto engine = Illusion::Graphics::Engine::create("Triangle Demo");
+  std::string modelFile = "data/models/DamagedHelmet.glb";
+  bool        printHelp = false;
+
+  Illusion::Core::CommandLineOptions args("Simple loader for GLTF files.");
+  args.addOption({"-m", "--model"}, &modelFile, "The model to load");
+  args.addOption({"-h", "--help"}, &printHelp, "print help");
+
+  args.parse(argc, argv);
+
+  if (printHelp) {
+    args.printHelp();
+    return 0;
+  }
+
+  auto engine = Illusion::Graphics::Engine::create("Simple GLTF Loader");
   auto device = Illusion::Graphics::Device::create(engine->getPhysicalDevice());
   auto window = Illusion::Graphics::Window::create(engine, device);
 
-  auto model  = Illusion::Graphics::GltfModel::create(device, "data/models/DamagedHelmet.glb");
+  auto model  = Illusion::Graphics::GltfModel::create(device, modelFile);
   auto shader = Illusion::Graphics::ShaderProgram::createFromFiles(
     device, {"data/shaders/SimpleGltfShader.vert", "data/shaders/SimpleGltfShader.frag"});
 
@@ -62,6 +77,34 @@ int main(int argc, char* argv[]) {
     FrameResources(device), FrameResources(device)};
 
   float time = 0.f;
+
+  glm::vec3 cameraPolar(0.f, 0.f, 3.f);
+
+  window->sOnMouseEvent.connect([&](Illusion::Input::MouseEvent const& e) {
+    if (e.mType == Illusion::Input::MouseEvent::Type::eMove) {
+      static int lastX = e.mX;
+      static int lastY = e.mY;
+
+      if (window->buttonPressed(Illusion::Input::Button::eButton1)) {
+        int dX = lastX - e.mX;
+        int dY = lastY - e.mY;
+
+        cameraPolar.x += dX * 0.005f;
+        cameraPolar.y += dY * 0.005f;
+
+        cameraPolar.y = glm::clamp(
+          cameraPolar.y, -glm::pi<float>() * 0.5f + 0.1f, glm::pi<float>() * 0.5f - 0.1f);
+      }
+
+      lastX = e.mX;
+      lastY = e.mY;
+    } else if (e.mType == Illusion::Input::MouseEvent::Type::eScroll) {
+      cameraPolar.z -= e.mY * 0.01;
+      cameraPolar.z = std::max(cameraPolar.z, 0.01f);
+    }
+
+    return true;
+  });
 
   window->open();
 
@@ -78,20 +121,22 @@ int main(int argc, char* argv[]) {
     res.mCmd->reset();
     res.mCmd->begin();
 
-    res.mCmd->graphicsState().setShaderProgram(shader);
+    res.mCmd->setShaderProgram(shader);
     res.mRenderPass->setExtent(window->pExtent.get());
     res.mCmd->graphicsState().setViewports(
       {{glm::vec2(0), glm::vec2(window->pExtent.get()), 0.f, 1.f}});
 
-    glm::mat4 projection = glm::perspective(glm::radians(60.f),
+    glm::mat4 projection = glm::perspectiveRH_ZO(glm::radians(50.f),
       static_cast<float>(window->pExtent.get().x) / static_cast<float>(window->pExtent.get().y),
       0.1f, 100.0f);
     res.mUniformBuffer->updateData(projection);
 
-    glm::mat4 view(1.f);
-    view = glm::translate(view, glm::vec3(0, 0, -3));
-    view = glm::rotate(view, -time * 0.5f, glm::vec3(0, 1, 0));
-    view = glm::rotate(view, time * 0.314f, glm::vec3(1, 0, 0));
+    glm::vec3 cameraCartesian =
+      glm::vec3(-std::cos(cameraPolar.y) * std::cos(cameraPolar.x), -std::sin(cameraPolar.y),
+        -std::cos(cameraPolar.y) * std::sin(cameraPolar.x)) *
+      cameraPolar.z;
+
+    glm::mat4 view = glm::lookAtRH(cameraCartesian, glm::vec3(0.f), glm::vec3(0.f, -1.f, 0.f));
 
     res.mCmd->bindingState().setUniformBuffer(
       res.mUniformBuffer->getBuffer(), sizeof(glm::mat4), 0, 0, 0);

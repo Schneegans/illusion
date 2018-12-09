@@ -14,6 +14,7 @@
 #include "Device.hpp"
 #include "PipelineReflection.hpp"
 #include "RenderPass.hpp"
+#include "ShaderModule.hpp"
 #include "ShaderProgram.hpp"
 #include "Texture.hpp"
 
@@ -170,6 +171,21 @@ void CommandBuffer::drawIndexed(uint32_t indexCount, uint32_t instanceCount, uin
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void CommandBuffer::dispatch(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) {
+  flush();
+  mVkCmd->dispatch(groupCountX, groupCountY, groupCountZ);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CommandBuffer::setShaderProgram(ShaderProgramPtr const& val) { mCurrentShaderProgram = val; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+ShaderProgramPtr const& CommandBuffer::getShaderProgram() const { return mCurrentShaderProgram; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 GraphicsState& CommandBuffer::graphicsState() { return mGraphicsState; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -179,7 +195,7 @@ BindingState& CommandBuffer::bindingState() { return mBindingState; }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::pushConstants(const void* data, uint32_t size, uint32_t offset) const {
-  auto const& reflection = mGraphicsState.getShaderProgram()->getReflection();
+  auto const& reflection = mCurrentShaderProgram->getReflection();
   auto constants = reflection->getResources(PipelineResource::ResourceType::ePushConstantBuffer);
 
   if (constants.size() != 1) {
@@ -277,8 +293,15 @@ void CommandBuffer::copyBufferToImage(vk::Buffer src, vk::Image dst, vk::ImageLa
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::flush() {
-  auto pipeline = mGraphicsState.getPipelineHandle(mCurrentRenderPass, mCurrentSubPass);
-  mVkCmd->bindPipeline(vk::PipelineBindPoint::eGraphics, *pipeline);
+
+  vk::PipelineBindPoint bindPoint = vk::PipelineBindPoint::eGraphics;
+
+  if (mType == QueueType::eCompute) {
+    bindPoint = vk::PipelineBindPoint::eCompute;
+  }
+
+  auto pipeline = getPipelineHandle();
+  mVkCmd->bindPipeline(bindPoint, *pipeline);
 
   // for each set of current program
   //    if binding state is dirty
@@ -289,7 +312,7 @@ void CommandBuffer::flush() {
   //         bind descriptor set
   //         store it
 
-  for (auto setReflection : mGraphicsState.getShaderProgram()->getDescriptorSetReflections()) {
+  for (auto setReflection : mCurrentShaderProgram->getDescriptorSetReflections()) {
 
     uint32_t setNum = setReflection.first;
 
@@ -300,7 +323,7 @@ void CommandBuffer::flush() {
         currentHashIt->second != setReflection.second->getHash()) {
 
       auto descriptorSet = mDescriptorSetCache.acquireHandle(
-        mGraphicsState.getShaderProgram()->getDescriptorSetReflections().at(setNum));
+        mCurrentShaderProgram->getDescriptorSetReflections().at(setNum));
 
       for (auto const& binding : mBindingState.getBindings(setNum)) {
 
@@ -326,7 +349,7 @@ void CommandBuffer::flush() {
 
           auto                    value = std::get<StorageImageBinding>(binding.second);
           vk::DescriptorImageInfo imageInfo;
-          imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+          imageInfo.imageLayout = vk::ImageLayout::eGeneral;
           imageInfo.imageView   = *value.mImage->getImageView();
           imageInfo.sampler     = *value.mImage->getSampler();
 
@@ -360,15 +383,220 @@ void CommandBuffer::flush() {
         }
       }
 
-      mVkCmd->bindDescriptorSets(vk::PipelineBindPoint::eGraphics,
-        *mGraphicsState.getShaderProgram()->getReflection()->getLayout(), setNum, *descriptorSet,
-        {});
+      mVkCmd->bindDescriptorSets(bindPoint, *mCurrentShaderProgram->getReflection()->getLayout(),
+        setNum, *descriptorSet, {});
 
       mCurrentDescriptorSetLayoutHashes[setNum] = setReflection.second->getHash();
     }
   }
 
   mBindingState.clearDirtySets();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+vk::PipelinePtr CommandBuffer::getPipelineHandle() {
+
+  if (mType == QueueType::eCompute) {
+
+    if (!mCurrentShaderProgram) {
+      throw std::runtime_error("Failed to create compute pipeline: No ShaderProgram given!");
+    }
+
+    Core::BitHash hash;
+    hash.push<64>(mCurrentShaderProgram.get());
+
+    auto cached = mPipelineCache.find(hash);
+    if (cached != mPipelineCache.end()) {
+      return cached->second;
+    }
+
+    vk::ComputePipelineCreateInfo info;
+
+    if (mCurrentShaderProgram->getModules().size() != 1) {
+      throw std::runtime_error(
+        "Failed to create compute pipeline: There must be exactly one ShaderModule!");
+    }
+
+    info.stage.stage               = mCurrentShaderProgram->getModules()[0]->getStage();
+    info.stage.module              = *mCurrentShaderProgram->getModules()[0]->getModule();
+    info.stage.pName               = "main";
+    info.stage.pSpecializationInfo = nullptr;
+    info.layout                    = *mCurrentShaderProgram->getReflection()->getLayout();
+
+    auto pipeline = mDevice->createComputePipeline(info);
+
+    mPipelineCache[hash] = pipeline;
+
+    return pipeline;
+  }
+
+  // -----------------------------------------------------------------------------------------------
+
+  Core::BitHash hash = mGraphicsState.getHash();
+  hash.push<64>(mCurrentShaderProgram.get());
+  hash.push<64>(mCurrentRenderPass.get());
+  hash.push<32>(mCurrentSubPass);
+
+  auto cached = mPipelineCache.find(hash);
+  if (cached != mPipelineCache.end()) {
+    return cached->second;
+  }
+
+  // -----------------------------------------------------------------------------------------------
+  std::vector<vk::PipelineShaderStageCreateInfo> stageInfos;
+  if (mCurrentShaderProgram) {
+    for (auto const& i : mCurrentShaderProgram->getModules()) {
+      vk::PipelineShaderStageCreateInfo stageInfo;
+      stageInfo.stage               = i->getStage();
+      stageInfo.module              = *i->getModule();
+      stageInfo.pName               = "main";
+      stageInfo.pSpecializationInfo = nullptr;
+      stageInfos.push_back(stageInfo);
+    }
+  }
+
+  // -----------------------------------------------------------------------------------------------
+  vk::PipelineVertexInputStateCreateInfo vertexInputStateInfo;
+
+  std::vector<vk::VertexInputBindingDescription>   vertexInputBindingDescriptions;
+  std::vector<vk::VertexInputAttributeDescription> vertexInputAttributeDescriptions;
+  for (auto const& i : mGraphicsState.getVertexInputBindings()) {
+    vertexInputBindingDescriptions.push_back({i.binding, i.stride, i.inputRate});
+  }
+  for (auto const& i : mGraphicsState.getVertexInputAttributes()) {
+    vertexInputAttributeDescriptions.push_back({i.location, i.binding, i.format, i.offset});
+  }
+  vertexInputStateInfo.vertexBindingDescriptionCount   = vertexInputBindingDescriptions.size();
+  vertexInputStateInfo.pVertexBindingDescriptions      = vertexInputBindingDescriptions.data();
+  vertexInputStateInfo.vertexAttributeDescriptionCount = vertexInputAttributeDescriptions.size();
+  vertexInputStateInfo.pVertexAttributeDescriptions    = vertexInputAttributeDescriptions.data();
+
+  // -----------------------------------------------------------------------------------------------
+  vk::PipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo;
+  inputAssemblyStateInfo.topology               = mGraphicsState.getTopology();
+  inputAssemblyStateInfo.primitiveRestartEnable = mGraphicsState.getPrimitiveRestartEnable();
+
+  // -----------------------------------------------------------------------------------------------
+  vk::PipelineTessellationStateCreateInfo tessellationStateInfo;
+  tessellationStateInfo.patchControlPoints = mGraphicsState.getTessellationPatchControlPoints();
+
+  // -----------------------------------------------------------------------------------------------
+  vk::PipelineViewportStateCreateInfo viewportStateInfo;
+  std::vector<vk::Viewport>           viewports;
+  std::vector<vk::Rect2D>             scissors;
+  for (auto const& i : mGraphicsState.getViewports()) {
+    viewports.push_back(
+      {i.mOffset[0], i.mOffset[1], i.mExtend[0], i.mExtend[1], i.mMinDepth, i.mMaxDepth});
+  }
+
+  // use viewport as scissors if no scissors are defined
+  if (mGraphicsState.getScissors().size() > 0) {
+    for (auto const& i : mGraphicsState.getScissors()) {
+      scissors.push_back({{i.mOffset[0], i.mOffset[1]}, {i.mExtend[0], i.mExtend[1]}});
+    }
+  } else {
+    for (auto const& i : mGraphicsState.getViewports()) {
+      scissors.push_back({{(int32_t)i.mOffset[0], (int32_t)i.mOffset[1]},
+        {(uint32_t)i.mExtend[0], (uint32_t)i.mExtend[1]}});
+    }
+  }
+  viewportStateInfo.viewportCount = viewports.size();
+  viewportStateInfo.pViewports    = viewports.data();
+  viewportStateInfo.scissorCount  = scissors.size();
+  viewportStateInfo.pScissors     = scissors.data();
+
+  // -----------------------------------------------------------------------------------------------
+  vk::PipelineRasterizationStateCreateInfo rasterizationStateInfo;
+  rasterizationStateInfo.depthClampEnable        = mGraphicsState.getDepthClampEnable();
+  rasterizationStateInfo.rasterizerDiscardEnable = mGraphicsState.getRasterizerDiscardEnable();
+  rasterizationStateInfo.polygonMode             = mGraphicsState.getPolygonMode();
+  rasterizationStateInfo.cullMode                = mGraphicsState.getCullMode();
+  rasterizationStateInfo.frontFace               = mGraphicsState.getFrontFace();
+  rasterizationStateInfo.depthBiasEnable         = mGraphicsState.getDepthBiasEnable();
+  rasterizationStateInfo.depthBiasConstantFactor = mGraphicsState.getDepthBiasConstantFactor();
+  rasterizationStateInfo.depthBiasClamp          = mGraphicsState.getDepthBiasClamp();
+  rasterizationStateInfo.depthBiasSlopeFactor    = mGraphicsState.getDepthBiasSlopeFactor();
+  rasterizationStateInfo.lineWidth               = mGraphicsState.getLineWidth();
+
+  // -----------------------------------------------------------------------------------------------
+  vk::PipelineMultisampleStateCreateInfo multisampleStateInfo;
+  multisampleStateInfo.rasterizationSamples  = mGraphicsState.getRasterizationSamples();
+  multisampleStateInfo.sampleShadingEnable   = mGraphicsState.getSampleShadingEnable();
+  multisampleStateInfo.minSampleShading      = mGraphicsState.getMinSampleShading();
+  multisampleStateInfo.pSampleMask           = mGraphicsState.getSampleMask().data();
+  multisampleStateInfo.alphaToCoverageEnable = mGraphicsState.getAlphaToCoverageEnable();
+  multisampleStateInfo.alphaToOneEnable      = mGraphicsState.getAlphaToOneEnable();
+
+  // -----------------------------------------------------------------------------------------------
+  vk::PipelineDepthStencilStateCreateInfo depthStencilStateInfo;
+  depthStencilStateInfo.depthTestEnable       = mGraphicsState.getDepthTestEnable();
+  depthStencilStateInfo.depthWriteEnable      = mGraphicsState.getDepthWriteEnable();
+  depthStencilStateInfo.depthCompareOp        = mGraphicsState.getDepthCompareOp();
+  depthStencilStateInfo.depthBoundsTestEnable = mGraphicsState.getDepthBoundsTestEnable();
+  depthStencilStateInfo.stencilTestEnable     = mGraphicsState.getStencilTestEnable();
+  depthStencilStateInfo.front                 = {mGraphicsState.getStencilFrontFailOp(),
+    mGraphicsState.getStencilFrontPassOp(), mGraphicsState.getStencilFrontDepthFailOp(),
+    mGraphicsState.getStencilFrontCompareOp(), mGraphicsState.getStencilFrontCompareMask(),
+    mGraphicsState.getStencilFrontWriteMask(), mGraphicsState.getStencilFrontReference()};
+  depthStencilStateInfo.back                  = {mGraphicsState.getStencilBackFailOp(),
+    mGraphicsState.getStencilBackPassOp(), mGraphicsState.getStencilBackDepthFailOp(),
+    mGraphicsState.getStencilBackCompareOp(), mGraphicsState.getStencilBackCompareMask(),
+    mGraphicsState.getStencilBackWriteMask(), mGraphicsState.getStencilBackReference()};
+  depthStencilStateInfo.minDepthBounds        = mGraphicsState.getMinDepthBounds();
+  depthStencilStateInfo.maxDepthBounds        = mGraphicsState.getMaxDepthBounds();
+
+  // -----------------------------------------------------------------------------------------------
+  vk::PipelineColorBlendStateCreateInfo              colorBlendStateInfo;
+  std::vector<vk::PipelineColorBlendAttachmentState> pipelineColorBlendAttachments;
+  for (auto const& i : mGraphicsState.getBlendAttachments()) {
+    pipelineColorBlendAttachments.push_back(
+      {i.mBlendEnable, i.mSrcColorBlendFactor, i.mDstColorBlendFactor, i.mColorBlendOp,
+        i.mSrcAlphaBlendFactor, i.mDstAlphaBlendFactor, i.mAlphaBlendOp, i.mColorWriteMask});
+  }
+  colorBlendStateInfo.logicOpEnable     = mGraphicsState.getBlendLogicOpEnable();
+  colorBlendStateInfo.logicOp           = mGraphicsState.getBlendLogicOp();
+  colorBlendStateInfo.attachmentCount   = pipelineColorBlendAttachments.size();
+  colorBlendStateInfo.pAttachments      = pipelineColorBlendAttachments.data();
+  colorBlendStateInfo.blendConstants[0] = mGraphicsState.getBlendConstants()[0];
+  colorBlendStateInfo.blendConstants[1] = mGraphicsState.getBlendConstants()[1];
+  colorBlendStateInfo.blendConstants[2] = mGraphicsState.getBlendConstants()[2];
+  colorBlendStateInfo.blendConstants[3] = mGraphicsState.getBlendConstants()[3];
+
+  // -----------------------------------------------------------------------------------------------
+  vk::PipelineDynamicStateCreateInfo dynamicStateInfo;
+  std::vector<vk::DynamicState>      dynamicState(
+    mGraphicsState.getDynamicState().begin(), mGraphicsState.getDynamicState().end());
+  dynamicStateInfo.dynamicStateCount = dynamicState.size();
+  dynamicStateInfo.pDynamicStates    = dynamicState.data();
+
+  // -----------------------------------------------------------------------------------------------
+  vk::GraphicsPipelineCreateInfo info;
+  info.stageCount          = stageInfos.size();
+  info.pStages             = stageInfos.data();
+  info.pVertexInputState   = &vertexInputStateInfo;
+  info.pInputAssemblyState = &inputAssemblyStateInfo;
+  info.pTessellationState  = &tessellationStateInfo;
+  info.pViewportState      = &viewportStateInfo;
+  info.pRasterizationState = &rasterizationStateInfo;
+  info.pMultisampleState   = &multisampleStateInfo;
+  info.pDepthStencilState  = &depthStencilStateInfo;
+  info.pColorBlendState    = &colorBlendStateInfo;
+  if (mGraphicsState.getDynamicState().size() > 0) {
+    info.pDynamicState = &dynamicStateInfo;
+  }
+  info.renderPass = *mCurrentRenderPass->getHandle();
+  info.subpass    = mCurrentSubPass;
+
+  if (mCurrentShaderProgram) {
+    info.layout = *mCurrentShaderProgram->getReflection()->getLayout();
+  }
+
+  auto pipeline = mDevice->createGraphicsPipeline(info);
+
+  mPipelineCache[hash] = pipeline;
+
+  return pipeline;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -335,184 +335,11 @@ void GraphicsState::setDynamicState(std::set<vk::DynamicState> const& val) {
 }
 std::set<vk::DynamicState> const& GraphicsState::getDynamicState() const { return mDynamicState; }
 
-// Shader State ----------------------------------------------------------------------------------
-void GraphicsState::setShaderProgram(ShaderProgramPtr const& val) {
-  mShaderProgram = val;
-  mDirty         = true;
-}
-ShaderProgramPtr const& GraphicsState::getShaderProgram() const { return mShaderProgram; }
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::PipelinePtr GraphicsState::getPipelineHandle(
-  RenderPassPtr const& renderPass, uint32_t subPass) {
+Core::BitHash GraphicsState::getHash() const {
 
-  Core::BitHash hash = getHash();
-  hash.push<32>(subPass);
-
-  auto cached = mPipelineCache.find(hash);
-  if (cached != mPipelineCache.end()) {
-    return cached->second;
-  }
-
-  // -----------------------------------------------------------------------------------------------
-  std::vector<vk::PipelineShaderStageCreateInfo> stageInfos;
-  if (getShaderProgram()) {
-    for (auto const& i : getShaderProgram()->getModules()) {
-      vk::PipelineShaderStageCreateInfo stageInfo;
-      stageInfo.stage               = i->getStage();
-      stageInfo.module              = *i->getModule();
-      stageInfo.pName               = "main";
-      stageInfo.pSpecializationInfo = nullptr;
-      stageInfos.push_back(stageInfo);
-    }
-  }
-
-  // -----------------------------------------------------------------------------------------------
-  vk::PipelineVertexInputStateCreateInfo vertexInputStateInfo;
-
-  std::vector<vk::VertexInputBindingDescription>   vertexInputBindingDescriptions;
-  std::vector<vk::VertexInputAttributeDescription> vertexInputAttributeDescriptions;
-  for (auto const& i : getVertexInputBindings()) {
-    vertexInputBindingDescriptions.push_back({i.binding, i.stride, i.inputRate});
-  }
-  for (auto const& i : getVertexInputAttributes()) {
-    vertexInputAttributeDescriptions.push_back({i.location, i.binding, i.format, i.offset});
-  }
-  vertexInputStateInfo.vertexBindingDescriptionCount   = vertexInputBindingDescriptions.size();
-  vertexInputStateInfo.pVertexBindingDescriptions      = vertexInputBindingDescriptions.data();
-  vertexInputStateInfo.vertexAttributeDescriptionCount = vertexInputAttributeDescriptions.size();
-  vertexInputStateInfo.pVertexAttributeDescriptions    = vertexInputAttributeDescriptions.data();
-
-  // -----------------------------------------------------------------------------------------------
-  vk::PipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo;
-  inputAssemblyStateInfo.topology               = getTopology();
-  inputAssemblyStateInfo.primitiveRestartEnable = getPrimitiveRestartEnable();
-
-  // -----------------------------------------------------------------------------------------------
-  vk::PipelineTessellationStateCreateInfo tessellationStateInfo;
-  tessellationStateInfo.patchControlPoints = getTessellationPatchControlPoints();
-
-  // -----------------------------------------------------------------------------------------------
-  vk::PipelineViewportStateCreateInfo viewportStateInfo;
-  std::vector<vk::Viewport>           viewports;
-  std::vector<vk::Rect2D>             scissors;
-  for (auto const& i : getViewports()) {
-    viewports.push_back(
-      {i.mOffset[0], i.mOffset[1], i.mExtend[0], i.mExtend[1], i.mMinDepth, i.mMaxDepth});
-  }
-
-  // use viewport as scissors if no scissors are defined
-  if (getScissors().size() > 0) {
-    for (auto const& i : getScissors()) {
-      scissors.push_back({{i.mOffset[0], i.mOffset[1]}, {i.mExtend[0], i.mExtend[1]}});
-    }
-  } else {
-    for (auto const& i : getViewports()) {
-      scissors.push_back({{(int32_t)i.mOffset[0], (int32_t)i.mOffset[1]},
-        {(uint32_t)i.mExtend[0], (uint32_t)i.mExtend[1]}});
-    }
-  }
-  viewportStateInfo.viewportCount = viewports.size();
-  viewportStateInfo.pViewports    = viewports.data();
-  viewportStateInfo.scissorCount  = scissors.size();
-  viewportStateInfo.pScissors     = scissors.data();
-
-  // -----------------------------------------------------------------------------------------------
-  vk::PipelineRasterizationStateCreateInfo rasterizationStateInfo;
-  rasterizationStateInfo.depthClampEnable        = getDepthClampEnable();
-  rasterizationStateInfo.rasterizerDiscardEnable = getRasterizerDiscardEnable();
-  rasterizationStateInfo.polygonMode             = getPolygonMode();
-  rasterizationStateInfo.cullMode                = getCullMode();
-  rasterizationStateInfo.frontFace               = getFrontFace();
-  rasterizationStateInfo.depthBiasEnable         = getDepthBiasEnable();
-  rasterizationStateInfo.depthBiasConstantFactor = getDepthBiasConstantFactor();
-  rasterizationStateInfo.depthBiasClamp          = getDepthBiasClamp();
-  rasterizationStateInfo.depthBiasSlopeFactor    = getDepthBiasSlopeFactor();
-  rasterizationStateInfo.lineWidth               = getLineWidth();
-
-  // -----------------------------------------------------------------------------------------------
-  vk::PipelineMultisampleStateCreateInfo multisampleStateInfo;
-  multisampleStateInfo.rasterizationSamples  = getRasterizationSamples();
-  multisampleStateInfo.sampleShadingEnable   = getSampleShadingEnable();
-  multisampleStateInfo.minSampleShading      = getMinSampleShading();
-  multisampleStateInfo.pSampleMask           = getSampleMask().data();
-  multisampleStateInfo.alphaToCoverageEnable = getAlphaToCoverageEnable();
-  multisampleStateInfo.alphaToOneEnable      = getAlphaToOneEnable();
-
-  // -----------------------------------------------------------------------------------------------
-  vk::PipelineDepthStencilStateCreateInfo depthStencilStateInfo;
-  depthStencilStateInfo.depthTestEnable       = getDepthTestEnable();
-  depthStencilStateInfo.depthWriteEnable      = getDepthWriteEnable();
-  depthStencilStateInfo.depthCompareOp        = getDepthCompareOp();
-  depthStencilStateInfo.depthBoundsTestEnable = getDepthBoundsTestEnable();
-  depthStencilStateInfo.stencilTestEnable     = getStencilTestEnable();
-  depthStencilStateInfo.front                 = {getStencilFrontFailOp(), getStencilFrontPassOp(),
-    getStencilFrontDepthFailOp(), getStencilFrontCompareOp(), getStencilFrontCompareMask(),
-    getStencilFrontWriteMask(), getStencilFrontReference()};
-  depthStencilStateInfo.back                  = {getStencilBackFailOp(), getStencilBackPassOp(),
-    getStencilBackDepthFailOp(), getStencilBackCompareOp(), getStencilBackCompareMask(),
-    getStencilBackWriteMask(), getStencilBackReference()};
-  depthStencilStateInfo.minDepthBounds        = getMinDepthBounds();
-  depthStencilStateInfo.maxDepthBounds        = getMaxDepthBounds();
-
-  // -----------------------------------------------------------------------------------------------
-  vk::PipelineColorBlendStateCreateInfo              colorBlendStateInfo;
-  std::vector<vk::PipelineColorBlendAttachmentState> pipelineColorBlendAttachments;
-  for (auto const& i : getBlendAttachments()) {
-    pipelineColorBlendAttachments.push_back(
-      {i.mBlendEnable, i.mSrcColorBlendFactor, i.mDstColorBlendFactor, i.mColorBlendOp,
-        i.mSrcAlphaBlendFactor, i.mDstAlphaBlendFactor, i.mAlphaBlendOp, i.mColorWriteMask});
-  }
-  colorBlendStateInfo.logicOpEnable     = getBlendLogicOpEnable();
-  colorBlendStateInfo.logicOp           = getBlendLogicOp();
-  colorBlendStateInfo.attachmentCount   = pipelineColorBlendAttachments.size();
-  colorBlendStateInfo.pAttachments      = pipelineColorBlendAttachments.data();
-  colorBlendStateInfo.blendConstants[0] = getBlendConstants()[0];
-  colorBlendStateInfo.blendConstants[1] = getBlendConstants()[1];
-  colorBlendStateInfo.blendConstants[2] = getBlendConstants()[2];
-  colorBlendStateInfo.blendConstants[3] = getBlendConstants()[3];
-
-  // -----------------------------------------------------------------------------------------------
-  vk::PipelineDynamicStateCreateInfo dynamicStateInfo;
-  std::vector<vk::DynamicState> dynamicState(getDynamicState().begin(), getDynamicState().end());
-  dynamicStateInfo.dynamicStateCount = dynamicState.size();
-  dynamicStateInfo.pDynamicStates    = dynamicState.data();
-
-  // -----------------------------------------------------------------------------------------------
-  vk::GraphicsPipelineCreateInfo info;
-  info.stageCount          = stageInfos.size();
-  info.pStages             = stageInfos.data();
-  info.pVertexInputState   = &vertexInputStateInfo;
-  info.pInputAssemblyState = &inputAssemblyStateInfo;
-  info.pTessellationState  = &tessellationStateInfo;
-  info.pViewportState      = &viewportStateInfo;
-  info.pRasterizationState = &rasterizationStateInfo;
-  info.pMultisampleState   = &multisampleStateInfo;
-  info.pDepthStencilState  = &depthStencilStateInfo;
-  info.pColorBlendState    = &colorBlendStateInfo;
-  if (getDynamicState().size() > 0) {
-    info.pDynamicState = &dynamicStateInfo;
-  }
-  info.renderPass = *renderPass->getHandle();
-  info.subpass    = subPass;
-
-  if (getShaderProgram()) {
-    info.layout = *getShaderProgram()->getReflection()->getLayout();
-  }
-
-  auto pipeline = mDevice->createPipeline(info);
-
-  mPipelineCache[hash] = pipeline;
-
-  return pipeline;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-Core::BitHash const& GraphicsState::getHash() const {
   if (mDirty) {
-
     mHash.clear();
 
     mHash.push<1>(mBlendLogicOpEnable);
@@ -586,8 +413,6 @@ Core::BitHash const& GraphicsState::getHash() const {
     mHash.push<1>(mAlphaToCoverageEnable);
     mHash.push<1>(mAlphaToOneEnable);
 
-    mHash.push<64>(mShaderProgram.get());
-
     mHash.push<1>(mDepthClampEnable);
     mHash.push<1>(mRasterizerDiscardEnable);
     mHash.push<2>(mPolygonMode);
@@ -642,6 +467,7 @@ Core::BitHash const& GraphicsState::getHash() const {
 
     mDirty = false;
   }
+
   return mHash;
 }
 

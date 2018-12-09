@@ -11,21 +11,50 @@
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/Engine.hpp>
+#include <Illusion/Graphics/PipelineReflection.hpp>
 #include <Illusion/Graphics/RenderPass.hpp>
 #include <Illusion/Graphics/ShaderProgram.hpp>
+#include <Illusion/Graphics/Texture.hpp>
 #include <Illusion/Graphics/Window.hpp>
 
 #include <thread>
+
+Illusion::Graphics::TexturePtr createBRDFLuT(Illusion::Graphics::DevicePtr const& device) {
+  auto shader =
+    Illusion::Graphics::ShaderProgram::createFromFiles(device, {"data/shaders/BRDFLuT.comp"});
+
+  auto storageImage = Illusion::Graphics::Texture::create2D(device, 512, 512,
+    vk::Format::eR32G32Sfloat, vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled,
+    vk::SamplerCreateInfo(vk::SamplerCreateFlags(), vk::Filter::eLinear, vk::Filter::eLinear,
+      vk::SamplerMipmapMode::eNearest, vk::SamplerAddressMode::eClampToEdge,
+      vk::SamplerAddressMode::eClampToEdge));
+
+  auto cmd =
+    Illusion::Graphics::CommandBuffer::create(device, Illusion::Graphics::QueueType::eCompute);
+  cmd->bindingState().setStorageImage(storageImage, 0, 0);
+
+  cmd->begin();
+  cmd->setShaderProgram(shader);
+  cmd->dispatch(512 / 16, 512 / 16, 1);
+  cmd->end();
+  cmd->submit();
+  cmd->waitIdle();
+
+  return storageImage;
+}
 
 int main(int argc, char* argv[]) {
 
   Illusion::Core::Logger::enableTrace = true;
 
-  auto engine = Illusion::Graphics::Engine::create("Triangle Demo");
+  auto engine = Illusion::Graphics::Engine::create("Physically Based Rendering Demo");
   auto device = Illusion::Graphics::Device::create(engine->getPhysicalDevice());
   auto window = Illusion::Graphics::Window::create(engine, device);
+
+  Illusion::Graphics::TexturePtr brdflut = createBRDFLuT(device);
+
   auto shader = Illusion::Graphics::ShaderProgram::createFromFiles(
-    device, {"data/shaders/Triangle.vert", "data/shaders/Triangle.frag"});
+    device, {"data/shaders/TexturedQuad.vert", "data/shaders/TexturedQuad.frag"});
 
   auto renderPass = Illusion::Graphics::RenderPass::create(device);
   renderPass->addAttachment(vk::Format::eR8G8B8A8Unorm);
@@ -34,10 +63,12 @@ int main(int argc, char* argv[]) {
   auto cmd = Illusion::Graphics::CommandBuffer::create(device);
   cmd->graphicsState().addBlendAttachment({});
   cmd->graphicsState().addViewport({glm::vec2(0), glm::vec2(window->pExtent.get()), 0.f, 1.f});
+  cmd->graphicsState().addScissor({glm::ivec2(0), window->pExtent.get()});
+  cmd->bindingState().setTexture(brdflut, 0, 0);
   cmd->begin();
   cmd->setShaderProgram(shader);
   cmd->beginRenderPass(renderPass);
-  cmd->draw(3);
+  cmd->draw(4);
   cmd->endRenderPass();
   cmd->end();
 
@@ -45,7 +76,6 @@ int main(int argc, char* argv[]) {
   auto renderFinishedSemaphore = device->createSemaphore();
 
   window->open();
-
   while (!window->shouldClose()) {
     window->processInput();
 
