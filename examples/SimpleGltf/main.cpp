@@ -19,7 +19,8 @@
 #include <Illusion/Graphics/ShaderProgram.hpp>
 #include <Illusion/Graphics/Window.hpp>
 
-#include <glm/gtc/matrix_transform.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/transform.hpp>
 #include <thread>
 
 struct FrameResources {
@@ -69,7 +70,10 @@ int main(int argc, char* argv[]) {
   auto device = Illusion::Graphics::Device::create(engine->getPhysicalDevice());
   auto window = Illusion::Graphics::Window::create(engine, device);
 
-  auto model  = Illusion::Graphics::GltfModel::create(device, modelFile);
+  auto  model      = Illusion::Graphics::GltfModel::create(device, modelFile);
+  float modelSize  = glm::length(model->getAABB()[0] - model->getAABB()[1]);
+  auto  modelScale = glm::scale(glm::mat4(1.0f), glm::vec3(1.f / modelSize));
+
   auto shader = Illusion::Graphics::ShaderProgram::createFromFiles(
     device, {"data/shaders/SimpleGltfShader.vert", "data/shaders/SimpleGltfShader.frag"});
 
@@ -78,7 +82,7 @@ int main(int argc, char* argv[]) {
 
   float time = 0.f;
 
-  glm::vec3 cameraPolar(0.f, 0.f, 3.f);
+  glm::vec3 cameraPolar(0.f, 0.f, 1.5f);
 
   window->sOnMouseEvent.connect([&](Illusion::Input::MouseEvent const& e) {
     if (e.mType == Illusion::Input::MouseEvent::Type::eMove) {
@@ -151,7 +155,7 @@ int main(int argc, char* argv[]) {
       [&](std::vector<Illusion::Graphics::GltfModel::Node> const& nodes) {
         for (auto const& n : nodes) {
 
-          glm::mat4 modelView = view * glm::mat4(n.mModelMatrix);
+          glm::mat4 modelView = view * modelScale * glm::mat4(n.mModelMatrix);
           res.mCmd->pushConstants(modelView);
 
           for (auto const& p : n.mPrimitives) {

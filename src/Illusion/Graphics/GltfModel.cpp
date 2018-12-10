@@ -295,9 +295,7 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
             auto const& v   = model.bufferViews[a.bufferView];
             vertexPositions = reinterpret_cast<const float*>(
               &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]));
-            primitve.mMinPosition = glm::make_vec3(&vertexPositions[0]);
-            primitve.mMaxPosition = glm::make_vec3(&vertexPositions[0]);
-            vertexCount           = a.count;
+            vertexCount = a.count;
           } else {
             throw std::runtime_error("Failed to load GLTF model: Primitve has no vertex data!");
           }

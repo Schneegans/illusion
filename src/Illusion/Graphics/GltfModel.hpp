@@ -62,16 +62,16 @@ class GltfModel {
     vk::PrimitiveTopology     mTopology;
     vk::DeviceSize            mIndexCount;
     vk::DeviceSize            mIndexOffset;
-    glm::vec3                 mMaxPosition;
-    glm::vec3                 mMinPosition;
+    glm::vec3                 mMaxPosition = glm::vec3(std::numeric_limits<float>::lowest());
+    glm::vec3                 mMinPosition = glm::vec3(std::numeric_limits<float>::max());
   };
 
   struct Node {
     glm::dmat4             mModelMatrix = glm::dmat4(1);
     std::vector<Primitive> mPrimitives;
     std::vector<Node>      mChildren;
-    glm::vec3              mMaxPosition;
-    glm::vec3              mMinPosition;
+    glm::vec3              mMaxPosition = glm::vec3(std::numeric_limits<float>::lowest());
+    glm::vec3              mMinPosition = glm::vec3(std::numeric_limits<float>::max());
     std::string            mName;
   };
 
