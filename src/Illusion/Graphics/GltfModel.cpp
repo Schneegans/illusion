@@ -249,7 +249,6 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
 
     std::function<void(Node&, tinygltf::Node const&)> addNode = [&](Node&               parent,
                                                                   tinygltf::Node const& n) {
-
       Node node;
       node.mModelMatrix = parent.mModelMatrix;
       node.mName        = n.name;
@@ -400,6 +399,8 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
       }
 
       parent.mChildren.emplace_back(node);
+      parent.mMinPosition = glm::min(parent.mMinPosition, node.mMinPosition);
+      parent.mMaxPosition = glm::max(parent.mMaxPosition, node.mMaxPosition);
     };
 
     // add all default scene nodes
@@ -407,16 +408,20 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
       addNode(mRootNode, model.nodes[n]);
     }
 
-    mVertexBuffer =
-      mDevice->createVertexBuffer(vertexBuffer.size() * sizeof(Vertex), vertexBuffer.data());
-    mIndexBuffer =
-      mDevice->createIndexBuffer(indexBuffer.size() * sizeof(uint32_t), indexBuffer.data());
+    mVertexBuffer = mDevice->createVertexBuffer(vertexBuffer);
+    mIndexBuffer  = mDevice->createIndexBuffer(indexBuffer);
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::vector<GltfModel::Node> const& GltfModel::getNodes() const { return mRootNode.mChildren; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::array<glm::vec3, 2> GltfModel::getAABB() const {
+  return {mRootNode.mMinPosition, mRootNode.mMaxPosition};
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

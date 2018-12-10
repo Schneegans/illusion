@@ -126,17 +126,18 @@ int main(int argc, char* argv[]) {
     res.mCmd->graphicsState().setViewports(
       {{glm::vec2(0), glm::vec2(window->pExtent.get()), 0.f, 1.f}});
 
-    glm::mat4 projection = glm::perspectiveRH_ZO(glm::radians(50.f),
+    glm::mat4 projection = glm::perspectiveZO(glm::radians(50.f),
       static_cast<float>(window->pExtent.get().x) / static_cast<float>(window->pExtent.get().y),
       0.1f, 100.0f);
+    projection[1][1] *= -1;
     res.mUniformBuffer->updateData(projection);
 
     glm::vec3 cameraCartesian =
-      glm::vec3(-std::cos(cameraPolar.y) * std::cos(cameraPolar.x), -std::sin(cameraPolar.y),
-        -std::cos(cameraPolar.y) * std::sin(cameraPolar.x)) *
+      glm::vec3(-std::cos(cameraPolar.y) * std::sin(cameraPolar.x), -std::sin(cameraPolar.y),
+        -std::cos(cameraPolar.y) * std::cos(cameraPolar.x)) *
       cameraPolar.z;
 
-    glm::mat4 view = glm::lookAtRH(cameraCartesian, glm::vec3(0.f), glm::vec3(0.f, -1.f, 0.f));
+    glm::mat4 view = glm::lookAt(cameraCartesian, glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
 
     res.mCmd->bindingState().setUniformBuffer(
       res.mUniformBuffer->getBuffer(), sizeof(glm::mat4), 0, 0, 0);

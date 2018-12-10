@@ -82,8 +82,8 @@ class GltfModel {
 
   GltfModel(DevicePtr const& device, std::string const& file);
 
-  std::vector<Node> const&                      getNodes() const;
-  std::vector<std::shared_ptr<Material>> const& getMaterials() const;
+  std::vector<Node> const& getNodes() const;
+  std::array<glm::vec3, 2> getAABB() const;
 
   BackedBufferPtr const& getIndexBuffer() const;
   BackedBufferPtr const& getVertexBuffer() const;

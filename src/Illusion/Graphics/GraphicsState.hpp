@@ -232,7 +232,7 @@ class GraphicsState {
   bool              mDepthClampEnable        = false;
   bool              mRasterizerDiscardEnable = false;
   vk::PolygonMode   mPolygonMode             = vk::PolygonMode::eFill;
-  vk::CullModeFlags mCullMode                = vk::CullModeFlagBits::eNone;
+  vk::CullModeFlags mCullMode                = vk::CullModeFlagBits::eBack;
   vk::FrontFace     mFrontFace               = vk::FrontFace::eCounterClockwise;
   bool              mDepthBiasEnable         = false;
   float             mDepthBiasConstantFactor = 0.f;
