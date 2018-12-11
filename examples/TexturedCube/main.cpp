@@ -128,9 +128,10 @@ int main(int argc, char* argv[]) {
       res.mUniformBuffer->getBuffer(), sizeof(glm::mat4), 0, 0, 0);
     res.mCmd->bindingState().setTexture(texture, 1, 0);
 
-    glm::mat4 projection = glm::perspective(glm::radians(60.f),
+    glm::mat4 projection = glm::perspectiveZO(glm::radians(60.f),
       static_cast<float>(window->pExtent.get().x) / static_cast<float>(window->pExtent.get().y),
       0.1f, 100.0f);
+    projection[1][1] *= -1;
     res.mUniformBuffer->updateData(projection);
 
     res.mCmd->beginRenderPass(res.mRenderPass);

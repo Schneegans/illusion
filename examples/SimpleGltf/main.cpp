@@ -23,6 +23,11 @@
 #include <glm/gtx/transform.hpp>
 #include <thread>
 
+struct PushConstants {
+  glm::mat4                                              mModelView;
+  Illusion::Graphics::GltfModel::Material::PushConstants mMaterial;
+};
+
 struct FrameResources {
   FrameResources(Illusion::Graphics::DevicePtr const& device)
     : mCmd(Illusion::Graphics::CommandBuffer::create(device))
@@ -80,8 +85,6 @@ int main(int argc, char* argv[]) {
   Illusion::Core::RingBuffer<FrameResources, 2> frameResources{
     FrameResources(device), FrameResources(device)};
 
-  float time = 0.f;
-
   glm::vec3 cameraPolar(0.f, 0.f, 1.5f);
 
   window->sOnMouseEvent.connect([&](Illusion::Input::MouseEvent const& e) {
@@ -116,7 +119,6 @@ int main(int argc, char* argv[]) {
 
     window->processInput();
 
-    time += 0.01;
     auto& res = frameResources.next();
 
     device->waitForFences(*res.mRenderFinishedFence, true, ~0);
@@ -155,13 +157,18 @@ int main(int argc, char* argv[]) {
       [&](std::vector<Illusion::Graphics::GltfModel::Node> const& nodes) {
         for (auto const& n : nodes) {
 
-          glm::mat4 modelView = view * modelScale * glm::mat4(n.mModelMatrix);
-          res.mCmd->pushConstants(modelView);
+          PushConstants pushConstants;
+          pushConstants.mModelView = view * modelScale * glm::mat4(n.mModelMatrix);
 
           for (auto const& p : n.mPrimitives) {
+            pushConstants.mMaterial = p.mMaterial->mPushConstants;
+            res.mCmd->pushConstants(pushConstants);
+
             res.mCmd->bindingState().setTexture(p.mMaterial->mBaseColorTexture, 1, 0);
-            res.mCmd->bindingState().setTexture(p.mMaterial->mOcclusionTexture, 1, 1);
-            res.mCmd->bindingState().setTexture(p.mMaterial->mEmissiveTexture, 1, 2);
+            res.mCmd->bindingState().setTexture(p.mMaterial->mMetallicRoughnessTexture, 1, 1);
+            res.mCmd->bindingState().setTexture(p.mMaterial->mNormalTexture, 1, 2);
+            res.mCmd->bindingState().setTexture(p.mMaterial->mOcclusionTexture, 1, 3);
+            res.mCmd->bindingState().setTexture(p.mMaterial->mEmissiveTexture, 1, 4);
             res.mCmd->graphicsState().setTopology(p.mTopology);
             res.mCmd->drawIndexed(p.mIndexCount, 1, p.mIndexOffset, 0, 0);
           }

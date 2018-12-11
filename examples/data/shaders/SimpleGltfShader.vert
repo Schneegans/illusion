@@ -17,14 +17,26 @@ layout(location = 2) in vec2 inTexcoords;
 layout(location = 3) in vec4 inJoint;
 layout(location = 4) in vec4 inWeight;
 
+
 // uniforms
 layout(binding = 0, set = 0) uniform CameraUniforms {
-    mat4 mProjection; 
+  mat4 mProjection; 
 } camera;
 
 // push constants
+struct Material {
+  vec4  mBaseColorFactor;
+  vec3  mEmissiveFactor;
+  float mMetallicFactor;
+  float mRoughnessFactor;
+  float mNormalScale;
+  float mOcclusionStrength;
+  float mAlphaCutoff;
+};
+
 layout(push_constant, std430) uniform PushConstants {
-    mat4 mModelView;
+  mat4     mModelView;
+  Material mMaterial;
 } pushConstants;
 
 // outputs
@@ -34,8 +46,8 @@ layout(location = 2) out vec2 vTexcoords;
 
 // methods
 void main() {
-    vTexcoords = inTexcoords;
-    vNormal = (inverse(transpose(pushConstants.mModelView)) * vec4(inNormal, 0.0)).xyz;
-    vPosition = (pushConstants.mModelView * vec4(inPosition, 1.0)).xyz;
-    gl_Position = camera.mProjection * vec4(vPosition, 1.0);
+  vTexcoords = inTexcoords;
+  vNormal = (inverse(transpose(pushConstants.mModelView)) * vec4(inNormal, 0.0)).xyz;
+  vPosition = (pushConstants.mModelView * vec4(inPosition, 1.0)).xyz;
+  gl_Position = camera.mProjection * vec4(vPosition, 1.0);
 }

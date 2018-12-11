@@ -41,7 +41,7 @@ struct BackedBuffer {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class Device {
+class Device : public std::enable_shared_from_this<Device> {
 
  public:
   template <typename... Args>
@@ -75,6 +75,8 @@ class Device {
   }
 
   BackedBufferPtr createUniformBuffer(vk::DeviceSize size) const;
+
+  TexturePtr const& getWhitePixel();
 
   // low-level create methods ----------------------------------------------------------------------
   // clang-format off
@@ -116,6 +118,8 @@ class Device {
 
   std::array<vk::Queue, 3>          mQueues;
   std::array<vk::CommandPoolPtr, 3> mCommandPools;
+
+  TexturePtr mWhitePixel;
 };
 
 } // namespace Illusion::Graphics

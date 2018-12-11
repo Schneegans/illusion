@@ -15,6 +15,7 @@
 #include "CommandBuffer.hpp"
 #include "PhysicalDevice.hpp"
 #include "PipelineResource.hpp"
+#include "Texture.hpp"
 #include "Utils.hpp"
 
 #include <iostream>
@@ -182,6 +183,22 @@ BackedBufferPtr Device::createUniformBuffer(vk::DeviceSize size) const {
   return createBackedBuffer(size,
     vk::BufferUsageFlagBits::eUniformBuffer | vk::BufferUsageFlagBits::eTransferDst,
     vk::MemoryPropertyFlagBits::eDeviceLocal);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+TexturePtr const& Device::getWhitePixel() {
+  if (!mWhitePixel) {
+    uint8_t data[4] = {255, 255, 255, 255};
+    mWhitePixel     = Illusion::Graphics::Texture::create2D(shared_from_this(), 1, 1,
+      vk::Format::eR8G8B8A8Unorm, vk::ImageUsageFlagBits::eSampled,
+      vk::SamplerCreateInfo(vk::SamplerCreateFlags(), vk::Filter::eLinear, vk::Filter::eLinear,
+        vk::SamplerMipmapMode::eNearest, vk::SamplerAddressMode::eClampToEdge,
+        vk::SamplerAddressMode::eClampToEdge),
+      4, data);
+  }
+
+  return mWhitePixel;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

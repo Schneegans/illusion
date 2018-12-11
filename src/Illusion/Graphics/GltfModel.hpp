@@ -30,15 +30,17 @@ class GltfModel {
   struct Material {
 
     enum class AlphaMode { eOpaque, eBlend, eMask };
+    AlphaMode mAlphaMode = AlphaMode::eOpaque;
 
-    glm::vec4 mBaseColorFactor   = glm::vec4(1.f);
-    glm::vec3 mEmissiveFactor    = glm::vec3(1.f);
-    float     mMetallicFactor    = 1.f;
-    float     mRoughnessFactor   = 1.f;
-    float     mNormalScale       = 1.f;
-    float     mOcclusionStrength = 1.f;
-    float     mAlphaCutoff       = 0.f;
-    AlphaMode mAlphaMode         = AlphaMode::eOpaque;
+    struct PushConstants {
+      glm::vec4 mBaseColorFactor   = glm::vec4(1.f);
+      glm::vec3 mEmissiveFactor    = glm::vec3(1.f);
+      float     mMetallicFactor    = 1.f;
+      float     mRoughnessFactor   = 1.f;
+      float     mNormalScale       = 1.f;
+      float     mOcclusionStrength = 1.f;
+      float     mAlphaCutoff       = 0.f;
+    } mPushConstants;
 
     TexturePtr mBaseColorTexture;
     TexturePtr mMetallicRoughnessTexture;

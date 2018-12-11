@@ -180,12 +180,9 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
     if (image.image.empty()) {
       textures.push_back(Texture::createFromFile(mDevice, image.uri, info));
     } else {
-
       // if there is image data, create an appropriate texture object for it
-      uint32_t channels = image.image.size() / image.width / image.height;
-
       textures.push_back(Texture::create2D(mDevice, image.width, image.height,
-        channels == 3 ? vk::Format::eR8G8B8Unorm : vk::Format::eR8G8B8A8Unorm,
+        image.component == 3 ? vk::Format::eR8G8B8Unorm : vk::Format::eR8G8B8A8Unorm,
         vk::ImageUsageFlagBits::eSampled, info, image.image.size(), (void*)image.image.data()));
     }
   }
@@ -195,6 +192,12 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
 
     auto m = std::make_shared<Material>();
 
+    m->mBaseColorTexture         = mDevice->getWhitePixel();
+    m->mMetallicRoughnessTexture = mDevice->getWhitePixel();
+    m->mNormalTexture            = mDevice->getWhitePixel();
+    m->mOcclusionTexture         = mDevice->getWhitePixel();
+    m->mEmissiveTexture          = mDevice->getWhitePixel();
+
     m->mName = material.name;
 
     for (auto const& p : material.values) {
@@ -203,12 +206,12 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
       else if (p.first == "metallicRoughnessTexture")
         m->mMetallicRoughnessTexture = textures[p.second.TextureIndex()];
       else if (p.first == "metallicFactor")
-        m->mMetallicFactor = p.second.Factor();
+        m->mPushConstants.mMetallicFactor = p.second.Factor();
       else if (p.first == "roughnessFactor")
-        m->mRoughnessFactor = p.second.Factor();
+        m->mPushConstants.mRoughnessFactor = p.second.Factor();
       else if (p.first == "baseColorFactor") {
-        auto fac            = p.second.ColorFactor();
-        m->mBaseColorFactor = glm::vec4(fac[0], fac[1], fac[2], fac[3]);
+        auto fac                           = p.second.ColorFactor();
+        m->mPushConstants.mBaseColorFactor = glm::vec4(fac[0], fac[1], fac[2], fac[3]);
       }
     }
 
@@ -220,14 +223,14 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
       else if (p.first == "emissiveTexture")
         m->mEmissiveTexture = textures[p.second.TextureIndex()];
       else if (p.first == "normalScale")
-        m->mNormalScale = p.second.Factor();
+        m->mPushConstants.mNormalScale = p.second.Factor();
       else if (p.first == "alphaCutoff")
-        m->mAlphaCutoff = p.second.Factor();
+        m->mPushConstants.mAlphaCutoff = p.second.Factor();
       else if (p.first == "occlusionStrength")
-        m->mOcclusionStrength = p.second.Factor();
+        m->mPushConstants.mOcclusionStrength = p.second.Factor();
       else if (p.first == "emissiveFactor") {
-        auto fac           = p.second.ColorFactor();
-        m->mEmissiveFactor = glm::vec3(fac[0], fac[1], fac[2]);
+        auto fac                          = p.second.ColorFactor();
+        m->mPushConstants.mEmissiveFactor = glm::vec3(fac[0], fac[1], fac[2]);
       } else if (p.first == "alphaMode") {
         if (p.second.string_value == "BLEND") {
           m->mAlphaMode = Material::AlphaMode::eBlend;
