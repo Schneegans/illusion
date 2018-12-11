@@ -37,15 +37,15 @@ class Texture {
 
   static TexturePtr create2D(DevicePtr const& device, int32_t width, int32_t height,
     vk::Format format, vk::ImageUsageFlags const& usage, vk::SamplerCreateInfo const& sampler,
-    size_t dataSize = 0, void* data = nullptr);
+    size_t dataSize = 0, const void* data = nullptr);
 
   static TexturePtr create2DMipMap(DevicePtr const& device, std::vector<TextureLevel> levels,
     vk::Format format, vk::ImageUsageFlags const& usage, vk::ImageViewType type,
-    vk::SamplerCreateInfo const& sampler, size_t dataSize = 0, void* data = nullptr);
+    vk::SamplerCreateInfo const& sampler, size_t dataSize = 0, const void* data = nullptr);
 
   static TexturePtr createCubemap(DevicePtr const& device, int32_t size, vk::Format format,
     vk::ImageUsageFlags const& usage, vk::SamplerCreateInfo const& sampler, size_t dataSize = 0,
-    void* data = nullptr);
+    const void* data = nullptr);
 
   Texture();
   virtual ~Texture();
@@ -58,7 +58,7 @@ class Texture {
  protected:
   void initData(DevicePtr const& device, std::vector<TextureLevel> levels, vk::Format format,
     vk::ImageUsageFlags usage, vk::ImageViewType type, vk::SamplerCreateInfo const& sampler,
-    size_t size, void* data);
+    size_t size, const void* data);
 
   vk::ImagePtr        mImage;
   vk::DeviceMemoryPtr mMemory;

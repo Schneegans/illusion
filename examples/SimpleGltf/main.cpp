@@ -53,6 +53,34 @@ struct FrameResources {
   vk::SemaphorePtr                             mRenderFinishedSemaphore;
 };
 
+void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::GltfModel::Node>> const& nodes,
+  glm::mat4 const& parentMatrix, glm::mat4 const& viewMatrix, FrameResources const& res) {
+
+  for (auto const& n : nodes) {
+    auto modelMatrix = parentMatrix * glm::mat4(n->mModelMatrix);
+
+    if (n->mMesh) {
+
+      for (auto const& p : n->mMesh->mPrimitives) {
+        PushConstants pushConstants;
+        pushConstants.mModelView = viewMatrix * modelMatrix;
+        pushConstants.mMaterial  = p.mMaterial->mPushConstants;
+        res.mCmd->pushConstants(pushConstants);
+
+        res.mCmd->bindingState().setTexture(p.mMaterial->mBaseColorTexture, 1, 0);
+        res.mCmd->bindingState().setTexture(p.mMaterial->mMetallicRoughnessTexture, 1, 1);
+        res.mCmd->bindingState().setTexture(p.mMaterial->mNormalTexture, 1, 2);
+        res.mCmd->bindingState().setTexture(p.mMaterial->mOcclusionTexture, 1, 3);
+        res.mCmd->bindingState().setTexture(p.mMaterial->mEmissiveTexture, 1, 4);
+        res.mCmd->graphicsState().setTopology(p.mTopology);
+        res.mCmd->drawIndexed(p.mIndexCount, 1, p.mIndexOffset, 0, 0);
+      }
+    }
+
+    drawNodes(n->mChildren, modelMatrix, viewMatrix, res);
+  }
+};
+
 int main(int argc, char* argv[]) {
 
   Illusion::Core::Logger::enableTrace = true;
@@ -75,9 +103,9 @@ int main(int argc, char* argv[]) {
   auto device = Illusion::Graphics::Device::create(engine->getPhysicalDevice());
   auto window = Illusion::Graphics::Window::create(engine, device);
 
-  auto  model      = Illusion::Graphics::GltfModel::create(device, modelFile);
-  float modelSize  = glm::length(model->getAABB()[0] - model->getAABB()[1]);
-  auto  modelScale = glm::scale(glm::mat4(1.0f), glm::vec3(1.f / modelSize));
+  auto      model       = Illusion::Graphics::GltfModel::create(device, modelFile);
+  float     modelSize   = glm::length(model->getBoundingBox().mMin - model->getBoundingBox().mMax);
+  glm::mat4 modelMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(1.f / modelSize));
 
   auto shader = Illusion::Graphics::ShaderProgram::createFromFiles(
     device, {"data/shaders/SimpleGltfShader.vert", "data/shaders/SimpleGltfShader.frag"});
@@ -139,11 +167,11 @@ int main(int argc, char* argv[]) {
     res.mUniformBuffer->updateData(projection);
 
     glm::vec3 cameraCartesian =
-      glm::vec3(-std::cos(cameraPolar.y) * std::sin(cameraPolar.x), -std::sin(cameraPolar.y),
-        -std::cos(cameraPolar.y) * std::cos(cameraPolar.x)) *
+      glm::vec3(std::cos(cameraPolar.y) * std::sin(cameraPolar.x), -std::sin(cameraPolar.y),
+        std::cos(cameraPolar.y) * std::cos(cameraPolar.x)) *
       cameraPolar.z;
 
-    glm::mat4 view = glm::lookAt(cameraCartesian, glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
+    glm::mat4 viewMatrix = glm::lookAt(cameraCartesian, glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
 
     res.mCmd->bindingState().setUniformBuffer(
       res.mUniformBuffer->getBuffer(), sizeof(glm::mat4), 0, 0, 0);
@@ -153,31 +181,7 @@ int main(int argc, char* argv[]) {
     res.mCmd->bindVertexBuffers(0, {model->getVertexBuffer()});
     res.mCmd->bindIndexBuffer(model->getIndexBuffer(), 0, vk::IndexType::eUint32);
 
-    std::function<void(std::vector<Illusion::Graphics::GltfModel::Node> const&)> drawNodes =
-      [&](std::vector<Illusion::Graphics::GltfModel::Node> const& nodes) {
-        for (auto const& n : nodes) {
-
-          PushConstants pushConstants;
-          pushConstants.mModelView = view * modelScale * glm::mat4(n.mModelMatrix);
-
-          for (auto const& p : n.mPrimitives) {
-            pushConstants.mMaterial = p.mMaterial->mPushConstants;
-            res.mCmd->pushConstants(pushConstants);
-
-            res.mCmd->bindingState().setTexture(p.mMaterial->mBaseColorTexture, 1, 0);
-            res.mCmd->bindingState().setTexture(p.mMaterial->mMetallicRoughnessTexture, 1, 1);
-            res.mCmd->bindingState().setTexture(p.mMaterial->mNormalTexture, 1, 2);
-            res.mCmd->bindingState().setTexture(p.mMaterial->mOcclusionTexture, 1, 3);
-            res.mCmd->bindingState().setTexture(p.mMaterial->mEmissiveTexture, 1, 4);
-            res.mCmd->graphicsState().setTopology(p.mTopology);
-            res.mCmd->drawIndexed(p.mIndexCount, 1, p.mIndexOffset, 0, 0);
-          }
-
-          drawNodes(n.mChildren);
-        }
-      };
-
-    drawNodes(model->getNodes());
+    drawNodes(model->getNodes(), modelMatrix, viewMatrix, res);
 
     res.mCmd->endRenderPass();
     res.mCmd->end();

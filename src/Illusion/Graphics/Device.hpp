@@ -76,7 +76,7 @@ class Device : public std::enable_shared_from_this<Device> {
 
   BackedBufferPtr createUniformBuffer(vk::DeviceSize size) const;
 
-  TexturePtr const& getWhitePixel();
+  TexturePtr getSinglePixelTexture(std::array<uint8_t, 4> const& color);
 
   // low-level create methods ----------------------------------------------------------------------
   // clang-format off
@@ -119,7 +119,7 @@ class Device : public std::enable_shared_from_this<Device> {
   std::array<vk::Queue, 3>          mQueues;
   std::array<vk::CommandPoolPtr, 3> mCommandPools;
 
-  TexturePtr mWhitePixel;
+  std::map<std::array<uint8_t, 4>, TexturePtr> mSinglePixelTextures;
 };
 
 } // namespace Illusion::Graphics

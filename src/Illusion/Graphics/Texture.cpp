@@ -133,7 +133,7 @@ TexturePtr Texture::createFromFile(
 
 TexturePtr Texture::create2D(DevicePtr const& device, int32_t width, int32_t height,
   vk::Format format, vk::ImageUsageFlags const& usage, vk::SamplerCreateInfo const& sampler,
-  size_t dataSize, void* data) {
+  size_t dataSize, const void* data) {
 
   TextureLevel level;
   level.mWidth  = width;
@@ -149,7 +149,7 @@ TexturePtr Texture::create2D(DevicePtr const& device, int32_t width, int32_t hei
 
 TexturePtr Texture::create2DMipMap(DevicePtr const& device, std::vector<TextureLevel> levels,
   vk::Format format, vk::ImageUsageFlags const& usage, vk::ImageViewType type,
-  vk::SamplerCreateInfo const& sampler, size_t dataSize, void* data) {
+  vk::SamplerCreateInfo const& sampler, size_t dataSize, const void* data) {
 
   auto result = std::make_shared<Texture>();
   result->initData(device, levels, format, usage, type, sampler, dataSize, data);
@@ -160,7 +160,7 @@ TexturePtr Texture::create2DMipMap(DevicePtr const& device, std::vector<TextureL
 
 TexturePtr Texture::createCubemap(DevicePtr const& device, int32_t size, vk::Format format,
   vk::ImageUsageFlags const& usage, vk::SamplerCreateInfo const& sampler, size_t dataSize,
-  void* data) {
+  const void* data) {
 
   TextureLevel level;
   level.mWidth  = size;
@@ -185,7 +185,7 @@ Texture::~Texture() { ILLUSION_TRACE << "Deleting Texture." << std::endl; }
 
 void Texture::initData(DevicePtr const& device, std::vector<TextureLevel> levels, vk::Format format,
   vk::ImageUsageFlags usage, vk::ImageViewType type, vk::SamplerCreateInfo const& sampler,
-  size_t size, void* data) {
+  size_t size, const void* data) {
 
   if (data) {
     usage |= vk::ImageUsageFlagBits::eTransferDst;

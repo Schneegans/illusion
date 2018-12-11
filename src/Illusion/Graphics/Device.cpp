@@ -186,19 +186,23 @@ BackedBufferPtr Device::createUniformBuffer(vk::DeviceSize size) const {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+TexturePtr Device::getSinglePixelTexture(std::array<uint8_t, 4> const& color) {
 
-TexturePtr const& Device::getWhitePixel() {
-  if (!mWhitePixel) {
-    uint8_t data[4] = {255, 255, 255, 255};
-    mWhitePixel     = Illusion::Graphics::Texture::create2D(shared_from_this(), 1, 1,
-      vk::Format::eR8G8B8A8Unorm, vk::ImageUsageFlagBits::eSampled,
-      vk::SamplerCreateInfo(vk::SamplerCreateFlags(), vk::Filter::eLinear, vk::Filter::eLinear,
-        vk::SamplerMipmapMode::eNearest, vk::SamplerAddressMode::eClampToEdge,
-        vk::SamplerAddressMode::eClampToEdge),
-      4, data);
+  auto cached = mSinglePixelTextures.find(color);
+  if (cached != mSinglePixelTextures.end()) {
+    return cached->second;
   }
 
-  return mWhitePixel;
+  auto texture = Illusion::Graphics::Texture::create2D(shared_from_this(), 1, 1,
+    vk::Format::eR8G8B8A8Unorm, vk::ImageUsageFlagBits::eSampled,
+    vk::SamplerCreateInfo(vk::SamplerCreateFlags(), vk::Filter::eLinear, vk::Filter::eLinear,
+      vk::SamplerMipmapMode::eNearest, vk::SamplerAddressMode::eClampToEdge,
+      vk::SamplerAddressMode::eClampToEdge),
+    4, &color[0]);
+
+  mSinglePixelTextures[color] = texture;
+
+  return texture;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

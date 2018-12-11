@@ -51,6 +51,21 @@ class GltfModel {
     std::string mName;
   };
 
+  struct BoundingBox {
+    glm::vec3 mMax = glm::vec3(std::numeric_limits<float>::lowest());
+    glm::vec3 mMin = glm::vec3(std::numeric_limits<float>::max());
+
+    void add(glm::vec3 const& point) {
+      mMin = glm::min(mMin, point);
+      mMax = glm::max(mMax, point);
+    }
+
+    void add(BoundingBox const& box) {
+      add(box.mMin);
+      add(box.mMax);
+    }
+  };
+
   struct Vertex {
     glm::vec3 mPosition  = glm::vec3(0.f);
     glm::vec3 mNormal    = glm::vec3(0.f);
@@ -64,17 +79,20 @@ class GltfModel {
     vk::PrimitiveTopology     mTopology;
     vk::DeviceSize            mIndexCount;
     vk::DeviceSize            mIndexOffset;
-    glm::vec3                 mMaxPosition = glm::vec3(std::numeric_limits<float>::lowest());
-    glm::vec3                 mMinPosition = glm::vec3(std::numeric_limits<float>::max());
+    BoundingBox               mBoundingBox;
+  };
+
+  struct Mesh {
+    std::vector<Primitive> mPrimitives;
+    BoundingBox            mBoundingBox;
   };
 
   struct Node {
-    glm::dmat4             mModelMatrix = glm::dmat4(1);
-    std::vector<Primitive> mPrimitives;
-    std::vector<Node>      mChildren;
-    glm::vec3              mMaxPosition = glm::vec3(std::numeric_limits<float>::lowest());
-    glm::vec3              mMinPosition = glm::vec3(std::numeric_limits<float>::max());
-    std::string            mName;
+    std::string                        mName;
+    glm::dmat4                         mModelMatrix = glm::dmat4(1);
+    BoundingBox                        mBoundingBox;
+    std::shared_ptr<Mesh>              mMesh;
+    std::vector<std::shared_ptr<Node>> mChildren;
   };
 
   template <typename... Args>
@@ -84,8 +102,8 @@ class GltfModel {
 
   GltfModel(DevicePtr const& device, std::string const& file);
 
-  std::vector<Node> const& getNodes() const;
-  std::array<glm::vec3, 2> getAABB() const;
+  std::vector<std::shared_ptr<Node>> const& getNodes() const;
+  BoundingBox const&                        getBoundingBox() const;
 
   BackedBufferPtr const& getIndexBuffer() const;
   BackedBufferPtr const& getVertexBuffer() const;
@@ -94,12 +112,10 @@ class GltfModel {
   static std::vector<vk::VertexInputAttributeDescription> getVertexInputAttributes();
 
  private:
-  DevicePtr mDevice;
-
-  Node                                   mRootNode;
-  std::vector<std::shared_ptr<Material>> mMaterials;
-  BackedBufferPtr                        mIndexBuffer;
-  BackedBufferPtr                        mVertexBuffer;
+  DevicePtr       mDevice;
+  Node            mRootNode;
+  BackedBufferPtr mIndexBuffer;
+  BackedBufferPtr mVertexBuffer;
 };
 
 } // namespace Illusion::Graphics
