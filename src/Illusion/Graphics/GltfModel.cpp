@@ -182,7 +182,6 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
         textures.push_back(Texture::createFromFile(mDevice, image.uri, info));
       } else {
         // if there is image data, create an appropriate texture object for it
-        ILLUSION_MESSAGE << "image.component: " << image.component << std::endl;
         textures.push_back(Texture::create2D(mDevice, image.width, image.height,
           image.component == 3 ? vk::Format::eR8G8B8Unorm : vk::Format::eR8G8B8A8Unorm,
           vk::ImageUsageFlagBits::eSampled, info, image.image.size(), (void*)image.image.data()));
@@ -247,7 +246,7 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
         }
       }
 
-      materials.push_back(m);
+      materials.emplace_back(m);
     }
   }
 

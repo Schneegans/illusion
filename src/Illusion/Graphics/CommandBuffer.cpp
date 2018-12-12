@@ -318,7 +318,7 @@ void CommandBuffer::flush() {
 
     auto currentHashIt = mCurrentDescriptorSetLayoutHashes.find(setNum);
 
-    if (mBindingState.getDirtySets().find(setNum) == mBindingState.getDirtySets().end() ||
+    if (mBindingState.getDirtySets().find(setNum) != mBindingState.getDirtySets().end() ||
         currentHashIt == mCurrentDescriptorSetLayoutHashes.end() ||
         currentHashIt->second != setReflection.second->getHash()) {
 
