@@ -43,7 +43,7 @@ vk::Filter convertFilter(int value) {
   case TINYGLTF_TEXTURE_FILTER_LINEAR:
   case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST:
   case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR:
-    return vk::Filter::eNearest;
+    return vk::Filter::eLinear;
   }
 
   throw std::runtime_error("Invalid filter mode " + std::to_string(value));
