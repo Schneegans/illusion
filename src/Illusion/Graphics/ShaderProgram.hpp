@@ -26,6 +26,9 @@ class ShaderProgram {
   static ShaderProgramPtr createFromFiles(
     DevicePtr const& device, std::vector<std::string> const& files);
 
+  static ShaderProgramPtr createFromGlsl(
+    DevicePtr const& device, std::map<vk::ShaderStageFlagBits, std::string> const& sources);
+
   template <typename... Args>
   static ShaderProgramPtr create(Args&&... args) {
     return std::make_shared<ShaderProgram>(args...);

@@ -30,10 +30,9 @@ class Texture {
   static TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
     vk::SamplerCreateInfo const& sampler = vk::SamplerCreateInfo());
 
-  template <typename... Args>
-  static TexturePtr create(Args&&... args) {
-    return std::make_shared<Texture>(args...);
-  };
+  static TexturePtr createCubemapFrom360PanoramaFile(DevicePtr const& device,
+    std::string const& fileName, int32_t size,
+    vk::SamplerCreateInfo const& sampler = vk::SamplerCreateInfo());
 
   static TexturePtr create2D(DevicePtr const& device, int32_t width, int32_t height,
     vk::Format format, vk::ImageUsageFlags const& usage, vk::SamplerCreateInfo const& sampler,
@@ -46,6 +45,12 @@ class Texture {
   static TexturePtr createCubemap(DevicePtr const& device, int32_t size, vk::Format format,
     vk::ImageUsageFlags const& usage, vk::SamplerCreateInfo const& sampler, size_t dataSize = 0,
     const void* data = nullptr);
+
+  static TexturePtr createBRDFLuT(DevicePtr const& device, int32_t size);
+
+  static vk::SamplerCreateInfo createSampler(vk::Filter filter     = vk::Filter::eLinear,
+    vk::SamplerMipmapMode                               mipmapMode = vk::SamplerMipmapMode::eLinear,
+    vk::SamplerAddressMode addressMode = vk::SamplerAddressMode::eClampToEdge);
 
   Texture();
   virtual ~Texture();

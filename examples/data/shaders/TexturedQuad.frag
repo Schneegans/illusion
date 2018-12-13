@@ -15,11 +15,18 @@ layout(location = 0) in vec2 vTexcoords;
 
 // uniforms
 layout(binding = 0) uniform sampler2D texSampler;
+// layout(binding = 0) uniform samplerCube texSampler;
 
 // outputs
 layout(location = 0) out vec4 outColor;
 
 // methods
 void main() {
-    outColor = texture(texSampler, vTexcoords);
+  outColor = texture(texSampler, vTexcoords);
+
+  // vec2 longLat = (vTexcoords - vec2(0, 0.5)) * vec2(2, -1) * 3.14159265359;
+  // vec3 dir = vec3(sin(longLat.x) * cos(longLat.y), 
+  //                 sin(longLat.y), 
+  //                 cos(longLat.x) * cos(longLat.y));
+  // outColor = texture(texSampler, dir);
 }

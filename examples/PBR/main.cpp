@@ -19,29 +19,7 @@
 
 #include <thread>
 
-Illusion::Graphics::TexturePtr createBRDFLuT(Illusion::Graphics::DevicePtr const& device) {
-  auto shader =
-    Illusion::Graphics::ShaderProgram::createFromFiles(device, {"data/shaders/BRDFLuT.comp"});
-
-  auto storageImage = Illusion::Graphics::Texture::create2D(device, 512, 512,
-    vk::Format::eR32G32Sfloat, vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled,
-    vk::SamplerCreateInfo(vk::SamplerCreateFlags(), vk::Filter::eLinear, vk::Filter::eLinear,
-      vk::SamplerMipmapMode::eNearest, vk::SamplerAddressMode::eClampToEdge,
-      vk::SamplerAddressMode::eClampToEdge));
-
-  auto cmd =
-    Illusion::Graphics::CommandBuffer::create(device, Illusion::Graphics::QueueType::eCompute);
-  cmd->bindingState().setStorageImage(storageImage, 0, 0);
-
-  cmd->begin();
-  cmd->setShaderProgram(shader);
-  cmd->dispatch(512 / 16, 512 / 16, 1);
-  cmd->end();
-  cmd->submit();
-  cmd->waitIdle();
-
-  return storageImage;
-}
+Illusion::Graphics::TexturePtr createBRDFLuT(Illusion::Graphics::DevicePtr const& device) {}
 
 int main(int argc, char* argv[]) {
 
@@ -51,10 +29,12 @@ int main(int argc, char* argv[]) {
   auto device = Illusion::Graphics::Device::create(engine->getPhysicalDevice());
   auto window = Illusion::Graphics::Window::create(engine, device);
 
-  Illusion::Graphics::TexturePtr brdflut = createBRDFLuT(device);
-
   auto shader = Illusion::Graphics::ShaderProgram::createFromFiles(
     device, {"data/shaders/TexturedQuad.vert", "data/shaders/TexturedQuad.frag"});
+
+  auto brdflut = Illusion::Graphics::Texture::createBRDFLuT(device, 512);
+  auto cubemap = Illusion::Graphics::Texture::createCubemapFrom360PanoramaFile(
+    device, "data/textures/sunset_fairway_1k.hdr", 512);
 
   auto renderPass = Illusion::Graphics::RenderPass::create(device);
   renderPass->addAttachment(vk::Format::eR8G8B8A8Unorm);

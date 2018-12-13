@@ -54,6 +54,20 @@ ShaderProgramPtr ShaderProgram::createFromFiles(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+ShaderProgramPtr ShaderProgram::createFromGlsl(
+  DevicePtr const& device, std::map<vk::ShaderStageFlagBits, std::string> const& sources) {
+
+  std::vector<ShaderModulePtr> modules;
+
+  for (auto const& source : sources) {
+    modules.push_back(std::make_shared<ShaderModule>(device, source.second, source.first));
+  }
+
+  return std::make_shared<ShaderProgram>(device, modules);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 ShaderProgram::ShaderProgram(DevicePtr const& device, std::vector<ShaderModulePtr> const& modules)
   : mDevice(device)
   , mModules(modules) {
