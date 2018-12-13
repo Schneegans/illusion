@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
   cmd->graphicsState().addBlendAttachment({});
   cmd->graphicsState().addViewport({glm::vec2(0), glm::vec2(window->pExtent.get()), 0.f, 1.f});
   cmd->graphicsState().addScissor({glm::ivec2(0), window->pExtent.get()});
-  cmd->bindingState().setTexture(brdflut, 0, 0);
+  cmd->bindingState().setTexture(cubemap, 0, 0);
   cmd->begin();
   cmd->setShaderProgram(shader);
   cmd->beginRenderPass(renderPass);

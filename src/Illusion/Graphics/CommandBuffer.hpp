@@ -87,6 +87,10 @@ class CommandBuffer {
   void blitImage(vk::Image src, vk::Image dst, glm::uvec2 const& srcSize, glm::uvec2 const& dstSize,
     vk::Filter filter) const;
 
+  void blitImage(vk::Image src, uint32_t srcMipmapLevel, vk::Image dst, uint32_t dstMipmapLevel,
+    glm::uvec2 const& srcSize, glm::uvec2 const& dstSize, uint32_t layerCount,
+    vk::Filter filter) const;
+
   void resolveImage(vk::Image src, vk::ImageLayout srcLayout, vk::Image dst,
     vk::ImageLayout dstLayout, vk::ImageResolve region) const;
 

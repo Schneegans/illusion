@@ -28,23 +28,19 @@ class Texture {
   };
 
   static TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
-    vk::SamplerCreateInfo const& sampler = vk::SamplerCreateInfo());
+    vk::SamplerCreateInfo const& sampler = vk::SamplerCreateInfo(), bool generateMipmaps = true);
 
   static TexturePtr createCubemapFrom360PanoramaFile(DevicePtr const& device,
     std::string const& fileName, int32_t size,
-    vk::SamplerCreateInfo const& sampler = vk::SamplerCreateInfo());
+    vk::SamplerCreateInfo const& sampler = vk::SamplerCreateInfo(), bool generateMipmaps = true);
 
   static TexturePtr create2D(DevicePtr const& device, int32_t width, int32_t height,
     vk::Format format, vk::ImageUsageFlags const& usage, vk::SamplerCreateInfo const& sampler,
-    size_t dataSize = 0, const void* data = nullptr);
-
-  static TexturePtr create2DMipMap(DevicePtr const& device, std::vector<TextureLevel> levels,
-    vk::Format format, vk::ImageUsageFlags const& usage, vk::ImageViewType type,
-    vk::SamplerCreateInfo const& sampler, size_t dataSize = 0, const void* data = nullptr);
+    size_t dataSize = 0, const void* data = nullptr, bool generateMipmaps = true);
 
   static TexturePtr createCubemap(DevicePtr const& device, int32_t size, vk::Format format,
     vk::ImageUsageFlags const& usage, vk::SamplerCreateInfo const& sampler, size_t dataSize = 0,
-    const void* data = nullptr);
+    const void* data = nullptr, bool generateMipmaps = true);
 
   static TexturePtr createBRDFLuT(DevicePtr const& device, int32_t size);
 
@@ -55,20 +51,21 @@ class Texture {
   Texture();
   virtual ~Texture();
 
-  vk::ImagePtr const&        getImage() const { return mImage; }
-  vk::DeviceMemoryPtr const& getMemory() const { return mMemory; }
-  vk::ImageViewPtr const&    getImageView() const { return mImageView; }
-  vk::SamplerPtr const&      getSampler() const { return mSampler; }
+  void updateMipmaps(DevicePtr const& device);
+
+  vk::ImageViewPtr const& getImageView() const { return mImageView; }
+  vk::SamplerPtr const&   getSampler() const { return mSampler; }
 
  protected:
   void initData(DevicePtr const& device, std::vector<TextureLevel> levels, vk::Format format,
     vk::ImageUsageFlags usage, vk::ImageViewType type, vk::SamplerCreateInfo const& sampler,
-    size_t size, const void* data);
+    size_t size, const void* data, bool generateMipmaps);
 
-  vk::ImagePtr        mImage;
-  vk::DeviceMemoryPtr mMemory;
-  vk::ImageViewPtr    mImageView;
-  vk::SamplerPtr      mSampler;
+  BackedImagePtr mImage;
+
+  vk::ImageViewCreateInfo mInfo;
+  vk::ImageViewPtr        mImageView;
+  vk::SamplerPtr          mSampler;
 };
 
 } // namespace Illusion::Graphics

@@ -25,19 +25,19 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 namespace {
-bool isFormatSupported(DevicePtr const& device, vk::Format format) {
+bool formatSupportsLinearSampling(DevicePtr const& device, vk::Format format) {
   auto const& features =
     device->getPhysicalDevice()->getFormatProperties(format).optimalTilingFeatures;
 
-  return (bool)(features & vk::FormatFeatureFlagBits::eSampledImage);
+  return (bool)(features & vk::FormatFeatureFlagBits::eSampledImageFilterLinear);
 }
 
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-TexturePtr Texture::createFromFile(
-  DevicePtr const& device, std::string const& fileName, vk::SamplerCreateInfo const& sampler) {
+TexturePtr Texture::createFromFile(DevicePtr const& device, std::string const& fileName,
+  vk::SamplerCreateInfo const& sampler, bool generateMipmaps) {
 
   auto result = std::make_shared<Texture>();
 
@@ -60,7 +60,7 @@ TexturePtr Texture::createFromFile(
 
     vk::Format format(static_cast<vk::Format>(texture.format()));
 
-    if (format == vk::Format::eR8G8B8Unorm && !isFormatSupported(device, format)) {
+    if (format == vk::Format::eR8G8B8Unorm && !formatSupportsLinearSampling(device, format)) {
       format  = vk::Format::eR8G8B8A8Unorm;
       texture = gli::convert(gli::texture2d(texture), gli::FORMAT_RGBA8_UNORM_PACK8);
     }
@@ -71,7 +71,7 @@ TexturePtr Texture::createFromFile(
     }
 
     result->initData(device, levels, format, vk::ImageUsageFlagBits::eSampled, type, sampler,
-      texture.size(), texture.data());
+      texture.size(), texture.data(), generateMipmaps);
 
     return result;
   }
@@ -119,7 +119,7 @@ TexturePtr Texture::createFromFile(
     }
 
     result->initData(device, levels, format, vk::ImageUsageFlagBits::eSampled,
-      vk::ImageViewType::e2D, sampler, size, data);
+      vk::ImageViewType::e2D, sampler, size, data, generateMipmaps);
 
     stbi_image_free(data);
 
@@ -134,7 +134,8 @@ TexturePtr Texture::createFromFile(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TexturePtr Texture::createCubemapFrom360PanoramaFile(DevicePtr const& device,
-  std::string const& fileName, int32_t size, vk::SamplerCreateInfo const& sampler) {
+  std::string const& fileName, int32_t size, vk::SamplerCreateInfo const& sampler,
+  bool generateMipmaps) {
 
   std::string glsl = R"(
     #version 450
@@ -188,13 +189,14 @@ TexturePtr Texture::createCubemapFrom360PanoramaFile(DevicePtr const& device,
   auto outputImage = createCubemap(device, size, vk::Format::eR32G32B32A32Sfloat,
     vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled,
     createSampler(
-      vk::Filter::eLinear, vk::SamplerMipmapMode::eNearest, vk::SamplerAddressMode::eRepeat));
+      vk::Filter::eLinear, vk::SamplerMipmapMode::eNearest, vk::SamplerAddressMode::eRepeat),
+    0, nullptr, true);
 
   auto cmd = CommandBuffer::create(device, QueueType::eCompute);
   cmd->bindingState().setTexture(panorama, 0, 0);
   cmd->bindingState().setStorageImage(outputImage, 0, 1);
 
-  cmd->begin();
+  cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
   cmd->setShaderProgram(shader);
 
   uint32_t groupCount = std::ceil(static_cast<float>(size) / 16.f);
@@ -203,6 +205,8 @@ TexturePtr Texture::createCubemapFrom360PanoramaFile(DevicePtr const& device,
   cmd->submit();
   cmd->waitIdle();
 
+  outputImage->updateMipmaps(device);
+
   return outputImage;
 }
 
@@ -210,7 +214,7 @@ TexturePtr Texture::createCubemapFrom360PanoramaFile(DevicePtr const& device,
 
 TexturePtr Texture::create2D(DevicePtr const& device, int32_t width, int32_t height,
   vk::Format format, vk::ImageUsageFlags const& usage, vk::SamplerCreateInfo const& sampler,
-  size_t dataSize, const void* data) {
+  size_t dataSize, const void* data, bool generateMipmaps) {
 
   TextureLevel level;
   level.mWidth  = width;
@@ -218,18 +222,8 @@ TexturePtr Texture::create2D(DevicePtr const& device, int32_t width, int32_t hei
   level.mSize   = dataSize;
 
   auto result = std::make_shared<Texture>();
-  result->initData(device, {level}, format, usage, vk::ImageViewType::e2D, sampler, dataSize, data);
-  return result;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-TexturePtr Texture::create2DMipMap(DevicePtr const& device, std::vector<TextureLevel> levels,
-  vk::Format format, vk::ImageUsageFlags const& usage, vk::ImageViewType type,
-  vk::SamplerCreateInfo const& sampler, size_t dataSize, const void* data) {
-
-  auto result = std::make_shared<Texture>();
-  result->initData(device, levels, format, usage, type, sampler, dataSize, data);
+  result->initData(device, {level}, format, usage, vk::ImageViewType::e2D, sampler, dataSize, data,
+    generateMipmaps);
   return result;
 }
 
@@ -237,7 +231,7 @@ TexturePtr Texture::create2DMipMap(DevicePtr const& device, std::vector<TextureL
 
 TexturePtr Texture::createCubemap(DevicePtr const& device, int32_t size, vk::Format format,
   vk::ImageUsageFlags const& usage, vk::SamplerCreateInfo const& sampler, size_t dataSize,
-  const void* data) {
+  const void* data, bool generateMipmaps) {
 
   TextureLevel level;
   level.mWidth  = size;
@@ -245,8 +239,8 @@ TexturePtr Texture::createCubemap(DevicePtr const& device, int32_t size, vk::For
   level.mSize   = dataSize;
 
   auto result = std::make_shared<Texture>();
-  result->initData(
-    device, {level}, format, usage, vk::ImageViewType::eCube, sampler, dataSize, data);
+  result->initData(device, {level}, format, usage, vk::ImageViewType::eCube, sampler, dataSize,
+    data, generateMipmaps);
   return result;
 }
 
@@ -363,12 +357,13 @@ TexturePtr Texture::createBRDFLuT(DevicePtr const& device, int32_t size) {
   auto shader = ShaderProgram::createFromGlsl(device, {{vk::ShaderStageFlagBits::eCompute, glsl}});
 
   auto outputImage = create2D(device, size, size, vk::Format::eR32G32Sfloat,
-    vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled, createSampler());
+    vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled, createSampler(), 0,
+    nullptr, false);
 
   auto cmd = CommandBuffer::create(device, QueueType::eCompute);
   cmd->bindingState().setStorageImage(outputImage, 0, 0);
 
-  cmd->begin();
+  cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
   cmd->setShaderProgram(shader);
 
   uint32_t groupCount = std::ceil(static_cast<float>(size) / 16.f);
@@ -399,46 +394,107 @@ Texture::~Texture() { ILLUSION_TRACE << "Deleting Texture." << std::endl; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void Texture::updateMipmaps(DevicePtr const& device) {
+
+  if (!formatSupportsLinearSampling(device, mInfo.format)) {
+    throw std::runtime_error(
+      "Failed to generate mipmaps: Texture format does not support linear sampling!");
+  }
+
+  auto cmd = CommandBuffer::create(device, QueueType::eGeneric);
+  cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+
+  vk::ImageSubresourceRange subresourceRange;
+  subresourceRange.aspectMask   = vk::ImageAspectFlagBits::eColor;
+  subresourceRange.baseMipLevel = 0;
+  subresourceRange.levelCount   = 1;
+  subresourceRange.layerCount   = mInfo.subresourceRange.layerCount;
+  subresourceRange.baseMipLevel = 0;
+
+  uint32_t mipWidth  = mImage->mInfo.extent.width;
+  uint32_t mipHeight = mImage->mInfo.extent.height;
+
+  // transfer write -> transfer read
+  cmd->transitionImageLayout(*mImage->mImage, vk::ImageLayout::eShaderReadOnlyOptimal,
+    vk::ImageLayout::eTransferSrcOptimal, vk::PipelineStageFlagBits::eTransfer, subresourceRange);
+
+  for (uint32_t i = 1; i < mInfo.subresourceRange.levelCount; ++i) {
+
+    subresourceRange.baseMipLevel = i;
+
+    cmd->transitionImageLayout(*mImage->mImage, vk::ImageLayout::eShaderReadOnlyOptimal,
+      vk::ImageLayout::eTransferDstOptimal, vk::PipelineStageFlagBits::eTransfer, subresourceRange);
+
+    cmd->blitImage(*mImage->mImage, i - 1, *mImage->mImage, i, glm::uvec2(mipWidth, mipHeight),
+      glm::uvec2(std::max(mipWidth / 2, 1u), std::max(mipHeight / 2, 1u)),
+      subresourceRange.layerCount, vk::Filter::eLinear);
+
+    cmd->transitionImageLayout(*mImage->mImage, vk::ImageLayout::eTransferDstOptimal,
+      vk::ImageLayout::eTransferSrcOptimal, vk::PipelineStageFlagBits::eTransfer, subresourceRange);
+
+    mipWidth  = std::max(mipWidth / 2, 1u);
+    mipHeight = std::max(mipHeight / 2, 1u);
+  }
+
+  subresourceRange.levelCount   = mInfo.subresourceRange.levelCount;
+  subresourceRange.baseMipLevel = 0;
+
+  // transfer read -> shader read
+  cmd->transitionImageLayout(*mImage->mImage, vk::ImageLayout::eTransferSrcOptimal,
+    vk::ImageLayout::eShaderReadOnlyOptimal, vk::PipelineStageFlagBits::eFragmentShader,
+    subresourceRange);
+
+  cmd->end();
+  cmd->submit();
+  cmd->waitIdle();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void Texture::initData(DevicePtr const& device, std::vector<TextureLevel> levels, vk::Format format,
   vk::ImageUsageFlags usage, vk::ImageViewType type, vk::SamplerCreateInfo const& sampler,
-  size_t size, const void* data) {
+  size_t size, const void* data, bool generateMipmaps) {
 
   if (data) {
     usage |= vk::ImageUsageFlagBits::eTransferDst;
   }
 
-  uint32_t             layerCount{1u};
+  bool                 mipmapsGenerationRequired = generateMipmaps && levels.size() == 1;
+  uint32_t             layerCount                = 1u;
+  uint32_t             levelCount                = levels.size();
   vk::ImageCreateFlags flags;
+
+  if (mipmapsGenerationRequired) {
+    levelCount =
+      static_cast<uint32_t>(std::floor(std::log2(std::max(levels[0].mWidth, levels[0].mHeight)))) +
+      1;
+    usage |= vk::ImageUsageFlagBits::eTransferSrc;
+    usage |= vk::ImageUsageFlagBits::eTransferDst;
+  }
 
   if (type == vk::ImageViewType::eCube) {
     layerCount = 6u;
-    flags      = vk::ImageCreateFlagBits::eCubeCompatible;
+    flags |= vk::ImageCreateFlagBits::eCubeCompatible;
   }
 
-  auto image = device->createBackedImage(levels[0].mWidth, levels[0].mHeight, 1, levels.size(),
-    layerCount, format, vk::ImageTiling::eOptimal, usage, vk::MemoryPropertyFlagBits::eDeviceLocal,
+  mImage = device->createBackedImage(levels[0].mWidth, levels[0].mHeight, 1, levelCount, layerCount,
+    format, vk::ImageTiling::eOptimal, usage, vk::MemoryPropertyFlagBits::eDeviceLocal,
     vk::SampleCountFlagBits::e1, flags);
 
-  mImage  = image->mImage;
-  mMemory = image->mMemory;
+  mInfo.image                           = *mImage->mImage;
+  mInfo.viewType                        = type;
+  mInfo.format                          = format;
+  mInfo.subresourceRange.aspectMask     = vk::ImageAspectFlagBits::eColor;
+  mInfo.subresourceRange.baseMipLevel   = 0;
+  mInfo.subresourceRange.levelCount     = levelCount;
+  mInfo.subresourceRange.baseArrayLayer = 0;
+  mInfo.subresourceRange.layerCount     = layerCount;
 
-  {
-    vk::ImageViewCreateInfo info;
-    info.image                           = *image->mImage;
-    info.viewType                        = type;
-    info.format                          = format;
-    info.subresourceRange.aspectMask     = vk::ImageAspectFlagBits::eColor;
-    info.subresourceRange.baseMipLevel   = 0;
-    info.subresourceRange.levelCount     = levels.size();
-    info.subresourceRange.baseArrayLayer = 0;
-    info.subresourceRange.layerCount     = layerCount;
-
-    mImageView = device->createImageView(info);
-  }
+  mImageView = device->createImageView(mInfo);
 
   {
     vk::SamplerCreateInfo info(sampler);
-    info.maxLod = levels.size();
+    info.maxLod = levelCount;
 
     mSampler = device->createSampler(info);
   }
@@ -446,14 +502,14 @@ void Texture::initData(DevicePtr const& device, std::vector<TextureLevel> levels
   vk::ImageSubresourceRange subresourceRange;
   subresourceRange.aspectMask   = vk::ImageAspectFlagBits::eColor;
   subresourceRange.baseMipLevel = 0;
-  subresourceRange.levelCount   = levels.size();
+  subresourceRange.levelCount   = levelCount;
   subresourceRange.layerCount   = layerCount;
 
   if (data) {
     auto cmd = std::make_shared<CommandBuffer>(device);
     cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
     {
-      cmd->transitionImageLayout(*mImage, vk::ImageLayout::eUndefined,
+      cmd->transitionImageLayout(*mImage->mImage, vk::ImageLayout::eUndefined,
         vk::ImageLayout::eTransferDstOptimal, vk::PipelineStageFlagBits::eTransfer,
         subresourceRange);
     }
@@ -489,7 +545,7 @@ void Texture::initData(DevicePtr const& device, std::vector<TextureLevel> levels
       ILLUSION_TRACE << "Copying vk::Buffer to vk::Image." << std::endl;
 
       cmd->copyBufferToImage(
-        *stagingBuffer->mBuffer, *mImage, vk::ImageLayout::eTransferDstOptimal, infos);
+        *stagingBuffer->mBuffer, *mImage->mImage, vk::ImageLayout::eTransferDstOptimal, infos);
     }
     cmd->end();
     cmd->submit();
@@ -497,7 +553,22 @@ void Texture::initData(DevicePtr const& device, std::vector<TextureLevel> levels
     cmd->reset();
     cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
     {
-      cmd->transitionImageLayout(*mImage, vk::ImageLayout::eTransferDstOptimal,
+      cmd->transitionImageLayout(*mImage->mImage, vk::ImageLayout::eTransferDstOptimal,
+        vk::ImageLayout::eShaderReadOnlyOptimal, vk::PipelineStageFlagBits::eTransfer,
+        subresourceRange);
+    }
+    cmd->end();
+    cmd->submit();
+    cmd->waitIdle();
+
+    if (generateMipmaps && levels.size() == 1) {
+      updateMipmaps(device);
+    }
+  } else {
+    auto cmd = std::make_shared<CommandBuffer>(device);
+    cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+    {
+      cmd->transitionImageLayout(*mImage->mImage, vk::ImageLayout::eUndefined,
         vk::ImageLayout::eShaderReadOnlyOptimal, vk::PipelineStageFlagBits::eTransfer,
         subresourceRange);
     }

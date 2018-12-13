@@ -252,13 +252,23 @@ void CommandBuffer::copyImage(vk::Image src, vk::Image dst, glm::uvec2 const& si
 void CommandBuffer::blitImage(vk::Image src, vk::Image dst, glm::uvec2 const& srcSize,
   glm::uvec2 const& dstSize, vk::Filter filter) const {
 
+  blitImage(src, 0, dst, 0, srcSize, dstSize, 1, filter);
+}
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CommandBuffer::blitImage(vk::Image src, uint32_t srcMipmapLevel, vk::Image dst,
+  uint32_t dstMipmapLevel, glm::uvec2 const& srcSize, glm::uvec2 const& dstSize,
+  uint32_t layerCount, vk::Filter filter) const {
+
   vk::ImageBlit info;
   info.srcSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
-  info.srcSubresource.layerCount = 1;
+  info.srcSubresource.layerCount = layerCount;
+  info.srcSubresource.mipLevel   = srcMipmapLevel;
   info.srcOffsets[0]             = vk::Offset3D(0, 0, 0);
   info.srcOffsets[1]             = vk::Offset3D(srcSize.x, srcSize.y, 1);
   info.dstSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
-  info.dstSubresource.layerCount = 1;
+  info.dstSubresource.layerCount = layerCount;
+  info.dstSubresource.mipLevel   = dstMipmapLevel;
   info.dstOffsets[0]             = vk::Offset3D(0, 0, 0);
   info.dstOffsets[1]             = vk::Offset3D(dstSize.x, dstSize.y, 1);
 
