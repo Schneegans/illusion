@@ -11,23 +11,19 @@
 #version 450
 
 // inputs
-vec2 positions[3] = vec2[](
-    vec2( 0.5, -0.5),
-    vec2(-0.5, -0.5),
-    vec2( 0.0,  0.5)
-);
+layout(location = 0) in vec2 vTexcoords;
 
-vec3 colors[3] = vec3[](
-    vec3(1, 0, 0),
-    vec3(0, 1, 0),
-    vec3(0, 0, 1)
-);
+// uniforms
+layout(binding = 0) uniform samplerCube texSampler;
 
 // outputs
-layout(location = 0) out vec3 color;
+layout(location = 0) out vec4 outColor;
 
 // methods
 void main() {
-    color = colors[gl_VertexIndex];
-    gl_Position = vec4(positions[gl_VertexIndex], 0.0, 1.0);
+  vec2 longLat = (vTexcoords - vec2(0, 0.5)) * vec2(2, -1) * 3.14159265359;
+  vec3 dir = vec3(sin(longLat.x) * cos(longLat.y), 
+                  sin(longLat.y), 
+                  cos(longLat.x) * cos(longLat.y));
+  outColor = texture(texSampler, dir);
 }

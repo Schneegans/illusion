@@ -16,7 +16,7 @@
 #include <Illusion/Graphics/PipelineReflection.hpp>
 #include <Illusion/Graphics/RenderPass.hpp>
 #include <Illusion/Graphics/ShaderProgram.hpp>
-#include <Illusion/Graphics/Texture.hpp>
+#include <Illusion/Graphics/TextureUtils.hpp>
 #include <Illusion/Graphics/Window.hpp>
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
   auto device = Illusion::Graphics::Device::create(engine->getPhysicalDevice());
   auto window = Illusion::Graphics::Window::create(engine, device);
 
-  auto texture = Illusion::Graphics::Texture::createFromFile(device, "data/textures/box.dds");
+  auto texture = Illusion::Graphics::TextureUtils::createFromFile(device, "data/textures/box.dds");
   auto shader  = Illusion::Graphics::ShaderProgram::createFromFiles(
     device, {"data/shaders/TexturedCube.vert", "data/shaders/TexturedCube.frag"});
 

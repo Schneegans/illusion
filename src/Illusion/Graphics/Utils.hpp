@@ -19,10 +19,11 @@
 namespace Illusion::Graphics::Utils {
 
 // some helpers regarding vk::Format ---------------------------------------------------------------
-bool isColorFormat(vk::Format format);
-bool isDepthFormat(vk::Format format);
-bool isDepthOnlyFormat(vk::Format format);
-bool isDepthStencilFormat(vk::Format format);
+bool    isColorFormat(vk::Format format);
+bool    isDepthFormat(vk::Format format);
+bool    isDepthOnlyFormat(vk::Format format);
+bool    isDepthStencilFormat(vk::Format format);
+uint8_t getByteCount(vk::Format format);
 
 // shared_ptr based memory management for vulkan objects -------------------------------------------
 template <typename T>

@@ -73,8 +73,9 @@ void Swapchain::present(BackedImagePtr const& image,
     auto cmd = std::make_shared<CommandBuffer>(mDevice);
     cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
     for (auto const& image : mImages) {
-      cmd->transitionImageLayout(
-        image, vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR);
+      cmd->transitionImageLayout(image, vk::ImageLayout::eUndefined,
+        vk::ImageLayout::ePresentSrcKHR, vk::PipelineStageFlagBits::eTopOfPipe,
+        vk::PipelineStageFlagBits::eTransfer);
     }
     cmd->end();
     cmd->submit();
@@ -115,14 +116,14 @@ void Swapchain::present(BackedImagePtr const& image,
     subResource.layerCount     = 1;
 
     // if source image is multisampled, resolve it
-    if (image->mInfo.samples != vk::SampleCountFlagBits::e1) {
+    if (image->mImageInfo.samples != vk::SampleCountFlagBits::e1) {
       vk::ImageResolve region;
       region.srcSubresource = subResource;
       region.dstSubresource = subResource;
       region.srcOffset      = vk::Offset3D(0, 0, 0);
       region.dstOffset      = vk::Offset3D(0, 0, 0);
-      region.extent.width   = image->mInfo.extent.width;
-      region.extent.height  = image->mInfo.extent.height;
+      region.extent.width   = image->mImageInfo.extent.width;
+      region.extent.height  = image->mImageInfo.extent.height;
       region.extent.depth   = 1;
 
       cmd->resolveImage(*image->mImage, vk::ImageLayout::eTransferSrcOptimal,
@@ -131,16 +132,21 @@ void Swapchain::present(BackedImagePtr const& image,
     // Else do an image blit.
     else {
       cmd->transitionImageLayout(*image->mImage, vk::ImageLayout::eColorAttachmentOptimal,
-        vk::ImageLayout::eTransferSrcOptimal, vk::PipelineStageFlagBits::eTransfer);
+        vk::ImageLayout::eTransferSrcOptimal, vk::PipelineStageFlagBits::eColorAttachmentOutput,
+        vk::PipelineStageFlagBits::eTransfer);
       cmd->transitionImageLayout(mImages[mCurrentImageIndex], vk::ImageLayout::ePresentSrcKHR,
-        vk::ImageLayout::eTransferDstOptimal, vk::PipelineStageFlagBits::eTransfer);
+        vk::ImageLayout::eTransferDstOptimal, vk::PipelineStageFlagBits::eTransfer,
+        vk::PipelineStageFlagBits::eTransfer);
       vk::ImageBlit info;
       cmd->blitImage(*image->mImage, mImages[mCurrentImageIndex],
-        {image->mInfo.extent.width, image->mInfo.extent.height}, mExtent, vk::Filter::eNearest);
+        {image->mImageInfo.extent.width, image->mImageInfo.extent.height}, mExtent,
+        vk::Filter::eNearest);
       cmd->transitionImageLayout(*image->mImage, vk::ImageLayout::eTransferSrcOptimal,
-        vk::ImageLayout::eColorAttachmentOptimal, vk::PipelineStageFlagBits::eTransfer);
+        vk::ImageLayout::eColorAttachmentOptimal, vk::PipelineStageFlagBits::eTransfer,
+        vk::PipelineStageFlagBits::eColorAttachmentOutput);
       cmd->transitionImageLayout(mImages[mCurrentImageIndex], vk::ImageLayout::eTransferDstOptimal,
-        vk::ImageLayout::ePresentSrcKHR, vk::PipelineStageFlagBits::eTransfer);
+        vk::ImageLayout::ePresentSrcKHR, vk::PipelineStageFlagBits::eTransfer,
+        vk::PipelineStageFlagBits::eTransfer);
     }
 
     cmd->end();

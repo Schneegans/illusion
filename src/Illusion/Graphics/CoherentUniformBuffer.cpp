@@ -18,10 +18,11 @@ namespace Illusion::Graphics {
 
 CoherentUniformBuffer::CoherentUniformBuffer(DevicePtr const& device, vk::DeviceSize size)
   : mDevice(device)
-  , mBuffer(device->createBackedBuffer(size, vk::BufferUsageFlagBits::eUniformBuffer,
-      vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible)) {
+  , mBuffer(device->createBackedBuffer(vk::BufferUsageFlagBits::eUniformBuffer,
+      vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible, size)) {
 
-  mMappedData = (uint8_t*)mDevice->getHandle()->mapMemory(*mBuffer->mMemory, 0, mBuffer->mSize);
+  mMappedData = (uint8_t*)mDevice->getHandle()->mapMemory(
+    *mBuffer->mMemory, 0, mBuffer->mMemoryInfo.allocationSize);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -44,7 +45,7 @@ vk::DeviceSize CoherentUniformBuffer::addData(uint8_t const* data, vk::DeviceSiz
 vk::DeviceSize CoherentUniformBuffer::updateData(
   uint8_t const* data, vk::DeviceSize count, vk::DeviceSize offset) {
 
-  if (offset + count > mBuffer->mSize) {
+  if (offset + count > mBuffer->mMemoryInfo.allocationSize) {
     throw std::runtime_error("Failed to set uniform data: Preallocated memory exhausted!");
   }
 

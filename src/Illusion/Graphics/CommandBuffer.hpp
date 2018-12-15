@@ -79,7 +79,7 @@ class CommandBuffer {
   }
 
   void transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout,
-    vk::PipelineStageFlagBits stage = vk::PipelineStageFlagBits::eTopOfPipe,
+    vk::PipelineStageFlagBits srcStage, vk::PipelineStageFlagBits dstStage,
     vk::ImageSubresourceRange range = {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}) const;
 
   void copyImage(vk::Image src, vk::Image dst, glm::uvec2 const& size) const;

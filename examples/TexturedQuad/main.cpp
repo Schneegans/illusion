@@ -14,7 +14,7 @@
 #include <Illusion/Graphics/PipelineReflection.hpp>
 #include <Illusion/Graphics/RenderPass.hpp>
 #include <Illusion/Graphics/ShaderProgram.hpp>
-#include <Illusion/Graphics/Texture.hpp>
+#include <Illusion/Graphics/TextureUtils.hpp>
 #include <Illusion/Graphics/Window.hpp>
 
 #include <thread>
@@ -27,9 +27,9 @@ int main(int argc, char* argv[]) {
   auto device = Illusion::Graphics::Device::create(engine->getPhysicalDevice());
   auto window = Illusion::Graphics::Window::create(engine, device);
 
-  auto texture = Illusion::Graphics::Texture::createFromFile(device, "data/textures/box.dds");
+  auto texture = Illusion::Graphics::TextureUtils::createFromFile(device, "data/textures/box.dds");
   auto shader  = Illusion::Graphics::ShaderProgram::createFromFiles(
-    device, {"data/shaders/TexturedQuad.vert", "data/shaders/TexturedQuad.frag"});
+    device, {"data/shaders/Quad.vert", "data/shaders/TexturedQuad.frag"});
 
   auto renderPass = Illusion::Graphics::RenderPass::create(device);
   renderPass->addAttachment(vk::Format::eR8G8B8A8Unorm);

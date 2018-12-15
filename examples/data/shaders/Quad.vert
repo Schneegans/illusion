@@ -12,10 +12,10 @@
 
 // inputs
 vec2 inPositions[4] = vec2[](
-    vec2(0.85, -0.85),
-    vec2(-0.85, -0.85),
-    vec2(0.85, 0.85),
-    vec2(-0.85, 0.85)
+    vec2( 1, -1),
+    vec2(-1, -1),
+    vec2( 1,  1),
+    vec2(-1,  1)
 );
 
 vec2 inTexcoords[4] = vec2[](

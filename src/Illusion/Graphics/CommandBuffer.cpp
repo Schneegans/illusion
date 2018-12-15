@@ -16,7 +16,6 @@
 #include "RenderPass.hpp"
 #include "ShaderModule.hpp"
 #include "ShaderProgram.hpp"
-#include "Texture.hpp"
 
 #include <iostream>
 
@@ -210,8 +209,29 @@ void CommandBuffer::pushConstants(const void* data, uint32_t size, uint32_t offs
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout,
-  vk::ImageLayout newLayout, vk::PipelineStageFlagBits stage,
+  vk::ImageLayout newLayout, vk::PipelineStageFlagBits srcStage, vk::PipelineStageFlagBits dstStage,
   vk::ImageSubresourceRange range) const {
+
+  // clang-format off
+  static const std::unordered_map<vk::ImageLayout, vk::AccessFlags> accessMapping = {
+    {vk::ImageLayout::eUndefined,                     vk::AccessFlags()},
+    {vk::ImageLayout::eGeneral,                       vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite},
+    {vk::ImageLayout::eColorAttachmentOptimal,        vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite},
+    {vk::ImageLayout::eDepthStencilReadOnlyOptimal,   vk::AccessFlagBits::eDepthStencilAttachmentRead},
+    {vk::ImageLayout::eDepthStencilAttachmentOptimal, vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite},
+    {vk::ImageLayout::eShaderReadOnlyOptimal,         vk::AccessFlagBits::eShaderRead},
+    {vk::ImageLayout::eTransferDstOptimal,            vk::AccessFlagBits::eTransferWrite},
+    {vk::ImageLayout::eTransferSrcOptimal,            vk::AccessFlagBits::eTransferRead},
+    {vk::ImageLayout::ePresentSrcKHR,                 vk::AccessFlagBits::eMemoryRead}
+  };
+  // clang-format on
+
+  auto srcAccess = accessMapping.find(oldLayout);
+  auto dstAccess = accessMapping.find(newLayout);
+
+  if (srcAccess == accessMapping.end() || dstAccess == accessMapping.end()) {
+    throw std::runtime_error("Failed to transition image layout: Unsupported transition!");
+  }
 
   vk::ImageMemoryBarrier barrier;
   barrier.oldLayout           = oldLayout;
@@ -220,8 +240,10 @@ void CommandBuffer::transitionImageLayout(vk::Image image, vk::ImageLayout oldLa
   barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   barrier.image               = image;
   barrier.subresourceRange    = range;
+  barrier.srcAccessMask       = srcAccess->second;
+  barrier.dstAccessMask       = dstAccess->second;
 
-  mVkCmd->pipelineBarrier(stage, stage, vk::DependencyFlagBits(), nullptr, nullptr, barrier);
+  mVkCmd->pipelineBarrier(srcStage, dstStage, vk::DependencyFlagBits(), nullptr, nullptr, barrier);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -342,8 +364,8 @@ void CommandBuffer::flush() {
           auto                    value = std::get<CombinedImageSamplerBinding>(binding.second);
           vk::DescriptorImageInfo imageInfo;
           imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
-          imageInfo.imageView   = *value.mTexture->getImageView();
-          imageInfo.sampler     = *value.mTexture->getSampler();
+          imageInfo.imageView   = *value.mTexture->mBackedImage->mView;
+          imageInfo.sampler     = *value.mTexture->mSampler;
 
           vk::WriteDescriptorSet info;
           info.dstSet          = *descriptorSet;
@@ -360,8 +382,8 @@ void CommandBuffer::flush() {
           auto                    value = std::get<StorageImageBinding>(binding.second);
           vk::DescriptorImageInfo imageInfo;
           imageInfo.imageLayout = vk::ImageLayout::eGeneral;
-          imageInfo.imageView   = *value.mImage->getImageView();
-          imageInfo.sampler     = *value.mImage->getSampler();
+          imageInfo.imageView   = *value.mImage->mBackedImage->mView;
+          imageInfo.sampler     = *value.mImage->mSampler;
 
           vk::WriteDescriptorSet info;
           info.dstSet          = *descriptorSet;

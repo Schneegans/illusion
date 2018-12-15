@@ -8,42 +8,31 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_RENDERTARGET_HPP
-#define ILLUSION_GRAPHICS_RENDERTARGET_HPP
+#ifndef ILLUSION_GRAPHICS_TEXTURE_UTILS_HPP
+#define ILLUSION_GRAPHICS_TEXTURE_UTILS_HPP
 
 #include "fwd.hpp"
 
-#include <glm/glm.hpp>
-
-namespace Illusion::Graphics {
+namespace Illusion::Graphics::TextureUtils {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class Framebuffer {
- public:
-  template <typename... Args>
-  static FramebufferPtr create(Args&&... args) {
-    return std::make_shared<Framebuffer>(args...);
-  };
+bool formatSupportsLinearSampling(DevicePtr const& device, vk::Format format);
 
-  Framebuffer(DevicePtr const& device, vk::RenderPassPtr const& renderPass,
-    glm::uvec2 const& extent, std::vector<vk::Format> const& attachments);
+uint32_t getMaxMipmapLevels(uint32_t width, uint32_t height);
 
-  virtual ~Framebuffer();
+TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
+  vk::SamplerCreateInfo samplerInfo = vk::SamplerCreateInfo(), bool generateMipmaps = true);
 
-  vk::FramebufferPtr const&          getHandle() const { return mFramebuffer; }
-  std::vector<BackedImagePtr> const& getImages() const { return mImageStore; }
+TexturePtr createCubemapFrom360PanoramaFile(DevicePtr const& device, std::string const& fileName,
+  int32_t size, vk::SamplerCreateInfo samplerInfo = vk::SamplerCreateInfo(),
+  bool generateMipmaps = true);
 
- private:
-  DevicePtr         mDevice;
-  vk::RenderPassPtr mRenderPass;
-  glm::uvec2        mExtent;
+TexturePtr createBRDFLuT(DevicePtr const& device, int32_t size);
 
-  vk::FramebufferPtr          mFramebuffer;
-  std::vector<BackedImagePtr> mImageStore;
-};
+void updateMipmaps(DevicePtr const& device, TexturePtr const& texture);
 
-} // namespace Illusion::Graphics
+} // namespace Illusion::Graphics::TextureUtils
 
-#endif // ILLUSION_GRAPHICS_RENDERTARGET_HPP
+#endif // ILLUSION_GRAPHICS_TEXTURE_UTILS_HPP

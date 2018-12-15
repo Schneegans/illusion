@@ -13,7 +13,7 @@
 #include "../Core/Logger.hpp"
 #include "CommandBuffer.hpp"
 #include "Device.hpp"
-#include "Texture.hpp"
+#include "TextureUtils.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtc/matrix_transform.hpp>
@@ -160,31 +160,50 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
         throw std::runtime_error("Error loading GLTF file " + file + ": No image source given");
       }
 
-      vk::SamplerCreateInfo info;
-      info.magFilter               = convertFilter(sampler.magFilter);
-      info.minFilter               = convertFilter(sampler.minFilter);
-      info.addressModeU            = convertSamplerAddressMode(sampler.wrapS);
-      info.addressModeV            = convertSamplerAddressMode(sampler.wrapT);
-      info.addressModeW            = vk::SamplerAddressMode::eRepeat;
-      info.anisotropyEnable        = true;
-      info.maxAnisotropy           = 16;
-      info.borderColor             = vk::BorderColor::eIntOpaqueBlack;
-      info.unnormalizedCoordinates = false;
-      info.compareEnable           = false;
-      info.compareOp               = vk::CompareOp::eAlways;
-      info.mipmapMode              = convertSamplerMipmapMode(sampler.minFilter);
-      info.mipLodBias              = 0.f;
-      info.minLod                  = 0.f;
-      info.maxLod                  = 0.f;
+      vk::SamplerCreateInfo samplerInfo;
+      samplerInfo.magFilter               = convertFilter(sampler.magFilter);
+      samplerInfo.minFilter               = convertFilter(sampler.minFilter);
+      samplerInfo.addressModeU            = convertSamplerAddressMode(sampler.wrapS);
+      samplerInfo.addressModeV            = convertSamplerAddressMode(sampler.wrapT);
+      samplerInfo.addressModeW            = vk::SamplerAddressMode::eRepeat;
+      samplerInfo.anisotropyEnable        = true;
+      samplerInfo.maxAnisotropy           = 16;
+      samplerInfo.borderColor             = vk::BorderColor::eIntOpaqueBlack;
+      samplerInfo.unnormalizedCoordinates = false;
+      samplerInfo.compareEnable           = false;
+      samplerInfo.compareOp               = vk::CompareOp::eAlways;
+      samplerInfo.mipmapMode              = convertSamplerMipmapMode(sampler.minFilter);
+      samplerInfo.mipLodBias              = 0.f;
+      samplerInfo.minLod                  = 0.f;
+      samplerInfo.maxLod = TextureUtils::getMaxMipmapLevels(image.width, image.height);
 
       // if no image data has been loaded, try loading it on our own
       if (image.image.empty()) {
-        textures.push_back(Texture::createFromFile(mDevice, image.uri, info));
+        textures.push_back(TextureUtils::createFromFile(mDevice, image.uri, samplerInfo));
       } else {
         // if there is image data, create an appropriate texture object for it
-        textures.push_back(Texture::create2D(mDevice, image.width, image.height,
-          image.component == 3 ? vk::Format::eR8G8B8Unorm : vk::Format::eR8G8B8A8Unorm,
-          vk::ImageUsageFlagBits::eSampled, info, image.image.size(), (void*)image.image.data()));
+        vk::ImageCreateInfo imageInfo;
+        imageInfo.imageType = vk::ImageType::e2D;
+        imageInfo.format =
+          image.component == 3 ? vk::Format::eR8G8B8Unorm : vk::Format::eR8G8B8A8Unorm;
+        imageInfo.extent.width  = image.width;
+        imageInfo.extent.height = image.height;
+        imageInfo.extent.depth  = 1;
+        imageInfo.mipLevels     = samplerInfo.maxLod;
+        imageInfo.arrayLayers   = 1;
+        imageInfo.samples       = vk::SampleCountFlagBits::e1;
+        imageInfo.tiling        = vk::ImageTiling::eOptimal;
+        imageInfo.usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferSrc |
+                          vk::ImageUsageFlagBits::eTransferDst;
+        imageInfo.sharingMode   = vk::SharingMode::eExclusive;
+        imageInfo.initialLayout = vk::ImageLayout::eUndefined;
+
+        auto texture = mDevice->createTexture(imageInfo, samplerInfo, vk::ImageViewType::e2D,
+          vk::ImageAspectFlagBits::eColor, image.image.size(), (void*)image.image.data());
+
+        TextureUtils::updateMipmaps(mDevice, texture);
+
+        textures.push_back(texture);
       }
     }
   }
@@ -205,34 +224,34 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
       m->mName = material.name;
 
       for (auto const& p : material.values) {
-        if (p.first == "baseColorTexture")
+        if (p.first == "baseColorTexture") {
           m->mBaseColorTexture = textures[p.second.TextureIndex()];
-        else if (p.first == "metallicRoughnessTexture")
+        } else if (p.first == "metallicRoughnessTexture") {
           m->mMetallicRoughnessTexture = textures[p.second.TextureIndex()];
-        else if (p.first == "metallicFactor")
+        } else if (p.first == "metallicFactor") {
           m->mPushConstants.mMetallicFactor = p.second.Factor();
-        else if (p.first == "roughnessFactor")
+        } else if (p.first == "roughnessFactor") {
           m->mPushConstants.mRoughnessFactor = p.second.Factor();
-        else if (p.first == "baseColorFactor") {
+        } else if (p.first == "baseColorFactor") {
           auto fac                           = p.second.ColorFactor();
           m->mPushConstants.mBaseColorFactor = glm::vec4(fac[0], fac[1], fac[2], fac[3]);
         }
       }
 
       for (auto const& p : material.additionalValues) {
-        if (p.first == "normalTexture")
+        if (p.first == "normalTexture") {
           m->mNormalTexture = textures[p.second.TextureIndex()];
-        else if (p.first == "occlusionTexture")
+        } else if (p.first == "occlusionTexture") {
           m->mOcclusionTexture = textures[p.second.TextureIndex()];
-        else if (p.first == "emissiveTexture")
+        } else if (p.first == "emissiveTexture") {
           m->mEmissiveTexture = textures[p.second.TextureIndex()];
-        else if (p.first == "normalScale")
+        } else if (p.first == "normalScale") {
           m->mPushConstants.mNormalScale = p.second.Factor();
-        else if (p.first == "alphaCutoff")
+        } else if (p.first == "alphaCutoff") {
           m->mPushConstants.mAlphaCutoff = p.second.Factor();
-        else if (p.first == "occlusionStrength")
+        } else if (p.first == "occlusionStrength") {
           m->mPushConstants.mOcclusionStrength = p.second.Factor();
-        else if (p.first == "emissiveFactor") {
+        } else if (p.first == "emissiveFactor") {
           auto fac                          = p.second.ColorFactor();
           m->mPushConstants.mEmissiveFactor = glm::vec3(fac[0], fac[1], fac[2]);
         } else if (p.first == "alphaMode") {

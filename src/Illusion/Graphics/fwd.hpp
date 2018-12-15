@@ -19,6 +19,7 @@ enum class QueueType { eGeneric = 0, eCompute = 1, eTransfer = 2 };
 
 struct BackedBuffer;
 struct BackedImage;
+struct Texture;
 
 class CoherentUniformBuffer;
 class CommandBuffer;
@@ -34,7 +35,6 @@ class RenderPass;
 class ShaderModule;
 class ShaderProgram;
 class Swapchain;
-class Texture;
 class Window;
 
 typedef std::shared_ptr<BackedBuffer> BackedBufferPtr;

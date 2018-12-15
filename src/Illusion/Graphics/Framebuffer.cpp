@@ -49,38 +49,36 @@ Framebuffer::Framebuffer(DevicePtr const& device, vk::RenderPassPtr const& rende
       usage = vk::ImageUsageFlagBits::eDepthStencilAttachment;
     }
 
-    auto image =
-      mDevice->createBackedImage(extent.x, extent.y, 1, 1, 1, attachment, vk::ImageTiling::eOptimal,
-        usage, vk::MemoryPropertyFlagBits::eDeviceLocal, vk::SampleCountFlagBits::e1);
+    vk::ImageCreateInfo imageInfo;
+    imageInfo.imageType     = vk::ImageType::e2D;
+    imageInfo.format        = attachment;
+    imageInfo.extent.width  = extent.x;
+    imageInfo.extent.height = extent.y;
+    imageInfo.extent.depth  = 1;
+    imageInfo.mipLevels     = 1;
+    imageInfo.arrayLayers   = 1;
+    imageInfo.samples       = vk::SampleCountFlagBits::e1;
+    imageInfo.tiling        = vk::ImageTiling::eOptimal;
+    imageInfo.usage         = usage;
+    imageInfo.sharingMode   = vk::SharingMode::eExclusive;
+    imageInfo.initialLayout = vk::ImageLayout::eUndefined;
 
-    vk::ImageViewCreateInfo info;
-    info.image                           = *image->mImage;
-    info.viewType                        = vk::ImageViewType::e2D;
-    info.format                          = attachment;
-    info.components.r                    = vk::ComponentSwizzle::eIdentity;
-    info.components.g                    = vk::ComponentSwizzle::eIdentity;
-    info.components.b                    = vk::ComponentSwizzle::eIdentity;
-    info.components.a                    = vk::ComponentSwizzle::eIdentity;
-    info.subresourceRange.aspectMask     = aspect;
-    info.subresourceRange.baseMipLevel   = 0;
-    info.subresourceRange.levelCount     = 1;
-    info.subresourceRange.baseArrayLayer = 0;
-    info.subresourceRange.layerCount     = 1;
+    auto image = mDevice->createBackedImage(
+      imageInfo, vk::ImageViewType::e2D, aspect, vk::MemoryPropertyFlagBits::eDeviceLocal);
 
     mImageStore.push_back(image);
-    mImageViewStore.push_back(mDevice->createImageView(info));
   }
 
-  std::vector<vk::ImageView> imageViewInfos(mImageViewStore.size());
+  std::vector<vk::ImageView> imageViews(mImageStore.size());
 
-  for (size_t i{0}; i < mImageViewStore.size(); ++i) {
-    imageViewInfos[i] = *mImageViewStore[i];
+  for (size_t i{0}; i < mImageStore.size(); ++i) {
+    imageViews[i] = *mImageStore[i]->mView;
   }
 
   vk::FramebufferCreateInfo info;
   info.renderPass      = *mRenderPass;
-  info.attachmentCount = imageViewInfos.size();
-  info.pAttachments    = imageViewInfos.data();
+  info.attachmentCount = imageViews.size();
+  info.pAttachments    = imageViews.data();
   info.width           = mExtent.x;
   info.height          = mExtent.y;
   info.layers          = 1;

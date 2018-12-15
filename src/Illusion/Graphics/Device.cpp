@@ -15,7 +15,6 @@
 #include "CommandBuffer.hpp"
 #include "PhysicalDevice.hpp"
 #include "PipelineResource.hpp"
-#include "Texture.hpp"
 #include "Utils.hpp"
 
 #include <iostream>
@@ -54,76 +53,144 @@ Device::~Device() { ILLUSION_TRACE << "Deleting Device." << std::endl; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BackedImagePtr Device::createBackedImage(uint32_t width, uint32_t height, uint32_t depth,
-  uint32_t levels, uint32_t layers, vk::Format format, vk::ImageTiling tiling,
-  vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties, vk::SampleCountFlagBits samples,
-  vk::ImageCreateFlags flags) const {
+BackedImagePtr Device::createBackedImage(vk::ImageCreateInfo imageInfo, vk::ImageViewType viewType,
+  vk::ImageAspectFlags imageAspectMask, vk::MemoryPropertyFlags properties, vk::DeviceSize dataSize,
+  const void* data) const {
 
   auto result = std::make_shared<BackedImage>();
 
-  result->mInfo.imageType     = vk::ImageType::e2D;
-  result->mInfo.extent.width  = width;
-  result->mInfo.extent.height = height;
-  result->mInfo.extent.depth  = depth;
-  result->mInfo.mipLevels     = levels;
-  result->mInfo.arrayLayers   = layers;
-  result->mInfo.format        = format;
-  result->mInfo.tiling        = tiling;
-  result->mInfo.initialLayout = vk::ImageLayout::eUndefined;
-  result->mInfo.usage         = usage;
-  result->mInfo.sharingMode   = vk::SharingMode::eExclusive;
-  result->mInfo.samples       = samples;
-  result->mInfo.flags         = flags;
+  // make sure eTransferDst is set when we have data to upload
+  if (data) {
+    imageInfo.usage |= vk::ImageUsageFlagBits::eTransferDst;
+  }
 
-  result->mImage = createImage(result->mInfo);
+  result->mImageInfo     = imageInfo;
+  result->mImage         = createImage(imageInfo);
+  result->mCurrentLayout = imageInfo.initialLayout;
 
+  // create memory
   auto requirements = mDevice->getImageMemoryRequirements(*result->mImage);
 
-  vk::MemoryAllocateInfo allocInfo;
-  allocInfo.allocationSize = requirements.size;
-  allocInfo.memoryTypeIndex =
+  result->mMemoryInfo.allocationSize = requirements.size;
+  result->mMemoryInfo.memoryTypeIndex =
     mPhysicalDevice->findMemoryType(requirements.memoryTypeBits, properties);
-
-  result->mMemory = createMemory(allocInfo);
-  result->mSize   = requirements.size;
-
+  result->mMemory = createMemory(result->mMemoryInfo);
   mDevice->bindImageMemory(*result->mImage, *result->mMemory, 0);
+
+  // create image view
+  result->mViewInfo.image                           = *result->mImage;
+  result->mViewInfo.viewType                        = viewType;
+  result->mViewInfo.format                          = imageInfo.format;
+  result->mViewInfo.subresourceRange.aspectMask     = imageAspectMask;
+  result->mViewInfo.subresourceRange.baseMipLevel   = 0;
+  result->mViewInfo.subresourceRange.levelCount     = imageInfo.mipLevels;
+  result->mViewInfo.subresourceRange.baseArrayLayer = 0;
+  result->mViewInfo.subresourceRange.layerCount     = imageInfo.arrayLayers;
+
+  result->mView = createImageView(result->mViewInfo);
+
+  if (data) {
+    auto stagingBuffer = createBackedBuffer(vk::BufferUsageFlagBits::eTransferSrc,
+      vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+      dataSize, data);
+
+    auto cmd = allocateCommandBuffer();
+    cmd->begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
+
+    vk::ImageMemoryBarrier barrier;
+    barrier.oldLayout                   = result->mCurrentLayout;
+    barrier.newLayout                   = vk::ImageLayout::eTransferDstOptimal;
+    barrier.srcQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image                       = *result->mImage;
+    barrier.subresourceRange.levelCount = imageInfo.mipLevels;
+    barrier.subresourceRange.layerCount = imageInfo.arrayLayers;
+    barrier.subresourceRange.aspectMask = imageAspectMask;
+
+    cmd->pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
+      vk::DependencyFlagBits(), nullptr, nullptr, barrier);
+
+    std::vector<vk::BufferImageCopy> infos;
+    uint64_t                         offset    = 0;
+    uint32_t                         mipWidth  = imageInfo.extent.width;
+    uint32_t                         mipHeight = imageInfo.extent.height;
+
+    for (uint32_t i = 0; i < imageInfo.mipLevels; ++i) {
+      uint64_t size = mipWidth * mipHeight * Utils::getByteCount(imageInfo.format);
+
+      if (offset + size > dataSize) {
+        ILLUSION_WARNING << "Failed to upload image completely: Not enough data provided!"
+                         << std::endl;
+        break;
+      }
+
+      vk::BufferImageCopy info;
+      info.imageSubresource.aspectMask     = imageAspectMask;
+      info.imageSubresource.mipLevel       = i;
+      info.imageSubresource.baseArrayLayer = 0;
+      info.imageSubresource.layerCount     = imageInfo.arrayLayers;
+      info.imageExtent.width               = mipWidth;
+      info.imageExtent.height              = mipHeight;
+      info.imageExtent.depth               = 1;
+      info.bufferOffset                    = offset;
+
+      infos.push_back(info);
+
+      offset += size;
+      mipWidth  = std::max(mipWidth / 2, 1u);
+      mipHeight = std::max(mipHeight / 2, 1u);
+    }
+
+    cmd->copyBufferToImage(
+      *stagingBuffer->mBuffer, *result->mImage, vk::ImageLayout::eTransferDstOptimal, infos);
+
+    barrier.oldLayout      = vk::ImageLayout::eTransferDstOptimal;
+    barrier.newLayout      = vk::ImageLayout::eShaderReadOnlyOptimal;
+    result->mCurrentLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+
+    cmd->pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
+      vk::DependencyFlagBits(), nullptr, nullptr, barrier);
+
+    cmd->end();
+
+    vk::CommandBuffer bufs[] = {*cmd};
+    vk::SubmitInfo    info;
+    info.commandBufferCount = 1;
+    info.pCommandBuffers    = bufs;
+
+    getQueue(QueueType::eGeneric).submit(info, nullptr);
+    getQueue(QueueType::eGeneric).waitIdle();
+  }
 
   return result;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BackedBufferPtr Device::createBackedBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage,
-  vk::MemoryPropertyFlags properties, const void* data) const {
+BackedBufferPtr Device::createBackedBuffer(vk::BufferUsageFlags usage,
+  vk::MemoryPropertyFlags properties, vk::DeviceSize dataSize, const void* data) const {
 
-  auto result   = std::make_shared<BackedBuffer>();
-  result->mSize = size;
+  auto result = std::make_shared<BackedBuffer>();
 
-  {
-    vk::BufferCreateInfo info;
-    info.size        = size;
-    info.usage       = usage;
-    info.sharingMode = vk::SharingMode::eExclusive;
+  result->mBufferInfo.size        = dataSize;
+  result->mBufferInfo.usage       = usage;
+  result->mBufferInfo.sharingMode = vk::SharingMode::eExclusive;
 
-    // if data upload will use a staging buffer, we need to make sure transferDst is set!
-    if (data && (!(properties & vk::MemoryPropertyFlagBits::eHostVisible) ||
-                  !(properties & vk::MemoryPropertyFlagBits::eHostCoherent))) {
-      info.usage |= vk::BufferUsageFlagBits::eTransferDst;
-    }
-
-    result->mBuffer = createBuffer(info);
+  // if data upload will use a staging buffer, we need to make sure transferDst is set!
+  if (data && (!(properties & vk::MemoryPropertyFlagBits::eHostVisible) ||
+                !(properties & vk::MemoryPropertyFlagBits::eHostCoherent))) {
+    result->mBufferInfo.usage |= vk::BufferUsageFlagBits::eTransferDst;
   }
 
-  {
-    auto requirements = mDevice->getBufferMemoryRequirements(*result->mBuffer);
+  result->mBuffer = createBuffer(result->mBufferInfo);
 
-    vk::MemoryAllocateInfo info;
-    info.allocationSize  = requirements.size;
-    info.memoryTypeIndex = mPhysicalDevice->findMemoryType(requirements.memoryTypeBits, properties);
+  auto requirements = mDevice->getBufferMemoryRequirements(*result->mBuffer);
 
-    result->mMemory = createMemory(info);
-  }
+  result->mMemoryInfo.allocationSize = requirements.size;
+  result->mMemoryInfo.memoryTypeIndex =
+    mPhysicalDevice->findMemoryType(requirements.memoryTypeBits, properties);
+
+  result->mMemory = createMemory(result->mMemoryInfo);
 
   mDevice->bindBufferMemory(*result->mBuffer, *result->mMemory, 0);
 
@@ -134,19 +201,20 @@ BackedBufferPtr Device::createBackedBuffer(vk::DeviceSize size, vk::BufferUsageF
 
       // simple case - memory is host visible and coherent;
       // we can simply map it and upload the data
-      void* dst = mDevice->mapMemory(*result->mMemory, 0, size);
-      std::memcpy(dst, data, size);
+      void* dst = mDevice->mapMemory(*result->mMemory, 0, dataSize);
+      std::memcpy(dst, data, dataSize);
       mDevice->unmapMemory(*result->mMemory);
     } else {
 
       // more difficult case, we need a staging buffer!
-      auto stagingBuffer = createBackedBuffer(size, vk::BufferUsageFlagBits::eTransferSrc,
-        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, data);
+      auto stagingBuffer = createBackedBuffer(vk::BufferUsageFlagBits::eTransferSrc,
+        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+        dataSize, data);
 
       auto cmd = allocateCommandBuffer();
       cmd->begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
       vk::BufferCopy region;
-      region.size = size;
+      region.size = dataSize;
       cmd->copyBuffer(*stagingBuffer->mBuffer, *result->mBuffer, 1, &region);
       cmd->end();
 
@@ -165,27 +233,56 @@ BackedBufferPtr Device::createBackedBuffer(vk::DeviceSize size, vk::BufferUsageF
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BackedBufferPtr Device::createVertexBuffer(vk::DeviceSize size, const void* data) const {
-  return createBackedBuffer(
-    size, vk::BufferUsageFlagBits::eVertexBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal, data);
+BackedBufferPtr Device::createVertexBuffer(vk::DeviceSize dataSize, const void* data) const {
+  return createBackedBuffer(vk::BufferUsageFlagBits::eVertexBuffer,
+    vk::MemoryPropertyFlagBits::eDeviceLocal, dataSize, data);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BackedBufferPtr Device::createIndexBuffer(vk::DeviceSize size, const void* data) const {
-  return createBackedBuffer(
-    size, vk::BufferUsageFlagBits::eIndexBuffer, vk::MemoryPropertyFlagBits::eDeviceLocal, data);
+BackedBufferPtr Device::createIndexBuffer(vk::DeviceSize dataSize, const void* data) const {
+  return createBackedBuffer(vk::BufferUsageFlagBits::eIndexBuffer,
+    vk::MemoryPropertyFlagBits::eDeviceLocal, dataSize, data);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 BackedBufferPtr Device::createUniformBuffer(vk::DeviceSize size) const {
-  return createBackedBuffer(size,
+  return createBackedBuffer(
     vk::BufferUsageFlagBits::eUniformBuffer | vk::BufferUsageFlagBits::eTransferDst,
-    vk::MemoryPropertyFlagBits::eDeviceLocal);
+    vk::MemoryPropertyFlagBits::eDeviceLocal, size);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+TexturePtr Device::createTexture(vk::ImageCreateInfo imageInfo, vk::SamplerCreateInfo samplerInfo,
+  vk::ImageViewType viewType, vk::ImageAspectFlags imageAspectMask, vk::DeviceSize dataSize,
+  const void* data) const {
+
+  auto result = std::make_shared<Texture>();
+
+  // create backed image for texture
+  result->mBackedImage = createBackedImage(
+    imageInfo, viewType, imageAspectMask, vk::MemoryPropertyFlagBits::eDeviceLocal, dataSize, data);
+
+  // create sampler
+  result->mSamplerInfo = samplerInfo;
+  result->mSampler     = createSampler(result->mSamplerInfo);
+
+  return result;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+vk::SamplerCreateInfo Device::createSamplerInfo(
+  vk::Filter filter, vk::SamplerMipmapMode mipmapMode, vk::SamplerAddressMode addressMode) {
+
+  return vk::SamplerCreateInfo(
+    vk::SamplerCreateFlags(), filter, filter, mipmapMode, addressMode, addressMode);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 TexturePtr Device::getSinglePixelTexture(std::array<uint8_t, 4> const& color) {
 
   auto cached = mSinglePixelTextures.find(color);
@@ -193,12 +290,24 @@ TexturePtr Device::getSinglePixelTexture(std::array<uint8_t, 4> const& color) {
     return cached->second;
   }
 
-  auto texture = Illusion::Graphics::Texture::create2D(shared_from_this(), 1, 1,
-    vk::Format::eR8G8B8A8Unorm, vk::ImageUsageFlagBits::eSampled,
-    vk::SamplerCreateInfo(vk::SamplerCreateFlags(), vk::Filter::eLinear, vk::Filter::eLinear,
-      vk::SamplerMipmapMode::eNearest, vk::SamplerAddressMode::eClampToEdge,
-      vk::SamplerAddressMode::eClampToEdge),
-    4, &color[0]);
+  vk::ImageCreateInfo imageInfo;
+  imageInfo.imageType     = vk::ImageType::e2D;
+  imageInfo.format        = vk::Format::eR8G8B8A8Unorm;
+  imageInfo.extent.width  = 1;
+  imageInfo.extent.height = 1;
+  imageInfo.extent.depth  = 1;
+  imageInfo.mipLevels     = 1;
+  imageInfo.arrayLayers   = 1;
+  imageInfo.samples       = vk::SampleCountFlagBits::e1;
+  imageInfo.tiling        = vk::ImageTiling::eOptimal;
+  imageInfo.usage         = vk::ImageUsageFlagBits::eSampled;
+  imageInfo.sharingMode   = vk::SharingMode::eExclusive;
+  imageInfo.initialLayout = vk::ImageLayout::eUndefined;
+
+  vk::SamplerCreateInfo samplerInfo = createSamplerInfo();
+
+  auto texture = createTexture(
+    imageInfo, samplerInfo, vk::ImageViewType::e2D, vk::ImageAspectFlagBits::eColor, 4, &color[0]);
 
   mSinglePixelTextures[color] = texture;
 
@@ -436,28 +545,6 @@ vk::SwapchainKHRPtr Device::createSwapChainKhr(vk::SwapchainCreateInfoKHR const&
     delete obj;
   });
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// CommandBufferPtr Device::beginSingleTimeCommands(QueueType type) const {
-//   mOneTimeCommandBuffers[Core::enumCast(type)]->reset({});
-//   mOneTimeCommandBuffers[Core::enumCast(type)]->begin(
-//     {vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
-//   return mOneTimeCommandBuffers[Core::enumCast(type)];
-// }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// void Device::endSingleTimeCommands(QueueType type) const {
-//   mOneTimeCommandBuffers[Core::enumCast(type)]->end();
-
-//   vk::SubmitInfo info;
-//   info.commandBufferCount = 1;
-//   info.pCommandBuffers    = mOneTimeCommandBuffers[Core::enumCast(type)].get();
-
-//   getQueue(type).submit(info, nullptr);
-//   getQueue(type).waitIdle();
-// }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -14,7 +14,7 @@
 #include <Illusion/Graphics/PipelineReflection.hpp>
 #include <Illusion/Graphics/RenderPass.hpp>
 #include <Illusion/Graphics/ShaderProgram.hpp>
-#include <Illusion/Graphics/Texture.hpp>
+#include <Illusion/Graphics/TextureUtils.hpp>
 #include <Illusion/Graphics/Window.hpp>
 
 #include <thread>
@@ -30,10 +30,10 @@ int main(int argc, char* argv[]) {
   auto window = Illusion::Graphics::Window::create(engine, device);
 
   auto shader = Illusion::Graphics::ShaderProgram::createFromFiles(
-    device, {"data/shaders/TexturedQuad.vert", "data/shaders/TexturedQuad.frag"});
+    device, {"data/shaders/Quad.vert", "data/shaders/CubemapQuad.frag"});
 
-  auto brdflut = Illusion::Graphics::Texture::createBRDFLuT(device, 512);
-  auto cubemap = Illusion::Graphics::Texture::createCubemapFrom360PanoramaFile(
+  auto brdflut = Illusion::Graphics::TextureUtils::createBRDFLuT(device, 512);
+  auto cubemap = Illusion::Graphics::TextureUtils::createCubemapFrom360PanoramaFile(
     device, "data/textures/sunset_fairway_1k.hdr", 512);
 
   auto renderPass = Illusion::Graphics::RenderPass::create(device);

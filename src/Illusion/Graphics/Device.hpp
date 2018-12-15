@@ -22,26 +22,42 @@ struct GLFWwindow;
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct BackedImage {
   vk::ImagePtr        mImage;
-  vk::DeviceMemoryPtr mMemory;
-  vk::DeviceSize      mSize;
-  vk::ImageCreateInfo mInfo;
+  vk::ImageCreateInfo mImageInfo;
+
+  vk::ImageViewPtr        mView;
+  vk::ImageViewCreateInfo mViewInfo;
+
+  vk::DeviceMemoryPtr    mMemory;
+  vk::MemoryAllocateInfo mMemoryInfo;
+
+  vk::ImageLayout mCurrentLayout = vk::ImageLayout::eUndefined;
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct Texture {
+  std::shared_ptr<BackedImage> mBackedImage;
+
+  vk::SamplerPtr        mSampler;
+  vk::SamplerCreateInfo mSamplerInfo;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct BackedBuffer {
-  vk::BufferPtr       mBuffer;
-  vk::DeviceMemoryPtr mMemory;
-  vk::DeviceSize      mSize;
+  vk::BufferPtr        mBuffer;
+  vk::BufferCreateInfo mBufferInfo;
+
+  vk::DeviceMemoryPtr    mMemory;
+  vk::MemoryAllocateInfo mMemoryInfo;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class Device : public std::enable_shared_from_this<Device> {
+class Device {
 
  public:
   template <typename... Args>
@@ -53,16 +69,15 @@ class Device : public std::enable_shared_from_this<Device> {
   virtual ~Device();
 
   // high-level create methods ---------------------------------------------------------------------
-  BackedImagePtr createBackedImage(uint32_t width, uint32_t height, uint32_t depth, uint32_t levels,
-    uint32_t layers, vk::Format format, vk::ImageTiling tiling, vk::ImageUsageFlags usage,
-    vk::MemoryPropertyFlags properties, vk::SampleCountFlagBits samples,
-    vk::ImageCreateFlags flags = vk::ImageCreateFlags()) const;
+  BackedImagePtr createBackedImage(vk::ImageCreateInfo info, vk::ImageViewType viewType,
+    vk::ImageAspectFlags imageAspectMask, vk::MemoryPropertyFlags properties,
+    vk::DeviceSize dataSize = 0, const void* data = nullptr) const;
 
-  BackedBufferPtr createBackedBuffer(vk::DeviceSize size, vk::BufferUsageFlags usage,
-    vk::MemoryPropertyFlags properties, const void* data = nullptr) const;
+  BackedBufferPtr createBackedBuffer(vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties,
+    vk::DeviceSize dataSize, const void* data = nullptr) const;
 
-  BackedBufferPtr createVertexBuffer(vk::DeviceSize size, const void* data) const;
-  BackedBufferPtr createIndexBuffer(vk::DeviceSize size, const void* data) const;
+  BackedBufferPtr createVertexBuffer(vk::DeviceSize dataSize, const void* data) const;
+  BackedBufferPtr createIndexBuffer(vk::DeviceSize dataSize, const void* data) const;
 
   template <typename T>
   BackedBufferPtr createVertexBuffer(T const& data) const {
@@ -76,7 +91,15 @@ class Device : public std::enable_shared_from_this<Device> {
 
   BackedBufferPtr createUniformBuffer(vk::DeviceSize size) const;
 
+  TexturePtr createTexture(vk::ImageCreateInfo imageInfo, vk::SamplerCreateInfo samplerInfo,
+    vk::ImageViewType viewType, vk::ImageAspectFlags imageAspectMask, vk::DeviceSize dataSize = 0,
+    const void* data = nullptr) const;
+
   TexturePtr getSinglePixelTexture(std::array<uint8_t, 4> const& color);
+
+  static vk::SamplerCreateInfo createSamplerInfo(vk::Filter filter = vk::Filter::eLinear,
+    vk::SamplerMipmapMode  mipmapMode                              = vk::SamplerMipmapMode::eLinear,
+    vk::SamplerAddressMode addressMode = vk::SamplerAddressMode::eClampToEdge);
 
   // low-level create methods ----------------------------------------------------------------------
   // clang-format off
