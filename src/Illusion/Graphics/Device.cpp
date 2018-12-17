@@ -119,8 +119,6 @@ BackedImagePtr Device::createBackedImage(vk::ImageCreateInfo imageInfo, vk::Imag
       uint64_t size = mipWidth * mipHeight * Utils::getByteCount(imageInfo.format);
 
       if (offset + size > dataSize) {
-        ILLUSION_WARNING << "Failed to upload image completely: Not enough data provided!"
-                         << std::endl;
         break;
       }
 

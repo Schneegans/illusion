@@ -39,8 +39,8 @@ class ShaderProgram {
 
   std::vector<ShaderModulePtr> const& getModules() const;
 
-  PipelineReflectionPtr const&                          getReflection() const;
-  std::map<uint32_t, DescriptorSetReflectionPtr> const& getDescriptorSetReflections() const;
+  PipelineReflectionPtr const&                   getReflection() const;
+  std::vector<DescriptorSetReflectionPtr> const& getDescriptorSetReflections() const;
 
  private:
   void createReflection();

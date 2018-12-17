@@ -8,6 +8,9 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#define GLM_FORCE_SWIZZLE
+#define GLM_ENABLE_EXPERIMENTAL
+
 #include <Illusion/Core/CommandLineOptions.hpp>
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Core/RingBuffer.hpp>
@@ -15,18 +18,25 @@
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/Engine.hpp>
 #include <Illusion/Graphics/GltfModel.hpp>
+#include <Illusion/Graphics/PhysicalDevice.hpp>
 #include <Illusion/Graphics/RenderPass.hpp>
 #include <Illusion/Graphics/ShaderProgram.hpp>
 #include <Illusion/Graphics/TextureUtils.hpp>
 #include <Illusion/Graphics/Window.hpp>
 
-#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/io.hpp>
 #include <glm/gtx/transform.hpp>
 #include <thread>
 
 struct PushConstants {
-  glm::mat4                                              mModelView;
+  glm::mat4                                              mModelMatrix;
   Illusion::Graphics::GltfModel::Material::PushConstants mMaterial;
+};
+
+struct CameraUniforms {
+  glm::vec4 mPosition;
+  glm::mat4 mViewMatrix;
+  glm::mat4 mProjectionMatrix;
 };
 
 struct FrameResources {
@@ -41,10 +51,6 @@ struct FrameResources {
     mRenderPass->addAttachment(vk::Format::eD32Sfloat);
 
     mCmd->graphicsState().addBlendAttachment({});
-    mCmd->graphicsState().setVertexInputBindings(
-      Illusion::Graphics::GltfModel::getVertexInputBindings());
-    mCmd->graphicsState().setVertexInputAttributes(
-      Illusion::Graphics::GltfModel::getVertexInputAttributes());
   }
 
   Illusion::Graphics::CommandBufferPtr         mCmd;
@@ -64,8 +70,8 @@ void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::GltfModel::Node>>
 
       for (auto const& p : n->mMesh->mPrimitives) {
         PushConstants pushConstants;
-        pushConstants.mModelView = viewMatrix * modelMatrix;
-        pushConstants.mMaterial  = p.mMaterial->mPushConstants;
+        pushConstants.mModelMatrix = modelMatrix;
+        pushConstants.mMaterial    = p.mMaterial->mPushConstants;
         res.mCmd->pushConstants(pushConstants);
 
         res.mCmd->bindingState().setTexture(p.mMaterial->mAlbedoTexture, 2, 0);
@@ -110,21 +116,24 @@ int main(int argc, char* argv[]) {
 
   auto brdflut = Illusion::Graphics::TextureUtils::createBRDFLuT(device, 256);
   auto cubemap = Illusion::Graphics::TextureUtils::createCubemapFrom360PanoramaFile(
-    device, "data/textures/whipple_creek_regional_park_04_1k.hdr", 256);
+    device, "data/textures/sunset_fairway_1k.hdr", 256);
   auto prefilteredIrradiance =
     Illusion::Graphics::TextureUtils::createPrefilteredIrradianceCubemap(device, 64, cubemap);
   auto prefilteredReflection =
     Illusion::Graphics::TextureUtils::createPrefilteredReflectionCubemap(device, cubemap);
 
-  auto shader = Illusion::Graphics::ShaderProgram::createFromFiles(
+  auto pbrShader = Illusion::Graphics::ShaderProgram::createFromFiles(
     device, {"data/shaders/SimpleGltfShader.vert", "data/shaders/SimpleGltfShader.frag"});
+
+  auto skyShader = Illusion::Graphics::ShaderProgram::createFromFiles(
+    device, {"data/shaders/Quad.vert", "data/shaders/Skybox.frag"});
 
   Illusion::Core::RingBuffer<FrameResources, 2> frameResources{
     FrameResources(device), FrameResources(device)};
 
   glm::vec3 cameraPolar(0.f, 0.f, 1.5f);
 
-  window->sOnMouseEvent.connect([&](Illusion::Input::MouseEvent const& e) {
+  window->sOnMouseEvent.connect([&cameraPolar, &window](Illusion::Input::MouseEvent const& e) {
     if (e.mType == Illusion::Input::MouseEvent::Type::eMove) {
       static int lastX = e.mX;
       static int lastY = e.mY;
@@ -164,37 +173,61 @@ int main(int argc, char* argv[]) {
     res.mCmd->reset();
     res.mCmd->begin();
 
-    res.mCmd->setShaderProgram(shader);
     res.mRenderPass->setExtent(window->pExtent.get());
     res.mCmd->graphicsState().setViewports(
       {{glm::vec2(0), glm::vec2(window->pExtent.get()), 0.f, 1.f}});
 
-    glm::mat4 projection = glm::perspectiveZO(glm::radians(50.f),
+    CameraUniforms camera;
+    camera.mProjectionMatrix = glm::perspectiveZO(glm::radians(50.f),
       static_cast<float>(window->pExtent.get().x) / static_cast<float>(window->pExtent.get().y),
       0.1f, 100.0f);
-    projection[1][1] *= -1;
-    res.mUniformBuffer->updateData(projection);
+    camera.mProjectionMatrix[1][1] *= -1;
 
-    glm::vec3 cameraCartesian =
-      glm::vec3(std::cos(cameraPolar.y) * std::sin(cameraPolar.x), -std::sin(cameraPolar.y),
-        std::cos(cameraPolar.y) * std::cos(cameraPolar.x)) *
-      cameraPolar.z;
+    camera.mPosition =
+      glm::vec4(glm::vec3(std::cos(cameraPolar.y) * std::sin(cameraPolar.x),
+                  -std::sin(cameraPolar.y), std::cos(cameraPolar.y) * std::cos(cameraPolar.x)) *
+                  cameraPolar.z,
+        1.0);
 
-    glm::mat4 viewMatrix = glm::lookAt(cameraCartesian, glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
+    camera.mViewMatrix =
+      glm::lookAt(camera.mPosition.xyz(), glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
+    res.mUniformBuffer->updateData(camera);
+
+    res.mCmd->beginRenderPass(res.mRenderPass);
 
     res.mCmd->bindingState().setUniformBuffer(
-      res.mUniformBuffer->getBuffer(), sizeof(glm::mat4), 0, 0, 0);
+      res.mUniformBuffer->getBuffer(), sizeof(CameraUniforms), 0, 0, 0);
 
+    res.mCmd->setShaderProgram(skyShader);
+    res.mCmd->bindingState().setTexture(cubemap, 1, 0);
+    res.mCmd->graphicsState().setDepthTestEnable(false);
+    res.mCmd->graphicsState().setDepthWriteEnable(false);
+    res.mCmd->graphicsState().setTopology(vk::PrimitiveTopology::eTriangleStrip);
+    res.mCmd->graphicsState().setVertexInputAttributes({});
+    res.mCmd->graphicsState().setVertexInputBindings({});
+
+    res.mCmd->draw(4);
+
+    res.mCmd->bindingState().clearSet(1);
+
+    res.mCmd->setShaderProgram(pbrShader);
     res.mCmd->bindingState().setTexture(brdflut, 1, 0);
     res.mCmd->bindingState().setTexture(prefilteredIrradiance, 1, 1);
     res.mCmd->bindingState().setTexture(prefilteredReflection, 1, 2);
-
-    res.mCmd->beginRenderPass(res.mRenderPass);
+    res.mCmd->graphicsState().setDepthTestEnable(true);
+    res.mCmd->graphicsState().setDepthWriteEnable(true);
+    res.mCmd->graphicsState().setVertexInputAttributes(
+      Illusion::Graphics::GltfModel::getVertexInputAttributes());
+    res.mCmd->graphicsState().setVertexInputBindings(
+      Illusion::Graphics::GltfModel::getVertexInputBindings());
 
     res.mCmd->bindVertexBuffers(0, {model->getVertexBuffer()});
     res.mCmd->bindIndexBuffer(model->getIndexBuffer(), 0, vk::IndexType::eUint32);
 
-    drawNodes(model->getNodes(), modelMatrix, viewMatrix, res);
+    drawNodes(model->getNodes(), modelMatrix, camera.mViewMatrix, res);
+
+    res.mCmd->bindingState().clearSet(1);
+    res.mCmd->bindingState().clearSet(2);
 
     res.mCmd->endRenderPass();
     res.mCmd->end();

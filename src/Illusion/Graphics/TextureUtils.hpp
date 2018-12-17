@@ -11,7 +11,7 @@
 #ifndef ILLUSION_GRAPHICS_TEXTURE_UTILS_HPP
 #define ILLUSION_GRAPHICS_TEXTURE_UTILS_HPP
 
-#include "fwd.hpp"
+#include "Device.hpp"
 
 namespace Illusion::Graphics::TextureUtils {
 
@@ -23,10 +23,10 @@ bool formatSupportsLinearSampling(DevicePtr const& device, vk::Format format);
 uint32_t getMaxMipmapLevels(uint32_t width, uint32_t height);
 
 TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
-  vk::SamplerCreateInfo samplerInfo = vk::SamplerCreateInfo(), bool generateMipmaps = true);
+  vk::SamplerCreateInfo samplerInfo = Device::createSamplerInfo(), bool generateMipmaps = true);
 
 TexturePtr createCubemapFrom360PanoramaFile(DevicePtr const& device, std::string const& fileName,
-  int32_t size, vk::SamplerCreateInfo samplerInfo = vk::SamplerCreateInfo(),
+  int32_t size, vk::SamplerCreateInfo samplerInfo = Device::createSamplerInfo(),
   bool generateMipmaps = true);
 
 TexturePtr createPrefilteredIrradianceCubemap(

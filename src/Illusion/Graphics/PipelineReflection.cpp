@@ -67,19 +67,17 @@ void PipelineReflection::addResource(PipelineResource const& resource) {
     return;
   }
 
-  auto it = mDescriptorSetReflections.find(resource.mSet);
-  if (it != mDescriptorSetReflections.end()) {
-    it->second->addResource(resource);
-  } else {
-    auto setReflection = std::make_shared<DescriptorSetReflection>(mDevice, resource.mSet);
-    setReflection->addResource(resource);
-    mDescriptorSetReflections.emplace(resource.mSet, setReflection);
+  while (mDescriptorSetReflections.size() < resource.mSet + 1) {
+    mDescriptorSetReflections.emplace_back(
+      std::make_shared<DescriptorSetReflection>(mDevice, resource.mSet));
   }
+
+  mDescriptorSetReflections[resource.mSet]->addResource(resource);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::map<uint32_t, DescriptorSetReflectionPtr> const&
+std::vector<DescriptorSetReflectionPtr> const&
 PipelineReflection::getDescriptorSetReflections() const {
   return mDescriptorSetReflections;
 };
@@ -100,7 +98,7 @@ std::map<std::string, PipelineResource> PipelineReflection::getResources(
   std::map<std::string, PipelineResource> result;
 
   for (auto const& s : mDescriptorSetReflections) {
-    auto const& r = s.second->getResources(type);
+    auto const& r = s->getResources(type);
     result.insert(r.begin(), r.end());
   }
 
@@ -114,7 +112,7 @@ std::map<std::string, PipelineResource> PipelineReflection::getResources() const
   std::map<std::string, PipelineResource> result;
 
   for (auto const& s : mDescriptorSetReflections) {
-    auto const& r = s.second->getResources();
+    auto const& r = s->getResources();
     result.insert(r.begin(), r.end());
   }
 
@@ -131,7 +129,7 @@ vk::PipelineLayoutPtr const& PipelineReflection::getLayout() const {
   if (!mLayout) {
     std::vector<vk::DescriptorSetLayout> descriptorSetLayouts;
     for (auto const& r : mDescriptorSetReflections) {
-      descriptorSetLayouts.push_back(*r.second->getLayout());
+      descriptorSetLayouts.push_back(*r->getLayout());
     }
 
     std::vector<vk::PushConstantRange> pushConstantRanges;
@@ -178,7 +176,7 @@ void PipelineReflection::printInfo() const {
   }
 
   for (auto const& s : mDescriptorSetReflections) {
-    s.second->printInfo();
+    s->printInfo();
   }
 }
 

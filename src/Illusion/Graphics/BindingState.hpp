@@ -41,6 +41,8 @@ class BindingState {
   std::optional<BindingType>             getBinding(uint32_t set, uint32_t binding);
   std::map<uint32_t, BindingType> const& getBindings(uint32_t set);
 
+  void clearSet(uint32_t set);
+
   std::set<uint32_t> const& getDirtySets() const;
   void                      clearDirtySets();
 

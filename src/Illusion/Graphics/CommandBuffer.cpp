@@ -344,15 +344,19 @@ void CommandBuffer::flush() {
   //         bind descriptor set
   //         store it
 
-  for (auto setReflection : mCurrentShaderProgram->getDescriptorSetReflections()) {
+  auto const& setReflections = mCurrentShaderProgram->getDescriptorSetReflections();
+  for (uint32_t setNum = 0; setNum < setReflections.size(); ++setNum) {
 
-    uint32_t setNum = setReflection.first;
+    // ignore empty descriptor sets
+    if (setReflections[setNum]->getResources().size() == 0) {
+      continue;
+    }
 
     auto currentHashIt = mCurrentDescriptorSetLayoutHashes.find(setNum);
 
     if (mBindingState.getDirtySets().find(setNum) != mBindingState.getDirtySets().end() ||
         currentHashIt == mCurrentDescriptorSetLayoutHashes.end() ||
-        currentHashIt->second != setReflection.second->getHash()) {
+        currentHashIt->second != setReflections[setNum]->getHash()) {
 
       auto descriptorSet = mDescriptorSetCache.acquireHandle(
         mCurrentShaderProgram->getDescriptorSetReflections().at(setNum));
@@ -418,7 +422,7 @@ void CommandBuffer::flush() {
       mVkCmd->bindDescriptorSets(bindPoint, *mCurrentShaderProgram->getReflection()->getLayout(),
         setNum, *descriptorSet, {});
 
-      mCurrentDescriptorSetLayoutHashes[setNum] = setReflection.second->getHash();
+      mCurrentDescriptorSetLayoutHashes[setNum] = setReflections[setNum]->getHash();
     }
   }
 

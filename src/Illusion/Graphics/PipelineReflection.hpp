@@ -44,9 +44,9 @@ class PipelineReflection {
   // before, the mStages of the new resource will be appended to those of the previous resource.
   void addResource(PipelineResource const& resource);
 
-  // Returns a reference to a map which can be used to access the individual
+  // Returns a reference to a vector containing the individual
   // DescriptorSetReflections of this PipelineReflection.
-  std::map<uint32_t, DescriptorSetReflectionPtr> const& getDescriptorSetReflections() const;
+  std::vector<DescriptorSetReflectionPtr> const& getDescriptorSetReflections() const;
 
   // Returns all resources which have been added to this PipelineReflection. The returned map is
   // created on-the-fly, hence this operation is quite costly. If this becomes a bottleneck, storing
@@ -66,12 +66,12 @@ class PipelineReflection {
   void printInfo() const;
 
  private:
-  DevicePtr                                      mDevice;
-  std::map<uint32_t, DescriptorSetReflectionPtr> mDescriptorSetReflections;
-  std::map<std::string, PipelineResource>        mInputs;
-  std::map<std::string, PipelineResource>        mOutputs;
-  std::map<std::string, PipelineResource>        mPushConstantBuffers;
-  mutable vk::PipelineLayoutPtr                  mLayout;
+  DevicePtr                               mDevice;
+  std::vector<DescriptorSetReflectionPtr> mDescriptorSetReflections;
+  std::map<std::string, PipelineResource> mInputs;
+  std::map<std::string, PipelineResource> mOutputs;
+  std::map<std::string, PipelineResource> mPushConstantBuffers;
+  mutable vk::PipelineLayoutPtr           mLayout;
 };
 
 } // namespace Illusion::Graphics

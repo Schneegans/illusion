@@ -14,16 +14,36 @@
 layout(location = 0) in vec2 vTexcoords;
 
 // uniforms
-layout(binding = 0) uniform samplerCube texSampler;
+layout(binding = 0, set = 0) uniform CameraUniforms {
+  vec4 mPosition;
+  mat4 mViewMatrix; 
+  mat4 mProjectionMatrix;
+} camera;
+
+layout(binding = 0, set = 1) uniform samplerCube texSampler;
 
 // outputs
 layout(location = 0) out vec4 outColor;
 
-// methods
+// From http://filmicgames.com/archives/75
+vec3 Uncharted2Tonemap(vec3 x) {
+  float A = 0.15;
+  float B = 0.50;
+  float C = 0.10;
+  float D = 0.20;
+  float E = 0.02;
+  float F = 0.30;
+  return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F;
+}
+
 void main() {
-  vec2 longLat = (vTexcoords - vec2(0, 0.5)) * vec2(2, -1) * 3.14159265359;
-  vec3 dir = vec3(sin(longLat.x) * cos(longLat.y), 
-                  sin(longLat.y), 
-                  cos(longLat.x) * cos(longLat.y));
-  outColor = textureLod(texSampler, dir, 3);
+
+  vec4 farPos = inverse(camera.mProjectionMatrix * camera.mViewMatrix) * vec4(vTexcoords*2-1, -1, 1);
+  farPos /= farPos.w;
+
+  outColor = texture(texSampler, normalize((farPos - camera.mPosition).xyz));
+
+  // Tone mapping
+  outColor.rgb = Uncharted2Tonemap(outColor.rgb);
+  outColor.rgb = outColor.rgb * (1.0 / Uncharted2Tonemap(vec3(11.2)));  
 }

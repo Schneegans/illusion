@@ -91,8 +91,7 @@ PipelineReflectionPtr const& ShaderProgram::getReflection() const { return mRefl
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::map<uint32_t, DescriptorSetReflectionPtr> const&
-ShaderProgram::getDescriptorSetReflections() const {
+std::vector<DescriptorSetReflectionPtr> const& ShaderProgram::getDescriptorSetReflections() const {
   return mReflection->getDescriptorSetReflections();
 }
 

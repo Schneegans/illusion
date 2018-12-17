@@ -15,6 +15,7 @@ layout(location = 0) in vec3 vPosition;
 layout(location = 1) in vec3 vNormal;
 layout(location = 2) in vec2 vTexcoords;
 
+// uniforms
 layout(binding = 0, set = 1) uniform sampler2D   uBRDFLuT;
 layout(binding = 1, set = 1) uniform samplerCube uPrefilteredIrradiance;
 layout(binding = 2, set = 1) uniform samplerCube uPrefilteredReflection;
@@ -24,6 +25,12 @@ layout(binding = 1, set = 2) uniform sampler2D mMetallicRoughnessTexture;
 layout(binding = 2, set = 2) uniform sampler2D mNormalTexture;
 layout(binding = 3, set = 2) uniform sampler2D uOcclusionTexture;
 layout(binding = 4, set = 2) uniform sampler2D uEmissiveTexture;
+
+layout(binding = 0, set = 0) uniform CameraUniforms {
+  vec4 mPosition;
+  mat4 mViewMatrix; 
+  mat4 mProjectionMatrix;
+} camera;
 
 // push constants
 struct Material {
@@ -37,7 +44,7 @@ struct Material {
 };
 
 layout(push_constant, std430) uniform PushConstants {
-  mat4     mModelView;
+  mat4     mModelMatrix;
   Material mMaterial;
 } pushConstants;
 
@@ -179,7 +186,7 @@ void main() {
   F0 = mix(F0, albedo.rgb, metallic);
 
   vec3 lightDir = normalize(vec3(0, 1, 1));
-  vec3 viewDir = normalize(-vPosition);
+  vec3 viewDir = normalize(camera.mPosition.xyz - vPosition);
 
   outColor.rgb = vec3(0.0);
   // outColor.rgb += directLighting(lightDir, viewDir, normal, F0, albedo.rgb, metallic, roughness);
