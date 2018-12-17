@@ -15,7 +15,6 @@ install(DIRECTORY "data"
 
 # make each example --------------------------------------------------------------------------------
 set(ENABLED_EXAMPLES
-  "PBR"
   "SimpleGltf"
   "TexturedCube"
   "TexturedQuad"
