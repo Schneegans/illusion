@@ -199,7 +199,8 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
         imageInfo.initialLayout = vk::ImageLayout::eUndefined;
 
         auto texture = mDevice->createTexture(imageInfo, samplerInfo, vk::ImageViewType::e2D,
-          vk::ImageAspectFlagBits::eColor, image.image.size(), (void*)image.image.data());
+          vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eShaderReadOnlyOptimal,
+          image.image.size(), (void*)image.image.data());
 
         TextureUtils::updateMipmaps(mDevice, texture);
 
@@ -215,7 +216,7 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
 
       auto m = std::make_shared<Material>();
 
-      m->mBaseColorTexture         = mDevice->getSinglePixelTexture({255, 255, 255, 255});
+      m->mAlbedoTexture            = mDevice->getSinglePixelTexture({255, 255, 255, 255});
       m->mMetallicRoughnessTexture = mDevice->getSinglePixelTexture({255, 255, 255, 255});
       m->mNormalTexture            = mDevice->getSinglePixelTexture({127, 127, 255, 255});
       m->mOcclusionTexture         = mDevice->getSinglePixelTexture({255, 255, 255, 255});
@@ -225,7 +226,7 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
 
       for (auto const& p : material.values) {
         if (p.first == "baseColorTexture") {
-          m->mBaseColorTexture = textures[p.second.TextureIndex()];
+          m->mAlbedoTexture = textures[p.second.TextureIndex()];
         } else if (p.first == "metallicRoughnessTexture") {
           m->mMetallicRoughnessTexture = textures[p.second.TextureIndex()];
         } else if (p.first == "metallicFactor") {
@@ -233,8 +234,8 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
         } else if (p.first == "roughnessFactor") {
           m->mPushConstants.mRoughnessFactor = p.second.Factor();
         } else if (p.first == "baseColorFactor") {
-          auto fac                           = p.second.ColorFactor();
-          m->mPushConstants.mBaseColorFactor = glm::vec4(fac[0], fac[1], fac[2], fac[3]);
+          auto fac                        = p.second.ColorFactor();
+          m->mPushConstants.mAlbedoFactor = glm::vec4(fac[0], fac[1], fac[2], fac[3]);
         }
       }
 

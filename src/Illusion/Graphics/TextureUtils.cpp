@@ -92,7 +92,8 @@ TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
     }
 
     auto outputImage = device->createTexture(imageInfo, samplerInfo, vk::ImageViewType::e2D,
-      vk::ImageAspectFlagBits::eColor, texture.size(), texture.data());
+      vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eShaderReadOnlyOptimal, texture.size(),
+      texture.data());
 
     if (generateMipmaps) {
       updateMipmaps(device, outputImage);
@@ -145,8 +146,8 @@ TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
       samplerInfo.maxLod = imageInfo.mipLevels;
     }
 
-    auto result = device->createTexture(
-      imageInfo, samplerInfo, vk::ImageViewType::e2D, vk::ImageAspectFlagBits::eColor, size, data);
+    auto result = device->createTexture(imageInfo, samplerInfo, vk::ImageViewType::e2D,
+      vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eShaderReadOnlyOptimal, size, data);
 
     stbi_image_free(data);
 
@@ -175,7 +176,7 @@ TexturePtr createCubemapFrom360PanoramaFile(DevicePtr const& device, std::string
 
     // outputs
     layout (binding = 0)                    uniform sampler2D inputImage;
-    layout (rgba32f, binding = 1) writeonly uniform imageCube outputImage;
+    layout (rgba32f, binding = 1) writeonly uniform imageCube outputCubemap;
 
     // constants
     vec3 majorAxes[6] = vec3[6](
@@ -197,24 +198,27 @@ TexturePtr createCubemapFrom360PanoramaFile(DevicePtr const& device, std::string
     );
 
     void main() {
-      const uvec2 size = imageSize(outputImage);
-      const uint  face = gl_GlobalInvocationID.z;
+      const uvec2 size = imageSize(outputCubemap);
 
       if (gl_GlobalInvocationID.x >= size.x || gl_GlobalInvocationID.y >= size.y) {
           return;
       }
 
+      const uint  face = gl_GlobalInvocationID.z;
       const vec2 st = vec2(gl_GlobalInvocationID.xy) / size - 0.5;
       const vec3 dir = normalize(s[face] * st.s + t[face] * st.t + 0.5 * majorAxes[face]);
 
       const vec2 lngLat = vec2(atan(dir.x, dir.z), asin(dir.y));
-      const vec2 uv = (lngLat / 3.14159265359 + vec2(0, 0.5)) * vec2(0.5, -1);
+      const vec2 uv = (lngLat / 3.14159265359 + vec2(0, -0.5)) * vec2(0.5, -1);
 
-      imageStore(outputImage, ivec3(gl_GlobalInvocationID), vec4(texture(inputImage, uv).rgb, 1.0) );
+      imageStore(outputCubemap, ivec3(gl_GlobalInvocationID), vec4(texture(inputImage, uv).rgb, 1.0) );
     }
   )";
 
-  auto panorama = createFromFile(device, fileName);
+  auto panorama = createFromFile(device, fileName,
+    vk::SamplerCreateInfo(vk::SamplerCreateFlags(), vk::Filter::eLinear, vk::Filter::eLinear,
+      vk::SamplerMipmapMode::eLinear, vk::SamplerAddressMode::eRepeat,
+      vk::SamplerAddressMode::eClampToEdge));
   auto shader = ShaderProgram::createFromGlsl(device, {{vk::ShaderStageFlagBits::eCompute, glsl}});
 
   vk::ImageCreateInfo imageInfo;
@@ -239,12 +243,12 @@ TexturePtr createCubemapFrom360PanoramaFile(DevicePtr const& device, std::string
     samplerInfo.maxLod = imageInfo.mipLevels;
   }
 
-  auto outputImage = device->createTexture(
-    imageInfo, samplerInfo, vk::ImageViewType::eCube, vk::ImageAspectFlagBits::eColor);
+  auto outputCubemap = device->createTexture(imageInfo, samplerInfo, vk::ImageViewType::eCube,
+    vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eGeneral);
 
   auto cmd = CommandBuffer::create(device, QueueType::eCompute);
   cmd->bindingState().setTexture(panorama, 0, 0);
-  cmd->bindingState().setStorageImage(outputImage, 0, 1);
+  cmd->bindingState().setStorageImage(outputCubemap, 0, 1);
 
   cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
   cmd->setShaderProgram(shader);
@@ -256,10 +260,321 @@ TexturePtr createCubemapFrom360PanoramaFile(DevicePtr const& device, std::string
   cmd->waitIdle();
 
   if (generateMipmaps) {
-    updateMipmaps(device, outputImage);
+    updateMipmaps(device, outputCubemap);
   }
 
-  return outputImage;
+  return outputCubemap;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+TexturePtr createPrefilteredIrradianceCubemap(
+  DevicePtr const& device, uint32_t size, TexturePtr const& inputCubemap) {
+  std::string glsl = R"(
+    #version 450
+
+    // inputs
+    layout (local_size_x = 16, local_size_y = 16, local_size_z = 6) in;
+
+    // outputs
+    layout (binding = 0)                    uniform samplerCube inputCubemap;
+    layout (rgba32f, binding = 1) writeonly uniform imageCube   outputCubemap;
+
+    // constants
+    #define PI 3.14159265359
+
+    vec3 majorAxes[6] = vec3[6](
+      vec3( 1,  0,  0), vec3(-1,  0,  0),
+      vec3( 0,  1,  0), vec3( 0, -1,  0),
+      vec3( 0,  0,  1), vec3( 0,  0, -1)
+    );
+
+    vec3 s[6] = vec3[6](
+      vec3( 0,  0, -1), vec3( 0,  0,  1),
+      vec3( 1,  0,  0), vec3( 1,  0,  0),
+      vec3( 1,  0,  0), vec3(-1,  0,  0)
+    );
+
+    vec3 t[6] = vec3[6](
+      vec3( 0, -1,  0), vec3( 0, -1,  0),
+      vec3( 0,  0,  1), vec3( 0,  0, -1),
+      vec3( 0, -1,  0), vec3( 0, -1,  0)
+    );
+
+    void main() {
+      const uvec2 size = imageSize(outputCubemap);
+
+      if (gl_GlobalInvocationID.x >= size.x || gl_GlobalInvocationID.y >= size.y) {
+          return;
+      }
+
+      const uint  face = gl_GlobalInvocationID.z;
+      const vec2 st = vec2(gl_GlobalInvocationID.xy) / size - 0.5;
+      const vec3 normal = normalize(s[face] * st.s + t[face] * st.t + 0.5 * majorAxes[face]);
+
+      // from https://learnopengl.com/PBR/IBL/Diffuse-irradiance
+      vec3 irradiance = vec3(0.0);
+
+      vec3 up    = vec3(0.0, 1.0, 0.0);
+      vec3 right = cross(up, normal);
+      up         = cross(normal, right);
+           
+      float sampleDelta = 0.05;
+      float nrSamples = 0.0;
+
+      for (float phi = 0.0; phi < 2.0 * PI; phi += sampleDelta) {
+        for (float theta = 0.0; theta < 0.5 * PI; theta += sampleDelta) {
+          // spherical to cartesian (in tangent space)
+          vec3 tangentSample = vec3(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
+          // tangent space to world
+          vec3 sampleVec = tangentSample.x * right + tangentSample.y * up + tangentSample.z * normal; 
+
+          irradiance += (texture(inputCubemap, sampleVec).rgb) * cos(theta) * sin(theta);
+
+          nrSamples++;
+        }
+      }
+      irradiance = PI * irradiance * (1.0 / float(nrSamples));
+
+      imageStore(outputCubemap, ivec3(gl_GlobalInvocationID), vec4(irradiance, 1.0));
+    }
+  )";
+
+  auto shader = ShaderProgram::createFromGlsl(device, {{vk::ShaderStageFlagBits::eCompute, glsl}});
+
+  vk::ImageCreateInfo imageInfo;
+  imageInfo.flags         = vk::ImageCreateFlagBits::eCubeCompatible;
+  imageInfo.imageType     = vk::ImageType::e2D;
+  imageInfo.format        = vk::Format::eR32G32B32A32Sfloat;
+  imageInfo.extent.width  = size;
+  imageInfo.extent.height = size;
+  imageInfo.extent.depth  = 1;
+  imageInfo.mipLevels     = 1;
+  imageInfo.arrayLayers   = 6;
+  imageInfo.samples       = vk::SampleCountFlagBits::e1;
+  imageInfo.tiling        = vk::ImageTiling::eOptimal;
+  imageInfo.usage         = vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled;
+  imageInfo.sharingMode   = vk::SharingMode::eExclusive;
+  imageInfo.initialLayout = vk::ImageLayout::eUndefined;
+
+  auto outputCubemap = device->createTexture(imageInfo, device->createSamplerInfo(),
+    vk::ImageViewType::eCube, vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eGeneral);
+
+  auto cmd = CommandBuffer::create(device, QueueType::eCompute);
+  cmd->bindingState().setTexture(inputCubemap, 0, 0);
+  cmd->bindingState().setStorageImage(outputCubemap, 0, 1);
+
+  cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+  cmd->setShaderProgram(shader);
+
+  uint32_t groupCount = std::ceil(static_cast<float>(size) / 16.f);
+  cmd->dispatch(groupCount, groupCount, 6);
+  cmd->end();
+  cmd->submit();
+  cmd->waitIdle();
+
+  return outputCubemap;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+TexturePtr createPrefilteredReflectionCubemap(
+  DevicePtr const& device, TexturePtr const& inputCubemap) {
+  std::string glsl = R"(
+    #version 450
+
+    // inputs
+    layout (local_size_x = 16, local_size_y = 16, local_size_z = 6) in;
+
+    // outputs
+    layout (binding = 0)                    uniform samplerCube inputCubemap;
+    layout (rgba32f, binding = 1) writeonly uniform imageCube   outputCubemap;
+
+    // push constants
+    layout(push_constant, std430) uniform PushConstants {
+        float mCurrentLevel;
+    } pushConstants;
+
+    // constants
+    #define PI 3.14159265359
+
+    vec3 majorAxes[6] = vec3[6](
+      vec3( 1,  0,  0), vec3(-1,  0,  0),
+      vec3( 0,  1,  0), vec3( 0, -1,  0),
+      vec3( 0,  0,  1), vec3( 0,  0, -1)
+    );
+
+    vec3 s[6] = vec3[6](
+      vec3( 0,  0, -1), vec3( 0,  0,  1),
+      vec3( 1,  0,  0), vec3( 1,  0,  0),
+      vec3( 1,  0,  0), vec3(-1,  0,  0)
+    );
+
+    vec3 t[6] = vec3[6](
+      vec3( 0, -1,  0), vec3( 0, -1,  0),
+      vec3( 0,  0,  1), vec3( 0,  0, -1),
+      vec3( 0, -1,  0), vec3( 0, -1,  0)
+    );
+
+    float DistributionGGX(vec3 N, vec3 H, float roughness) {
+      float a = roughness*roughness;
+      float a2 = a*a;
+      float NdotH = max(dot(N, H), 0.0);
+      float NdotH2 = NdotH*NdotH;
+
+      float nom   = a2;
+      float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+      denom = PI * denom * denom;
+
+      return nom / denom;
+    }
+
+    // http://holger.dammertz.org/stuff/notes_HammersleyOnHemisphere.html
+    // efficient VanDerCorpus calculation.
+    float RadicalInverse_VdC(uint bits) {
+       bits = (bits << 16u) | (bits >> 16u);
+       bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
+       bits = ((bits & 0x33333333u) << 2u) | ((bits & 0xCCCCCCCCu) >> 2u);
+       bits = ((bits & 0x0F0F0F0Fu) << 4u) | ((bits & 0xF0F0F0F0u) >> 4u);
+       bits = ((bits & 0x00FF00FFu) << 8u) | ((bits & 0xFF00FF00u) >> 8u);
+       return float(bits) * 2.3283064365386963e-10; // / 0x100000000
+    }
+
+    vec2 Hammersley(uint i, uint N) {
+        return vec2(float(i)/float(N), RadicalInverse_VdC(i));
+    }
+
+    vec3 ImportanceSampleGGX(vec2 Xi, vec3 N, float roughness) {
+      float a = roughness*roughness;
+      
+      float phi = 2.0 * PI * Xi.x;
+      float cosTheta = sqrt((1.0 - Xi.y) / (1.0 + (a*a - 1.0) * Xi.y));
+      float sinTheta = sqrt(1.0 - cosTheta*cosTheta);
+      
+      // from spherical coordinates to cartesian coordinates - halfway vector
+      vec3 H;
+      H.x = cos(phi) * sinTheta;
+      H.y = sin(phi) * sinTheta;
+      H.z = cosTheta;
+      
+      // from tangent-space H vector to world-space sample vector
+      vec3 up          = abs(N.z) < 0.999 ? vec3(0.0, 0.0, 1.0) : vec3(1.0, 0.0, 0.0);
+      vec3 tangent   = normalize(cross(up, N));
+      vec3 bitangent = cross(N, tangent);
+      
+      vec3 sampleVec = tangent * H.x + bitangent * H.y + N * H.z;
+      return normalize(sampleVec);
+    }
+
+    void main() {
+      const uvec2 size = imageSize(outputCubemap);
+
+      if (gl_GlobalInvocationID.x >= size.x || gl_GlobalInvocationID.y >= size.y) {
+          return;
+      }
+
+      const uint  face      = gl_GlobalInvocationID.z;
+      const float maxLevel  = float(textureQueryLevels(inputCubemap));
+      const float roughness = pushConstants.mCurrentLevel / maxLevel;
+
+      const vec2 st = vec2(gl_GlobalInvocationID.xy) / size - 0.5;
+      const vec3 normal = normalize(s[face] * st.s + t[face] * st.t + 0.5 * majorAxes[face]);
+
+      const uint SAMPLE_COUNT = 512u;
+      vec3 prefilteredReflection = vec3(0.0);
+      float totalWeight = 0.0;
+
+      for(uint i = 0u; i < SAMPLE_COUNT; ++i)
+      {
+        // generates a sample vector that's biased towards the preferred alignment direction (importance sampling).
+        vec2 Xi = Hammersley(i, SAMPLE_COUNT);
+        vec3 H = ImportanceSampleGGX(Xi, normal, roughness);
+        vec3 L  = normalize(2.0 * dot(normal, H) * H - normal);
+
+        float NdotL = max(dot(normal, L), 0.0);
+        if(NdotL > 0.0)
+        {
+          // sample from the environment's mip level based on roughness/pdf
+          float D   = DistributionGGX(normal, H, roughness);
+          float NdotH = max(dot(normal, H), 0.0);
+          float HdotV = max(dot(H, normal), 0.0);
+          float pdf = D * NdotH / (4.0 * HdotV) + 0.0001; 
+
+          float resolution = textureSize(inputCubemap, 0).x;
+          float saTexel  = 4.0 * PI / (6.0 * resolution * resolution);
+          float saSample = 1.0 / (float(SAMPLE_COUNT) * pdf + 0.0001);
+
+          float mipLevel = roughness == 0.0 ? 0.0 : 0.5 * log2(saSample / saTexel); 
+          
+          prefilteredReflection += textureLod(inputCubemap, L, mipLevel).rgb * NdotL;
+          totalWeight += NdotL;
+        }
+      }
+
+      prefilteredReflection = prefilteredReflection / totalWeight;
+
+      imageStore(outputCubemap, ivec3(gl_GlobalInvocationID), vec4(prefilteredReflection, 1.0));
+    }
+  )";
+
+  auto shader = ShaderProgram::createFromGlsl(device, {{vk::ShaderStageFlagBits::eCompute, glsl}});
+
+  uint32_t width     = inputCubemap->mBackedImage->mImageInfo.extent.width;
+  uint32_t height    = inputCubemap->mBackedImage->mImageInfo.extent.height;
+  uint32_t mipLevels = getMaxMipmapLevels(width, height);
+
+  vk::ImageCreateInfo imageInfo;
+  imageInfo.flags         = vk::ImageCreateFlagBits::eCubeCompatible;
+  imageInfo.imageType     = vk::ImageType::e2D;
+  imageInfo.format        = vk::Format::eR32G32B32A32Sfloat;
+  imageInfo.extent.width  = width;
+  imageInfo.extent.height = height;
+  imageInfo.extent.depth  = 1;
+  imageInfo.mipLevels     = mipLevels;
+  imageInfo.arrayLayers   = 6;
+  imageInfo.samples       = vk::SampleCountFlagBits::e1;
+  imageInfo.tiling        = vk::ImageTiling::eOptimal;
+  imageInfo.usage         = vk::ImageUsageFlagBits::eStorage | vk::ImageUsageFlagBits::eSampled;
+  imageInfo.sharingMode   = vk::SharingMode::eExclusive;
+  imageInfo.initialLayout = vk::ImageLayout::eUndefined;
+
+  auto samplerInfo   = device->createSamplerInfo();
+  samplerInfo.maxLod = imageInfo.mipLevels;
+
+  auto outputCubemap = device->createTexture(imageInfo, samplerInfo, vk::ImageViewType::eCube,
+    vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eGeneral);
+
+  auto cmd = CommandBuffer::create(device, QueueType::eCompute);
+  cmd->bindingState().setTexture(inputCubemap, 0, 0);
+
+  cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+  cmd->setShaderProgram(shader);
+
+  std::vector<vk::ImageViewPtr> mipViews;
+
+  for (int i = 0; i < mipLevels; ++i) {
+    uint32_t groupCountX = std::ceil(static_cast<float>(width) / 16.f);
+    uint32_t groupCountY = std::ceil(static_cast<float>(height) / 16.f);
+
+    auto mipViewInfo                          = outputCubemap->mBackedImage->mViewInfo;
+    mipViewInfo.subresourceRange.baseMipLevel = i;
+    mipViewInfo.subresourceRange.levelCount   = 1;
+    auto mipView                              = device->createImageView(mipViewInfo);
+
+    cmd->pushConstants((float)i);
+    cmd->bindingState().setStorageImage(outputCubemap, mipView, 0, 1);
+    cmd->dispatch(groupCountX, groupCountY, 6);
+
+    mipViews.emplace_back(mipView);
+
+    width  = std::max(width / 2, 1u);
+    height = std::max(height / 2, 1u);
+  }
+  cmd->end();
+  cmd->submit();
+  cmd->waitIdle();
+
+  return outputCubemap;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -389,7 +704,7 @@ TexturePtr createBRDFLuT(DevicePtr const& device, int32_t size) {
   imageInfo.initialLayout = vk::ImageLayout::eUndefined;
 
   auto outputImage = device->createTexture(imageInfo, device->createSamplerInfo(),
-    vk::ImageViewType::e2D, vk::ImageAspectFlagBits::eColor);
+    vk::ImageViewType::e2D, vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eGeneral);
 
   auto cmd = CommandBuffer::create(device, QueueType::eCompute);
   cmd->bindingState().setStorageImage(outputImage, 0, 0);

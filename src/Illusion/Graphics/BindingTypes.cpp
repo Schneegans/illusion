@@ -15,7 +15,7 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool StorageImageBinding::operator==(StorageImageBinding const& other) const {
-  return mImage == other.mImage;
+  return mImage == other.mImage && mView == other.mView;
 }
 
 bool StorageImageBinding::operator!=(StorageImageBinding const& other) const {

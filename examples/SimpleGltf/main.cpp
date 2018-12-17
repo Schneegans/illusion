@@ -17,6 +17,7 @@
 #include <Illusion/Graphics/GltfModel.hpp>
 #include <Illusion/Graphics/RenderPass.hpp>
 #include <Illusion/Graphics/ShaderProgram.hpp>
+#include <Illusion/Graphics/TextureUtils.hpp>
 #include <Illusion/Graphics/Window.hpp>
 
 #define GLM_ENABLE_EXPERIMENTAL
@@ -67,11 +68,11 @@ void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::GltfModel::Node>>
         pushConstants.mMaterial  = p.mMaterial->mPushConstants;
         res.mCmd->pushConstants(pushConstants);
 
-        res.mCmd->bindingState().setTexture(p.mMaterial->mBaseColorTexture, 1, 0);
-        res.mCmd->bindingState().setTexture(p.mMaterial->mMetallicRoughnessTexture, 1, 1);
-        res.mCmd->bindingState().setTexture(p.mMaterial->mNormalTexture, 1, 2);
-        res.mCmd->bindingState().setTexture(p.mMaterial->mOcclusionTexture, 1, 3);
-        res.mCmd->bindingState().setTexture(p.mMaterial->mEmissiveTexture, 1, 4);
+        res.mCmd->bindingState().setTexture(p.mMaterial->mAlbedoTexture, 2, 0);
+        res.mCmd->bindingState().setTexture(p.mMaterial->mMetallicRoughnessTexture, 2, 1);
+        res.mCmd->bindingState().setTexture(p.mMaterial->mNormalTexture, 2, 2);
+        res.mCmd->bindingState().setTexture(p.mMaterial->mOcclusionTexture, 2, 3);
+        res.mCmd->bindingState().setTexture(p.mMaterial->mEmissiveTexture, 2, 4);
         res.mCmd->graphicsState().setTopology(p.mTopology);
         res.mCmd->drawIndexed(p.mIndexCount, 1, p.mIndexOffset, 0, 0);
       }
@@ -106,6 +107,14 @@ int main(int argc, char* argv[]) {
   auto      model       = Illusion::Graphics::GltfModel::create(device, modelFile);
   float     modelSize   = glm::length(model->getBoundingBox().mMin - model->getBoundingBox().mMax);
   glm::mat4 modelMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(1.f / modelSize));
+
+  auto brdflut = Illusion::Graphics::TextureUtils::createBRDFLuT(device, 256);
+  auto cubemap = Illusion::Graphics::TextureUtils::createCubemapFrom360PanoramaFile(
+    device, "data/textures/whipple_creek_regional_park_04_1k.hdr", 256);
+  auto prefilteredIrradiance =
+    Illusion::Graphics::TextureUtils::createPrefilteredIrradianceCubemap(device, 64, cubemap);
+  auto prefilteredReflection =
+    Illusion::Graphics::TextureUtils::createPrefilteredReflectionCubemap(device, cubemap);
 
   auto shader = Illusion::Graphics::ShaderProgram::createFromFiles(
     device, {"data/shaders/SimpleGltfShader.vert", "data/shaders/SimpleGltfShader.frag"});
@@ -175,6 +184,10 @@ int main(int argc, char* argv[]) {
 
     res.mCmd->bindingState().setUniformBuffer(
       res.mUniformBuffer->getBuffer(), sizeof(glm::mat4), 0, 0, 0);
+
+    res.mCmd->bindingState().setTexture(brdflut, 1, 0);
+    res.mCmd->bindingState().setTexture(prefilteredIrradiance, 1, 1);
+    res.mCmd->bindingState().setTexture(prefilteredReflection, 1, 2);
 
     res.mCmd->beginRenderPass(res.mRenderPass);
 

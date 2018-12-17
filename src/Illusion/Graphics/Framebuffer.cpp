@@ -44,9 +44,11 @@ Framebuffer::Framebuffer(DevicePtr const& device, vk::RenderPassPtr const& rende
     // swapchain images
     vk::ImageUsageFlags usage =
       vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc;
+    vk::ImageLayout layout = vk::ImageLayout::eColorAttachmentOptimal;
 
     if (Utils::isDepthFormat(attachment)) {
-      usage = vk::ImageUsageFlagBits::eDepthStencilAttachment;
+      usage  = vk::ImageUsageFlagBits::eDepthStencilAttachment;
+      layout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
     }
 
     vk::ImageCreateInfo imageInfo;
@@ -64,7 +66,7 @@ Framebuffer::Framebuffer(DevicePtr const& device, vk::RenderPassPtr const& rende
     imageInfo.initialLayout = vk::ImageLayout::eUndefined;
 
     auto image = mDevice->createBackedImage(
-      imageInfo, vk::ImageViewType::e2D, aspect, vk::MemoryPropertyFlagBits::eDeviceLocal);
+      imageInfo, vk::ImageViewType::e2D, aspect, vk::MemoryPropertyFlagBits::eDeviceLocal, layout);
 
     mImageStore.push_back(image);
   }

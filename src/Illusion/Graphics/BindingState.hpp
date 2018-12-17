@@ -29,6 +29,8 @@ class BindingState {
   void setTexture(TexturePtr const& texture, uint32_t set, uint32_t binding);
 
   void setStorageImage(TexturePtr const& image, uint32_t set, uint32_t binding);
+  void setStorageImage(
+    TexturePtr const& image, vk::ImageViewPtr const& view, uint32_t set, uint32_t binding);
 
   void setDynamicUniformBuffer(
     BackedBufferPtr const& buffer, vk::DeviceSize size, uint32_t set, uint32_t binding);

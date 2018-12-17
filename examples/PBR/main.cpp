@@ -32,9 +32,11 @@ int main(int argc, char* argv[]) {
   auto shader = Illusion::Graphics::ShaderProgram::createFromFiles(
     device, {"data/shaders/Quad.vert", "data/shaders/CubemapQuad.frag"});
 
-  auto brdflut = Illusion::Graphics::TextureUtils::createBRDFLuT(device, 512);
+  auto brdflut = Illusion::Graphics::TextureUtils::createBRDFLuT(device, 256);
   auto cubemap = Illusion::Graphics::TextureUtils::createCubemapFrom360PanoramaFile(
-    device, "data/textures/sunset_fairway_1k.hdr", 512);
+    device, "data/textures/sunset_fairway_1k.hdr", 256);
+  auto prefilteredReflection =
+    Illusion::Graphics::TextureUtils::createPrefilteredReflectionCubemap(device, cubemap);
 
   auto renderPass = Illusion::Graphics::RenderPass::create(device);
   renderPass->addAttachment(vk::Format::eR8G8B8A8Unorm);
@@ -44,7 +46,7 @@ int main(int argc, char* argv[]) {
   cmd->graphicsState().addBlendAttachment({});
   cmd->graphicsState().addViewport({glm::vec2(0), glm::vec2(window->pExtent.get()), 0.f, 1.f});
   cmd->graphicsState().addScissor({glm::ivec2(0), window->pExtent.get()});
-  cmd->bindingState().setTexture(cubemap, 0, 0);
+  cmd->bindingState().setTexture(prefilteredReflection, 0, 0);
   cmd->begin();
   cmd->setShaderProgram(shader);
   cmd->beginRenderPass(renderPass);

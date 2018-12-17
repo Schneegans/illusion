@@ -33,7 +33,7 @@ class GltfModel {
     AlphaMode mAlphaMode = AlphaMode::eOpaque;
 
     struct PushConstants {
-      glm::vec4 mBaseColorFactor   = glm::vec4(1.f);
+      glm::vec4 mAlbedoFactor      = glm::vec4(1.f);
       glm::vec3 mEmissiveFactor    = glm::vec3(1.f);
       float     mMetallicFactor    = 1.f;
       float     mRoughnessFactor   = 1.f;
@@ -42,7 +42,7 @@ class GltfModel {
       float     mAlphaCutoff       = 0.f;
     } mPushConstants;
 
-    TexturePtr mBaseColorTexture;
+    TexturePtr mAlbedoTexture;
     TexturePtr mMetallicRoughnessTexture;
     TexturePtr mNormalTexture;
     TexturePtr mOcclusionTexture;

@@ -54,8 +54,8 @@ Device::~Device() { ILLUSION_TRACE << "Deleting Device." << std::endl; }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 BackedImagePtr Device::createBackedImage(vk::ImageCreateInfo imageInfo, vk::ImageViewType viewType,
-  vk::ImageAspectFlags imageAspectMask, vk::MemoryPropertyFlags properties, vk::DeviceSize dataSize,
-  const void* data) const {
+  vk::ImageAspectFlags imageAspectMask, vk::MemoryPropertyFlags properties, vk::ImageLayout layout,
+  vk::DeviceSize dataSize, const void* data) const {
 
   auto result = std::make_shared<BackedImage>();
 
@@ -90,22 +90,22 @@ BackedImagePtr Device::createBackedImage(vk::ImageCreateInfo imageInfo, vk::Imag
   result->mView = createImageView(result->mViewInfo);
 
   if (data) {
+    auto cmd = allocateCommandBuffer();
+    cmd->begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
+
     auto stagingBuffer = createBackedBuffer(vk::BufferUsageFlagBits::eTransferSrc,
       vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
       dataSize, data);
 
-    auto cmd = allocateCommandBuffer();
-    cmd->begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
-
     vk::ImageMemoryBarrier barrier;
-    barrier.oldLayout                   = result->mCurrentLayout;
-    barrier.newLayout                   = vk::ImageLayout::eTransferDstOptimal;
     barrier.srcQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
     barrier.dstQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
     barrier.image                       = *result->mImage;
     barrier.subresourceRange.levelCount = imageInfo.mipLevels;
     barrier.subresourceRange.layerCount = imageInfo.arrayLayers;
     barrier.subresourceRange.aspectMask = imageAspectMask;
+    barrier.oldLayout                   = result->mCurrentLayout;
+    barrier.newLayout                   = vk::ImageLayout::eTransferDstOptimal;
 
     cmd->pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
       vk::DependencyFlagBits(), nullptr, nullptr, barrier);
@@ -144,12 +144,43 @@ BackedImagePtr Device::createBackedImage(vk::ImageCreateInfo imageInfo, vk::Imag
     cmd->copyBufferToImage(
       *stagingBuffer->mBuffer, *result->mImage, vk::ImageLayout::eTransferDstOptimal, infos);
 
-    barrier.oldLayout      = vk::ImageLayout::eTransferDstOptimal;
-    barrier.newLayout      = vk::ImageLayout::eShaderReadOnlyOptimal;
-    result->mCurrentLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+    barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
+    barrier.newLayout = layout;
 
     cmd->pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
       vk::DependencyFlagBits(), nullptr, nullptr, barrier);
+
+    result->mCurrentLayout = layout;
+
+    cmd->end();
+
+    vk::CommandBuffer bufs[] = {*cmd};
+    vk::SubmitInfo    info;
+    info.commandBufferCount = 1;
+    info.pCommandBuffers    = bufs;
+
+    getQueue(QueueType::eGeneric).submit(info, nullptr);
+    getQueue(QueueType::eGeneric).waitIdle();
+
+  } else {
+
+    auto cmd = allocateCommandBuffer();
+    cmd->begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
+
+    vk::ImageMemoryBarrier barrier;
+    barrier.srcQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image                       = *result->mImage;
+    barrier.subresourceRange.levelCount = imageInfo.mipLevels;
+    barrier.subresourceRange.layerCount = imageInfo.arrayLayers;
+    barrier.subresourceRange.aspectMask = imageAspectMask;
+    barrier.oldLayout                   = result->mCurrentLayout;
+    barrier.newLayout                   = layout;
+
+    cmd->pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
+      vk::DependencyFlagBits(), nullptr, nullptr, barrier);
+
+    result->mCurrentLayout = layout;
 
     cmd->end();
 
@@ -256,14 +287,14 @@ BackedBufferPtr Device::createUniformBuffer(vk::DeviceSize size) const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TexturePtr Device::createTexture(vk::ImageCreateInfo imageInfo, vk::SamplerCreateInfo samplerInfo,
-  vk::ImageViewType viewType, vk::ImageAspectFlags imageAspectMask, vk::DeviceSize dataSize,
-  const void* data) const {
+  vk::ImageViewType viewType, vk::ImageAspectFlags imageAspectMask, vk::ImageLayout layout,
+  vk::DeviceSize dataSize, const void* data) const {
 
   auto result = std::make_shared<Texture>();
 
   // create backed image for texture
-  result->mBackedImage = createBackedImage(
-    imageInfo, viewType, imageAspectMask, vk::MemoryPropertyFlagBits::eDeviceLocal, dataSize, data);
+  result->mBackedImage = createBackedImage(imageInfo, viewType, imageAspectMask,
+    vk::MemoryPropertyFlagBits::eDeviceLocal, layout, dataSize, data);
 
   // create sampler
   result->mSamplerInfo = samplerInfo;
@@ -306,8 +337,8 @@ TexturePtr Device::getSinglePixelTexture(std::array<uint8_t, 4> const& color) {
 
   vk::SamplerCreateInfo samplerInfo = createSamplerInfo();
 
-  auto texture = createTexture(
-    imageInfo, samplerInfo, vk::ImageViewType::e2D, vk::ImageAspectFlagBits::eColor, 4, &color[0]);
+  auto texture = createTexture(imageInfo, samplerInfo, vk::ImageViewType::e2D,
+    vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eShaderReadOnlyOptimal, 4, &color[0]);
 
   mSinglePixelTextures[color] = texture;
 

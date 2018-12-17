@@ -25,5 +25,5 @@ void main() {
   vec3 dir = vec3(sin(longLat.x) * cos(longLat.y), 
                   sin(longLat.y), 
                   cos(longLat.x) * cos(longLat.y));
-  outColor = texture(texSampler, dir);
+  outColor = textureLod(texSampler, dir, 3);
 }

@@ -29,6 +29,10 @@ TexturePtr createCubemapFrom360PanoramaFile(DevicePtr const& device, std::string
   int32_t size, vk::SamplerCreateInfo samplerInfo = vk::SamplerCreateInfo(),
   bool generateMipmaps = true);
 
+TexturePtr createPrefilteredIrradianceCubemap(
+  DevicePtr const& device, uint32_t size, TexturePtr const& inputCubemap);
+TexturePtr createPrefilteredReflectionCubemap(
+  DevicePtr const& device, TexturePtr const& inputCubemap);
 TexturePtr createBRDFLuT(DevicePtr const& device, int32_t size);
 
 void updateMipmaps(DevicePtr const& device, TexturePtr const& texture);

@@ -21,7 +21,8 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct StorageImageBinding {
-  TexturePtr mImage;
+  TexturePtr       mImage;
+  vk::ImageViewPtr mView;
 
   bool operator==(StorageImageBinding const& other) const;
   bool operator!=(StorageImageBinding const& other) const;

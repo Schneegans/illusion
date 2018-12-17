@@ -363,7 +363,7 @@ void CommandBuffer::flush() {
 
           auto                    value = std::get<CombinedImageSamplerBinding>(binding.second);
           vk::DescriptorImageInfo imageInfo;
-          imageInfo.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+          imageInfo.imageLayout = value.mTexture->mBackedImage->mCurrentLayout;
           imageInfo.imageView   = *value.mTexture->mBackedImage->mView;
           imageInfo.sampler     = *value.mTexture->mSampler;
 
@@ -381,8 +381,8 @@ void CommandBuffer::flush() {
 
           auto                    value = std::get<StorageImageBinding>(binding.second);
           vk::DescriptorImageInfo imageInfo;
-          imageInfo.imageLayout = vk::ImageLayout::eGeneral;
-          imageInfo.imageView   = *value.mImage->mBackedImage->mView;
+          imageInfo.imageLayout = value.mImage->mBackedImage->mCurrentLayout;
+          imageInfo.imageView   = *(value.mView ? value.mView : value.mImage->mBackedImage->mView);
           imageInfo.sampler     = *value.mImage->mSampler;
 
           vk::WriteDescriptorSet info;

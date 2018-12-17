@@ -24,15 +24,20 @@ void BindingState::setBinding(BindingType const& value, uint32_t set, uint32_t b
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void BindingState::setTexture(TexturePtr const& texture, uint32_t set, uint32_t binding) {
-
   setBinding(CombinedImageSamplerBinding{texture}, set, binding);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void BindingState::setStorageImage(TexturePtr const& image, uint32_t set, uint32_t binding) {
+  setBinding(StorageImageBinding{image, nullptr}, set, binding);
+}
 
-  setBinding(StorageImageBinding{image}, set, binding);
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void BindingState::setStorageImage(
+  TexturePtr const& image, vk::ImageViewPtr const& view, uint32_t set, uint32_t binding) {
+  setBinding(StorageImageBinding{image, view}, set, binding);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
