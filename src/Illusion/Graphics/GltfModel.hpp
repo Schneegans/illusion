@@ -40,7 +40,7 @@ class GltfModel {
       float     mRoughnessFactor   = 1.f;
       float     mNormalScale       = 1.f;
       float     mOcclusionStrength = 1.f;
-      float     mAlphaCutoff       = 0.f;
+      float     mAlphaCutoff       = 0.5f;
     } mPushConstants;
 
     TexturePtr mAlbedoTexture;
@@ -56,14 +56,21 @@ class GltfModel {
     glm::vec3 mMax = glm::vec3(std::numeric_limits<float>::lowest());
     glm::vec3 mMin = glm::vec3(std::numeric_limits<float>::max());
 
+    bool isEmpty() const {
+      return mMax == glm::vec3(std::numeric_limits<float>::lowest()) &&
+             mMin == glm::vec3(std::numeric_limits<float>::max());
+    }
+
     void add(glm::vec3 const& point) {
       mMin = glm::min(mMin, point);
       mMax = glm::max(mMax, point);
     }
 
     void add(BoundingBox const& box) {
-      add(box.mMin);
-      add(box.mMax);
+      if (!box.isEmpty()) {
+        add(box.mMin);
+        add(box.mMax);
+      }
     }
   };
 
@@ -84,16 +91,17 @@ class GltfModel {
   };
 
   struct Mesh {
+    std::string            mName;
     std::vector<Primitive> mPrimitives;
     BoundingBox            mBoundingBox;
   };
 
   struct Node {
-    std::string                        mName;
-    glm::dmat4                         mModelMatrix = glm::dmat4(1);
-    BoundingBox                        mBoundingBox;
-    std::shared_ptr<Mesh>              mMesh;
-    std::vector<std::shared_ptr<Node>> mChildren;
+    std::string           mName;
+    glm::dmat4            mModelMatrix = glm::dmat4(1);
+    BoundingBox           mBoundingBox;
+    std::shared_ptr<Mesh> mMesh;
+    std::vector<Node>     mChildren;
   };
 
   template <typename... Args>
@@ -103,11 +111,13 @@ class GltfModel {
 
   GltfModel(DevicePtr const& device, std::string const& file);
 
-  std::vector<std::shared_ptr<Node>> const& getNodes() const;
-  BoundingBox const&                        getBoundingBox() const;
+  std::vector<Node> const& getNodes() const;
+  BoundingBox const&       getBoundingBox() const;
 
   BackedBufferPtr const& getIndexBuffer() const;
   BackedBufferPtr const& getVertexBuffer() const;
+
+  void printInfo() const;
 
   static std::vector<vk::VertexInputBindingDescription>   getVertexInputBindings();
   static std::vector<vk::VertexInputAttributeDescription> getVertexInputAttributes();
@@ -117,6 +127,10 @@ class GltfModel {
   Node            mRootNode;
   BackedBufferPtr mIndexBuffer;
   BackedBufferPtr mVertexBuffer;
+
+  std::vector<TexturePtr>                mTextures;
+  std::vector<std::shared_ptr<Material>> mMaterials;
+  std::vector<std::shared_ptr<Mesh>>     mMeshes;
 };
 
 } // namespace Illusion::Graphics

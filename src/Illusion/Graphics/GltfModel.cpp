@@ -10,6 +10,7 @@
 
 #include "GltfModel.hpp"
 
+#include "../Core/EnumCast.hpp"
 #include "../Core/Logger.hpp"
 #include "CommandBuffer.hpp"
 #include "Device.hpp"
@@ -137,7 +138,6 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
   }
 
   // create textures -------------------------------------------------------------------------------
-  std::vector<TexturePtr> textures;
   {
     for (size_t i{0}; i < model.textures.size(); ++i) {
 
@@ -179,7 +179,7 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
 
       // if no image data has been loaded, try loading it on our own
       if (image.image.empty()) {
-        textures.push_back(TextureUtils::createFromFile(mDevice, image.uri, samplerInfo));
+        mTextures.push_back(TextureUtils::createFromFile(mDevice, image.uri, samplerInfo));
       } else {
         // if there is image data, create an appropriate texture object for it
         vk::ImageCreateInfo imageInfo;
@@ -204,13 +204,12 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
 
         TextureUtils::updateMipmaps(mDevice, texture);
 
-        textures.push_back(texture);
+        mTextures.push_back(texture);
       }
     }
   }
 
   // create materials ------------------------------------------------------------------------------
-  std::vector<std::shared_ptr<Material>> materials;
   {
     for (auto const& material : model.materials) {
 
@@ -226,9 +225,9 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
 
       for (auto const& p : material.values) {
         if (p.first == "baseColorTexture") {
-          m->mAlbedoTexture = textures[p.second.TextureIndex()];
+          m->mAlbedoTexture = mTextures[p.second.TextureIndex()];
         } else if (p.first == "metallicRoughnessTexture") {
-          m->mMetallicRoughnessTexture = textures[p.second.TextureIndex()];
+          m->mMetallicRoughnessTexture = mTextures[p.second.TextureIndex()];
         } else if (p.first == "metallicFactor") {
           m->mPushConstants.mMetallicFactor = p.second.Factor();
         } else if (p.first == "roughnessFactor") {
@@ -244,11 +243,11 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
 
       for (auto const& p : material.additionalValues) {
         if (p.first == "normalTexture") {
-          m->mNormalTexture = textures[p.second.TextureIndex()];
+          m->mNormalTexture = mTextures[p.second.TextureIndex()];
         } else if (p.first == "occlusionTexture") {
-          m->mOcclusionTexture = textures[p.second.TextureIndex()];
+          m->mOcclusionTexture = mTextures[p.second.TextureIndex()];
         } else if (p.first == "emissiveTexture") {
-          m->mEmissiveTexture = textures[p.second.TextureIndex()];
+          m->mEmissiveTexture = mTextures[p.second.TextureIndex()];
         } else if (p.first == "normalScale") {
           m->mPushConstants.mNormalScale = p.second.Factor();
         } else if (p.first == "alphaCutoff") {
@@ -277,24 +276,24 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
         }
       }
 
-      materials.emplace_back(m);
+      mMaterials.emplace_back(m);
     }
   }
 
-  // create meshed & primitives --------------------------------------------------------------------
-  std::vector<std::shared_ptr<Mesh>> meshes;
+  // create meshes & primitives --------------------------------------------------------------------
   {
     std::vector<uint32_t> indexBuffer;
     std::vector<Vertex>   vertexBuffer;
 
     for (auto const& m : model.meshes) {
 
-      auto mesh = std::make_shared<Mesh>();
+      auto mesh   = std::make_shared<Mesh>();
+      mesh->mName = m.name;
 
       for (auto const& p : m.primitives) {
         Primitive primitve;
 
-        primitve.mMaterial = materials[p.material];
+        primitve.mMaterial = mMaterials[p.material];
         primitve.mTopology = convertPrimitiveTopology(p.mode);
 
         uint32_t vertexStart = static_cast<uint32_t>(vertexBuffer.size());
@@ -405,7 +404,7 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
         mesh->mPrimitives.emplace_back(primitve);
         mesh->mBoundingBox.add(primitve.mBoundingBox);
       }
-      meshes.emplace_back(mesh);
+      mMeshes.emplace_back(mesh);
     }
 
     mVertexBuffer = mDevice->createVertexBuffer(vertexBuffer);
@@ -413,63 +412,51 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
   }
 
   // create nodes ----------------------------------------------------------------------------------
-  std::vector<std::shared_ptr<Node>> nodes;
-  {
-    for (auto const& n : model.nodes) {
-      auto node = std::make_shared<Node>();
+  std::function<void(uint32_t, Node&)> loadNodes = [this, &loadNodes, &model](
+                                                     uint32_t childIndex, Node& parent) {
+    auto const& child = model.nodes[childIndex];
 
-      node->mName = n.name;
+    Node node;
+    node.mName = child.name;
 
-      if (n.matrix.size() > 0) {
-        node->mModelMatrix *= glm::make_mat4(n.matrix.data());
-      } else {
-        if (n.translation.size() > 0) {
-          node->mModelMatrix =
-            glm::translate(node->mModelMatrix, glm::make_vec3(n.translation.data()));
-        }
-        if (n.rotation.size() > 0) {
-          glm::dquat quaternion(glm::make_quat(n.rotation.data()));
-          node->mModelMatrix =
-            glm::rotate(node->mModelMatrix, glm::angle(quaternion), glm::axis(quaternion));
-        }
-        if (n.scale.size() > 0) {
-          node->mModelMatrix = glm::scale(node->mModelMatrix, glm::make_vec3(n.scale.data()));
-        }
+    if (child.matrix.size() > 0) {
+      node.mModelMatrix *= glm::make_mat4(child.matrix.data());
+    } else {
+      if (child.translation.size() > 0) {
+        node.mModelMatrix =
+          glm::translate(node.mModelMatrix, glm::make_vec3(child.translation.data()));
       }
-
-      if (n.mesh >= 0) {
-        node->mMesh = meshes[n.mesh];
-        node->mBoundingBox.add(meshes[n.mesh]->mBoundingBox);
+      if (child.rotation.size() > 0) {
+        glm::dquat quaternion(glm::make_quat(child.rotation.data()));
+        node.mModelMatrix =
+          glm::rotate(node.mModelMatrix, glm::angle(quaternion), glm::axis(quaternion));
       }
-
-      nodes.emplace_back(node);
-    }
-  }
-
-  // add children to nodes -------------------------------------------------------------------------
-  {
-    for (size_t i(0); i < model.nodes.size(); ++i) {
-      for (auto const& c : model.nodes[i].children) {
-        nodes[i]->mChildren.push_back(nodes[c]);
-        nodes[i]->mBoundingBox.add(nodes[c]->mBoundingBox);
+      if (child.scale.size() > 0) {
+        node.mModelMatrix = glm::scale(node.mModelMatrix, glm::make_vec3(child.scale.data()));
       }
     }
-  }
 
-  // add children to root node ---------------------------------------------------------------------
-  {
-    for (int n : model.scenes[model.defaultScene].nodes) {
-      mRootNode.mChildren.push_back(nodes[n]);
-      mRootNode.mBoundingBox.add(nodes[n]->mBoundingBox);
+    if (child.mesh >= 0) {
+      node.mMesh = mMeshes[child.mesh];
+      node.mBoundingBox.add(mMeshes[child.mesh]->mBoundingBox);
     }
+
+    for (auto const& c : child.children) {
+      loadNodes(c, node);
+    }
+
+    parent.mBoundingBox.add(node.mBoundingBox);
+    parent.mChildren.emplace_back(node);
+  };
+
+  for (int i : model.scenes[model.defaultScene].nodes) {
+    loadNodes(i, mRootNode);
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<std::shared_ptr<GltfModel::Node>> const& GltfModel::getNodes() const {
-  return mRootNode.mChildren;
-}
+std::vector<GltfModel::Node> const& GltfModel::getNodes() const { return mRootNode.mChildren; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -482,6 +469,67 @@ BackedBufferPtr const& GltfModel::getIndexBuffer() const { return mIndexBuffer; 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 BackedBufferPtr const& GltfModel::getVertexBuffer() const { return mVertexBuffer; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void GltfModel::printInfo() const {
+
+  // clang-format off
+  ILLUSION_MESSAGE << "Textures:" << std::endl;
+  for (auto const& t : mTextures) {
+    ILLUSION_MESSAGE << "  " << t << ": " << t->mBackedImage->mImageInfo.extent.width << "x"
+                     << t->mBackedImage->mImageInfo.extent.width << ", "
+                     << vk::to_string(t->mBackedImage->mImageInfo.format) << std::endl;
+  }
+
+  ILLUSION_MESSAGE << "Materials:" << std::endl;
+  for (auto const& m : mMaterials) {
+    ILLUSION_MESSAGE << "  " << m << ": " << m->mName << std::endl;
+    ILLUSION_MESSAGE << "    AlbedoTexture:            " << m->mAlbedoTexture << std::endl;
+    ILLUSION_MESSAGE << "    MetallicRoughnessTexture: " << m->mMetallicRoughnessTexture << std::endl;
+    ILLUSION_MESSAGE << "    NormalTexture:            " << m->mNormalTexture << std::endl;
+    ILLUSION_MESSAGE << "    OcclusionTexture:         " << m->mOcclusionTexture << std::endl;
+    ILLUSION_MESSAGE << "    EmissiveTexture:          " << m->mEmissiveTexture << std::endl;
+    ILLUSION_MESSAGE << "    AlphaMode:                " << Core::enumCast(m->mAlphaMode) << std::endl;
+    ILLUSION_MESSAGE << "    DoubleSided:              " << m->mDoubleSided << std::endl;
+    ILLUSION_MESSAGE << "    AlbedoFactor:             " << m->mPushConstants.mAlbedoFactor << std::endl;
+    ILLUSION_MESSAGE << "    EmissiveFactor:           " << m->mPushConstants.mEmissiveFactor << std::endl;
+    ILLUSION_MESSAGE << "    MetallicFactor:           " << m->mPushConstants.mMetallicFactor << std::endl;
+    ILLUSION_MESSAGE << "    RoughnessFactor:          " << m->mPushConstants.mRoughnessFactor << std::endl;
+    ILLUSION_MESSAGE << "    NormalScale:              " << m->mPushConstants.mNormalScale << std::endl;
+    ILLUSION_MESSAGE << "    OcclusionStrength:        " << m->mPushConstants.mOcclusionStrength << std::endl;
+    ILLUSION_MESSAGE << "    AlphaCutoff:              " << m->mPushConstants.mAlphaCutoff << std::endl;
+  }
+  ILLUSION_MESSAGE << "Meshes:" << std::endl;
+  for (auto const& m : mMeshes) {
+    ILLUSION_MESSAGE << "  " << m << ": " << m->mName << std::endl;
+    ILLUSION_MESSAGE << "    BoundingBox: " << m->mBoundingBox.mMin << " - " << m->mBoundingBox.mMax << std::endl;
+    ILLUSION_MESSAGE << "    Primitives:" << std::endl;
+    for (auto const& p : m->mPrimitives) {
+      ILLUSION_MESSAGE << "      Material: " << p.mMaterial << " Topology: " << vk::to_string(p.mTopology) 
+                       << " IndexCount: " << p.mIndexCount << " IndexOffset: " << p.mIndexOffset 
+                       << " BoundingBox: " << p.mBoundingBox.mMin << " - " << p.mBoundingBox.mMax << std::endl;
+    }
+  }
+  ILLUSION_MESSAGE << "Nodes:" << std::endl;
+  std::function<void(Node const&, uint32_t)> printNode = [&printNode](Node const& n, uint32_t indent) {
+    ILLUSION_MESSAGE << std::string(indent, ' ') << "  " << &n << ": " << n.mName << std::endl;
+    ILLUSION_MESSAGE << std::string(indent, ' ') << "    BoundingBox: " << n.mBoundingBox.mMin << " - " << n.mBoundingBox.mMax << std::endl;
+
+    if (n.mMesh) {
+      ILLUSION_MESSAGE << std::string(indent, ' ') << "    Mesh:        " << n.mMesh << std::endl;
+    }
+
+    if (n.mChildren.size() > 0) {
+      ILLUSION_MESSAGE << std::string(indent, ' ') << "    Children:" << std::endl;
+      for (auto const& c : n.mChildren) {
+        printNode(c, indent+2);
+      }
+    }
+  };
+  printNode(mRootNode, 0);
+  // clang-format on
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

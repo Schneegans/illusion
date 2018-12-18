@@ -60,15 +60,15 @@ struct FrameResources {
   vk::SemaphorePtr                             mRenderFinishedSemaphore;
 };
 
-void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::GltfModel::Node>> const& nodes,
+void drawNodes(std::vector<Illusion::Graphics::GltfModel::Node> const& nodes,
   glm::mat4 const& parentMatrix, glm::mat4 const& viewMatrix, FrameResources const& res) {
 
   for (auto const& n : nodes) {
-    auto modelMatrix = parentMatrix * glm::mat4(n->mModelMatrix);
+    auto modelMatrix = parentMatrix * glm::mat4(n.mModelMatrix);
 
-    if (n->mMesh) {
+    if (n.mMesh) {
 
-      for (auto const& p : n->mMesh->mPrimitives) {
+      for (auto const& p : n.mMesh->mPrimitives) {
         PushConstants pushConstants;
         pushConstants.mModelMatrix = modelMatrix;
         pushConstants.mMaterial    = p.mMaterial->mPushConstants;
@@ -86,7 +86,7 @@ void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::GltfModel::Node>>
       }
     }
 
-    drawNodes(n->mChildren, modelMatrix, viewMatrix, res);
+    drawNodes(n.mChildren, modelMatrix, viewMatrix, res);
   }
 };
 
@@ -114,7 +114,8 @@ int main(int argc, char* argv[]) {
   auto device = Illusion::Graphics::Device::create(engine->getPhysicalDevice());
   auto window = Illusion::Graphics::Window::create(engine, device);
 
-  auto      model       = Illusion::Graphics::GltfModel::create(device, modelFile);
+  auto model = Illusion::Graphics::GltfModel::create(device, modelFile);
+  model->printInfo();
   float     modelSize   = glm::length(model->getBoundingBox().mMin - model->getBoundingBox().mMax);
   glm::mat4 modelMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(1.f / modelSize));
 
