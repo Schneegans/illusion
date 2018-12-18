@@ -236,6 +236,9 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
         } else if (p.first == "baseColorFactor") {
           auto fac                        = p.second.ColorFactor();
           m->mPushConstants.mAlbedoFactor = glm::vec4(fac[0], fac[1], fac[2], fac[3]);
+        } else {
+          ILLUSION_WARNING << "Ignoring GLTF property \"" << p.first << "\" of material "
+                           << m->mName << "\"!" << std::endl;
         }
       }
 
@@ -263,6 +266,14 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
           } else {
             m->mAlphaMode = Material::AlphaMode::eOpaque;
           }
+        } else if (p.first == "doubleSided") {
+          m->mDoubleSided = p.second.bool_value;
+          ILLUSION_MESSAGE << "m->mDoubleSided: " << m->mDoubleSided << std::endl;
+        } else if (p.first == "name") {
+          // tinygltf already loaded the name
+        } else {
+          ILLUSION_WARNING << "Ignoring GLTF property \"" << p.first << "\" of material \""
+                           << m->mName << "\"!" << std::endl;
         }
       }
 

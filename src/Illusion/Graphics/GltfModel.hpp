@@ -30,7 +30,8 @@ class GltfModel {
   struct Material {
 
     enum class AlphaMode { eOpaque, eBlend, eMask };
-    AlphaMode mAlphaMode = AlphaMode::eOpaque;
+    AlphaMode mAlphaMode   = AlphaMode::eOpaque;
+    bool      mDoubleSided = false;
 
     struct PushConstants {
       glm::vec4 mAlbedoFactor      = glm::vec4(1.f);

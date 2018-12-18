@@ -80,6 +80,8 @@ void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::GltfModel::Node>>
         res.mCmd->bindingState().setTexture(p.mMaterial->mOcclusionTexture, 2, 3);
         res.mCmd->bindingState().setTexture(p.mMaterial->mEmissiveTexture, 2, 4);
         res.mCmd->graphicsState().setTopology(p.mTopology);
+        res.mCmd->graphicsState().setCullMode(
+          p.mMaterial->mDoubleSided ? vk::CullModeFlagBits::eNone : vk::CullModeFlagBits::eBack);
         res.mCmd->drawIndexed(p.mIndexCount, 1, p.mIndexOffset, 0, 0);
       }
     }

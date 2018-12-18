@@ -140,11 +140,7 @@ vec3 directLighting(vec3 L, vec3 V, vec3 N, vec3 f0, vec3 albedo, float metallic
 }
 
 // See http://www.thetenthplanet.de/archives/1180
-vec3 perturbNormal(vec3 normal, vec3 position, vec2 texcoords) {
-  vec3 tangentNormal = texture(mNormalTexture, texcoords).rgb * 2.0 - 1.0;
-  tangentNormal *= pushConstants.mMaterial.mNormalScale;
-  tangentNormal.x *= -1;
-
+vec3 perturbNormal(vec3 normal, vec3 tangentNormal, vec3 position, vec2 texcoords) {
   // get edge vectors of the pixel triangle
   vec3 dp1 = dFdx( position );
   vec3 dp2 = dFdy( position );
@@ -176,7 +172,19 @@ void main() {
   }
 
   vec3  emissive  = sRGBtoLinear(texture(uEmissiveTexture, vTexcoords)).rgb * pushConstants.mMaterial.mEmissiveFactor;
-  vec3  normal    = perturbNormal(normalize(vNormal), vPosition, vTexcoords);
+
+  vec3 viewDir = normalize(camera.mPosition.xyz - vPosition);
+  vec3 tangentNormal = texture(mNormalTexture, vTexcoords).rgb * 2.0 - 1.0;
+  tangentNormal *= pushConstants.mMaterial.mNormalScale;
+  vec3 normal = normalize(vNormal);
+  if (dot(normal, viewDir) < 0) {
+   normal *= -1;
+   tangentNormal.y *= -1;
+  } else {
+    tangentNormal.x *= -1;
+  }
+  normal = perturbNormal(normal, tangentNormal, vPosition, vTexcoords);
+
   float occlusion = mix(1.0, texture(uOcclusionTexture, vTexcoords).r, pushConstants.mMaterial.mOcclusionStrength);
   float metallic  = texture(mMetallicRoughnessTexture, vTexcoords).b * pushConstants.mMaterial.mMetallicFactor;
   metallic = clamp(metallic, 0, 1);
@@ -185,7 +193,6 @@ void main() {
 
   outColor.rgb = vec3(0.0);
 
-  vec3 viewDir = normalize(camera.mPosition.xyz - vPosition);
   vec3 f0 = vec3(0.04); 
   vec3 diffuseColor = albedo.rgb * (vec3(1.0) - f0) * (1.0 - metallic);
   vec3 specularColor = mix(f0, albedo.rgb, metallic);
