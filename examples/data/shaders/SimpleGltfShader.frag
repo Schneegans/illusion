@@ -85,63 +85,54 @@ float G_SchlicksmithGGX(float dotNL, float dotNV, float roughness) {
 }
 
 // Fresnel function
-vec3 F_Schlick(float cosTheta, vec3 F0) {
-  return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+vec3 F_Schlick(float cosTheta, vec3 f0) {
+  return f0 + (1.0 - f0) * pow(1.0 - cosTheta, 5.0);
 }
-vec3 F_SchlickR(float cosTheta, vec3 F0, float roughness) {
-  return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
+vec3 F_SchlickR(float cosTheta, vec3 f0, float roughness) {
+  return f0 + (max(vec3(1.0 - roughness), f0) - f0) * pow(1.0 - cosTheta, 5.0);
 }
 
-vec3 prefilteredReflection(vec3 R, float roughness) {
+vec3 prefilteredReflection(vec3 reflectionDir, float roughness) {
   float lod = roughness * textureQueryLevels(uPrefilteredReflection);
   float lodf = floor(lod);
   float lodc = ceil(lod);
-  vec3 a = textureLod(uPrefilteredReflection, R, lodf).rgb;
-  vec3 b = textureLod(uPrefilteredReflection, R, lodc).rgb;
+  vec3 a = textureLod(uPrefilteredReflection, reflectionDir, lodf).rgb;
+  vec3 b = textureLod(uPrefilteredReflection, reflectionDir, lodc).rgb;
   return mix(a, b, lod - lodf);
 }
 
-vec3 imageBasedLighting(vec3 V, vec3 N, vec3 F0, vec3 albedo, float metallic, float roughness) {
+vec3 imageBasedLighting(vec3 V, vec3 N, vec3 f0, vec3 albedo, float metallic, float roughness) {
 
   // diffuse contribution
-  vec3 color = vec3(0.0);
   vec3 irradiance = texture(uPrefilteredIrradiance, N).rgb;
-  color += irradiance * albedo;
+  vec3 diffuse = irradiance * albedo;
 
   // specular contribution
-  vec3 R = -normalize(reflect(V, N));
+  vec3 reflectionDir = -normalize(reflect(V, N));
+  vec3 reflection = prefilteredReflection(reflectionDir, roughness).rgb;  
+  vec3 fresnel = F_SchlickR(max(dot(N, V), 0.0), f0, roughness);
   vec2 brdf = texture(uBRDFLuT, vec2(max(dot(N, V), 0.0), roughness)).rg;
-  vec3 reflection = prefilteredReflection(R, roughness).rgb;  
+  vec3 specular = reflection * (fresnel * brdf.x + brdf.y);
 
-  vec3 F = F_SchlickR(max(dot(N, V), 0.0), F0, roughness);
-
-  vec3 specular = reflection * (F * brdf.x + brdf.y);
-  color += specular;
-
-  return color;
+  return (1.0 - fresnel) * (1.0 - metallic) * diffuse + specular;
 }
 
-vec3 directLighting(vec3 L, vec3 V, vec3 N, vec3 F0, vec3 albedo, float metallic, float roughness) {
-  // Precalculate vectors and dot products  
-  vec3 H = normalize (V + L);
+vec3 directLighting(vec3 L, vec3 V, vec3 N, vec3 f0, vec3 albedo, float metallic, float roughness) {
+  vec3 H = normalize(V + L);
   float dotNH = clamp(dot(N, H), 0.0, 1.0);
   float dotNV = clamp(dot(N, V), 0.0, 1.0);
   float dotNL = clamp(dot(N, L), 0.0, 1.0);
 
-  // Light color fixed
   vec3 lightColor = vec3(1.0);
 
   vec3 color = vec3(0.0);
 
   if (dotNL > 0.0) {
-    // D = Normal distribution (Distribution of the microfacets)
-    float D = D_GGX(dotNH, roughness); 
-    // G = Geometric shadowing term (Microfacets shadowing)
-    float G = G_SchlicksmithGGX(dotNL, dotNV, roughness);
-    // F = Fresnel factor (Reflectance depending on angle of incidence)
-    vec3 F = F_Schlick(dotNV, F0);    
-    vec3 spec = D * F * G / (4.0 * dotNL * dotNV + 0.001);    
-    vec3 kD = (vec3(1.0) - F) * (1.0 - metallic);     
+    float normalDistribution = D_GGX(dotNH, roughness); 
+    float shadowing = G_SchlicksmithGGX(dotNL, dotNV, roughness);
+    vec3 fresnel = F_Schlick(dotNV, f0);    
+    vec3 spec = normalDistribution * fresnel * shadowing / (4.0 * dotNL * dotNV + 0.001);    
+    vec3 kD = (vec3(1.0) - fresnel) * (1.0 - metallic);     
     color += (kD * albedo / M_PI + spec) * dotNL;
   }
 
@@ -149,48 +140,60 @@ vec3 directLighting(vec3 L, vec3 V, vec3 N, vec3 F0, vec3 albedo, float metallic
 }
 
 // See http://www.thetenthplanet.de/archives/1180
-vec3 getNormal() {
-  vec3 tangentNormal = texture(mNormalTexture, vTexcoords).rgb * 2.0 - 1.0;
+vec3 perturbNormal(vec3 normal, vec3 position, vec2 texcoords) {
+  vec3 tangentNormal = texture(mNormalTexture, texcoords).rgb * 2.0 - 1.0;
   tangentNormal *= pushConstants.mMaterial.mNormalScale;
+  tangentNormal.x *= -1;
 
-  vec3 q1 = dFdx(vPosition);
-  vec3 q2 = dFdy(vPosition);
-  vec2 st1 = dFdx(vTexcoords);
-  vec2 st2 = dFdy(vTexcoords);
+  // get edge vectors of the pixel triangle
+  vec3 dp1 = dFdx( position );
+  vec3 dp2 = dFdy( position );
+  vec2 duv1 = dFdx( texcoords );
+  vec2 duv2 = dFdy( texcoords );
 
-  vec3 N = normalize(vNormal);
-  vec3 T = normalize(q1 * st2.t - q2 * st1.t);
-  vec3 B = -normalize(cross(N, T));
-  mat3 TBN = mat3(T, B, N);
+  // solve the linear system
+  vec3 dp2perp = cross( dp2, normal );
+  vec3 dp1perp = cross( normal, dp1 );
+  vec3 T = dp2perp * duv1.x + dp1perp * duv2.x;
+  vec3 B = dp2perp * duv1.y + dp1perp * duv2.y;
+
+  // construct a scale-invariant frame 
+  float invmax = inversesqrt( max( dot(T,T), dot(B,B) ) );
+  mat3 TBN = mat3( T * invmax, B * invmax, normal );
 
   return normalize(TBN * tangentNormal);
 }
 
+vec4 sRGBtoLinear(vec4 color) {
+  return vec4(pow(color.rgb, vec3(2.2)), color.a);
+}
+
 void main() {
-  vec4 albedo = texture(uAlbedoTexture, vTexcoords) * pushConstants.mMaterial.mAlbedoFactor;
+  vec4 albedo = sRGBtoLinear(texture(uAlbedoTexture, vTexcoords)) * pushConstants.mMaterial.mAlbedoFactor;
 
   if (albedo.a < pushConstants.mMaterial.mAlphaCutoff) {
     discard;
   }
 
-  vec3  emissive  = texture(uEmissiveTexture, vTexcoords).rgb * pushConstants.mMaterial.mEmissiveFactor;
-  vec3  normal    = getNormal();
+  vec3  emissive  = sRGBtoLinear(texture(uEmissiveTexture, vTexcoords)).rgb * pushConstants.mMaterial.mEmissiveFactor;
+  vec3  normal    = perturbNormal(normalize(vNormal), vPosition, vTexcoords);
   float occlusion = mix(1.0, texture(uOcclusionTexture, vTexcoords).r, pushConstants.mMaterial.mOcclusionStrength);
   float metallic  = texture(mMetallicRoughnessTexture, vTexcoords).b * pushConstants.mMaterial.mMetallicFactor;
+  metallic = clamp(metallic, 0, 1);
   float roughness = texture(mMetallicRoughnessTexture, vTexcoords).g * pushConstants.mMaterial.mRoughnessFactor;
-
-  albedo.rgb = pow(albedo.rgb, vec3(2.2));
-  emissive.rgb = pow(emissive.rgb, vec3(2.2));
-
-  vec3 F0 = vec3(0.04); 
-  F0 = mix(F0, albedo.rgb, metallic);
-
-  vec3 lightDir = normalize(vec3(0, 1, 1));
-  vec3 viewDir = normalize(camera.mPosition.xyz - vPosition);
+  roughness = clamp(roughness, 0.04, 1);
 
   outColor.rgb = vec3(0.0);
-  // outColor.rgb += directLighting(lightDir, viewDir, normal, F0, albedo.rgb, metallic, roughness);
-  outColor.rgb += imageBasedLighting(viewDir, normal, F0, albedo.rgb, metallic, roughness);
+
+  vec3 viewDir = normalize(camera.mPosition.xyz - vPosition);
+  vec3 f0 = vec3(0.04); 
+  vec3 diffuseColor = albedo.rgb * (vec3(1.0) - f0) * (1.0 - metallic);
+  vec3 specularColor = mix(f0, albedo.rgb, metallic);
+
+  // vec3 lightDir = normalize(vec3(0, 1, 1));
+  // outColor.rgb += directLighting(lightDir, viewDir, normal, specularColor, albedo.rgb, metallic, roughness);
+
+  outColor.rgb += imageBasedLighting(viewDir, normal, specularColor, albedo.rgb, metallic, roughness);
   
   outColor.rgb *= occlusion;
   outColor.rgb += emissive;

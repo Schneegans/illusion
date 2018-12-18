@@ -92,11 +92,13 @@ int main(int argc, char* argv[]) {
 
   Illusion::Core::Logger::enableTrace = true;
 
-  std::string modelFile = "data/models/DamagedHelmet.glb";
-  bool        printHelp = false;
+  std::string modelFile  = "data/models/DamagedHelmet.glb";
+  std::string skyboxFile = "data/textures/sunset_fairway_1k.hdr";
+  bool        printHelp  = false;
 
   Illusion::Core::CommandLineOptions args("Simple loader for GLTF files.");
-  args.addOption({"-m", "--model"}, &modelFile, "The model to load");
+  args.addOption({"-m", "--model"}, &modelFile, "GLTF model (.gltf or .glb)");
+  args.addOption({"-s", "--skybox"}, &skyboxFile, "Skybox image (in equirectangular projection)");
   args.addOption({"-h", "--help"}, &printHelp, "print help");
 
   args.parse(argc, argv);
@@ -115,12 +117,12 @@ int main(int argc, char* argv[]) {
   glm::mat4 modelMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(1.f / modelSize));
 
   auto brdflut = Illusion::Graphics::TextureUtils::createBRDFLuT(device, 256);
-  auto cubemap = Illusion::Graphics::TextureUtils::createCubemapFrom360PanoramaFile(
-    device, "data/textures/sunset_fairway_1k.hdr", 256);
+  auto skybox =
+    Illusion::Graphics::TextureUtils::createCubemapFrom360PanoramaFile(device, skyboxFile, 256);
   auto prefilteredIrradiance =
-    Illusion::Graphics::TextureUtils::createPrefilteredIrradianceCubemap(device, 64, cubemap);
+    Illusion::Graphics::TextureUtils::createPrefilteredIrradianceCubemap(device, 64, skybox);
   auto prefilteredReflection =
-    Illusion::Graphics::TextureUtils::createPrefilteredReflectionCubemap(device, cubemap);
+    Illusion::Graphics::TextureUtils::createPrefilteredReflectionCubemap(device, skybox);
 
   auto pbrShader = Illusion::Graphics::ShaderProgram::createFromFiles(
     device, {"data/shaders/SimpleGltfShader.vert", "data/shaders/SimpleGltfShader.frag"});
@@ -199,7 +201,7 @@ int main(int argc, char* argv[]) {
       res.mUniformBuffer->getBuffer(), sizeof(CameraUniforms), 0, 0, 0);
 
     res.mCmd->setShaderProgram(skyShader);
-    res.mCmd->bindingState().setTexture(cubemap, 1, 0);
+    res.mCmd->bindingState().setTexture(skybox, 1, 0);
     res.mCmd->graphicsState().setDepthTestEnable(false);
     res.mCmd->graphicsState().setDepthWriteEnable(false);
     res.mCmd->graphicsState().setTopology(vk::PrimitiveTopology::eTriangleStrip);
