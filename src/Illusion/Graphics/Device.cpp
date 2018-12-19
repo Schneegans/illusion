@@ -55,7 +55,7 @@ Device::~Device() { ILLUSION_TRACE << "Deleting Device." << std::endl; }
 
 BackedImagePtr Device::createBackedImage(vk::ImageCreateInfo imageInfo, vk::ImageViewType viewType,
   vk::ImageAspectFlags imageAspectMask, vk::MemoryPropertyFlags properties, vk::ImageLayout layout,
-  vk::DeviceSize dataSize, const void* data) const {
+  vk::ComponentMapping const& componentMapping, vk::DeviceSize dataSize, const void* data) const {
 
   auto result = std::make_shared<BackedImage>();
 
@@ -86,6 +86,7 @@ BackedImagePtr Device::createBackedImage(vk::ImageCreateInfo imageInfo, vk::Imag
   result->mViewInfo.subresourceRange.levelCount     = imageInfo.mipLevels;
   result->mViewInfo.subresourceRange.baseArrayLayer = 0;
   result->mViewInfo.subresourceRange.layerCount     = imageInfo.arrayLayers;
+  result->mViewInfo.components                      = componentMapping;
 
   result->mView = createImageView(result->mViewInfo);
 
@@ -286,13 +287,13 @@ BackedBufferPtr Device::createUniformBuffer(vk::DeviceSize size) const {
 
 TexturePtr Device::createTexture(vk::ImageCreateInfo imageInfo, vk::SamplerCreateInfo samplerInfo,
   vk::ImageViewType viewType, vk::ImageAspectFlags imageAspectMask, vk::ImageLayout layout,
-  vk::DeviceSize dataSize, const void* data) const {
+  vk::ComponentMapping const& componentMapping, vk::DeviceSize dataSize, const void* data) const {
 
   auto result = std::make_shared<Texture>();
 
   // create backed image for texture
   result->mBackedImage = createBackedImage(imageInfo, viewType, imageAspectMask,
-    vk::MemoryPropertyFlagBits::eDeviceLocal, layout, dataSize, data);
+    vk::MemoryPropertyFlagBits::eDeviceLocal, layout, componentMapping, dataSize, data);
 
   // create sampler
   result->mSamplerInfo = samplerInfo;
@@ -335,8 +336,9 @@ TexturePtr Device::getSinglePixelTexture(std::array<uint8_t, 4> const& color) {
 
   vk::SamplerCreateInfo samplerInfo = createSamplerInfo();
 
-  auto texture = createTexture(imageInfo, samplerInfo, vk::ImageViewType::e2D,
-    vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eShaderReadOnlyOptimal, 4, &color[0]);
+  auto texture =
+    createTexture(imageInfo, samplerInfo, vk::ImageViewType::e2D, vk::ImageAspectFlagBits::eColor,
+      vk::ImageLayout::eShaderReadOnlyOptimal, vk::ComponentMapping(), 4, &color[0]);
 
   mSinglePixelTextures[color] = texture;
 

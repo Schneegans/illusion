@@ -71,7 +71,8 @@ class Device {
   // high-level create methods ---------------------------------------------------------------------
   BackedImagePtr createBackedImage(vk::ImageCreateInfo info, vk::ImageViewType viewType,
     vk::ImageAspectFlags imageAspectMask, vk::MemoryPropertyFlags properties,
-    vk::ImageLayout layout, vk::DeviceSize dataSize = 0, const void* data = nullptr) const;
+    vk::ImageLayout layout, vk::ComponentMapping const& componentMapping = vk::ComponentMapping(),
+    vk::DeviceSize dataSize = 0, const void* data = nullptr) const;
 
   BackedBufferPtr createBackedBuffer(vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties,
     vk::DeviceSize dataSize, const void* data = nullptr) const;
@@ -93,6 +94,7 @@ class Device {
 
   TexturePtr createTexture(vk::ImageCreateInfo imageInfo, vk::SamplerCreateInfo samplerInfo,
     vk::ImageViewType viewType, vk::ImageAspectFlags imageAspectMask, vk::ImageLayout layout,
+    vk::ComponentMapping const& componentMapping = vk::ComponentMapping(),
     vk::DeviceSize dataSize = 0, const void* data = nullptr) const;
 
   TexturePtr getSinglePixelTexture(std::array<uint8_t, 4> const& color);

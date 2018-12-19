@@ -40,7 +40,8 @@ uint32_t getMaxMipmapLevels(uint32_t width, uint32_t height) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
-  vk::SamplerCreateInfo samplerInfo, bool generateMipmaps) {
+  vk::SamplerCreateInfo samplerInfo, bool generateMipmaps,
+  vk::ComponentMapping const& componentMapping) {
 
   // first try loading with gli
   gli::texture texture(gli::load(fileName));
@@ -92,8 +93,8 @@ TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
     }
 
     auto outputImage = device->createTexture(imageInfo, samplerInfo, vk::ImageViewType::e2D,
-      vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eShaderReadOnlyOptimal, texture.size(),
-      texture.data());
+      vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eShaderReadOnlyOptimal, componentMapping,
+      texture.size(), texture.data());
 
     if (generateMipmaps) {
       updateMipmaps(device, outputImage);
@@ -147,7 +148,8 @@ TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
     }
 
     auto result = device->createTexture(imageInfo, samplerInfo, vk::ImageViewType::e2D,
-      vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eShaderReadOnlyOptimal, size, data);
+      vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eShaderReadOnlyOptimal, componentMapping,
+      size, data);
 
     stbi_image_free(data);
 
@@ -166,7 +168,7 @@ TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TexturePtr createCubemapFrom360PanoramaFile(DevicePtr const& device, std::string const& fileName,
-  int32_t size, vk::SamplerCreateInfo samplerInfo, bool generateMipmaps) {
+  uint32_t size, vk::SamplerCreateInfo samplerInfo, bool generateMipmaps) {
 
   std::string glsl = R"(
     #version 450
@@ -209,7 +211,7 @@ TexturePtr createCubemapFrom360PanoramaFile(DevicePtr const& device, std::string
       const vec3 dir = normalize(s[face] * st.s + t[face] * st.t + 0.5 * majorAxes[face]);
 
       const vec2 lngLat = vec2(atan(dir.x, dir.z), asin(dir.y));
-      const vec2 uv = (lngLat / 3.14159265359 + vec2(0, -0.5)) * vec2(0.5, -1);
+      const vec2 uv = (lngLat / 3.14159265359 + vec2(0, -0.5)) * vec2(-0.5, -1);
 
       imageStore(outputCubemap, ivec3(gl_GlobalInvocationID), vec4(texture(inputImage, uv).rgb, 1.0) );
     }
@@ -322,6 +324,12 @@ TexturePtr createPrefilteredIrradianceCubemap(
       float sampleDelta = 0.05;
       float nrSamples = 0.0;
 
+      // choose an input level which we will not undersample given our sampleDelta
+      float requiredSize  = 0.5 * PI / sampleDelta;
+      float inputBaseSize = float(textureSize(inputCubemap, 0).x);
+      float inputLevels   = float(textureQueryLevels(inputCubemap));
+      float lod = clamp(log2(inputBaseSize) - log2(requiredSize), 0, inputLevels);
+
       for (float phi = 0.0; phi < 2.0 * PI; phi += sampleDelta) {
         for (float theta = 0.0; theta < 0.5 * PI; theta += sampleDelta) {
           // spherical to cartesian (in tangent space)
@@ -329,7 +337,7 @@ TexturePtr createPrefilteredIrradianceCubemap(
           // tangent space to world
           vec3 sampleVec = tangentSample.x * right + tangentSample.y * up + tangentSample.z * normal; 
 
-          irradiance += (texture(inputCubemap, sampleVec).rgb) * cos(theta) * sin(theta);
+          irradiance += (textureLod(inputCubemap, sampleVec, lod).rgb) * cos(theta) * sin(theta);
 
           nrSamples++;
         }
@@ -379,7 +387,7 @@ TexturePtr createPrefilteredIrradianceCubemap(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TexturePtr createPrefilteredReflectionCubemap(
-  DevicePtr const& device, TexturePtr const& inputCubemap) {
+  DevicePtr const& device, uint32_t size, TexturePtr const& inputCubemap) {
   std::string glsl = R"(
     #version 450
 
@@ -519,16 +527,14 @@ TexturePtr createPrefilteredReflectionCubemap(
 
   auto shader = ShaderProgram::createFromGlsl(device, {{vk::ShaderStageFlagBits::eCompute, glsl}});
 
-  uint32_t width     = inputCubemap->mBackedImage->mImageInfo.extent.width;
-  uint32_t height    = inputCubemap->mBackedImage->mImageInfo.extent.height;
-  uint32_t mipLevels = getMaxMipmapLevels(width, height);
+  uint32_t mipLevels = getMaxMipmapLevels(size, size);
 
   vk::ImageCreateInfo imageInfo;
   imageInfo.flags         = vk::ImageCreateFlagBits::eCubeCompatible;
   imageInfo.imageType     = vk::ImageType::e2D;
   imageInfo.format        = vk::Format::eR32G32B32A32Sfloat;
-  imageInfo.extent.width  = width;
-  imageInfo.extent.height = height;
+  imageInfo.extent.width  = size;
+  imageInfo.extent.height = size;
   imageInfo.extent.depth  = 1;
   imageInfo.mipLevels     = mipLevels;
   imageInfo.arrayLayers   = 6;
@@ -553,8 +559,7 @@ TexturePtr createPrefilteredReflectionCubemap(
   std::vector<vk::ImageViewPtr> mipViews;
 
   for (int i = 0; i < mipLevels; ++i) {
-    uint32_t groupCountX = std::ceil(static_cast<float>(width) / 16.f);
-    uint32_t groupCountY = std::ceil(static_cast<float>(height) / 16.f);
+    uint32_t groupCount = std::ceil(static_cast<float>(size) / 16.f);
 
     auto mipViewInfo                          = outputCubemap->mBackedImage->mViewInfo;
     mipViewInfo.subresourceRange.baseMipLevel = i;
@@ -563,12 +568,11 @@ TexturePtr createPrefilteredReflectionCubemap(
 
     cmd->pushConstants((float)i);
     cmd->bindingState().setStorageImage(outputCubemap, mipView, 0, 1);
-    cmd->dispatch(groupCountX, groupCountY, 6);
+    cmd->dispatch(groupCount, groupCount, 6);
 
     mipViews.emplace_back(mipView);
 
-    width  = std::max(width / 2, 1u);
-    height = std::max(height / 2, 1u);
+    size = std::max(size / 2, 1u);
   }
   cmd->end();
   cmd->submit();
@@ -579,7 +583,7 @@ TexturePtr createPrefilteredReflectionCubemap(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-TexturePtr createBRDFLuT(DevicePtr const& device, int32_t size) {
+TexturePtr createBRDFLuT(DevicePtr const& device, uint32_t size) {
 
   std::string glsl = R"(
     #version 450

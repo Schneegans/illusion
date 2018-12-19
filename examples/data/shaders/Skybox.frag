@@ -44,6 +44,6 @@ void main() {
   outColor = texture(texSampler, normalize((farPos - camera.mPosition).xyz));
 
   // Tone mapping
-  outColor.rgb = Uncharted2Tonemap(outColor.rgb);
+  outColor.rgb = Uncharted2Tonemap(outColor.rgb * 2);
   outColor.rgb = outColor.rgb * (1.0 / Uncharted2Tonemap(vec3(11.2)));  
 }

@@ -61,7 +61,10 @@ struct FrameResources {
 };
 
 void drawNodes(std::vector<Illusion::Graphics::GltfModel::Node> const& nodes,
-  glm::mat4 const& parentMatrix, glm::mat4 const& viewMatrix, FrameResources const& res) {
+  glm::mat4 const& parentMatrix, glm::mat4 const& viewMatrix, bool doAlphaBlending,
+  FrameResources const& res) {
+
+  res.mCmd->graphicsState().setBlendAttachments({{doAlphaBlending}});
 
   for (auto const& n : nodes) {
     auto modelMatrix = parentMatrix * glm::mat4(n.mModelMatrix);
@@ -69,24 +72,27 @@ void drawNodes(std::vector<Illusion::Graphics::GltfModel::Node> const& nodes,
     if (n.mMesh) {
 
       for (auto const& p : n.mMesh->mPrimitives) {
-        PushConstants pushConstants;
-        pushConstants.mModelMatrix = modelMatrix;
-        pushConstants.mMaterial    = p.mMaterial->mPushConstants;
-        res.mCmd->pushConstants(pushConstants);
 
-        res.mCmd->bindingState().setTexture(p.mMaterial->mAlbedoTexture, 2, 0);
-        res.mCmd->bindingState().setTexture(p.mMaterial->mMetallicRoughnessTexture, 2, 1);
-        res.mCmd->bindingState().setTexture(p.mMaterial->mNormalTexture, 2, 2);
-        res.mCmd->bindingState().setTexture(p.mMaterial->mOcclusionTexture, 2, 3);
-        res.mCmd->bindingState().setTexture(p.mMaterial->mEmissiveTexture, 2, 4);
-        res.mCmd->graphicsState().setTopology(p.mTopology);
-        res.mCmd->graphicsState().setCullMode(
-          p.mMaterial->mDoubleSided ? vk::CullModeFlagBits::eNone : vk::CullModeFlagBits::eBack);
-        res.mCmd->drawIndexed(p.mIndexCount, 1, p.mIndexOffset, 0, 0);
+        if (p.mMaterial->mDoAlphaBlending == doAlphaBlending) {
+          PushConstants pushConstants;
+          pushConstants.mModelMatrix = modelMatrix;
+          pushConstants.mMaterial    = p.mMaterial->mPushConstants;
+          res.mCmd->pushConstants(pushConstants);
+
+          res.mCmd->bindingState().setTexture(p.mMaterial->mAlbedoTexture, 2, 0);
+          res.mCmd->bindingState().setTexture(p.mMaterial->mMetallicRoughnessTexture, 2, 1);
+          res.mCmd->bindingState().setTexture(p.mMaterial->mNormalTexture, 2, 2);
+          res.mCmd->bindingState().setTexture(p.mMaterial->mOcclusionTexture, 2, 3);
+          res.mCmd->bindingState().setTexture(p.mMaterial->mEmissiveTexture, 2, 4);
+          res.mCmd->graphicsState().setTopology(p.mTopology);
+          res.mCmd->graphicsState().setCullMode(
+            p.mMaterial->mDoubleSided ? vk::CullModeFlagBits::eNone : vk::CullModeFlagBits::eBack);
+          res.mCmd->drawIndexed(p.mIndexCount, 1, p.mIndexOffset, 0, 0);
+        }
       }
     }
 
-    drawNodes(n.mChildren, modelMatrix, viewMatrix, res);
+    drawNodes(n.mChildren, modelMatrix, viewMatrix, doAlphaBlending, res);
   }
 };
 
@@ -94,13 +100,18 @@ int main(int argc, char* argv[]) {
 
   Illusion::Core::Logger::enableTrace = true;
 
-  std::string modelFile  = "data/models/DamagedHelmet.glb";
-  std::string skyboxFile = "data/textures/sunset_fairway_1k.hdr";
-  bool        printHelp  = false;
+  std::string modelFile   = "data/models/DamagedHelmet.glb";
+  std::string skyboxFile  = "data/textures/sunset_fairway_1k.hdr";
+  std::string texChannels = "rgb";
+  bool        printHelp   = false;
 
   Illusion::Core::CommandLineOptions args("Simple loader for GLTF files.");
   args.addOption({"-m", "--model"}, &modelFile, "GLTF model (.gltf or .glb)");
   args.addOption({"-s", "--skybox"}, &skyboxFile, "Skybox image (in equirectangular projection)");
+  args.addOption({"-c", "--channels"}, &texChannels,
+    "Texture channels containing the occlusion, roughness and metallic information. Default is rgb "
+    "(which means occlusion is expected to be in the red channel, roughness in green and metallic "
+    "in blue). ");
   args.addOption({"-h", "--help"}, &printHelp, "print help");
 
   args.parse(argc, argv);
@@ -114,18 +125,34 @@ int main(int argc, char* argv[]) {
   auto device = Illusion::Graphics::Device::create(engine->getPhysicalDevice());
   auto window = Illusion::Graphics::Window::create(engine, device);
 
-  auto model = Illusion::Graphics::GltfModel::create(device, modelFile);
-  model->printInfo();
-  float     modelSize   = glm::length(model->getBoundingBox().mMin - model->getBoundingBox().mMax);
-  glm::mat4 modelMatrix = glm::scale(glm::mat4(1.0f), glm::vec3(1.f / modelSize));
+  Illusion::Graphics::GltfModel::TextureChannelMapping texChannelMapping;
+  if (texChannels.size() != 3 || texChannels.find_first_not_of("rgb") != std::string::npos) {
+    throw std::runtime_error(
+      "Failed to parse texture channel mapping! Expected a string like \"rgb\" or \"bgr\"!");
+  }
 
-  auto brdflut = Illusion::Graphics::TextureUtils::createBRDFLuT(device, 256);
+  const std::unordered_map<char, Illusion::Graphics::GltfModel::TextureChannelMapping::Channel>
+    convert = {{'r', Illusion::Graphics::GltfModel::TextureChannelMapping::Channel::eRed},
+      {'g', Illusion::Graphics::GltfModel::TextureChannelMapping::Channel::eGreen},
+      {'b', Illusion::Graphics::GltfModel::TextureChannelMapping::Channel::eBlue}};
+
+  auto model = Illusion::Graphics::GltfModel::create(device, modelFile,
+    Illusion::Graphics::GltfModel::TextureChannelMapping(
+      convert.at(texChannels[0]), convert.at(texChannels[1]), convert.at(texChannels[2])));
+
+  auto      modelBBox   = model->getBoundingBox();
+  float     modelSize   = glm::length(modelBBox.mMin - modelBBox.mMax);
+  glm::vec3 modelCenter = (modelBBox.mMin + modelBBox.mMax) * 0.5f;
+  glm::mat4 modelMatrix = glm::scale(glm::vec3(1.f / modelSize));
+  modelMatrix           = glm::translate(modelMatrix, -modelCenter);
+
+  auto brdflut = Illusion::Graphics::TextureUtils::createBRDFLuT(device, 128);
   auto skybox =
-    Illusion::Graphics::TextureUtils::createCubemapFrom360PanoramaFile(device, skyboxFile, 256);
+    Illusion::Graphics::TextureUtils::createCubemapFrom360PanoramaFile(device, skyboxFile, 1024);
   auto prefilteredIrradiance =
     Illusion::Graphics::TextureUtils::createPrefilteredIrradianceCubemap(device, 64, skybox);
   auto prefilteredReflection =
-    Illusion::Graphics::TextureUtils::createPrefilteredReflectionCubemap(device, skybox);
+    Illusion::Graphics::TextureUtils::createPrefilteredReflectionCubemap(device, 128, skybox);
 
   auto pbrShader = Illusion::Graphics::ShaderProgram::createFromFiles(
     device, {"data/shaders/SimpleGltfShader.vert", "data/shaders/SimpleGltfShader.frag"});
@@ -185,7 +212,7 @@ int main(int argc, char* argv[]) {
     CameraUniforms camera;
     camera.mProjectionMatrix = glm::perspectiveZO(glm::radians(50.f),
       static_cast<float>(window->pExtent.get().x) / static_cast<float>(window->pExtent.get().y),
-      0.1f, 100.0f);
+      0.01f, 10.0f);
     camera.mProjectionMatrix[1][1] *= -1;
 
     camera.mPosition =
@@ -229,7 +256,8 @@ int main(int argc, char* argv[]) {
     res.mCmd->bindVertexBuffers(0, {model->getVertexBuffer()});
     res.mCmd->bindIndexBuffer(model->getIndexBuffer(), 0, vk::IndexType::eUint32);
 
-    drawNodes(model->getNodes(), modelMatrix, camera.mViewMatrix, res);
+    drawNodes(model->getNodes(), modelMatrix, camera.mViewMatrix, false, res);
+    drawNodes(model->getNodes(), modelMatrix, camera.mViewMatrix, true, res);
 
     res.mCmd->bindingState().clearSet(1);
     res.mCmd->bindingState().clearSet(2);

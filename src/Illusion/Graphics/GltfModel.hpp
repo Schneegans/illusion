@@ -13,6 +13,7 @@
 
 #include "fwd.hpp"
 
+#define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
 #include <tiny_gltf.h>
 
@@ -27,11 +28,28 @@ namespace Illusion::Graphics {
 
 class GltfModel {
  public:
+  struct TextureChannelMapping {
+    enum class Channel { eRed, eGreen, eBlue };
+
+    TextureChannelMapping()
+      : mOcclusion(Channel::eRed)
+      , mRoughness(Channel::eGreen)
+      , mMetallic(Channel::eBlue) {}
+
+    TextureChannelMapping(Channel occlusion, Channel roughness, Channel metallic)
+      : mOcclusion(occlusion)
+      , mRoughness(roughness)
+      , mMetallic(metallic) {}
+
+    Channel mOcclusion;
+    Channel mRoughness;
+    Channel mMetallic;
+  };
+
   struct Material {
 
-    enum class AlphaMode { eOpaque, eBlend, eMask };
-    AlphaMode mAlphaMode   = AlphaMode::eOpaque;
-    bool      mDoubleSided = false;
+    bool mDoubleSided     = false;
+    bool mDoAlphaBlending = false;
 
     struct PushConstants {
       glm::vec4 mAlbedoFactor      = glm::vec4(1.f);
@@ -55,6 +73,19 @@ class GltfModel {
   struct BoundingBox {
     glm::vec3 mMax = glm::vec3(std::numeric_limits<float>::lowest());
     glm::vec3 mMin = glm::vec3(std::numeric_limits<float>::max());
+
+    BoundingBox getTransformed(glm::mat4 const& transform) {
+      BoundingBox bbox;
+      bbox.add((transform * glm::vec4(mMax.x, mMax.y, mMax.z, 1.f)).xyz());
+      bbox.add((transform * glm::vec4(mMax.x, mMax.y, mMin.z, 1.f)).xyz());
+      bbox.add((transform * glm::vec4(mMax.x, mMin.y, mMax.z, 1.f)).xyz());
+      bbox.add((transform * glm::vec4(mMax.x, mMin.y, mMin.z, 1.f)).xyz());
+      bbox.add((transform * glm::vec4(mMin.x, mMax.y, mMax.z, 1.f)).xyz());
+      bbox.add((transform * glm::vec4(mMin.x, mMax.y, mMin.z, 1.f)).xyz());
+      bbox.add((transform * glm::vec4(mMin.x, mMin.y, mMax.z, 1.f)).xyz());
+      bbox.add((transform * glm::vec4(mMin.x, mMin.y, mMin.z, 1.f)).xyz());
+      return bbox;
+    }
 
     bool isEmpty() const {
       return mMax == glm::vec3(std::numeric_limits<float>::lowest()) &&
@@ -92,16 +123,31 @@ class GltfModel {
 
   struct Mesh {
     std::string            mName;
-    std::vector<Primitive> mPrimitives;
     BoundingBox            mBoundingBox;
+    std::vector<Primitive> mPrimitives;
   };
 
   struct Node {
     std::string           mName;
     glm::dmat4            mModelMatrix = glm::dmat4(1);
-    BoundingBox           mBoundingBox;
     std::shared_ptr<Mesh> mMesh;
     std::vector<Node>     mChildren;
+
+    BoundingBox getBoundingBox() const {
+      BoundingBox bbox;
+      addMeshesToBoundingBox(bbox, mModelMatrix);
+      return bbox;
+    }
+
+    void addMeshesToBoundingBox(BoundingBox& bbox, glm::dmat4 parentTransform) const {
+      auto transform = parentTransform * mModelMatrix;
+      if (mMesh) {
+        bbox.add(mMesh->mBoundingBox.getTransformed(mModelMatrix));
+      }
+      for (auto const& c : mChildren) {
+        c.addMeshesToBoundingBox(bbox, transform);
+      }
+    }
   };
 
   template <typename... Args>
@@ -109,10 +155,11 @@ class GltfModel {
     return std::make_shared<GltfModel>(args...);
   };
 
-  GltfModel(DevicePtr const& device, std::string const& file);
+  GltfModel(DevicePtr const& device, std::string const& file,
+    TextureChannelMapping const& textureChannels = TextureChannelMapping());
 
   std::vector<Node> const& getNodes() const;
-  BoundingBox const&       getBoundingBox() const;
+  BoundingBox              getBoundingBox() const;
 
   BackedBufferPtr const& getIndexBuffer() const;
   BackedBufferPtr const& getVertexBuffer() const;

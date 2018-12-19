@@ -10,7 +10,6 @@
 
 #include "GltfModel.hpp"
 
-#include "../Core/EnumCast.hpp"
 #include "../Core/Logger.hpp"
 #include "CommandBuffer.hpp"
 #include "Device.hpp"
@@ -107,7 +106,8 @@ vk::PrimitiveTopology convertPrimitiveTopology(int value) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
+GltfModel::GltfModel(
+  DevicePtr const& device, std::string const& file, TextureChannelMapping const& textureChannels)
   : mDevice(device) {
 
   // load the file ---------------------------------------------------------------------------------
@@ -177,9 +177,10 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
       samplerInfo.minLod                  = 0.f;
       samplerInfo.maxLod = TextureUtils::getMaxMipmapLevels(image.width, image.height);
 
-      // if no image data has been loaded, try loading it on our own
+      // TODO: if no image data has been loaded, try loading it on our own
       if (image.image.empty()) {
-        mTextures.push_back(TextureUtils::createFromFile(mDevice, image.uri, samplerInfo));
+        throw std::runtime_error(
+          "Failed to load GLTF model: Non-tinygltf texture loading is not implemented yet!");
       } else {
         // if there is image data, create an appropriate texture object for it
         vk::ImageCreateInfo imageInfo;
@@ -198,9 +199,35 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
         imageInfo.sharingMode   = vk::SharingMode::eExclusive;
         imageInfo.initialLayout = vk::ImageLayout::eUndefined;
 
+        // Check if this texture is used as occlusion or metallicRoughness texture, if so we need to
+        // adapt the vk::ComponentMapping accordingly. Occlusion should always map to the the red
+        // channel, roughness to green and metallic to blue.
+        vk::ComponentMapping componentMapping;
+        static const std::unordered_map<TextureChannelMapping::Channel, vk::ComponentSwizzle>
+          convert = {{TextureChannelMapping::Channel::eRed, vk::ComponentSwizzle::eR},
+            {TextureChannelMapping::Channel::eGreen, vk::ComponentSwizzle::eG},
+            {TextureChannelMapping::Channel::eBlue, vk::ComponentSwizzle::eB}};
+
+        for (auto const& material : model.materials) {
+          for (auto const& p : material.values) {
+            if (p.first == "metallicRoughnessTexture" && p.second.TextureIndex() == i) {
+              componentMapping.g = convert.at(textureChannels.mRoughness);
+              componentMapping.b = convert.at(textureChannels.mMetallic);
+              break;
+            }
+          }
+          for (auto const& p : material.additionalValues) {
+            if (p.first == "occlusionTexture" && p.second.TextureIndex() == i) {
+              componentMapping.r = convert.at(textureChannels.mOcclusion);
+              break;
+            }
+          }
+        }
+
+        // create the texture
         auto texture = mDevice->createTexture(imageInfo, samplerInfo, vk::ImageViewType::e2D,
           vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eShaderReadOnlyOptimal,
-          image.image.size(), (void*)image.image.data());
+          componentMapping, image.image.size(), (void*)image.image.data());
 
         TextureUtils::updateMipmaps(mDevice, texture);
 
@@ -241,6 +268,9 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
         }
       }
 
+      bool ignoreCutoff = false;
+      bool hasBlendMode = false;
+
       for (auto const& p : material.additionalValues) {
         if (p.first == "normalTexture") {
           m->mNormalTexture = mTextures[p.second.TextureIndex()];
@@ -251,29 +281,39 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
         } else if (p.first == "normalScale") {
           m->mPushConstants.mNormalScale = p.second.Factor();
         } else if (p.first == "alphaCutoff") {
-          m->mPushConstants.mAlphaCutoff = p.second.Factor();
+          if (!ignoreCutoff) {
+            m->mPushConstants.mAlphaCutoff = p.second.Factor();
+          }
         } else if (p.first == "occlusionStrength") {
           m->mPushConstants.mOcclusionStrength = p.second.Factor();
         } else if (p.first == "emissiveFactor") {
           auto fac                          = p.second.ColorFactor();
           m->mPushConstants.mEmissiveFactor = glm::vec3(fac[0], fac[1], fac[2]);
         } else if (p.first == "alphaMode") {
+          hasBlendMode = true;
           if (p.second.string_value == "BLEND") {
-            m->mAlphaMode = Material::AlphaMode::eBlend;
+            m->mDoAlphaBlending            = true;
+            m->mPushConstants.mAlphaCutoff = 0.f;
+            ignoreCutoff                   = true;
           } else if (p.second.string_value == "MASK") {
-            m->mAlphaMode = Material::AlphaMode::eMask;
+            m->mDoAlphaBlending = false;
           } else {
-            m->mAlphaMode = Material::AlphaMode::eOpaque;
+            m->mDoAlphaBlending            = false;
+            m->mPushConstants.mAlphaCutoff = 1.f;
+            ignoreCutoff                   = true;
           }
         } else if (p.first == "doubleSided") {
           m->mDoubleSided = p.second.bool_value;
-          ILLUSION_MESSAGE << "m->mDoubleSided: " << m->mDoubleSided << std::endl;
         } else if (p.first == "name") {
           // tinygltf already loaded the name
         } else {
           ILLUSION_WARNING << "Ignoring GLTF property \"" << p.first << "\" of material \""
                            << m->mName << "\"!" << std::endl;
         }
+      }
+
+      if (!hasBlendMode) {
+        m->mPushConstants.mAlphaCutoff = 0.f;
       }
 
       mMaterials.emplace_back(m);
@@ -438,14 +478,12 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file)
 
     if (child.mesh >= 0) {
       node.mMesh = mMeshes[child.mesh];
-      node.mBoundingBox.add(mMeshes[child.mesh]->mBoundingBox);
     }
 
     for (auto const& c : child.children) {
       loadNodes(c, node);
     }
 
-    parent.mBoundingBox.add(node.mBoundingBox);
     parent.mChildren.emplace_back(node);
   };
 
@@ -460,7 +498,7 @@ std::vector<GltfModel::Node> const& GltfModel::getNodes() const { return mRootNo
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-GltfModel::BoundingBox const& GltfModel::getBoundingBox() const { return mRootNode.mBoundingBox; }
+GltfModel::BoundingBox GltfModel::getBoundingBox() const { return mRootNode.getBoundingBox(); }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -490,7 +528,7 @@ void GltfModel::printInfo() const {
     ILLUSION_MESSAGE << "    NormalTexture:            " << m->mNormalTexture << std::endl;
     ILLUSION_MESSAGE << "    OcclusionTexture:         " << m->mOcclusionTexture << std::endl;
     ILLUSION_MESSAGE << "    EmissiveTexture:          " << m->mEmissiveTexture << std::endl;
-    ILLUSION_MESSAGE << "    AlphaMode:                " << Core::enumCast(m->mAlphaMode) << std::endl;
+    ILLUSION_MESSAGE << "    DoAlphaBlending:          " << m->mDoAlphaBlending << std::endl;
     ILLUSION_MESSAGE << "    DoubleSided:              " << m->mDoubleSided << std::endl;
     ILLUSION_MESSAGE << "    AlbedoFactor:             " << m->mPushConstants.mAlbedoFactor << std::endl;
     ILLUSION_MESSAGE << "    EmissiveFactor:           " << m->mPushConstants.mEmissiveFactor << std::endl;
@@ -514,7 +552,6 @@ void GltfModel::printInfo() const {
   ILLUSION_MESSAGE << "Nodes:" << std::endl;
   std::function<void(Node const&, uint32_t)> printNode = [&printNode](Node const& n, uint32_t indent) {
     ILLUSION_MESSAGE << std::string(indent, ' ') << "  " << &n << ": " << n.mName << std::endl;
-    ILLUSION_MESSAGE << std::string(indent, ' ') << "    BoundingBox: " << n.mBoundingBox.mMin << " - " << n.mBoundingBox.mMax << std::endl;
 
     if (n.mMesh) {
       ILLUSION_MESSAGE << std::string(indent, ' ') << "    Mesh:        " << n.mMesh << std::endl;

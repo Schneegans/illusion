@@ -186,10 +186,10 @@ void main() {
   normal = perturbNormal(normal, tangentNormal, vPosition, vTexcoords);
 
   float occlusion = mix(1.0, texture(uOcclusionTexture, vTexcoords).r, pushConstants.mMaterial.mOcclusionStrength);
-  float metallic  = texture(mMetallicRoughnessTexture, vTexcoords).b * pushConstants.mMaterial.mMetallicFactor;
-  metallic = clamp(metallic, 0, 1);
   float roughness = texture(mMetallicRoughnessTexture, vTexcoords).g * pushConstants.mMaterial.mRoughnessFactor;
   roughness = clamp(roughness, 0.04, 1);
+  float metallic  = texture(mMetallicRoughnessTexture, vTexcoords).b * pushConstants.mMaterial.mMetallicFactor;
+  metallic = clamp(metallic, 0, 1);
 
   outColor.rgb = vec3(0.0);
 
@@ -206,7 +206,7 @@ void main() {
   outColor.rgb += emissive;
 
   // Tone mapping
-  outColor.rgb = Uncharted2Tonemap(outColor.rgb);
+  outColor.rgb = Uncharted2Tonemap(outColor.rgb * 2);
   outColor.rgb = outColor.rgb * (1.0 / Uncharted2Tonemap(vec3(11.2)));  
 
   // Gamma correction

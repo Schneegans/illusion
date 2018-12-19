@@ -57,10 +57,23 @@ void CommandLineOptions::printHelp() const {
     }
 
     std::stringstream sstr;
-    sstr << std::left << std::setw(maxNameLength) << names.substr(0, names.size() - 2)
-         << option.mHelp;
+    sstr << std::left << std::setw(maxNameLength) << names.substr(0, names.size() - 2);
 
-    ILLUSION_MESSAGE << sstr.str() << std::endl;
+    size_t currentSpacePos  = 0;
+    size_t currentLineWidth = 0;
+    while (currentSpacePos != std::string::npos) {
+      size_t nextSpacePos = option.mHelp.find_first_of(' ', currentSpacePos + 1);
+      sstr << option.mHelp.substr(currentSpacePos, nextSpacePos - currentSpacePos);
+      currentLineWidth += nextSpacePos - currentSpacePos;
+      currentSpacePos = nextSpacePos;
+
+      if (currentLineWidth > 60) {
+        ILLUSION_MESSAGE << sstr.str() << std::endl;
+        sstr = std::stringstream();
+        sstr << std::left << std::setw(maxNameLength - 1) << " ";
+        currentLineWidth = 0;
+      }
+    }
   }
 }
 
