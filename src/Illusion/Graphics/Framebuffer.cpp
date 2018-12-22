@@ -73,7 +73,7 @@ Framebuffer::Framebuffer(DevicePtr const& device, vk::RenderPassPtr const& rende
 
   std::vector<vk::ImageView> imageViews(mImageStore.size());
 
-  for (size_t i{0}; i < mImageStore.size(); ++i) {
+  for (size_t i(0); i < mImageStore.size(); ++i) {
     imageViews[i] = *mImageStore[i]->mView;
   }
 

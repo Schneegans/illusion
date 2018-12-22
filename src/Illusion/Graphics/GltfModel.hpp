@@ -15,6 +15,7 @@
 
 #define GLM_FORCE_SWIZZLE
 #include <glm/glm.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <tiny_gltf.h>
 
 namespace tinygltf {
@@ -53,7 +54,7 @@ class GltfModel {
 
     struct PushConstants {
       glm::vec4 mAlbedoFactor      = glm::vec4(1.f);
-      glm::vec3 mEmissiveFactor    = glm::vec3(1.f);
+      glm::vec3 mEmissiveFactor    = glm::vec3(0.f);
       float     mMetallicFactor    = 1.f;
       float     mRoughnessFactor   = 1.f;
       float     mNormalScale       = 1.f;
@@ -128,27 +129,72 @@ class GltfModel {
   };
 
   struct Node {
-    std::string           mName;
-    glm::dmat4            mModelMatrix = glm::dmat4(1);
-    std::shared_ptr<Mesh> mMesh;
-    std::vector<Node>     mChildren;
+    std::string mName;
+
+    glm::mat4 mTransform = glm::mat4(1.f);
+
+    glm::vec3 mTranslation = glm::vec3(0.f);
+    glm::quat mRotation    = glm::quat(1.f, 0.f, 0.f, 0.f);
+    glm::vec3 mScale       = glm::vec3(1.f);
+
+    glm::vec3 mRestTranslation = glm::vec3(0.f);
+    glm::quat mRestRotation    = glm::quat(1.f, 0.f, 0.f, 0.f);
+    glm::vec3 mRestScale       = glm::vec3(1.f);
+
+    std::shared_ptr<Mesh>              mMesh;
+    std::vector<std::shared_ptr<Node>> mChildren;
+
+    glm::mat4 getTransform() const {
+      glm::mat4 transform(mTransform);
+      transform = glm::translate(transform, mTranslation);
+      transform = glm::rotate(transform, glm::angle(mRotation), glm::axis(mRotation));
+      transform = glm::scale(transform, mScale);
+      return transform;
+    };
 
     BoundingBox getBoundingBox() const {
       BoundingBox bbox;
-      addMeshesToBoundingBox(bbox, mModelMatrix);
+      addMeshesToBoundingBox(bbox, getTransform());
       return bbox;
     }
 
-    void addMeshesToBoundingBox(BoundingBox& bbox, glm::dmat4 parentTransform) const {
-      auto transform = parentTransform * mModelMatrix;
+    void addMeshesToBoundingBox(BoundingBox& bbox, glm::mat4 parentTransform) const {
+      auto transform = parentTransform * getTransform();
       if (mMesh) {
-        bbox.add(mMesh->mBoundingBox.getTransformed(mModelMatrix));
+        bbox.add(mMesh->mBoundingBox.getTransformed(getTransform()));
       }
       for (auto const& c : mChildren) {
-        c.addMeshesToBoundingBox(bbox, transform);
+        c->addMeshesToBoundingBox(bbox, transform);
       }
     }
   };
+
+  struct Animation {
+    struct Channel {
+      enum class Type { eTranslation, eRotation, eScale };
+      Type                  mType;
+      std::shared_ptr<Node> mNode;
+      uint32_t              mSamplerIndex;
+    };
+
+    struct Sampler {
+      enum class Type { eLinear, eStep, eCubicSpline };
+      Type                   mType;
+      std::vector<float>     mKeyFrames;
+      std::vector<glm::vec4> mValues;
+    };
+
+    std::string          mName;
+    std::vector<Sampler> mSamplers;
+    std::vector<Channel> mChannels;
+    float                mStart = std::numeric_limits<float>::max();
+    float                mEnd   = std::numeric_limits<float>::min();
+  };
+
+  typedef std::shared_ptr<Material>  MaterialPtr;
+  typedef std::shared_ptr<Mesh>      MeshPtr;
+  typedef std::shared_ptr<Node>      NodePtr;
+  typedef std::shared_ptr<Animation> AnimationPtr;
 
   template <typename... Args>
   static GltfModelPtr create(Args&&... args) {
@@ -158,11 +204,17 @@ class GltfModel {
   GltfModel(DevicePtr const& device, std::string const& file,
     TextureChannelMapping const& textureChannels = TextureChannelMapping());
 
-  std::vector<Node> const& getNodes() const;
-  BoundingBox              getBoundingBox() const;
+  void setAnimationTime(uint32_t animationIndex, float time);
 
+  Node const&            getRoot() const;
   BackedBufferPtr const& getIndexBuffer() const;
   BackedBufferPtr const& getVertexBuffer() const;
+
+  std::vector<TexturePtr> const&   getTextures() const;
+  std::vector<MaterialPtr> const&  getMaterials() const;
+  std::vector<MeshPtr> const&      getMeshes() const;
+  std::vector<NodePtr> const&      getNodes() const;
+  std::vector<AnimationPtr> const& getAnimations() const;
 
   void printInfo() const;
 
@@ -175,9 +227,11 @@ class GltfModel {
   BackedBufferPtr mIndexBuffer;
   BackedBufferPtr mVertexBuffer;
 
-  std::vector<TexturePtr>                mTextures;
-  std::vector<std::shared_ptr<Material>> mMaterials;
-  std::vector<std::shared_ptr<Mesh>>     mMeshes;
+  std::vector<TexturePtr>   mTextures;
+  std::vector<MaterialPtr>  mMaterials;
+  std::vector<MeshPtr>      mMeshes;
+  std::vector<NodePtr>      mNodes;
+  std::vector<AnimationPtr> mAnimations;
 };
 
 } // namespace Illusion::Graphics

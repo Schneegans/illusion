@@ -558,7 +558,7 @@ TexturePtr createPrefilteredReflectionCubemap(
 
   std::vector<vk::ImageViewPtr> mipViews;
 
-  for (int i = 0; i < mipLevels; ++i) {
+  for (uint32_t i(0); i < mipLevels; ++i) {
     uint32_t groupCount = std::ceil(static_cast<float>(size) / 16.f);
 
     auto mipViewInfo                          = outputCubemap->mBackedImage->mViewInfo;

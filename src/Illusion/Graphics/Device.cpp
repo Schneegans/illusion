@@ -36,7 +36,7 @@ Device::Device(PhysicalDevicePtr const& physicalDevice)
 
   ILLUSION_TRACE << "Creating Device." << std::endl;
 
-  for (int i = 0; i < 3; ++i) {
+  for (size_t i(0); i < 3; ++i) {
     QueueType type = static_cast<QueueType>(i);
     mQueues[i]     = mDevice->getQueue(mPhysicalDevice->getQueueFamily(type), 0);
 

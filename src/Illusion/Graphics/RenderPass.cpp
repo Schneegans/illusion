@@ -101,9 +101,9 @@ vk::RenderPassPtr RenderPass::createRenderPass() const {
 
   std::vector<vk::AttachmentDescription> attachments;
   std::vector<vk::AttachmentReference>   attachmentRefs;
-  int                                    depthStencilAttachmentRef{-1};
+  int                                    depthStencilAttachmentRef(-1);
 
-  for (size_t i{0}; i < mFrameBufferAttachmentFormats.size(); ++i) {
+  for (size_t i(0); i < mFrameBufferAttachmentFormats.size(); ++i) {
     vk::AttachmentDescription attachment;
     vk::AttachmentReference   attachmentRef;
 
@@ -141,8 +141,8 @@ vk::RenderPassPtr RenderPass::createRenderPass() const {
   // create default subpass if none are specified
   if (mSubPasses.size() == 0) {
     std::vector<vk::AttachmentReference> colorAttachmentRefs;
-    for (int i{0}; i < (int)attachmentRefs.size(); ++i) {
-      if (i != depthStencilAttachmentRef) {
+    for (size_t i(0); i < attachmentRefs.size(); ++i) {
+      if ((int)i != depthStencilAttachmentRef) {
         colorAttachmentRefs.push_back(attachmentRefs[i]);
       }
     }
@@ -169,14 +169,14 @@ vk::RenderPassPtr RenderPass::createRenderPass() const {
   std::vector<std::vector<vk::AttachmentReference>> inputAttachmentRefs(mSubPasses.size());
   std::vector<std::vector<vk::AttachmentReference>> outputAttachmentRefs(mSubPasses.size());
 
-  for (size_t i{0}; i < mSubPasses.size(); ++i) {
+  for (size_t i(0); i < mSubPasses.size(); ++i) {
 
     for (uint32_t attachment : mSubPasses[i].mInputAttachments) {
       inputAttachmentRefs[i].push_back(attachmentRefs[attachment]);
     }
 
-    for (int attachment : mSubPasses[i].mOutputAttachments) {
-      if (attachment == depthStencilAttachmentRef) {
+    for (auto attachment : mSubPasses[i].mOutputAttachments) {
+      if ((int)attachment == depthStencilAttachmentRef) {
         subPasses[i].pDepthStencilAttachment = &attachmentRefs[depthStencilAttachmentRef];
       } else {
         outputAttachmentRefs[i].push_back(attachmentRefs[attachment]);
@@ -191,7 +191,7 @@ vk::RenderPassPtr RenderPass::createRenderPass() const {
   }
 
   std::vector<vk::SubpassDependency> dependencies;
-  for (size_t dst{0}; dst < mSubPasses.size(); ++dst) {
+  for (size_t dst(0); dst < mSubPasses.size(); ++dst) {
     for (auto src : mSubPasses[dst].mPreSubPasses) {
       vk::SubpassDependency dependency;
       dependency.srcSubpass    = src;

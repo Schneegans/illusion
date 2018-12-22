@@ -55,7 +55,7 @@ class BitHash : public std::vector<bool> {
 
     std::memcpy(&castedValue, &value, sizeof(T));
 
-    for (int i(0); i < bitCount; ++i) {
+    for (uint32_t i(0); i < bitCount; ++i) {
       push_back((castedValue & mask));
       mask = mask << 1;
     }

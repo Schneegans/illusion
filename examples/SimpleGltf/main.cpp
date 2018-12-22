@@ -14,6 +14,7 @@
 #include <Illusion/Core/CommandLineOptions.hpp>
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Core/RingBuffer.hpp>
+#include <Illusion/Core/Timer.hpp>
 #include <Illusion/Graphics/CoherentUniformBuffer.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/Engine.hpp>
@@ -60,18 +61,18 @@ struct FrameResources {
   vk::SemaphorePtr                             mRenderFinishedSemaphore;
 };
 
-void drawNodes(std::vector<Illusion::Graphics::GltfModel::Node> const& nodes,
+void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::GltfModel::Node>> const& nodes,
   glm::mat4 const& parentMatrix, glm::mat4 const& viewMatrix, bool doAlphaBlending,
   FrameResources const& res) {
 
   res.mCmd->graphicsState().setBlendAttachments({{doAlphaBlending}});
 
   for (auto const& n : nodes) {
-    auto modelMatrix = parentMatrix * glm::mat4(n.mModelMatrix);
+    auto modelMatrix = parentMatrix * glm::mat4(n->getTransform());
 
-    if (n.mMesh) {
+    if (n->mMesh) {
 
-      for (auto const& p : n.mMesh->mPrimitives) {
+      for (auto const& p : n->mMesh->mPrimitives) {
 
         if (p.mMaterial->mDoAlphaBlending == doAlphaBlending) {
           PushConstants pushConstants;
@@ -92,7 +93,7 @@ void drawNodes(std::vector<Illusion::Graphics::GltfModel::Node> const& nodes,
       }
     }
 
-    drawNodes(n.mChildren, modelMatrix, viewMatrix, doAlphaBlending, res);
+    drawNodes(n->mChildren, modelMatrix, viewMatrix, doAlphaBlending, res);
   }
 };
 
@@ -103,15 +104,13 @@ int main(int argc, char* argv[]) {
   std::string modelFile   = "data/models/DamagedHelmet.glb";
   std::string skyboxFile  = "data/textures/sunset_fairway_1k.hdr";
   std::string texChannels = "rgb";
+  int         animation   = 0;
   bool        printHelp   = false;
 
   Illusion::Core::CommandLineOptions args("Simple loader for GLTF files.");
   args.addOption({"-m", "--model"}, &modelFile, "GLTF model (.gltf or .glb)");
   args.addOption({"-s", "--skybox"}, &skyboxFile, "Skybox image (in equirectangular projection)");
-  args.addOption({"-c", "--channels"}, &texChannels,
-    "Texture channels containing the occlusion, roughness and metallic information. Default is rgb "
-    "(which means occlusion is expected to be in the red channel, roughness in green and metallic "
-    "in blue). ");
+  args.addOption({"-a", "--animation"}, &animation, "Index of the animation to play. Default: 0.");
   args.addOption({"-h", "--help"}, &printHelp, "print help");
 
   args.parse(argc, argv);
@@ -125,22 +124,10 @@ int main(int argc, char* argv[]) {
   auto device = Illusion::Graphics::Device::create(engine->getPhysicalDevice());
   auto window = Illusion::Graphics::Window::create(engine, device);
 
-  Illusion::Graphics::GltfModel::TextureChannelMapping texChannelMapping;
-  if (texChannels.size() != 3 || texChannels.find_first_not_of("rgb") != std::string::npos) {
-    throw std::runtime_error(
-      "Failed to parse texture channel mapping! Expected a string like \"rgb\" or \"bgr\"!");
-  }
+  auto model = Illusion::Graphics::GltfModel::create(device, modelFile);
+  model->printInfo();
 
-  const std::unordered_map<char, Illusion::Graphics::GltfModel::TextureChannelMapping::Channel>
-    convert = {{'r', Illusion::Graphics::GltfModel::TextureChannelMapping::Channel::eRed},
-      {'g', Illusion::Graphics::GltfModel::TextureChannelMapping::Channel::eGreen},
-      {'b', Illusion::Graphics::GltfModel::TextureChannelMapping::Channel::eBlue}};
-
-  auto model = Illusion::Graphics::GltfModel::create(device, modelFile,
-    Illusion::Graphics::GltfModel::TextureChannelMapping(
-      convert.at(texChannels[0]), convert.at(texChannels[1]), convert.at(texChannels[2])));
-
-  auto      modelBBox   = model->getBoundingBox();
+  auto      modelBBox   = model->getRoot().getBoundingBox();
   float     modelSize   = glm::length(modelBBox.mMin - modelBBox.mMax);
   glm::vec3 modelCenter = (modelBBox.mMin + modelBBox.mMax) * 0.5f;
   glm::mat4 modelMatrix = glm::scale(glm::vec3(1.f / modelSize));
@@ -193,9 +180,18 @@ int main(int argc, char* argv[]) {
 
   window->open();
 
+  Illusion::Core::Timer timer;
+
   while (!window->shouldClose()) {
 
     window->processInput();
+
+    if (model->getAnimations().size() > animation) {
+      auto const& anim         = model->getAnimations()[animation];
+      float modelAnimationTime = std::fmod((float)timer.getElapsed(), anim->mEnd - anim->mStart);
+      modelAnimationTime += anim->mStart;
+      model->setAnimationTime(animation, modelAnimationTime);
+    }
 
     auto& res = frameResources.next();
 
@@ -256,8 +252,8 @@ int main(int argc, char* argv[]) {
     res.mCmd->bindVertexBuffers(0, {model->getVertexBuffer()});
     res.mCmd->bindIndexBuffer(model->getIndexBuffer(), 0, vk::IndexType::eUint32);
 
-    drawNodes(model->getNodes(), modelMatrix, camera.mViewMatrix, false, res);
-    drawNodes(model->getNodes(), modelMatrix, camera.mViewMatrix, true, res);
+    drawNodes(model->getRoot().mChildren, modelMatrix, camera.mViewMatrix, false, res);
+    drawNodes(model->getRoot().mChildren, modelMatrix, camera.mViewMatrix, true, res);
 
     res.mCmd->bindingState().clearSet(1);
     res.mCmd->bindingState().clearSet(2);

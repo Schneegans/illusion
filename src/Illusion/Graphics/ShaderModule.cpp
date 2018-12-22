@@ -126,7 +126,7 @@ static std::vector<PipelineResource::Member> ParseMembers(
 
   std::vector<PipelineResource::Member> members;
 
-  for (auto i = 0U; i < spirType.member_types.size(); ++i) {
+  for (size_t i(0); i < spirType.member_types.size(); ++i) {
     // Validate member is of a supported type.
     const auto& memberType = compiler.get_type(spirType.member_types[i]);
     if (spirvTypeToBaseType.find(memberType.basetype) == spirvTypeToBaseType.end())
@@ -166,7 +166,7 @@ class CustomCompiler : public spirv_cross::CompilerGLSL {
     // spirv_cross executable correctly outputs the attributes when converting spirv back to GLSL,
     // but it's own reflection code does not :-(
     auto all_members_flag_mask = spirv_cross::Bitset(~0ULL);
-    for (auto i = 0U; i < type.member_types.size(); ++i)
+    for (size_t i(0); i < type.member_types.size(); ++i)
       all_members_flag_mask.merge_and(get_member_decoration_bitset(type.self, i));
 
     auto base_flags = ir.meta[type.self].decoration.decoration_flags;
@@ -480,7 +480,7 @@ void ShaderModule::createReflection() {
     // Get the start offset of the push constant buffer since this will differ between shader
     // stages.
     uint32_t offset = ~0;
-    for (auto i = 0U; i < spirType.member_types.size(); ++i) {
+    for (size_t i(0); i < spirType.member_types.size(); ++i) {
       auto memberType = compiler.get_type(spirType.member_types[i]);
       offset =
         std::min(offset, compiler.get_member_decoration(spirType.self, i, spv::DecorationOffset));

@@ -139,7 +139,7 @@ GltfModel::GltfModel(
 
   // create textures -------------------------------------------------------------------------------
   {
-    for (size_t i{0}; i < model.textures.size(); ++i) {
+    for (size_t i(0); i < model.textures.size(); ++i) {
 
       tinygltf::Sampler sampler;
 
@@ -246,7 +246,7 @@ GltfModel::GltfModel(
       m->mMetallicRoughnessTexture = mDevice->getSinglePixelTexture({255, 255, 255, 255});
       m->mNormalTexture            = mDevice->getSinglePixelTexture({127, 127, 255, 255});
       m->mOcclusionTexture         = mDevice->getSinglePixelTexture({255, 255, 255, 255});
-      m->mEmissiveTexture          = mDevice->getSinglePixelTexture({0, 0, 0, 255});
+      m->mEmissiveTexture          = mDevice->getSinglePixelTexture({255, 255, 255, 255});
 
       m->mName = material.name;
 
@@ -452,53 +452,238 @@ GltfModel::GltfModel(
   }
 
   // create nodes ----------------------------------------------------------------------------------
-  std::function<void(uint32_t, Node&)> loadNodes = [this, &loadNodes, &model](
-                                                     uint32_t childIndex, Node& parent) {
-    auto const& child = model.nodes[childIndex];
+  for (auto const& n : model.nodes) {
+    mNodes.emplace_back(std::make_shared<Node>());
+  }
 
-    Node node;
-    node.mName = child.name;
+  for (size_t i(0); i < model.nodes.size(); ++i) {
+    mNodes[i]->mName = model.nodes[i].name;
 
-    if (child.matrix.size() > 0) {
-      node.mModelMatrix *= glm::make_mat4(child.matrix.data());
+    if (model.nodes[i].matrix.size() > 0) {
+      mNodes[i]->mTransform = glm::make_mat4(model.nodes[i].matrix.data());
     } else {
-      if (child.translation.size() > 0) {
-        node.mModelMatrix =
-          glm::translate(node.mModelMatrix, glm::make_vec3(child.translation.data()));
+      if (model.nodes[i].translation.size() > 0) {
+        mNodes[i]->mRestTranslation = glm::make_vec3(model.nodes[i].translation.data());
+        mNodes[i]->mTranslation     = mNodes[i]->mRestTranslation;
       }
-      if (child.rotation.size() > 0) {
-        glm::dquat quaternion(glm::make_quat(child.rotation.data()));
-        node.mModelMatrix =
-          glm::rotate(node.mModelMatrix, glm::angle(quaternion), glm::axis(quaternion));
+      if (model.nodes[i].rotation.size() > 0) {
+        mNodes[i]->mRestRotation = glm::make_quat(model.nodes[i].rotation.data());
+        mNodes[i]->mRotation     = mNodes[i]->mRestRotation;
       }
-      if (child.scale.size() > 0) {
-        node.mModelMatrix = glm::scale(node.mModelMatrix, glm::make_vec3(child.scale.data()));
+      if (model.nodes[i].scale.size() > 0) {
+        mNodes[i]->mRestScale = glm::make_vec3(model.nodes[i].scale.data());
+        mNodes[i]->mScale     = mNodes[i]->mRestScale;
       }
     }
 
-    if (child.mesh >= 0) {
-      node.mMesh = mMeshes[child.mesh];
+    if (model.nodes[i].mesh >= 0) {
+      mNodes[i]->mMesh = mMeshes[model.nodes[i].mesh];
     }
 
-    for (auto const& c : child.children) {
-      loadNodes(c, node);
+    for (auto c : model.nodes[i].children) {
+      mNodes[i]->mChildren.push_back(mNodes[c]);
+    }
+  }
+
+  for (auto i : model.scenes[model.defaultScene].nodes) {
+    mRootNode.mChildren.push_back(mNodes[i]);
+  }
+
+  // create animations -----------------------------------------------------------------------------
+  for (auto const& a : model.animations) {
+    auto animation   = std::make_shared<Animation>();
+    animation->mName = a.name;
+
+    // Samplers
+    for (auto& source : a.samplers) {
+      Animation::Sampler sampler;
+
+      if (source.interpolation == "LINEAR") {
+        sampler.mType = Animation::Sampler::Type::eLinear;
+      } else if (source.interpolation == "STEP") {
+        sampler.mType = Animation::Sampler::Type::eStep;
+      } else if (source.interpolation == "CUBICSPLINE") {
+        sampler.mType = Animation::Sampler::Type::eCubicSpline;
+      } else {
+        ILLUSION_WARNING << "Ignoring unknown animation interpolation type \""
+                         << source.interpolation << "\" for GLTF model \"" << file << "\"."
+                         << std::endl;
+        sampler.mType = Animation::Sampler::Type::eLinear;
+      }
+
+      // Read sampler input time values
+      {
+        auto const& a = model.accessors[source.input];
+        auto const& v = model.bufferViews[a.bufferView];
+
+        auto data = reinterpret_cast<const float*>(
+          &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+
+        for (size_t i(0); i < a.count; ++i) {
+          sampler.mKeyFrames.push_back(data[i]);
+          animation->mStart = std::min(animation->mStart, data[i]);
+          animation->mEnd   = std::max(animation->mEnd, data[i]);
+        }
+      }
+
+      // Read sampler output T/R/S values
+      {
+        auto const& a = model.accessors[source.output];
+        auto const& v = model.bufferViews[a.bufferView];
+
+        if (a.type == TINYGLTF_TYPE_SCALAR) {
+          auto data = reinterpret_cast<const float*>(
+            &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+          for (size_t i(0); i < a.count; ++i) {
+            sampler.mValues.emplace_back(glm::vec4(data[i], 0.f, 0.f, 0.f));
+          }
+        } else if (a.type == TINYGLTF_TYPE_VEC2) {
+          auto data = reinterpret_cast<const glm::vec2*>(
+            &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+          for (size_t i(0); i < a.count; ++i) {
+            sampler.mValues.emplace_back(glm::vec4(data[i], 0.f, 0.f));
+          }
+        } else if (a.type == TINYGLTF_TYPE_VEC3) {
+          auto data = reinterpret_cast<const glm::vec3*>(
+            &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+          for (size_t i(0); i < a.count; ++i) {
+            sampler.mValues.emplace_back(glm::vec4(data[i], 0.f));
+          }
+        } else if (a.type == TINYGLTF_TYPE_VEC4) {
+          auto data = reinterpret_cast<const glm::vec4*>(
+            &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+          for (size_t i(0); i < a.count; ++i) {
+            sampler.mValues.emplace_back(data[i]);
+          }
+        } else {
+          throw std::runtime_error("Failed to load animation: Unsupported output type \"" +
+                                   std::to_string(a.type) + "\"!");
+        }
+      }
+
+      animation->mSamplers.emplace_back(sampler);
     }
 
-    parent.mChildren.emplace_back(node);
-  };
+    // Channels
+    for (auto const& source : a.channels) {
+      Animation::Channel channel;
 
-  for (int i : model.scenes[model.defaultScene].nodes) {
-    loadNodes(i, mRootNode);
+      if (source.target_path == "rotation") {
+        channel.mType = Animation::Channel::Type::eRotation;
+      } else if (source.target_path == "translation") {
+        channel.mType = Animation::Channel::Type::eTranslation;
+      } else if (source.target_path == "scale") {
+        channel.mType = Animation::Channel::Type::eScale;
+      } else {
+        ILLUSION_WARNING << "Ignoring animation path type \"" << source.target_path
+                         << "\" for GLTF model \"" << file << "\"." << std::endl;
+        continue;
+      }
+
+      channel.mSamplerIndex = source.sampler;
+      channel.mNode         = mNodes[source.target_node];
+
+      if (!channel.mNode) {
+        continue;
+      }
+
+      animation->mChannels.emplace_back(channel);
+    }
+
+    mAnimations.emplace_back(animation);
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<GltfModel::Node> const& GltfModel::getNodes() const { return mRootNode.mChildren; }
+void GltfModel::setAnimationTime(uint32_t animationIndex, float time) {
+  if (animationIndex >= mAnimations.size()) {
+    throw std::runtime_error("Failed to update GLTF animation: No animation number \"" +
+                             std::to_string(animationIndex) + "\" available!");
+  }
+
+  for (auto& channel : mAnimations[animationIndex]->mChannels) {
+    auto const& sampler = mAnimations[animationIndex]->mSamplers[channel.mSamplerIndex];
+
+    if ((sampler.mType == Animation::Sampler::Type::eCubicSpline &&
+          sampler.mKeyFrames.size() * 3 != sampler.mValues.size()) ||
+        (sampler.mType != Animation::Sampler::Type::eCubicSpline &&
+          sampler.mKeyFrames.size() != sampler.mValues.size())) {
+      ILLUSION_WARNING << "Failed to update GLTF animation: Number of data points does not match "
+                          "the number of keyframes. This should not happen!"
+                       << std::endl;
+      continue;
+    }
+
+    if (sampler.mKeyFrames.size() < 2) {
+      ILLUSION_WARNING << "Failed to update GLTF animation: There must be at least two key frames!"
+                       << std::endl;
+      continue;
+    }
+
+    size_t s = 0;
+    size_t e = 0;
+    float  t = 0.f;
+
+    if (time >= sampler.mKeyFrames.back()) {
+      s = e = sampler.mKeyFrames.size() - 1;
+    } else if (time >= sampler.mKeyFrames.front()) {
+      while (time >= sampler.mKeyFrames[e]) {
+        ++e;
+      }
+      s = e - 1;
+      t = glm::clamp(
+        (time - sampler.mKeyFrames[s]) / (sampler.mKeyFrames[e] - sampler.mKeyFrames[s]), 0.f, 1.f);
+    }
+
+    if (sampler.mType == Animation::Sampler::Type::eStep) {
+
+      if (channel.mType == Animation::Channel::Type::eTranslation) {
+        channel.mNode->mTranslation = sampler.mValues[s];
+      } else if (channel.mType == Animation::Channel::Type::eScale) {
+        channel.mNode->mScale = sampler.mValues[s];
+      } else if (channel.mType == Animation::Channel::Type::eRotation) {
+        channel.mNode->mRotation = glm::normalize(glm::make_quat(&sampler.mValues[s][0]));
+      }
+
+    } else if (sampler.mType == Animation::Sampler::Type::eLinear) {
+
+      if (channel.mType == Animation::Channel::Type::eTranslation) {
+        channel.mNode->mTranslation = glm::mix(sampler.mValues[s], sampler.mValues[e], t);
+      } else if (channel.mType == Animation::Channel::Type::eScale) {
+        channel.mNode->mScale = glm::mix(sampler.mValues[s], sampler.mValues[e], t);
+      } else if (channel.mType == Animation::Channel::Type::eRotation) {
+        glm::quat q1             = glm::make_quat(&sampler.mValues[s][0]);
+        glm::quat q2             = glm::make_quat(&sampler.mValues[e][0]);
+        channel.mNode->mRotation = glm::normalize(glm::slerp(q1, q2, t));
+      }
+
+    } else if (sampler.mType == Animation::Sampler::Type::eCubicSpline) {
+
+      float     d  = sampler.mKeyFrames[e] - sampler.mKeyFrames[s];
+      glm::vec4 m0 = sampler.mValues[s * 3 + 0] * d;
+      glm::vec4 p0 = sampler.mValues[s * 3 + 1];
+      glm::vec4 m1 = sampler.mValues[s * 3 + 2] * d;
+      glm::vec4 p1 = sampler.mValues[e * 3 + 1];
+
+      glm::vec4 spline = (2.f * t * t * t - 3.f * t * t + 1.f) * p0 +
+                         (t * t * t - 2.f * t * t + t) * m0 +
+                         (-2.f * t * t * t + 3.f * t * t) * p1 + (t * t * t - t * t) * m1;
+
+      if (channel.mType == Animation::Channel::Type::eTranslation) {
+        channel.mNode->mTranslation = spline;
+      } else if (channel.mType == Animation::Channel::Type::eScale) {
+        channel.mNode->mScale = spline;
+      } else if (channel.mType == Animation::Channel::Type::eRotation) {
+        channel.mNode->mRotation = glm::normalize(glm::make_quat(&spline[0]));
+      }
+    }
+  }
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-GltfModel::BoundingBox GltfModel::getBoundingBox() const { return mRootNode.getBoundingBox(); }
+GltfModel::Node const& GltfModel::getRoot() const { return mRootNode; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -507,6 +692,26 @@ BackedBufferPtr const& GltfModel::getIndexBuffer() const { return mIndexBuffer; 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 BackedBufferPtr const& GltfModel::getVertexBuffer() const { return mVertexBuffer; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::vector<TexturePtr> const& GltfModel::getTextures() const { return mTextures; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::vector<GltfModel::MaterialPtr> const& GltfModel::getMaterials() const { return mMaterials; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::vector<GltfModel::MeshPtr> const& GltfModel::getMeshes() const { return mMeshes; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::vector<GltfModel::NodePtr> const& GltfModel::getNodes() const { return mNodes; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::vector<GltfModel::AnimationPtr> const& GltfModel::getAnimations() const { return mAnimations; }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -538,6 +743,7 @@ void GltfModel::printInfo() const {
     ILLUSION_MESSAGE << "    OcclusionStrength:        " << m->mPushConstants.mOcclusionStrength << std::endl;
     ILLUSION_MESSAGE << "    AlphaCutoff:              " << m->mPushConstants.mAlphaCutoff << std::endl;
   }
+
   ILLUSION_MESSAGE << "Meshes:" << std::endl;
   for (auto const& m : mMeshes) {
     ILLUSION_MESSAGE << "  " << m << ": " << m->mName << std::endl;
@@ -549,6 +755,7 @@ void GltfModel::printInfo() const {
                        << " BoundingBox: " << p.mBoundingBox.mMin << " - " << p.mBoundingBox.mMax << std::endl;
     }
   }
+
   ILLUSION_MESSAGE << "Nodes:" << std::endl;
   std::function<void(Node const&, uint32_t)> printNode = [&printNode](Node const& n, uint32_t indent) {
     ILLUSION_MESSAGE << std::string(indent, ' ') << "  " << &n << ": " << n.mName << std::endl;
@@ -560,11 +767,20 @@ void GltfModel::printInfo() const {
     if (n.mChildren.size() > 0) {
       ILLUSION_MESSAGE << std::string(indent, ' ') << "    Children:" << std::endl;
       for (auto const& c : n.mChildren) {
-        printNode(c, indent+2);
+        printNode(*c, indent+2);
       }
     }
   };
   printNode(mRootNode, 0);
+
+  ILLUSION_MESSAGE << "Animations:" << std::endl;
+  for (auto const& a : mAnimations) {
+    ILLUSION_MESSAGE << "  " << a << ": " << a->mName << std::endl;
+    ILLUSION_MESSAGE << "    Samplers: " << a->mSamplers.size() << std::endl;
+    ILLUSION_MESSAGE << "    Channels: " << a->mChannels.size() << std::endl;
+    ILLUSION_MESSAGE << "    Start:    " << a->mStart << std::endl;
+    ILLUSION_MESSAGE << "    End:      " << a->mEnd << std::endl;
+  }
   // clang-format on
 }
 

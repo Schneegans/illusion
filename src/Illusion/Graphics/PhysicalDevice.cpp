@@ -37,7 +37,7 @@ void printCap(std::string const& name, vk::Bool32 cap) {
 void printVal(std::string const& name, std::vector<std::string> const& vals) {
   std::stringstream sstr;
 
-  for (size_t i{0}; i < vals.size(); ++i) {
+  for (size_t i(0); i < vals.size(); ++i) {
     sstr << vals[i];
     if (i < vals.size() - 1) {
       sstr << " | ";
@@ -87,7 +87,7 @@ PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice 
   auto available = getQueueFamilyProperties();
 
   // first find a family which can do everything
-  for (size_t i{0}; i < available.size(); ++i) {
+  for (size_t i(0); i < available.size(); ++i) {
     vk::QueueFlags required(
       vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute | vk::QueueFlagBits::eTransfer);
 
@@ -100,7 +100,7 @@ PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice 
   }
 
   // then find a different family for compute
-  for (size_t i{0}; i < available.size(); ++i) {
+  for (size_t i(0); i < available.size(); ++i) {
     vk::QueueFlags required(vk::QueueFlagBits::eCompute);
 
     if (available[i].queueCount > 0 && (available[i].queueFlags & required) == required &&
@@ -112,7 +112,7 @@ PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice 
   }
 
   // then find a different family for transfer
-  for (size_t i{0}; i < available.size(); ++i) {
+  for (size_t i(0); i < available.size(); ++i) {
     vk::QueueFlags required(vk::QueueFlagBits::eTransfer);
 
     if (available[i].queueCount > 0 && (available[i].queueFlags & required) == required &&
@@ -126,7 +126,7 @@ PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice 
 
   // if we did not find a transfer family which is different from compute and generic, we might use
   // the same as for compute
-  for (size_t i{0}; i < available.size(); ++i) {
+  for (size_t i(0); i < available.size(); ++i) {
     vk::QueueFlags required(vk::QueueFlagBits::eTransfer);
 
     if (available[i].queueCount > 0 && (available[i].queueFlags & required) == required &&
