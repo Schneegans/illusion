@@ -163,14 +163,14 @@ class GltfModel {
 
     BoundingBox getBoundingBox() const {
       BoundingBox bbox;
-      addMeshesToBoundingBox(bbox, getTransform());
+      addMeshesToBoundingBox(bbox, glm::mat4(1.f));
       return bbox;
     }
 
     void addMeshesToBoundingBox(BoundingBox& bbox, glm::mat4 parentTransform) const {
       auto transform = parentTransform * getTransform();
       if (mMesh) {
-        bbox.add(mMesh->mBoundingBox.getTransformed(getTransform()));
+        bbox.add(mMesh->mBoundingBox.getTransformed(transform));
       }
       for (auto const& c : mChildren) {
         c->addMeshesToBoundingBox(bbox, transform);

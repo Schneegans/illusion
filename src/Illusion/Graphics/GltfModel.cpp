@@ -238,8 +238,8 @@ GltfModel::GltfModel(
 
   // create materials ------------------------------------------------------------------------------
   {
-    for (auto const& material : model.materials) {
-
+    // create default material if necessary
+    if (model.materials.size() == 0) {
       auto m = std::make_shared<Material>();
 
       m->mAlbedoTexture            = mDevice->getSinglePixelTexture({255, 255, 255, 255});
@@ -248,75 +248,94 @@ GltfModel::GltfModel(
       m->mOcclusionTexture         = mDevice->getSinglePixelTexture({255, 255, 255, 255});
       m->mEmissiveTexture          = mDevice->getSinglePixelTexture({255, 255, 255, 255});
 
-      m->mName = material.name;
-
-      for (auto const& p : material.values) {
-        if (p.first == "baseColorTexture") {
-          m->mAlbedoTexture = mTextures[p.second.TextureIndex()];
-        } else if (p.first == "metallicRoughnessTexture") {
-          m->mMetallicRoughnessTexture = mTextures[p.second.TextureIndex()];
-        } else if (p.first == "metallicFactor") {
-          m->mPushConstants.mMetallicFactor = p.second.Factor();
-        } else if (p.first == "roughnessFactor") {
-          m->mPushConstants.mRoughnessFactor = p.second.Factor();
-        } else if (p.first == "baseColorFactor") {
-          auto fac                        = p.second.ColorFactor();
-          m->mPushConstants.mAlbedoFactor = glm::vec4(fac[0], fac[1], fac[2], fac[3]);
-        } else {
-          ILLUSION_WARNING << "Ignoring GLTF property \"" << p.first << "\" of material "
-                           << m->mName << "\"!" << std::endl;
-        }
-      }
-
-      bool ignoreCutoff = false;
-      bool hasBlendMode = false;
-
-      for (auto const& p : material.additionalValues) {
-        if (p.first == "normalTexture") {
-          m->mNormalTexture = mTextures[p.second.TextureIndex()];
-        } else if (p.first == "occlusionTexture") {
-          m->mOcclusionTexture = mTextures[p.second.TextureIndex()];
-        } else if (p.first == "emissiveTexture") {
-          m->mEmissiveTexture = mTextures[p.second.TextureIndex()];
-        } else if (p.first == "normalScale") {
-          m->mPushConstants.mNormalScale = p.second.Factor();
-        } else if (p.first == "alphaCutoff") {
-          if (!ignoreCutoff) {
-            m->mPushConstants.mAlphaCutoff = p.second.Factor();
-          }
-        } else if (p.first == "occlusionStrength") {
-          m->mPushConstants.mOcclusionStrength = p.second.Factor();
-        } else if (p.first == "emissiveFactor") {
-          auto fac                          = p.second.ColorFactor();
-          m->mPushConstants.mEmissiveFactor = glm::vec3(fac[0], fac[1], fac[2]);
-        } else if (p.first == "alphaMode") {
-          hasBlendMode = true;
-          if (p.second.string_value == "BLEND") {
-            m->mDoAlphaBlending            = true;
-            m->mPushConstants.mAlphaCutoff = 0.f;
-            ignoreCutoff                   = true;
-          } else if (p.second.string_value == "MASK") {
-            m->mDoAlphaBlending = false;
-          } else {
-            m->mDoAlphaBlending            = false;
-            m->mPushConstants.mAlphaCutoff = 1.f;
-            ignoreCutoff                   = true;
-          }
-        } else if (p.first == "doubleSided") {
-          m->mDoubleSided = p.second.bool_value;
-        } else if (p.first == "name") {
-          // tinygltf already loaded the name
-        } else {
-          ILLUSION_WARNING << "Ignoring GLTF property \"" << p.first << "\" of material \""
-                           << m->mName << "\"!" << std::endl;
-        }
-      }
-
-      if (!hasBlendMode) {
-        m->mPushConstants.mAlphaCutoff = 0.f;
-      }
+      m->mPushConstants.mAlbedoFactor   = glm::vec4(0.5f, 0.5f, 0.5f, 1.f);
+      m->mPushConstants.mMetallicFactor = 0.f;
+      m->mDoubleSided                   = true;
 
       mMaterials.emplace_back(m);
+
+    } else {
+
+      for (auto const& material : model.materials) {
+
+        auto m = std::make_shared<Material>();
+
+        m->mAlbedoTexture            = mDevice->getSinglePixelTexture({255, 255, 255, 255});
+        m->mMetallicRoughnessTexture = mDevice->getSinglePixelTexture({255, 255, 255, 255});
+        m->mNormalTexture            = mDevice->getSinglePixelTexture({127, 127, 255, 255});
+        m->mOcclusionTexture         = mDevice->getSinglePixelTexture({255, 255, 255, 255});
+        m->mEmissiveTexture          = mDevice->getSinglePixelTexture({255, 255, 255, 255});
+
+        m->mName = material.name;
+
+        for (auto const& p : material.values) {
+          if (p.first == "baseColorTexture") {
+            m->mAlbedoTexture = mTextures[p.second.TextureIndex()];
+          } else if (p.first == "metallicRoughnessTexture") {
+            m->mMetallicRoughnessTexture = mTextures[p.second.TextureIndex()];
+          } else if (p.first == "metallicFactor") {
+            m->mPushConstants.mMetallicFactor = p.second.Factor();
+          } else if (p.first == "roughnessFactor") {
+            m->mPushConstants.mRoughnessFactor = p.second.Factor();
+          } else if (p.first == "baseColorFactor") {
+            auto fac                        = p.second.ColorFactor();
+            m->mPushConstants.mAlbedoFactor = glm::vec4(fac[0], fac[1], fac[2], fac[3]);
+          } else {
+            ILLUSION_WARNING << "Ignoring GLTF property \"" << p.first << "\" of material "
+                             << m->mName << "\"!" << std::endl;
+          }
+        }
+
+        bool ignoreCutoff = false;
+        bool hasBlendMode = false;
+
+        for (auto const& p : material.additionalValues) {
+          if (p.first == "normalTexture") {
+            m->mNormalTexture = mTextures[p.second.TextureIndex()];
+          } else if (p.first == "occlusionTexture") {
+            m->mOcclusionTexture = mTextures[p.second.TextureIndex()];
+          } else if (p.first == "emissiveTexture") {
+            m->mEmissiveTexture = mTextures[p.second.TextureIndex()];
+          } else if (p.first == "normalScale") {
+            m->mPushConstants.mNormalScale = p.second.Factor();
+          } else if (p.first == "alphaCutoff") {
+            if (!ignoreCutoff) {
+              m->mPushConstants.mAlphaCutoff = p.second.Factor();
+            }
+          } else if (p.first == "occlusionStrength") {
+            m->mPushConstants.mOcclusionStrength = p.second.Factor();
+          } else if (p.first == "emissiveFactor") {
+            auto fac                          = p.second.ColorFactor();
+            m->mPushConstants.mEmissiveFactor = glm::vec3(fac[0], fac[1], fac[2]);
+          } else if (p.first == "alphaMode") {
+            hasBlendMode = true;
+            if (p.second.string_value == "BLEND") {
+              m->mDoAlphaBlending            = true;
+              m->mPushConstants.mAlphaCutoff = 0.f;
+              ignoreCutoff                   = true;
+            } else if (p.second.string_value == "MASK") {
+              m->mDoAlphaBlending = false;
+            } else {
+              m->mDoAlphaBlending            = false;
+              m->mPushConstants.mAlphaCutoff = 1.f;
+              ignoreCutoff                   = true;
+            }
+          } else if (p.first == "doubleSided") {
+            m->mDoubleSided = p.second.bool_value;
+          } else if (p.first == "name") {
+            // tinygltf already loaded the name
+          } else {
+            ILLUSION_WARNING << "Ignoring GLTF property \"" << p.first << "\" of material \""
+                             << m->mName << "\"!" << std::endl;
+          }
+        }
+
+        if (!hasBlendMode) {
+          m->mPushConstants.mAlphaCutoff = 0.f;
+        }
+
+        mMaterials.emplace_back(m);
+      }
     }
   }
 
@@ -333,87 +352,156 @@ GltfModel::GltfModel(
       for (auto const& p : m.primitives) {
         Primitive primitve;
 
-        primitve.mMaterial = mMaterials[p.material];
+        // use default material if p.material < 0
+        primitve.mMaterial = mMaterials[std::max(0, p.material)];
         primitve.mTopology = convertPrimitiveTopology(p.mode);
 
         uint32_t vertexStart = static_cast<uint32_t>(vertexBuffer.size());
 
-        // append all vertices to our vertex buffer
-        const float*    vertexPositions = nullptr;
-        const float*    vertexNormals   = nullptr;
-        const float*    vertexTexcoords = nullptr;
-        const uint16_t* vertexJoints    = nullptr;
-        const float*    vertexWeights   = nullptr;
-        uint32_t        vertexCount     = 0;
-
-        auto it = p.attributes.find("POSITION");
-        if (it != p.attributes.end()) {
-          auto const& a   = model.accessors[it->second];
-          auto const& v   = model.bufferViews[a.bufferView];
-          vertexPositions = reinterpret_cast<const float*>(
-            &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]));
-          vertexCount = a.count;
-        } else {
+        auto positions = p.attributes.find("POSITION");
+        if (positions == p.attributes.end()) {
           throw std::runtime_error("Failed to load GLTF model: Primitve has no vertex data!");
         }
 
-        if ((it = p.attributes.find("NORMAL")) != p.attributes.end()) {
-          auto const& a = model.accessors[it->second];
+        uint32_t vertexCount = model.accessors[positions->second].count;
+        vertexBuffer.resize(vertexStart + vertexCount);
+
+        // positions
+        {
+          auto const& a = model.accessors[positions->second];
           auto const& v = model.bufferViews[a.bufferView];
-          vertexNormals = reinterpret_cast<const float*>(
-            &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]));
+
+          if (a.componentType != TINYGLTF_COMPONENT_TYPE_FLOAT) {
+            throw std::runtime_error(
+              "Failed to load GLTF model: Unsupported component type for positions!");
+          }
+
+          uint32_t s = v.byteStride == 0 ? sizeof(glm::vec3) : v.byteStride;
+          for (uint32_t i(0); i < vertexCount; ++i) {
+            vertexBuffer[vertexStart + i].mPosition = *reinterpret_cast<glm::vec3*>(
+              &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]));
+            primitve.mBoundingBox.add(vertexBuffer[vertexStart + i].mPosition);
+          }
         }
 
-        if ((it = p.attributes.find("TEXCOORD_0")) != p.attributes.end()) {
-          auto const& a   = model.accessors[it->second];
-          auto const& v   = model.bufferViews[a.bufferView];
-          vertexTexcoords = reinterpret_cast<const float*>(
-            &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]));
-        }
-
-        if ((it = p.attributes.find("JOINTS_0")) != p.attributes.end()) {
-          auto const& a = model.accessors[it->second];
-          auto const& v = model.bufferViews[a.bufferView];
-          vertexJoints  = reinterpret_cast<const uint16_t*>(
-            &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]));
-        }
-
-        if ((it = p.attributes.find("WEIGHTS_0")) != p.attributes.end()) {
-          auto const& a = model.accessors[it->second];
-          auto const& v = model.bufferViews[a.bufferView];
-          vertexWeights = reinterpret_cast<const float*>(
-            &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]));
-        }
-
-        if (vertexNormals) {
+        auto normals = p.attributes.find("NORMAL");
+        if (normals != p.attributes.end()) {
           primitve.mVertexAttributes |= Primitive::VertexAttributeBits::eNormals;
+
+          auto const& a = model.accessors[normals->second];
+          auto const& v = model.bufferViews[a.bufferView];
+
+          if (a.componentType != TINYGLTF_COMPONENT_TYPE_FLOAT) {
+            throw std::runtime_error(
+              "Failed to load GLTF model: Unsupported component type for normals!");
+          }
+
+          uint32_t s = v.byteStride == 0 ? sizeof(glm::vec3) : v.byteStride;
+          for (uint32_t i(0); i < vertexCount; ++i) {
+            vertexBuffer[vertexStart + i].mNormal = *reinterpret_cast<glm::vec3*>(
+              &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]));
+          }
         }
-        if (vertexTexcoords) {
+
+        auto texcoords = p.attributes.find("TEXCOORD_0");
+        if (texcoords != p.attributes.end()) {
           primitve.mVertexAttributes |= Primitive::VertexAttributeBits::eTexcoords;
+
+          auto const& a = model.accessors[texcoords->second];
+          auto const& v = model.bufferViews[a.bufferView];
+
+          switch (a.componentType) {
+          case TINYGLTF_COMPONENT_TYPE_FLOAT: {
+            uint32_t s = v.byteStride == 0 ? sizeof(glm::vec2) : v.byteStride;
+            for (uint32_t i(0); i < vertexCount; ++i) {
+              vertexBuffer[vertexStart + i].mTexcoords = *reinterpret_cast<glm::vec2*>(
+                &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]));
+            }
+            break;
+          }
+          case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
+            uint32_t s = v.byteStride == 0 ? sizeof(glm::u8vec2) : v.byteStride;
+            for (uint32_t i(0); i < vertexCount; ++i) {
+              vertexBuffer[vertexStart + i].mTexcoords =
+                glm::vec2(*reinterpret_cast<glm::u8vec2*>(
+                  &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]))) /
+                255.f;
+            }
+            break;
+          }
+          case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
+            uint32_t s = v.byteStride == 0 ? sizeof(glm::u16vec2) : v.byteStride;
+            for (uint32_t i(0); i < vertexCount; ++i) {
+              vertexBuffer[vertexStart + i].mTexcoords =
+                glm::vec2(*reinterpret_cast<glm::u16vec2*>(
+                  &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]))) /
+                65535.f;
+            }
+            break;
+          }
+          default:
+            throw std::runtime_error(
+              "Failed to load GLTF model: Unsupported component type for texcoords!");
+          }
         }
-        if (vertexJoints && vertexWeights) {
+
+        auto joints  = p.attributes.find("JOINTS_0");
+        auto weights = p.attributes.find("WEIGHTS_0");
+
+        if (joints != p.attributes.end() && weights != p.attributes.end()) {
           primitve.mVertexAttributes |= Primitive::VertexAttributeBits::eSkins;
+
+          {
+            auto const& a = model.accessors[joints->second];
+            auto const& v = model.bufferViews[a.bufferView];
+            uint32_t    s = v.byteStride == 0 ? sizeof(glm::vec4) : v.byteStride;
+            for (uint32_t i(0); i < vertexCount; ++i) {
+              vertexBuffer[vertexStart + i].mJoint0 = *reinterpret_cast<glm::vec4*>(
+                &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]));
+            }
+          }
+
+          {
+            auto const& a = model.accessors[weights->second];
+            auto const& v = model.bufferViews[a.bufferView];
+
+            switch (a.componentType) {
+            case TINYGLTF_COMPONENT_TYPE_FLOAT: {
+              uint32_t s = v.byteStride == 0 ? sizeof(glm::vec4) : v.byteStride;
+              for (uint32_t i(0); i < vertexCount; ++i) {
+                vertexBuffer[vertexStart + i].mWeight0 = *reinterpret_cast<glm::vec4*>(
+                  &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]));
+              }
+              break;
+            }
+            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
+              uint32_t s = v.byteStride == 0 ? sizeof(glm::u8vec4) : v.byteStride;
+              for (uint32_t i(0); i < vertexCount; ++i) {
+                vertexBuffer[vertexStart + i].mWeight0 =
+                  glm::vec4(*reinterpret_cast<glm::u8vec4*>(
+                    &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]))) /
+                  255.f;
+              }
+              break;
+            }
+            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
+              uint32_t s = v.byteStride == 0 ? sizeof(glm::u16vec4) : v.byteStride;
+              for (uint32_t i(0); i < vertexCount; ++i) {
+                vertexBuffer[vertexStart + i].mWeight0 =
+                  glm::vec4(*reinterpret_cast<glm::u16vec4*>(
+                    &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]))) /
+                  65535.f;
+              }
+              break;
+            }
+            default:
+              throw std::runtime_error(
+                "Failed to load GLTF model: Unsupported component type for texcoords!");
+            }
+          }
         }
 
-        for (uint32_t v = 0; v < vertexCount; ++v) {
-          Vertex vertex;
-          vertex.mPosition = glm::make_vec3(&vertexPositions[v * 3]);
-
-          primitve.mBoundingBox.add(vertex.mPosition);
-
-          if (vertexNormals) {
-            vertex.mNormal = glm::normalize(glm::make_vec3(&vertexNormals[v * 3]));
-          }
-          if (vertexTexcoords) {
-            vertex.mTexcoords = glm::make_vec2(&vertexTexcoords[v * 2]);
-          }
-          if (vertexJoints && vertexWeights) {
-            vertex.mJoint0  = glm::vec4(glm::make_vec4(&vertexJoints[v * 4]));
-            vertex.mWeight0 = glm::make_vec4(&vertexWeights[v * 4]);
-          }
-
-          vertexBuffer.emplace_back(vertex);
-        }
+        ILLUSION_MESSAGE << "p.indices: " << p.indices << std::endl;
 
         // append all indices to our index buffer
         auto const& a = model.accessors[p.indices];
@@ -451,8 +539,8 @@ GltfModel::GltfModel(
           throw std::runtime_error("Failed to load GLTF model: Unsupported index type!");
         }
 
-        mesh->mPrimitives.emplace_back(primitve);
         mesh->mBoundingBox.add(primitve.mBoundingBox);
+        mesh->mPrimitives.emplace_back(primitve);
       }
       mMeshes.emplace_back(mesh);
     }
@@ -495,7 +583,7 @@ GltfModel::GltfModel(
     }
   }
 
-  for (auto i : model.scenes[model.defaultScene].nodes) {
+  for (auto i : model.scenes[std::max(0, model.defaultScene)].nodes) {
     mRootNode.mChildren.push_back(mNodes[i]);
   }
 
