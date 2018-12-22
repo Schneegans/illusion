@@ -11,6 +11,7 @@
 #ifndef ILLUSION_GRAPHICS_GLTF_MODEL_HPP
 #define ILLUSION_GRAPHICS_GLTF_MODEL_HPP
 
+#include "../Core/Flags.hpp"
 #include "fwd.hpp"
 
 #define GLM_FORCE_SWIZZLE
@@ -115,11 +116,19 @@ class GltfModel {
   };
 
   struct Primitive {
-    std::shared_ptr<Material> mMaterial;
-    vk::PrimitiveTopology     mTopology;
-    vk::DeviceSize            mIndexCount;
-    vk::DeviceSize            mIndexOffset;
-    BoundingBox               mBoundingBox;
+
+    enum class VertexAttributeBits : int {
+      eNormals   = 1 << 0,
+      eTexcoords = 1 << 1,
+      eSkins     = 1 << 2
+    };
+
+    Core::Flags<VertexAttributeBits> mVertexAttributes;
+    std::shared_ptr<Material>        mMaterial;
+    vk::PrimitiveTopology            mTopology;
+    vk::DeviceSize                   mIndexCount;
+    vk::DeviceSize                   mIndexOffset;
+    BoundingBox                      mBoundingBox;
   };
 
   struct Mesh {

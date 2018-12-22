@@ -35,9 +35,14 @@ struct Material {
   float mAlphaCutoff;
 };
 
+const int HasNormals   = 1 << 0; 
+const int HasTexcoords = 1 << 1; 
+const int HasSkins     = 1 << 2; 
+
 layout(push_constant, std430) uniform PushConstants {
   mat4     mModelMatrix;
   Material mMaterial;
+  int      mVertexAttributes; 
 } pushConstants;
 
 // outputs
@@ -48,7 +53,11 @@ layout(location = 2) out vec2 vTexcoords;
 // methods
 void main() {
   vTexcoords = inTexcoords;
-  vNormal = (inverse(transpose(pushConstants.mModelMatrix)) * vec4(inNormal, 0.0)).xyz;
+
+  if ((pushConstants.mVertexAttributes & HasNormals) > 0) {
+    vNormal = (inverse(transpose(pushConstants.mModelMatrix)) * vec4(inNormal, 0.0)).xyz;
+  }
+
   vPosition = (pushConstants.mModelMatrix * vec4(inPosition, 1.0)).xyz;
   gl_Position = camera.mProjectionMatrix * camera.mViewMatrix * vec4(vPosition, 1.0);
 }

@@ -11,7 +11,6 @@
 #ifndef ILLUSION_CORE_BITHASH_HPP
 #define ILLUSION_CORE_BITHASH_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include <cstdint>
 #include <cstring>
 #include <vector>

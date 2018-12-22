@@ -32,6 +32,7 @@
 struct PushConstants {
   glm::mat4                                              mModelMatrix;
   Illusion::Graphics::GltfModel::Material::PushConstants mMaterial;
+  int                                                    mVertexAttributes;
 };
 
 struct CameraUniforms {
@@ -76,8 +77,9 @@ void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::GltfModel::Node>>
 
         if (p.mMaterial->mDoAlphaBlending == doAlphaBlending) {
           PushConstants pushConstants;
-          pushConstants.mModelMatrix = modelMatrix;
-          pushConstants.mMaterial    = p.mMaterial->mPushConstants;
+          pushConstants.mModelMatrix      = modelMatrix;
+          pushConstants.mMaterial         = p.mMaterial->mPushConstants;
+          pushConstants.mVertexAttributes = (int)p.mVertexAttributes;
           res.mCmd->pushConstants(pushConstants);
 
           res.mCmd->bindingState().setTexture(p.mMaterial->mAlbedoTexture, 2, 0);

@@ -43,9 +43,14 @@ struct Material {
   float mAlphaCutoff;
 };
 
+const int HasNormals   = 1 << 0; 
+const int HasTexcoords = 1 << 1; 
+const int HasSkins     = 1 << 2; 
+
 layout(push_constant, std430) uniform PushConstants {
   mat4     mModelMatrix;
   Material mMaterial;
+  int      mVertexAttributes; 
 } pushConstants;
 
 // outputs
@@ -171,19 +176,29 @@ void main() {
     discard;
   }
 
-  vec3  emissive  = sRGBtoLinear(texture(uEmissiveTexture, vTexcoords)).rgb * pushConstants.mMaterial.mEmissiveFactor;
+  vec3 emissive = sRGBtoLinear(texture(uEmissiveTexture, vTexcoords)).rgb * pushConstants.mMaterial.mEmissiveFactor;
 
   vec3 viewDir = normalize(camera.mPosition.xyz - vPosition);
-  vec3 tangentNormal = texture(mNormalTexture, vTexcoords).rgb * 2.0 - 1.0;
-  tangentNormal *= pushConstants.mMaterial.mNormalScale;
-  vec3 normal = normalize(vNormal);
-  if (dot(normal, viewDir) < 0) {
-   normal *= -1;
-   tangentNormal.y *= -1;
+
+  vec3 normal;
+
+  if ((pushConstants.mVertexAttributes & HasNormals) > 0) {
+    normal = normalize(vNormal);
   } else {
-    tangentNormal.x *= -1;
+    normal = normalize(cross(dFdy(vPosition), dFdx(vPosition)));
   }
-  normal = perturbNormal(normal, tangentNormal, vPosition, vTexcoords);
+  
+  if ((pushConstants.mVertexAttributes & HasTexcoords) > 0) {
+    vec3 tangentNormal = texture(mNormalTexture, vTexcoords).rgb * 2.0 - 1.0;
+    tangentNormal *= pushConstants.mMaterial.mNormalScale;
+    if (dot(normal, viewDir) < 0) {
+     normal *= -1;
+     tangentNormal.y *= -1;
+    } else {
+      tangentNormal.x *= -1;
+    }
+    normal = perturbNormal(normal, tangentNormal, vPosition, vTexcoords);
+  }
 
   float occlusion = mix(1.0, texture(uOcclusionTexture, vTexcoords).r, pushConstants.mMaterial.mOcclusionStrength);
   float roughness = texture(mMetallicRoughnessTexture, vTexcoords).g * pushConstants.mMaterial.mRoughnessFactor;

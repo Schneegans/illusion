@@ -385,6 +385,16 @@ GltfModel::GltfModel(
             &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]));
         }
 
+        if (vertexNormals) {
+          primitve.mVertexAttributes |= Primitive::VertexAttributeBits::eNormals;
+        }
+        if (vertexTexcoords) {
+          primitve.mVertexAttributes |= Primitive::VertexAttributeBits::eTexcoords;
+        }
+        if (vertexJoints && vertexWeights) {
+          primitve.mVertexAttributes |= Primitive::VertexAttributeBits::eSkins;
+        }
+
         for (uint32_t v = 0; v < vertexCount; ++v) {
           Vertex vertex;
           vertex.mPosition = glm::make_vec3(&vertexPositions[v * 3]);
