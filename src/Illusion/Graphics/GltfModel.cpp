@@ -341,8 +341,8 @@ GltfModel::GltfModel(
 
   // create meshes & primitives --------------------------------------------------------------------
   {
-    std::vector<uint32_t> indexBuffer;
     std::vector<Vertex>   vertexBuffer;
+    std::vector<uint32_t> indexBuffer;
 
     for (auto const& m : model.meshes) {
 
@@ -501,42 +501,52 @@ GltfModel::GltfModel(
           }
         }
 
-        ILLUSION_MESSAGE << "p.indices: " << p.indices << std::endl;
+        if (p.indices < 0) {
 
-        // append all indices to our index buffer
-        auto const& a = model.accessors[p.indices];
-        auto const& v = model.bufferViews[a.bufferView];
+          // add artificial indices if there are none
+          primitve.mIndexOffset = static_cast<uint32_t>(indexBuffer.size());
+          primitve.mIndexCount  = vertexCount;
 
-        primitve.mIndexOffset = static_cast<uint32_t>(indexBuffer.size());
-        primitve.mIndexCount  = static_cast<uint32_t>(a.count);
+          for (uint32_t i(0); i < vertexCount; ++i) {
+            indexBuffer.push_back(i + vertexStart);
+          }
 
-        switch (a.componentType) {
-        case TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT: {
-          auto data = reinterpret_cast<const uint32_t*>(
-            &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
-          for (uint32_t i = 0; i < primitve.mIndexCount; ++i) {
-            indexBuffer.push_back(data[i] + vertexStart);
+        } else {
+
+          auto const& a = model.accessors[p.indices];
+          auto const& v = model.bufferViews[a.bufferView];
+
+          primitve.mIndexOffset = static_cast<uint32_t>(indexBuffer.size());
+          primitve.mIndexCount  = static_cast<uint32_t>(a.count);
+
+          switch (a.componentType) {
+          case TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT: {
+            auto data = reinterpret_cast<const uint32_t*>(
+              &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+            for (uint32_t i = 0; i < primitve.mIndexCount; ++i) {
+              indexBuffer.push_back(data[i] + vertexStart);
+            }
+            break;
           }
-          break;
-        }
-        case TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT: {
-          auto data = reinterpret_cast<const uint16_t*>(
-            &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
-          for (uint32_t i = 0; i < primitve.mIndexCount; ++i) {
-            indexBuffer.push_back(data[i] + vertexStart);
+          case TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT: {
+            auto data = reinterpret_cast<const uint16_t*>(
+              &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+            for (uint32_t i = 0; i < primitve.mIndexCount; ++i) {
+              indexBuffer.push_back(data[i] + vertexStart);
+            }
+            break;
           }
-          break;
-        }
-        case TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE: {
-          auto data = reinterpret_cast<const uint8_t*>(
-            &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
-          for (uint32_t i = 0; i < primitve.mIndexCount; ++i) {
-            indexBuffer.push_back(data[i] + vertexStart);
+          case TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE: {
+            auto data = reinterpret_cast<const uint8_t*>(
+              &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+            for (uint32_t i = 0; i < primitve.mIndexCount; ++i) {
+              indexBuffer.push_back(data[i] + vertexStart);
+            }
+            break;
           }
-          break;
-        }
-        default:
-          throw std::runtime_error("Failed to load GLTF model: Unsupported index type!");
+          default:
+            throw std::runtime_error("Failed to load GLTF model: Unsupported index type!");
+          }
         }
 
         mesh->mBoundingBox.add(primitve.mBoundingBox);
