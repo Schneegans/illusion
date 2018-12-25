@@ -253,11 +253,12 @@ std::vector<uint32_t> ShaderModule::compileGlsl(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ShaderModule::ShaderModule(
-  DevicePtr const& device, std::vector<uint32_t>&& spirv, vk::ShaderStageFlagBits stage)
+ShaderModule::ShaderModule(DevicePtr const& device, std::vector<uint32_t>&& spirv,
+  vk::ShaderStageFlagBits stage, std::set<std::string> const& dynamicBuffers)
   : mSpirv(spirv)
   , mStage(stage) {
-  createReflection();
+
+  createReflection(dynamicBuffers);
 
   vk::ShaderModuleCreateInfo info;
   info.codeSize = mSpirv.size() * 4;
@@ -267,12 +268,12 @@ ShaderModule::ShaderModule(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ShaderModule::ShaderModule(
-  DevicePtr const& device, std::string const& glsl, vk::ShaderStageFlagBits stage)
+ShaderModule::ShaderModule(DevicePtr const& device, std::string const& glsl,
+  vk::ShaderStageFlagBits stage, std::set<std::string> const& dynamicBuffers)
   : mSpirv(compileGlsl(glsl, stage))
   , mStage(stage) {
 
-  createReflection();
+  createReflection(dynamicBuffers);
 
   vk::ShaderModuleCreateInfo info;
   info.codeSize = mSpirv.size() * 4;
@@ -298,7 +299,7 @@ std::vector<PipelineResource> const& ShaderModule::getResources() const { return
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ShaderModule::createReflection() {
+void ShaderModule::createReflection(std::set<std::string> const& dynamicBuffers) {
   // Parse SPIRV binary.
   CustomCompiler                     compiler(mSpirv);
   spirv_cross::CompilerGLSL::Options opts = compiler.get_common_options();
@@ -356,10 +357,14 @@ void ShaderModule::createReflection() {
   for (auto& resource : resources.uniform_buffers) {
     const auto& spirType = compiler.get_type_from_variable(resource.id);
 
+    bool isDynamic = dynamicBuffers.find(resource.name) != dynamicBuffers.end();
+
     PipelineResource pipelineResource;
     pipelineResource.mStages       = mStage;
-    pipelineResource.mResourceType = PipelineResource::ResourceType::eUniformBuffer;
-    pipelineResource.mAccess       = vk::AccessFlagBits::eUniformRead;
+    pipelineResource.mResourceType = isDynamic
+                                       ? PipelineResource::ResourceType::eUniformBufferDynamic
+                                       : PipelineResource::ResourceType::eUniformBuffer;
+    pipelineResource.mAccess  = vk::AccessFlagBits::eUniformRead;
     pipelineResource.mSet     = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
     pipelineResource.mBinding = compiler.get_decoration(resource.id, spv::DecorationBinding);
     pipelineResource.mArraySize = (spirType.array.size() == 0) ? 1 : spirType.array[0];
@@ -373,10 +378,14 @@ void ShaderModule::createReflection() {
   for (auto& resource : resources.storage_buffers) {
     const auto& spirType = compiler.get_type_from_variable(resource.id);
 
+    bool isDynamic = dynamicBuffers.find(resource.name) != dynamicBuffers.end();
+
     PipelineResource pipelineResource;
     pipelineResource.mStages       = mStage;
-    pipelineResource.mResourceType = PipelineResource::ResourceType::eStorageBuffer;
-    pipelineResource.mAccess       = compiler.GetAccessFlags(spirType);
+    pipelineResource.mResourceType = isDynamic
+                                       ? PipelineResource::ResourceType::eStorageBufferDynamic
+                                       : PipelineResource::ResourceType::eStorageBuffer;
+    pipelineResource.mAccess  = compiler.GetAccessFlags(spirType);
     pipelineResource.mSet     = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
     pipelineResource.mBinding = compiler.get_decoration(resource.id, spv::DecorationBinding);
     pipelineResource.mArraySize = (spirType.array.size() == 0) ? 1 : spirType.array[0];

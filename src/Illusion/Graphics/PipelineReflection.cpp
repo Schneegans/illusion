@@ -67,9 +67,9 @@ void PipelineReflection::addResource(PipelineResource const& resource) {
     return;
   }
 
-  while (mDescriptorSetReflections.size() < resource.mSet + 1) {
+  while (mDescriptorSetReflections.size() <= resource.mSet) {
     mDescriptorSetReflections.emplace_back(
-      std::make_shared<DescriptorSetReflection>(mDevice, resource.mSet));
+      std::make_shared<DescriptorSetReflection>(mDevice, mDescriptorSetReflections.size()));
   }
 
   mDescriptorSetReflections[resource.mSet]->addResource(resource);

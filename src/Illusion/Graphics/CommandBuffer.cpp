@@ -34,7 +34,7 @@ CommandBuffer::CommandBuffer(DevicePtr const& device, QueueType type, vk::Comman
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::reset() {
-  mCurrentDescriptorSetLayoutHashes.clear();
+  mCurrentDescriptorSets.clear();
   mDescriptorSetCache.releaseAll();
   mVkCmd->reset({});
 }
@@ -326,25 +326,31 @@ void CommandBuffer::copyBufferToImage(vk::Buffer src, vk::Image dst, vk::ImageLa
 
 void CommandBuffer::flush() {
 
-  vk::PipelineBindPoint bindPoint = vk::PipelineBindPoint::eGraphics;
+  vk::PipelineBindPoint bindPoint = mType == QueueType::eCompute ? vk::PipelineBindPoint::eCompute
+                                                                 : vk::PipelineBindPoint::eGraphics;
 
-  if (mType == QueueType::eCompute) {
-    bindPoint = vk::PipelineBindPoint::eCompute;
-  }
-
+  // create (or retrieve from cache) and bind a pipeline -------------------------------------------
   auto pipeline = getPipelineHandle();
   mVkCmd->bindPipeline(bindPoint, *pipeline);
 
-  // for each set of current program
-  //    if binding state is dirty
-  //    or no currently bound set
-  //    or currently bound layout does not match layout of set
-  //         acquire new set
-  //         update descriptor set
-  //         bind descriptor set
-  //         store it
+  // now bind and update all descriptor sets -------------------------------------------------------
 
+  // the logic is roughly as follows:
+
+  // for each descriptor set number of the current program
+  //   if binding state of this set number is dirty (a binding for this set has been changed)
+  //     or no descriptor set is currently bound for this set
+  //     or the layout of the currently bound descriptor set is incompatible to the current program
+  //       acquire new descriptor set
+  //       update descriptor set
+  //       bind descriptor set
+  //       store hash for compatibility checks
+  //   else if a dynamic offset has been changed
+  //       re-bind current descriptor set
+
+  // get descriptor set layouts of the current program
   auto const& setReflections = mCurrentShaderProgram->getDescriptorSetReflections();
+
   for (uint32_t setNum = 0; setNum < setReflections.size(); ++setNum) {
 
     // ignore empty descriptor sets
@@ -352,20 +358,37 @@ void CommandBuffer::flush() {
       continue;
     }
 
-    auto currentHashIt = mCurrentDescriptorSetLayoutHashes.find(setNum);
+    // there is nothing to bind, most likely the user forgot to bind something - but it may also be
+    // on purpose when the current program actually does not need this set
+    if (mBindingState.getBindings(setNum).size() == 0) {
+      continue;
+    }
 
+    // get hash of the currently bound descriptor set (if any) to check if it is compatible with the
+    // descriptor set layout of the currently bound program
+    auto currentSetIt = mCurrentDescriptorSets.find(setNum);
+
+    // we need to bind a new descriptor set if
+    //   binding state of this set number is dirty (a binding for this set has been changed)
+    //   or no descriptor set is currently bound for this set
+    //   or the layout of the currently bound descriptor set is incompatible to the current program
     if (mBindingState.getDirtySets().find(setNum) != mBindingState.getDirtySets().end() ||
-        currentHashIt == mCurrentDescriptorSetLayoutHashes.end() ||
-        currentHashIt->second != setReflections[setNum]->getHash()) {
+        currentSetIt == mCurrentDescriptorSets.end() ||
+        currentSetIt->second.mSetLayoutHash != setReflections[setNum]->getHash()) {
 
+      // acquire an unused descriptor set
       auto descriptorSet = mDescriptorSetCache.acquireHandle(
         mCurrentShaderProgram->getDescriptorSetReflections().at(setNum));
 
+      // this will store the offsets of dynamic uniform and storage buffers
+      std::vector<uint32_t> dynamicOffsets;
+
+      // write descriptor set for each binding
       for (auto const& binding : mBindingState.getBindings(setNum)) {
 
         if (std::holds_alternative<CombinedImageSamplerBinding>(binding.second)) {
+          auto value = std::get<CombinedImageSamplerBinding>(binding.second);
 
-          auto                    value = std::get<CombinedImageSamplerBinding>(binding.second);
           vk::DescriptorImageInfo imageInfo;
           imageInfo.imageLayout = value.mTexture->mBackedImage->mCurrentLayout;
           imageInfo.imageView   = *value.mTexture->mBackedImage->mView;
@@ -382,8 +405,8 @@ void CommandBuffer::flush() {
           mDevice->getHandle()->updateDescriptorSets(info, nullptr);
 
         } else if (std::holds_alternative<StorageImageBinding>(binding.second)) {
+          auto value = std::get<StorageImageBinding>(binding.second);
 
-          auto                    value = std::get<StorageImageBinding>(binding.second);
           vk::DescriptorImageInfo imageInfo;
           imageInfo.imageLayout = value.mImage->mBackedImage->mCurrentLayout;
           imageInfo.imageView   = *(value.mView ? value.mView : value.mImage->mBackedImage->mView);
@@ -400,8 +423,8 @@ void CommandBuffer::flush() {
           mDevice->getHandle()->updateDescriptorSets(info, nullptr);
 
         } else if (std::holds_alternative<UniformBufferBinding>(binding.second)) {
+          auto value = std::get<UniformBufferBinding>(binding.second);
 
-          auto                     value = std::get<UniformBufferBinding>(binding.second);
           vk::DescriptorBufferInfo bufferInfo;
           bufferInfo.buffer = *value.mBuffer->mBuffer;
           bufferInfo.offset = value.mOffset;
@@ -416,17 +439,57 @@ void CommandBuffer::flush() {
           info.pBufferInfo     = &bufferInfo;
 
           mDevice->getHandle()->updateDescriptorSets(info, nullptr);
+
+        } else if (std::holds_alternative<DynamicUniformBufferBinding>(binding.second)) {
+          auto value = std::get<DynamicUniformBufferBinding>(binding.second);
+
+          vk::DescriptorBufferInfo bufferInfo;
+          bufferInfo.buffer = *value.mBuffer->mBuffer;
+          bufferInfo.range  = value.mSize;
+
+          vk::WriteDescriptorSet info;
+          info.dstSet          = *descriptorSet;
+          info.dstBinding      = binding.first;
+          info.dstArrayElement = 0;
+          info.descriptorType  = vk::DescriptorType::eUniformBufferDynamic;
+          info.descriptorCount = 1;
+          info.pBufferInfo     = &bufferInfo;
+
+          dynamicOffsets.push_back(mBindingState.getDynamicOffset(setNum, binding.first));
+
+          mDevice->getHandle()->updateDescriptorSets(info, nullptr);
+        }
+      }
+
+      // now the descriptor set is up-to-date and we can bind it
+      mVkCmd->bindDescriptorSets(bindPoint, *mCurrentShaderProgram->getReflection()->getLayout(),
+        setNum, *descriptorSet, dynamicOffsets);
+
+      // store the hash of the descriptor set layout so that we can check for
+      // compatibility if a new program is bound
+      mCurrentDescriptorSets[setNum] = {descriptorSet, setReflections[setNum]->getHash()};
+
+    }
+    // there is a matching descriptor set currently bound,
+    // however the dynamic offsets have been changed
+    else if (mBindingState.getDirtyDynamicOffsets().find(setNum) !=
+             mBindingState.getDirtyDynamicOffsets().end()) {
+
+      std::vector<uint32_t> dynamicOffsets;
+
+      for (auto const& binding : mBindingState.getBindings(setNum)) {
+        if (std::holds_alternative<DynamicUniformBufferBinding>(binding.second)) {
+          dynamicOffsets.push_back(mBindingState.getDynamicOffset(setNum, binding.first));
         }
       }
 
       mVkCmd->bindDescriptorSets(bindPoint, *mCurrentShaderProgram->getReflection()->getLayout(),
-        setNum, *descriptorSet, {});
-
-      mCurrentDescriptorSetLayoutHashes[setNum] = setReflections[setNum]->getHash();
+        setNum, *currentSetIt->second.mSet, dynamicOffsets);
     }
   }
 
   mBindingState.clearDirtySets();
+  mBindingState.clearDirtyDynamicOffsets();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

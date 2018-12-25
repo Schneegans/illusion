@@ -14,6 +14,7 @@
 #include "DescriptorPool.hpp"
 
 #include <map>
+#include <set>
 
 namespace Illusion::Graphics {
 
@@ -23,11 +24,12 @@ namespace Illusion::Graphics {
 class ShaderProgram {
 
  public:
-  static ShaderProgramPtr createFromFiles(
-    DevicePtr const& device, std::vector<std::string> const& files);
+  static ShaderProgramPtr createFromFiles(DevicePtr const& device,
+    std::vector<std::string> const& files, std::set<std::string> const& dynamicBuffers = {});
 
-  static ShaderProgramPtr createFromGlsl(
-    DevicePtr const& device, std::map<vk::ShaderStageFlagBits, std::string> const& sources);
+  static ShaderProgramPtr createFromGlsl(DevicePtr const& device,
+    std::map<vk::ShaderStageFlagBits, std::string> const& sources,
+    std::set<std::string> const&                          dynamicBuffers = {});
 
   template <typename... Args>
   static ShaderProgramPtr create(Args&&... args) {

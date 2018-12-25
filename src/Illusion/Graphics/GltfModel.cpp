@@ -106,8 +106,8 @@ vk::PrimitiveTopology convertPrimitiveTopology(int value) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-GltfModel::GltfModel(
-  DevicePtr const& device, std::string const& file, TextureChannelMapping const& textureChannels)
+GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFlags options,
+  TextureChannelMapping const& textureChannels)
   : mDevice(device) {
 
   // load the file ---------------------------------------------------------------------------------
@@ -139,99 +139,102 @@ GltfModel::GltfModel(
 
   // create textures -------------------------------------------------------------------------------
   {
-    for (size_t i(0); i < model.textures.size(); ++i) {
+    if (options & OptionFlagBits::eTextures) {
+      for (size_t i(0); i < model.textures.size(); ++i) {
 
-      tinygltf::Sampler sampler;
+        tinygltf::Sampler sampler;
 
-      if (model.textures[i].sampler >= 0) {
-        sampler = model.samplers[model.textures[i].sampler];
-      } else {
-        sampler.minFilter = TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR;
-        sampler.magFilter = TINYGLTF_TEXTURE_FILTER_LINEAR;
-        sampler.wrapS     = TINYGLTF_TEXTURE_WRAP_REPEAT;
-        sampler.wrapT     = TINYGLTF_TEXTURE_WRAP_REPEAT;
-      }
-
-      tinygltf::Image image;
-
-      if (model.textures[i].source >= 0) {
-        image = model.images[model.textures[i].source];
-      } else {
-        throw std::runtime_error("Error loading GLTF file " + file + ": No image source given");
-      }
-
-      vk::SamplerCreateInfo samplerInfo;
-      samplerInfo.magFilter               = convertFilter(sampler.magFilter);
-      samplerInfo.minFilter               = convertFilter(sampler.minFilter);
-      samplerInfo.addressModeU            = convertSamplerAddressMode(sampler.wrapS);
-      samplerInfo.addressModeV            = convertSamplerAddressMode(sampler.wrapT);
-      samplerInfo.addressModeW            = vk::SamplerAddressMode::eRepeat;
-      samplerInfo.anisotropyEnable        = true;
-      samplerInfo.maxAnisotropy           = 16;
-      samplerInfo.borderColor             = vk::BorderColor::eIntOpaqueBlack;
-      samplerInfo.unnormalizedCoordinates = false;
-      samplerInfo.compareEnable           = false;
-      samplerInfo.compareOp               = vk::CompareOp::eAlways;
-      samplerInfo.mipmapMode              = convertSamplerMipmapMode(sampler.minFilter);
-      samplerInfo.mipLodBias              = 0.f;
-      samplerInfo.minLod                  = 0.f;
-      samplerInfo.maxLod = TextureUtils::getMaxMipmapLevels(image.width, image.height);
-
-      // TODO: if no image data has been loaded, try loading it on our own
-      if (image.image.empty()) {
-        throw std::runtime_error(
-          "Failed to load GLTF model: Non-tinygltf texture loading is not implemented yet!");
-      } else {
-        // if there is image data, create an appropriate texture object for it
-        vk::ImageCreateInfo imageInfo;
-        imageInfo.imageType = vk::ImageType::e2D;
-        imageInfo.format =
-          image.component == 3 ? vk::Format::eR8G8B8Unorm : vk::Format::eR8G8B8A8Unorm;
-        imageInfo.extent.width  = image.width;
-        imageInfo.extent.height = image.height;
-        imageInfo.extent.depth  = 1;
-        imageInfo.mipLevels     = samplerInfo.maxLod;
-        imageInfo.arrayLayers   = 1;
-        imageInfo.samples       = vk::SampleCountFlagBits::e1;
-        imageInfo.tiling        = vk::ImageTiling::eOptimal;
-        imageInfo.usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferSrc |
-                          vk::ImageUsageFlagBits::eTransferDst;
-        imageInfo.sharingMode   = vk::SharingMode::eExclusive;
-        imageInfo.initialLayout = vk::ImageLayout::eUndefined;
-
-        // Check if this texture is used as occlusion or metallicRoughness texture, if so we need to
-        // adapt the vk::ComponentMapping accordingly. Occlusion should always map to the the red
-        // channel, roughness to green and metallic to blue.
-        vk::ComponentMapping componentMapping;
-        static const std::unordered_map<TextureChannelMapping::Channel, vk::ComponentSwizzle>
-          convert = {{TextureChannelMapping::Channel::eRed, vk::ComponentSwizzle::eR},
-            {TextureChannelMapping::Channel::eGreen, vk::ComponentSwizzle::eG},
-            {TextureChannelMapping::Channel::eBlue, vk::ComponentSwizzle::eB}};
-
-        for (auto const& material : model.materials) {
-          for (auto const& p : material.values) {
-            if (p.first == "metallicRoughnessTexture" && p.second.TextureIndex() == i) {
-              componentMapping.g = convert.at(textureChannels.mRoughness);
-              componentMapping.b = convert.at(textureChannels.mMetallic);
-              break;
-            }
-          }
-          for (auto const& p : material.additionalValues) {
-            if (p.first == "occlusionTexture" && p.second.TextureIndex() == i) {
-              componentMapping.r = convert.at(textureChannels.mOcclusion);
-              break;
-            }
-          }
+        if (model.textures[i].sampler >= 0) {
+          sampler = model.samplers[model.textures[i].sampler];
+        } else {
+          sampler.minFilter = TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR;
+          sampler.magFilter = TINYGLTF_TEXTURE_FILTER_LINEAR;
+          sampler.wrapS     = TINYGLTF_TEXTURE_WRAP_REPEAT;
+          sampler.wrapT     = TINYGLTF_TEXTURE_WRAP_REPEAT;
         }
 
-        // create the texture
-        auto texture = mDevice->createTexture(imageInfo, samplerInfo, vk::ImageViewType::e2D,
-          vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eShaderReadOnlyOptimal,
-          componentMapping, image.image.size(), (void*)image.image.data());
+        tinygltf::Image image;
 
-        TextureUtils::updateMipmaps(mDevice, texture);
+        if (model.textures[i].source >= 0) {
+          image = model.images[model.textures[i].source];
+        } else {
+          throw std::runtime_error("Error loading GLTF file " + file + ": No image source given");
+        }
 
-        mTextures.push_back(texture);
+        vk::SamplerCreateInfo samplerInfo;
+        samplerInfo.magFilter               = convertFilter(sampler.magFilter);
+        samplerInfo.minFilter               = convertFilter(sampler.minFilter);
+        samplerInfo.addressModeU            = convertSamplerAddressMode(sampler.wrapS);
+        samplerInfo.addressModeV            = convertSamplerAddressMode(sampler.wrapT);
+        samplerInfo.addressModeW            = vk::SamplerAddressMode::eRepeat;
+        samplerInfo.anisotropyEnable        = true;
+        samplerInfo.maxAnisotropy           = 16;
+        samplerInfo.borderColor             = vk::BorderColor::eIntOpaqueBlack;
+        samplerInfo.unnormalizedCoordinates = false;
+        samplerInfo.compareEnable           = false;
+        samplerInfo.compareOp               = vk::CompareOp::eAlways;
+        samplerInfo.mipmapMode              = convertSamplerMipmapMode(sampler.minFilter);
+        samplerInfo.mipLodBias              = 0.f;
+        samplerInfo.minLod                  = 0.f;
+        samplerInfo.maxLod = TextureUtils::getMaxMipmapLevels(image.width, image.height);
+
+        // TODO: if no image data has been loaded, try loading it on our own
+        if (image.image.empty()) {
+          throw std::runtime_error(
+            "Failed to load GLTF model: Non-tinygltf texture loading is not implemented yet!");
+        } else {
+          // if there is image data, create an appropriate texture object for it
+          vk::ImageCreateInfo imageInfo;
+          imageInfo.imageType = vk::ImageType::e2D;
+          imageInfo.format =
+            image.component == 3 ? vk::Format::eR8G8B8Unorm : vk::Format::eR8G8B8A8Unorm;
+          imageInfo.extent.width  = image.width;
+          imageInfo.extent.height = image.height;
+          imageInfo.extent.depth  = 1;
+          imageInfo.mipLevels     = samplerInfo.maxLod;
+          imageInfo.arrayLayers   = 1;
+          imageInfo.samples       = vk::SampleCountFlagBits::e1;
+          imageInfo.tiling        = vk::ImageTiling::eOptimal;
+          imageInfo.usage         = vk::ImageUsageFlagBits::eSampled |
+                            vk::ImageUsageFlagBits::eTransferSrc |
+                            vk::ImageUsageFlagBits::eTransferDst;
+          imageInfo.sharingMode   = vk::SharingMode::eExclusive;
+          imageInfo.initialLayout = vk::ImageLayout::eUndefined;
+
+          // Check if this texture is used as occlusion or metallicRoughness texture, if so we need
+          // to adapt the vk::ComponentMapping accordingly. Occlusion should always map to the the
+          // red channel, roughness to green and metallic to blue.
+          vk::ComponentMapping componentMapping;
+          static const std::unordered_map<TextureChannelMapping::Channel, vk::ComponentSwizzle>
+            convert = {{TextureChannelMapping::Channel::eRed, vk::ComponentSwizzle::eR},
+              {TextureChannelMapping::Channel::eGreen, vk::ComponentSwizzle::eG},
+              {TextureChannelMapping::Channel::eBlue, vk::ComponentSwizzle::eB}};
+
+          for (auto const& material : model.materials) {
+            for (auto const& p : material.values) {
+              if (p.first == "metallicRoughnessTexture" && p.second.TextureIndex() == i) {
+                componentMapping.g = convert.at(textureChannels.mRoughness);
+                componentMapping.b = convert.at(textureChannels.mMetallic);
+                break;
+              }
+            }
+            for (auto const& p : material.additionalValues) {
+              if (p.first == "occlusionTexture" && p.second.TextureIndex() == i) {
+                componentMapping.r = convert.at(textureChannels.mOcclusion);
+                break;
+              }
+            }
+          }
+
+          // create the texture
+          auto texture = mDevice->createTexture(imageInfo, samplerInfo, vk::ImageViewType::e2D,
+            vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eShaderReadOnlyOptimal,
+            componentMapping, image.image.size(), (void*)image.image.data());
+
+          TextureUtils::updateMipmaps(mDevice, texture);
+
+          mTextures.push_back(texture);
+        }
       }
     }
   }
@@ -269,9 +272,10 @@ GltfModel::GltfModel(
         m->mName = material.name;
 
         for (auto const& p : material.values) {
-          if (p.first == "baseColorTexture") {
+          if (p.first == "baseColorTexture" && p.second.TextureIndex() < mTextures.size()) {
             m->mAlbedoTexture = mTextures[p.second.TextureIndex()];
-          } else if (p.first == "metallicRoughnessTexture") {
+          } else if (p.first == "metallicRoughnessTexture" &&
+                     p.second.TextureIndex() < mTextures.size()) {
             m->mMetallicRoughnessTexture = mTextures[p.second.TextureIndex()];
           } else if (p.first == "metallicFactor") {
             m->mPushConstants.mMetallicFactor = p.second.Factor();
@@ -290,11 +294,11 @@ GltfModel::GltfModel(
         bool hasBlendMode = false;
 
         for (auto const& p : material.additionalValues) {
-          if (p.first == "normalTexture") {
+          if (p.first == "normalTexture" && p.second.TextureIndex() < mTextures.size()) {
             m->mNormalTexture = mTextures[p.second.TextureIndex()];
-          } else if (p.first == "occlusionTexture") {
+          } else if (p.first == "occlusionTexture" && p.second.TextureIndex() < mTextures.size()) {
             m->mOcclusionTexture = mTextures[p.second.TextureIndex()];
-          } else if (p.first == "emissiveTexture") {
+          } else if (p.first == "emissiveTexture" && p.second.TextureIndex() < mTextures.size()) {
             m->mEmissiveTexture = mTextures[p.second.TextureIndex()];
           } else if (p.first == "normalScale") {
             m->mPushConstants.mNormalScale = p.second.Factor();
@@ -448,16 +452,34 @@ GltfModel::GltfModel(
         auto joints  = p.attributes.find("JOINTS_0");
         auto weights = p.attributes.find("WEIGHTS_0");
 
-        if (joints != p.attributes.end() && weights != p.attributes.end()) {
+        if (joints != p.attributes.end() && weights != p.attributes.end() &&
+            (options & OptionFlagBits::eSkins)) {
           primitve.mVertexAttributes |= Primitive::VertexAttributeBits::eSkins;
 
           {
             auto const& a = model.accessors[joints->second];
             auto const& v = model.bufferViews[a.bufferView];
-            uint32_t    s = v.byteStride == 0 ? sizeof(glm::vec4) : v.byteStride;
-            for (uint32_t i(0); i < vertexCount; ++i) {
-              vertexBuffer[vertexStart + i].mJoint0 = *reinterpret_cast<glm::vec4*>(
-                &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]));
+
+            switch (a.componentType) {
+            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
+              uint32_t s = v.byteStride == 0 ? sizeof(glm::u8vec4) : v.byteStride;
+              for (uint32_t i(0); i < vertexCount; ++i) {
+                vertexBuffer[vertexStart + i].mJoint0 = glm::vec4(*reinterpret_cast<glm::u8vec4*>(
+                  &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s])));
+              }
+              break;
+            }
+            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
+              uint32_t s = v.byteStride == 0 ? sizeof(glm::u16vec4) : v.byteStride;
+              for (uint32_t i(0); i < vertexCount; ++i) {
+                vertexBuffer[vertexStart + i].mJoint0 = glm::vec4(*reinterpret_cast<glm::u16vec4*>(
+                  &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s])));
+              }
+              break;
+            }
+            default:
+              throw std::runtime_error(
+                "Failed to load GLTF model: Unsupported component type for joints!");
             }
           }
 
@@ -496,7 +518,19 @@ GltfModel::GltfModel(
             }
             default:
               throw std::runtime_error(
-                "Failed to load GLTF model: Unsupported component type for texcoords!");
+                "Failed to load GLTF model: Unsupported component type for weights!");
+            }
+
+            // normalize weights - is this the correct way of handling cases where the sum of the
+            // weights is not equal to one?
+            for (uint32_t i(0); i < vertexCount; ++i) {
+              float sum = vertexBuffer[vertexStart + i].mWeight0.x +
+                          vertexBuffer[vertexStart + i].mWeight0.y +
+                          vertexBuffer[vertexStart + i].mWeight0.z +
+                          vertexBuffer[vertexStart + i].mWeight0.w;
+              if (sum > 0) {
+                vertexBuffer[vertexStart + i].mWeight0 /= sum;
+              }
             }
           }
         }
@@ -559,11 +593,36 @@ GltfModel::GltfModel(
     mIndexBuffer  = mDevice->createIndexBuffer(indexBuffer);
   }
 
-  // create nodes ----------------------------------------------------------------------------------
+  // pre-create nodes (they are referenced by themselves as children and by the skins) -------------
   for (auto const& n : model.nodes) {
     mNodes.emplace_back(std::make_shared<Node>());
   }
 
+  // create skins ----------------------------------------------------------------------------------
+  if (options & OptionFlagBits::eSkins) {
+    for (auto const& s : model.skins) {
+      auto skin   = std::make_shared<Skin>();
+      skin->mName = s.name;
+
+      for (int j : s.joints) {
+        if (j >= 0 && j < mNodes.size()) {
+          skin->mJoints.push_back(mNodes[j]);
+        }
+      }
+
+      if (s.inverseBindMatrices > -1) {
+        auto const& a = model.accessors[s.inverseBindMatrices];
+        auto const& v = model.bufferViews[a.bufferView];
+        skin->mInverseBindMatrices.resize(a.count);
+        std::memcpy(skin->mInverseBindMatrices.data(),
+          &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset], a.count * sizeof(glm::mat4));
+      }
+
+      mSkins.emplace_back(skin);
+    }
+  }
+
+  // create nodes ----------------------------------------------------------------------------------
   for (size_t i(0); i < model.nodes.size(); ++i) {
     mNodes[i]->mName = model.nodes[i].name;
 
@@ -588,6 +647,10 @@ GltfModel::GltfModel(
       mNodes[i]->mMesh = mMeshes[model.nodes[i].mesh];
     }
 
+    if (model.nodes[i].skin >= 0 && (options & OptionFlagBits::eSkins)) {
+      mNodes[i]->mSkin = mSkins[model.nodes[i].skin];
+    }
+
     for (auto c : model.nodes[i].children) {
       mNodes[i]->mChildren.push_back(mNodes[c]);
     }
@@ -598,107 +661,109 @@ GltfModel::GltfModel(
   }
 
   // create animations -----------------------------------------------------------------------------
-  for (auto const& a : model.animations) {
-    auto animation   = std::make_shared<Animation>();
-    animation->mName = a.name;
+  if (options & OptionFlagBits::eAnimations) {
+    for (auto const& a : model.animations) {
+      auto animation   = std::make_shared<Animation>();
+      animation->mName = a.name;
 
-    // Samplers
-    for (auto& source : a.samplers) {
-      Animation::Sampler sampler;
+      // Samplers
+      for (auto& source : a.samplers) {
+        Animation::Sampler sampler;
 
-      if (source.interpolation == "LINEAR") {
-        sampler.mType = Animation::Sampler::Type::eLinear;
-      } else if (source.interpolation == "STEP") {
-        sampler.mType = Animation::Sampler::Type::eStep;
-      } else if (source.interpolation == "CUBICSPLINE") {
-        sampler.mType = Animation::Sampler::Type::eCubicSpline;
-      } else {
-        ILLUSION_WARNING << "Ignoring unknown animation interpolation type \""
-                         << source.interpolation << "\" for GLTF model \"" << file << "\"."
-                         << std::endl;
-        sampler.mType = Animation::Sampler::Type::eLinear;
-      }
-
-      // Read sampler input time values
-      {
-        auto const& a = model.accessors[source.input];
-        auto const& v = model.bufferViews[a.bufferView];
-
-        auto data = reinterpret_cast<const float*>(
-          &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
-
-        for (size_t i(0); i < a.count; ++i) {
-          sampler.mKeyFrames.push_back(data[i]);
-          animation->mStart = std::min(animation->mStart, data[i]);
-          animation->mEnd   = std::max(animation->mEnd, data[i]);
+        if (source.interpolation == "LINEAR") {
+          sampler.mType = Animation::Sampler::Type::eLinear;
+        } else if (source.interpolation == "STEP") {
+          sampler.mType = Animation::Sampler::Type::eStep;
+        } else if (source.interpolation == "CUBICSPLINE") {
+          sampler.mType = Animation::Sampler::Type::eCubicSpline;
+        } else {
+          ILLUSION_WARNING << "Ignoring unknown animation interpolation type \""
+                           << source.interpolation << "\" for GLTF model \"" << file << "\"."
+                           << std::endl;
+          sampler.mType = Animation::Sampler::Type::eLinear;
         }
-      }
 
-      // Read sampler output T/R/S values
-      {
-        auto const& a = model.accessors[source.output];
-        auto const& v = model.bufferViews[a.bufferView];
+        // Read sampler input time values
+        {
+          auto const& a = model.accessors[source.input];
+          auto const& v = model.bufferViews[a.bufferView];
 
-        if (a.type == TINYGLTF_TYPE_SCALAR) {
           auto data = reinterpret_cast<const float*>(
             &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+
           for (size_t i(0); i < a.count; ++i) {
-            sampler.mValues.emplace_back(glm::vec4(data[i], 0.f, 0.f, 0.f));
+            sampler.mKeyFrames.push_back(data[i]);
+            animation->mStart = std::min(animation->mStart, data[i]);
+            animation->mEnd   = std::max(animation->mEnd, data[i]);
           }
-        } else if (a.type == TINYGLTF_TYPE_VEC2) {
-          auto data = reinterpret_cast<const glm::vec2*>(
-            &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
-          for (size_t i(0); i < a.count; ++i) {
-            sampler.mValues.emplace_back(glm::vec4(data[i], 0.f, 0.f));
-          }
-        } else if (a.type == TINYGLTF_TYPE_VEC3) {
-          auto data = reinterpret_cast<const glm::vec3*>(
-            &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
-          for (size_t i(0); i < a.count; ++i) {
-            sampler.mValues.emplace_back(glm::vec4(data[i], 0.f));
-          }
-        } else if (a.type == TINYGLTF_TYPE_VEC4) {
-          auto data = reinterpret_cast<const glm::vec4*>(
-            &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
-          for (size_t i(0); i < a.count; ++i) {
-            sampler.mValues.emplace_back(data[i]);
-          }
-        } else {
-          throw std::runtime_error("Failed to load animation: Unsupported output type \"" +
-                                   std::to_string(a.type) + "\"!");
         }
+
+        // Read sampler output T/R/S values
+        {
+          auto const& a = model.accessors[source.output];
+          auto const& v = model.bufferViews[a.bufferView];
+
+          if (a.type == TINYGLTF_TYPE_SCALAR) {
+            auto data = reinterpret_cast<const float*>(
+              &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+            for (size_t i(0); i < a.count; ++i) {
+              sampler.mValues.emplace_back(glm::vec4(data[i], 0.f, 0.f, 0.f));
+            }
+          } else if (a.type == TINYGLTF_TYPE_VEC2) {
+            auto data = reinterpret_cast<const glm::vec2*>(
+              &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+            for (size_t i(0); i < a.count; ++i) {
+              sampler.mValues.emplace_back(glm::vec4(data[i], 0.f, 0.f));
+            }
+          } else if (a.type == TINYGLTF_TYPE_VEC3) {
+            auto data = reinterpret_cast<const glm::vec3*>(
+              &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+            for (size_t i(0); i < a.count; ++i) {
+              sampler.mValues.emplace_back(glm::vec4(data[i], 0.f));
+            }
+          } else if (a.type == TINYGLTF_TYPE_VEC4) {
+            auto data = reinterpret_cast<const glm::vec4*>(
+              &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+            for (size_t i(0); i < a.count; ++i) {
+              sampler.mValues.emplace_back(data[i]);
+            }
+          } else {
+            throw std::runtime_error("Failed to load animation: Unsupported output type \"" +
+                                     std::to_string(a.type) + "\"!");
+          }
+        }
+
+        animation->mSamplers.emplace_back(sampler);
       }
 
-      animation->mSamplers.emplace_back(sampler);
+      // Channels
+      for (auto const& source : a.channels) {
+        Animation::Channel channel;
+
+        if (source.target_path == "rotation") {
+          channel.mType = Animation::Channel::Type::eRotation;
+        } else if (source.target_path == "translation") {
+          channel.mType = Animation::Channel::Type::eTranslation;
+        } else if (source.target_path == "scale") {
+          channel.mType = Animation::Channel::Type::eScale;
+        } else {
+          ILLUSION_WARNING << "Ignoring animation path type \"" << source.target_path
+                           << "\" for GLTF model \"" << file << "\"." << std::endl;
+          continue;
+        }
+
+        channel.mSamplerIndex = source.sampler;
+        channel.mNode         = mNodes[source.target_node];
+
+        if (!channel.mNode) {
+          continue;
+        }
+
+        animation->mChannels.emplace_back(channel);
+      }
+
+      mAnimations.emplace_back(animation);
     }
-
-    // Channels
-    for (auto const& source : a.channels) {
-      Animation::Channel channel;
-
-      if (source.target_path == "rotation") {
-        channel.mType = Animation::Channel::Type::eRotation;
-      } else if (source.target_path == "translation") {
-        channel.mType = Animation::Channel::Type::eTranslation;
-      } else if (source.target_path == "scale") {
-        channel.mType = Animation::Channel::Type::eScale;
-      } else {
-        ILLUSION_WARNING << "Ignoring animation path type \"" << source.target_path
-                         << "\" for GLTF model \"" << file << "\"." << std::endl;
-        continue;
-      }
-
-      channel.mSamplerIndex = source.sampler;
-      channel.mNode         = mNodes[source.target_node];
-
-      if (!channel.mNode) {
-        continue;
-      }
-
-      animation->mChannels.emplace_back(channel);
-    }
-
-    mAnimations.emplace_back(animation);
   }
 }
 
@@ -723,8 +788,8 @@ void GltfModel::setAnimationTime(uint32_t animationIndex, float time) {
       continue;
     }
 
-    if (sampler.mKeyFrames.size() < 2) {
-      ILLUSION_WARNING << "Failed to update GLTF animation: There must be at least two key frames!"
+    if (sampler.mKeyFrames.size() == 0) {
+      ILLUSION_WARNING << "Failed to update GLTF animation: There must be at least one key frame!"
                        << std::endl;
       continue;
     }
@@ -733,7 +798,7 @@ void GltfModel::setAnimationTime(uint32_t animationIndex, float time) {
     size_t e = 0;
     float  t = 0.f;
 
-    if (time >= sampler.mKeyFrames.back()) {
+    if (sampler.mKeyFrames.size() == 1 || time >= sampler.mKeyFrames.back()) {
       s = e = sampler.mKeyFrames.size() - 1;
     } else if (time >= sampler.mKeyFrames.front()) {
       while (time >= sampler.mKeyFrames[e]) {
@@ -879,7 +944,10 @@ void GltfModel::printInfo() const {
       }
     }
   };
-  printNode(mRootNode, 0);
+  
+  for (auto const& c : mRootNode.mChildren) {
+    printNode(*c, 0);
+  }
 
   ILLUSION_MESSAGE << "Animations:" << std::endl;
   for (auto const& a : mAnimations) {
@@ -888,6 +956,13 @@ void GltfModel::printInfo() const {
     ILLUSION_MESSAGE << "    Channels: " << a->mChannels.size() << std::endl;
     ILLUSION_MESSAGE << "    Start:    " << a->mStart << std::endl;
     ILLUSION_MESSAGE << "    End:      " << a->mEnd << std::endl;
+  }
+
+  ILLUSION_MESSAGE << "Skins:" << std::endl;
+  for (auto const& s : mSkins) {
+    ILLUSION_MESSAGE << "  " << s << ": " << s->mName << std::endl;
+    ILLUSION_MESSAGE << "    Joints:              " << s->mJoints.size() << std::endl;
+    ILLUSION_MESSAGE << "    InverseBindMatrices: " << s->mInverseBindMatrices.size() << std::endl;
   }
   // clang-format on
 }

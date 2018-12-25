@@ -112,10 +112,15 @@ class CommandBuffer {
   BindingState       mBindingState;
   DescriptorSetCache mDescriptorSetCache;
 
-  ShaderProgramPtr                  mCurrentShaderProgram;
-  RenderPassPtr                     mCurrentRenderPass;
-  uint32_t                          mCurrentSubPass = 0;
-  std::map<uint32_t, Core::BitHash> mCurrentDescriptorSetLayoutHashes;
+  ShaderProgramPtr mCurrentShaderProgram;
+  RenderPassPtr    mCurrentRenderPass;
+  uint32_t         mCurrentSubPass = 0;
+
+  struct DescriptorSetState {
+    vk::DescriptorSetPtr mSet;
+    Core::BitHash        mSetLayoutHash;
+  };
+  std::map<uint32_t, DescriptorSetState> mCurrentDescriptorSets;
 
   std::map<Core::BitHash, vk::PipelinePtr> mPipelineCache;
 };

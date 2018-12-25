@@ -47,7 +47,9 @@ struct PipelineResource {
     eUniformTexelBuffer,
     eStorageTexelBuffer,
     eUniformBuffer,
+    eUniformBufferDynamic,
     eStorageBuffer,
+    eStorageBufferDynamic,
     eInputAttachment,
     ePushConstantBuffer,
     eNone

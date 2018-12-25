@@ -25,14 +25,16 @@ class CoherentUniformBuffer {
     return std::make_shared<CoherentUniformBuffer>(args...);
   };
 
-  CoherentUniformBuffer(DevicePtr const& device, vk::DeviceSize size);
+  CoherentUniformBuffer(DevicePtr const& device, vk::DeviceSize size, vk::DeviceSize alignment = 0);
   virtual ~CoherentUniformBuffer();
+
+  void reset();
 
   vk::DeviceSize addData(uint8_t const* data, vk::DeviceSize count);
 
   template <typename T>
   vk::DeviceSize addData(T const& data) {
-    addData((uint8_t*)&data, sizeof(data));
+    return addData((uint8_t*)&data, sizeof(data));
   }
 
   vk::DeviceSize updateData(uint8_t const* data, vk::DeviceSize count, vk::DeviceSize offset);
@@ -49,6 +51,7 @@ class CoherentUniformBuffer {
   BackedBufferPtr mBuffer;
   uint8_t*        mMappedData         = nullptr;
   vk::DeviceSize  mCurrentWriteOffset = 0;
+  vk::DeviceSize  mAlignment          = 0;
 };
 
 } // namespace Illusion::Graphics

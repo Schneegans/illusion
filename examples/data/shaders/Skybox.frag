@@ -14,13 +14,13 @@
 layout(location = 0) in vec2 vTexcoords;
 
 // uniforms
-layout(binding = 0, set = 0) uniform CameraUniforms {
+layout(set = 0, binding = 0) uniform CameraUniforms {
   vec4 mPosition;
   mat4 mViewMatrix; 
   mat4 mProjectionMatrix;
 } camera;
 
-layout(binding = 0, set = 1) uniform samplerCube texSampler;
+layout(set = 1, binding = 0) uniform samplerCube texSampler;
 
 // outputs
 layout(location = 0) out vec4 outColor;

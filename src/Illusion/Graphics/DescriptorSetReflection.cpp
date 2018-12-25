@@ -27,9 +27,13 @@ const std::unordered_map<PipelineResource::ResourceType, vk::DescriptorType> res
   {PipelineResource::ResourceType::eSampledImage, vk::DescriptorType::eSampledImage},
   {PipelineResource::ResourceType::eSampler, vk::DescriptorType::eSampler},
   {PipelineResource::ResourceType::eStorageBuffer, vk::DescriptorType::eStorageBuffer},
+  {PipelineResource::ResourceType::eStorageBufferDynamic,
+    vk::DescriptorType::eStorageBufferDynamic},
   {PipelineResource::ResourceType::eStorageImage, vk::DescriptorType::eStorageImage},
   {PipelineResource::ResourceType::eStorageTexelBuffer, vk::DescriptorType::eStorageTexelBuffer},
   {PipelineResource::ResourceType::eUniformBuffer, vk::DescriptorType::eUniformBuffer},
+  {PipelineResource::ResourceType::eUniformBufferDynamic,
+    vk::DescriptorType::eUniformBufferDynamic},
   {PipelineResource::ResourceType::eUniformTexelBuffer, vk::DescriptorType::eUniformTexelBuffer},
 };
 
@@ -143,7 +147,9 @@ void DescriptorSetReflection::printInfo() const {
     {PipelineResource::ResourceType::eUniformTexelBuffer, "uniform_texel_buffer"},
     {PipelineResource::ResourceType::eStorageTexelBuffer, "storage_texel_buffer"},
     {PipelineResource::ResourceType::eUniformBuffer, "uniform_buffer"},
+    {PipelineResource::ResourceType::eUniformBufferDynamic, "uniform_buffer_dynamic"},
     {PipelineResource::ResourceType::eStorageBuffer, "storage_buffer"},
+    {PipelineResource::ResourceType::eStorageBufferDynamic, "storage_buffer_dynamic"},
     {PipelineResource::ResourceType::eInputAttachment, "input_attachment"},
     {PipelineResource::ResourceType::ePushConstantBuffer, "push_constant_buffer"},
     {PipelineResource::ResourceType::eNone, "none"}};

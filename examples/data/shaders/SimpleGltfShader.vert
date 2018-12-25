@@ -18,11 +18,15 @@ layout(location = 3) in vec4 inJoint;
 layout(location = 4) in vec4 inWeight;
 
 // uniforms
-layout(binding = 0, set = 0) uniform CameraUniforms {
+layout(set = 0, binding = 0) uniform CameraUniforms {
   vec4 mPosition;
   mat4 mViewMatrix; 
   mat4 mProjectionMatrix;
 } camera;
+
+layout(set = 2, binding = 0) uniform SkinUniforms {
+  mat4 mJointMatrices[256]; 
+} skin;
 
 // push constants
 struct Material {
@@ -35,9 +39,9 @@ struct Material {
   float mAlphaCutoff;
 };
 
-const int HasNormals   = 1 << 0; 
-const int HasTexcoords = 1 << 1; 
-const int HasSkins     = 1 << 2; 
+const int HAS_NORMALS   = 1 << 0; 
+const int HAS_TEXCOORDS = 1 << 1; 
+const int HAS_SKINS     = 1 << 2; 
 
 layout(push_constant, std430) uniform PushConstants {
   mat4     mModelMatrix;
@@ -54,10 +58,23 @@ layout(location = 2) out vec2 vTexcoords;
 void main() {
   vTexcoords = inTexcoords;
 
-  if ((pushConstants.mVertexAttributes & HasNormals) > 0) {
-    vNormal = (inverse(transpose(pushConstants.mModelMatrix)) * vec4(inNormal, 0.0)).xyz;
+  mat4 modelMatrix = pushConstants.mModelMatrix;
+
+  if ((pushConstants.mVertexAttributes & HAS_SKINS) > 0) {
+    mat4 skinMat = 
+      inWeight.x * skin.mJointMatrices[int(inJoint.x)] +
+      inWeight.y * skin.mJointMatrices[int(inJoint.y)] +
+      inWeight.z * skin.mJointMatrices[int(inJoint.z)] +
+      inWeight.w * skin.mJointMatrices[int(inJoint.w)];
+
+    modelMatrix = modelMatrix * skinMat;
+  } 
+
+  vPosition = (modelMatrix * vec4(inPosition, 1.0)).xyz;
+
+  if ((pushConstants.mVertexAttributes & HAS_NORMALS) > 0) {
+    vNormal = inverse(transpose(mat3(modelMatrix))) * inNormal;
   }
 
-  vPosition = (pushConstants.mModelMatrix * vec4(inPosition, 1.0)).xyz;
   gl_Position = camera.mProjectionMatrix * camera.mViewMatrix * vec4(vPosition, 1.0);
 }

@@ -14,6 +14,8 @@
 #include "PipelineResource.hpp"
 #include "fwd.hpp"
 
+#include <set>
+
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28,10 +30,11 @@ class ShaderModule {
     return std::make_shared<Engine>(args...);
   };
 
-  ShaderModule(DevicePtr const& device, std::string const& glsl, vk::ShaderStageFlagBits stage);
+  ShaderModule(DevicePtr const& device, std::string const& glsl, vk::ShaderStageFlagBits stage,
+    std::set<std::string> const& dynamicBuffers);
 
-  ShaderModule(
-    DevicePtr const& device, std::vector<uint32_t>&& spirv, vk::ShaderStageFlagBits stage);
+  ShaderModule(DevicePtr const& device, std::vector<uint32_t>&& spirv,
+    vk::ShaderStageFlagBits stage, std::set<std::string> const& dynamicBuffers);
 
   virtual ~ShaderModule();
 
@@ -40,7 +43,7 @@ class ShaderModule {
   std::vector<PipelineResource> const& getResources() const;
 
  private:
-  void createReflection();
+  void createReflection(std::set<std::string> const& dynamicBuffers);
 
   std::vector<uint32_t>         mSpirv;
   vk::ShaderStageFlagBits       mStage;

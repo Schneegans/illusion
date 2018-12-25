@@ -31,8 +31,8 @@ const std::unordered_map<std::string, vk::ShaderStageFlagBits> extensionMapping 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ShaderProgramPtr ShaderProgram::createFromFiles(
-  DevicePtr const& device, std::vector<std::string> const& files) {
+ShaderProgramPtr ShaderProgram::createFromFiles(DevicePtr const& device,
+  std::vector<std::string> const& files, std::set<std::string> const& dynamicBuffers) {
 
   std::vector<ShaderModulePtr> modules;
 
@@ -46,7 +46,7 @@ ShaderProgramPtr ShaderProgram::createFromFiles(
     }
 
     auto glsl = Illusion::Core::File<std::string>(file).getContent();
-    modules.push_back(std::make_shared<ShaderModule>(device, glsl, stage->second));
+    modules.push_back(std::make_shared<ShaderModule>(device, glsl, stage->second, dynamicBuffers));
   }
 
   return std::make_shared<ShaderProgram>(device, modules);
@@ -54,13 +54,15 @@ ShaderProgramPtr ShaderProgram::createFromFiles(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ShaderProgramPtr ShaderProgram::createFromGlsl(
-  DevicePtr const& device, std::map<vk::ShaderStageFlagBits, std::string> const& sources) {
+ShaderProgramPtr ShaderProgram::createFromGlsl(DevicePtr const& device,
+  std::map<vk::ShaderStageFlagBits, std::string> const&         sources,
+  std::set<std::string> const&                                  dynamicBuffers) {
 
   std::vector<ShaderModulePtr> modules;
 
   for (auto const& source : sources) {
-    modules.push_back(std::make_shared<ShaderModule>(device, source.second, source.first));
+    modules.push_back(
+      std::make_shared<ShaderModule>(device, source.second, source.first, dynamicBuffers));
   }
 
   return std::make_shared<ShaderProgram>(device, modules);

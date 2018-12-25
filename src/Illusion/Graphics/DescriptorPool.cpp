@@ -29,9 +29,13 @@ const std::unordered_map<PipelineResource::ResourceType, vk::DescriptorType> res
   {PipelineResource::ResourceType::eSampledImage, vk::DescriptorType::eSampledImage},
   {PipelineResource::ResourceType::eSampler, vk::DescriptorType::eSampler},
   {PipelineResource::ResourceType::eStorageBuffer, vk::DescriptorType::eStorageBuffer},
+  {PipelineResource::ResourceType::eStorageBufferDynamic,
+    vk::DescriptorType::eStorageBufferDynamic},
   {PipelineResource::ResourceType::eStorageImage, vk::DescriptorType::eStorageImage},
   {PipelineResource::ResourceType::eStorageTexelBuffer, vk::DescriptorType::eStorageTexelBuffer},
   {PipelineResource::ResourceType::eUniformBuffer, vk::DescriptorType::eUniformBuffer},
+  {PipelineResource::ResourceType::eUniformBufferDynamic,
+    vk::DescriptorType::eUniformBufferDynamic},
   {PipelineResource::ResourceType::eUniformTexelBuffer, vk::DescriptorType::eUniformTexelBuffer},
 };
 

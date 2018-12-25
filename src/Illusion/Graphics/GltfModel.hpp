@@ -30,6 +30,18 @@ namespace Illusion::Graphics {
 
 class GltfModel {
  public:
+  struct Material;
+  struct Mesh;
+  struct Node;
+  struct Animation;
+  struct Skin;
+
+  typedef std::shared_ptr<Material>  MaterialPtr;
+  typedef std::shared_ptr<Mesh>      MeshPtr;
+  typedef std::shared_ptr<Node>      NodePtr;
+  typedef std::shared_ptr<Animation> AnimationPtr;
+  typedef std::shared_ptr<Skin>      SkinPtr;
+
   struct TextureChannelMapping {
     enum class Channel { eRed, eGreen, eBlue };
 
@@ -124,7 +136,7 @@ class GltfModel {
     };
 
     Core::Flags<VertexAttributeBits> mVertexAttributes;
-    std::shared_ptr<Material>        mMaterial;
+    MaterialPtr                      mMaterial;
     vk::PrimitiveTopology            mTopology;
     vk::DeviceSize                   mIndexCount;
     vk::DeviceSize                   mIndexOffset;
@@ -140,8 +152,9 @@ class GltfModel {
   struct Node {
     std::string mName;
 
-    glm::mat4 mTransform = glm::mat4(1.f);
+    glm::mat4 mGlobalTransform = glm::mat4(1.f);
 
+    glm::mat4 mTransform   = glm::mat4(1.f);
     glm::vec3 mTranslation = glm::vec3(0.f);
     glm::quat mRotation    = glm::quat(1.f, 0.f, 0.f, 0.f);
     glm::vec3 mScale       = glm::vec3(1.f);
@@ -150,10 +163,19 @@ class GltfModel {
     glm::quat mRestRotation    = glm::quat(1.f, 0.f, 0.f, 0.f);
     glm::vec3 mRestScale       = glm::vec3(1.f);
 
-    std::shared_ptr<Mesh>              mMesh;
-    std::vector<std::shared_ptr<Node>> mChildren;
+    MeshPtr              mMesh;
+    SkinPtr              mSkin;
+    std::vector<NodePtr> mChildren;
 
-    glm::mat4 getTransform() const {
+    void update(glm::mat4 parentTransform) {
+      mGlobalTransform = parentTransform * getLocalTransform();
+
+      for (auto const& c : mChildren) {
+        c->update(mGlobalTransform);
+      }
+    }
+
+    glm::mat4 getLocalTransform() const {
       glm::mat4 transform(mTransform);
       transform = glm::translate(transform, mTranslation);
       transform = glm::rotate(transform, glm::angle(mRotation), glm::axis(mRotation));
@@ -167,8 +189,8 @@ class GltfModel {
       return bbox;
     }
 
-    void addMeshesToBoundingBox(BoundingBox& bbox, glm::mat4 parentTransform) const {
-      auto transform = parentTransform * getTransform();
+    void addMeshesToBoundingBox(BoundingBox& bbox, glm::mat4 const& parentTransform) const {
+      glm::mat4 transform = parentTransform * getLocalTransform();
       if (mMesh) {
         bbox.add(mMesh->mBoundingBox.getTransformed(transform));
       }
@@ -181,9 +203,9 @@ class GltfModel {
   struct Animation {
     struct Channel {
       enum class Type { eTranslation, eRotation, eScale };
-      Type                  mType;
-      std::shared_ptr<Node> mNode;
-      uint32_t              mSamplerIndex;
+      Type     mType;
+      NodePtr  mNode;
+      uint32_t mSamplerIndex;
     };
 
     struct Sampler {
@@ -200,17 +222,42 @@ class GltfModel {
     float                mEnd   = std::numeric_limits<float>::min();
   };
 
-  typedef std::shared_ptr<Material>  MaterialPtr;
-  typedef std::shared_ptr<Mesh>      MeshPtr;
-  typedef std::shared_ptr<Node>      NodePtr;
-  typedef std::shared_ptr<Animation> AnimationPtr;
+  struct Skin {
+    std::string            mName;
+    std::vector<glm::mat4> mInverseBindMatrices;
+    std::vector<NodePtr>   mJoints;
+
+    std::vector<glm::mat4> getJointMatrices(glm::mat4 const& meshTransform) const {
+      std::vector<glm::mat4> jointMatrices(mJoints.size());
+
+      glm::mat4 inverseMeshTransform = glm::inverse(meshTransform);
+
+      for (size_t i(0); i < mJoints.size(); i++) {
+        jointMatrices[i] =
+          inverseMeshTransform * mJoints[i]->mGlobalTransform * mInverseBindMatrices[i];
+      }
+
+      return jointMatrices;
+    }
+  };
 
   template <typename... Args>
   static GltfModelPtr create(Args&&... args) {
     return std::make_shared<GltfModel>(args...);
   };
 
+  enum class OptionFlagBits : int {
+    eNone       = 0,
+    eAnimations = 1 << 0,
+    eSkins      = 1 << 1,
+    eTextures   = 1 << 2,
+    eAll        = eAnimations | eSkins | eTextures
+  };
+
+  typedef Core::Flags<OptionFlagBits> OptionFlags;
+
   GltfModel(DevicePtr const& device, std::string const& file,
+    OptionFlags                  options         = OptionFlagBits::eAll,
     TextureChannelMapping const& textureChannels = TextureChannelMapping());
 
   void setAnimationTime(uint32_t animationIndex, float time);
@@ -224,6 +271,8 @@ class GltfModel {
   std::vector<MeshPtr> const&      getMeshes() const;
   std::vector<NodePtr> const&      getNodes() const;
   std::vector<AnimationPtr> const& getAnimations() const;
+
+  void update() { mRootNode.update(glm::mat4(1.f)); }
 
   void printInfo() const;
 
@@ -241,6 +290,7 @@ class GltfModel {
   std::vector<MeshPtr>      mMeshes;
   std::vector<NodePtr>      mNodes;
   std::vector<AnimationPtr> mAnimations;
+  std::vector<SkinPtr>      mSkins;
 };
 
 } // namespace Illusion::Graphics

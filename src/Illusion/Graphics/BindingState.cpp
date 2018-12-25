@@ -16,8 +16,8 @@ namespace Illusion::Graphics {
 
 void BindingState::setBinding(BindingType const& value, uint32_t set, uint32_t binding) {
   if (getBinding(set, binding) != value) {
-    mBindings[set][binding] = value;
-    mDirtySets.insert(set);
+    mSetBindings[set][binding] = value;
+    mDirtySetBindings.insert(set);
   }
 }
 
@@ -42,10 +42,15 @@ void BindingState::setStorageImage(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void BindingState::setDynamicUniformBuffer(
-  BackedBufferPtr const& buffer, vk::DeviceSize size, uint32_t set, uint32_t binding) {
+void BindingState::setDynamicUniformBuffer(BackedBufferPtr const& buffer, vk::DeviceSize size,
+  uint32_t offset, uint32_t set, uint32_t binding) {
 
   setBinding(DynamicUniformBufferBinding{buffer, size}, set, binding);
+
+  if (getDynamicOffset(set, binding) != offset) {
+    mDynamicOffsets[set][binding] = offset;
+    mDirtyDynamicOffsets.insert(set);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -58,10 +63,23 @@ void BindingState::setUniformBuffer(BackedBufferPtr const& buffer, vk::DeviceSiz
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::optional<BindingType> BindingState::getBinding(uint32_t set, uint32_t binding) {
-  auto setIt = mBindings.find(set);
+void BindingState::clearSet(uint32_t set) {
+  auto setIt = mSetBindings.find(set);
 
-  if (setIt == mBindings.end()) {
+  if (setIt != mSetBindings.end()) {
+    mSetBindings.erase(setIt);
+    mDynamicOffsets.erase(set);
+    mDirtySetBindings.insert(set);
+    mDirtyDynamicOffsets.insert(set);
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::optional<BindingType> BindingState::getBinding(uint32_t set, uint32_t binding) {
+  auto setIt = mSetBindings.find(set);
+
+  if (setIt == mSetBindings.end()) {
     return {};
   }
 
@@ -77,9 +95,9 @@ std::optional<BindingType> BindingState::getBinding(uint32_t set, uint32_t bindi
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::map<uint32_t, BindingType> const& BindingState::getBindings(uint32_t set) {
-  auto setIt = mBindings.find(set);
+  auto setIt = mSetBindings.find(set);
 
-  if (setIt == mBindings.end()) {
+  if (setIt == mSetBindings.end()) {
     static std::map<uint32_t, BindingType> empty;
     return empty;
   }
@@ -89,22 +107,52 @@ std::map<uint32_t, BindingType> const& BindingState::getBindings(uint32_t set) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void BindingState::clearSet(uint32_t set) {
-  auto setIt = mBindings.find(set);
+std::set<uint32_t> const& BindingState::getDirtySets() const { return mDirtySetBindings; }
 
-  if (setIt != mBindings.end()) {
-    mBindings.erase(setIt);
-    mDirtySets.insert(set);
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void BindingState::clearDirtySets() { mDirtySetBindings.clear(); }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+uint32_t BindingState::getDynamicOffset(uint32_t set, uint32_t binding) {
+  auto setIt = mDynamicOffsets.find(set);
+
+  if (setIt == mDynamicOffsets.end()) {
+    return 0;
   }
+
+  auto bindingIt = setIt->second.find(binding);
+
+  if (bindingIt == setIt->second.end()) {
+    return 0;
+  }
+
+  return bindingIt->second;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::set<uint32_t> const& BindingState::getDirtySets() const { return mDirtySets; }
+std::map<uint32_t, uint32_t> const& BindingState::getDynamicOffsets(uint32_t set) {
+  auto setIt = mDynamicOffsets.find(set);
+
+  if (setIt == mDynamicOffsets.end()) {
+    static std::map<uint32_t, uint32_t> empty;
+    return empty;
+  }
+
+  return setIt->second;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void BindingState::clearDirtySets() { mDirtySets.clear(); }
+std::set<uint32_t> const& BindingState::getDirtyDynamicOffsets() const {
+  return mDirtyDynamicOffsets;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void BindingState::clearDirtyDynamicOffsets() { mDirtyDynamicOffsets.clear(); }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

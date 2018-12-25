@@ -16,10 +16,12 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-CoherentUniformBuffer::CoherentUniformBuffer(DevicePtr const& device, vk::DeviceSize size)
+CoherentUniformBuffer::CoherentUniformBuffer(
+  DevicePtr const& device, vk::DeviceSize size, vk::DeviceSize alignment)
   : mDevice(device)
   , mBuffer(device->createBackedBuffer(vk::BufferUsageFlagBits::eUniformBuffer,
-      vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible, size)) {
+      vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible, size))
+  , mAlignment(alignment) {
 
   mMappedData = (uint8_t*)mDevice->getHandle()->mapMemory(
     *mBuffer->mMemory, 0, mBuffer->mMemoryInfo.allocationSize);
@@ -33,10 +35,19 @@ CoherentUniformBuffer::~CoherentUniformBuffer() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void CoherentUniformBuffer::reset() { mCurrentWriteOffset = 0; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 vk::DeviceSize CoherentUniformBuffer::addData(uint8_t const* data, vk::DeviceSize count) {
   vk::DeviceSize offset = mCurrentWriteOffset;
   updateData(data, count, offset);
   mCurrentWriteOffset += count;
+
+  if (mAlignment > 0) {
+    mCurrentWriteOffset += mCurrentWriteOffset % mAlignment;
+  }
+
   return offset;
 }
 

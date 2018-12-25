@@ -35,6 +35,10 @@ struct PushConstants {
   int                                                    mVertexAttributes;
 };
 
+struct SkinUniforms {
+  glm::mat4 mJointMatrices[256];
+};
+
 struct CameraUniforms {
   glm::vec4 mPosition;
   glm::mat4 mViewMatrix;
@@ -42,10 +46,11 @@ struct CameraUniforms {
 };
 
 struct FrameResources {
-  FrameResources(Illusion::Graphics::DevicePtr const& device)
+  FrameResources(Illusion::Graphics::DevicePtr const& device, vk::DeviceSize uboAlignment)
     : mCmd(Illusion::Graphics::CommandBuffer::create(device))
     , mRenderPass(Illusion::Graphics::RenderPass::create(device))
-    , mUniformBuffer(Illusion::Graphics::CoherentUniformBuffer::create(device, 512))
+    , mUniformBuffer(
+        Illusion::Graphics::CoherentUniformBuffer::create(device, std::pow(2, 20), uboAlignment))
     , mRenderFinishedFence(device->createFence())
     , mRenderFinishedSemaphore(device->createSemaphore()) {
 
@@ -63,13 +68,30 @@ struct FrameResources {
 };
 
 void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::GltfModel::Node>> const& nodes,
-  glm::mat4 const& parentMatrix, glm::mat4 const& viewMatrix, bool doAlphaBlending,
-  FrameResources const& res) {
+  glm::mat4 const& viewMatrix, glm::mat4 const& modelMatrix, bool doAlphaBlending,
+  uint32_t emptySkinDynamicOffset, FrameResources const& res) {
 
   res.mCmd->graphicsState().setBlendAttachments({{doAlphaBlending}});
 
   for (auto const& n : nodes) {
-    auto modelMatrix = parentMatrix * glm::mat4(n->getTransform());
+
+    glm::mat4 nodeMatrix = n->mGlobalTransform;
+
+    if (n->mSkin) {
+      SkinUniforms skin;
+      auto         jointMatrices = n->mSkin->getJointMatrices(nodeMatrix);
+
+      for (size_t i(0); i < jointMatrices.size() && i < 256; ++i) {
+        skin.mJointMatrices[i] = jointMatrices[i];
+      }
+
+      auto skinDynamicOffset = res.mUniformBuffer->addData(skin);
+      res.mCmd->bindingState().setDynamicUniformBuffer(
+        res.mUniformBuffer->getBuffer(), sizeof(SkinUniforms), skinDynamicOffset, 2, 0);
+    } else {
+      res.mCmd->bindingState().setDynamicUniformBuffer(
+        res.mUniformBuffer->getBuffer(), sizeof(SkinUniforms), emptySkinDynamicOffset, 2, 0);
+    }
 
     if (n->mMesh) {
 
@@ -77,16 +99,16 @@ void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::GltfModel::Node>>
 
         if (p.mMaterial->mDoAlphaBlending == doAlphaBlending) {
           PushConstants pushConstants;
-          pushConstants.mModelMatrix      = modelMatrix;
+          pushConstants.mModelMatrix      = modelMatrix * nodeMatrix;
           pushConstants.mMaterial         = p.mMaterial->mPushConstants;
           pushConstants.mVertexAttributes = (int)p.mVertexAttributes;
           res.mCmd->pushConstants(pushConstants);
 
-          res.mCmd->bindingState().setTexture(p.mMaterial->mAlbedoTexture, 2, 0);
-          res.mCmd->bindingState().setTexture(p.mMaterial->mMetallicRoughnessTexture, 2, 1);
-          res.mCmd->bindingState().setTexture(p.mMaterial->mNormalTexture, 2, 2);
-          res.mCmd->bindingState().setTexture(p.mMaterial->mOcclusionTexture, 2, 3);
-          res.mCmd->bindingState().setTexture(p.mMaterial->mEmissiveTexture, 2, 4);
+          res.mCmd->bindingState().setTexture(p.mMaterial->mAlbedoTexture, 3, 0);
+          res.mCmd->bindingState().setTexture(p.mMaterial->mMetallicRoughnessTexture, 3, 1);
+          res.mCmd->bindingState().setTexture(p.mMaterial->mNormalTexture, 3, 2);
+          res.mCmd->bindingState().setTexture(p.mMaterial->mOcclusionTexture, 3, 3);
+          res.mCmd->bindingState().setTexture(p.mMaterial->mEmissiveTexture, 3, 4);
           res.mCmd->graphicsState().setTopology(p.mTopology);
           res.mCmd->graphicsState().setCullMode(
             p.mMaterial->mDoubleSided ? vk::CullModeFlagBits::eNone : vk::CullModeFlagBits::eBack);
@@ -95,29 +117,35 @@ void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::GltfModel::Node>>
       }
     }
 
-    drawNodes(n->mChildren, modelMatrix, viewMatrix, doAlphaBlending, res);
+    drawNodes(n->mChildren, viewMatrix, modelMatrix, doAlphaBlending, emptySkinDynamicOffset, res);
   }
 };
 
 int main(int argc, char* argv[]) {
 
-  Illusion::Core::Logger::enableTrace = true;
+  struct {
+    std::string mModelFile   = "data/models/DamagedHelmet.glb";
+    std::string mSkyboxFile  = "data/textures/sunset_fairway_1k.hdr";
+    std::string mTexChannels = "rgb";
+    int         mAnimation   = 0;
+    bool        mNoSkins     = false;
+    bool        mNoTextures  = false;
+    bool        mPrintHelp   = false;
+  } options;
 
-  std::string modelFile   = "data/models/DamagedHelmet.glb";
-  std::string skyboxFile  = "data/textures/sunset_fairway_1k.hdr";
-  std::string texChannels = "rgb";
-  int         animation   = 0;
-  bool        printHelp   = false;
-
+  // clang-format off
   Illusion::Core::CommandLineOptions args("Simple loader for GLTF files.");
-  args.addOption({"-m", "--model"}, &modelFile, "GLTF model (.gltf or .glb)");
-  args.addOption({"-s", "--skybox"}, &skyboxFile, "Skybox image (in equirectangular projection)");
-  args.addOption({"-a", "--animation"}, &animation, "Index of the animation to play. Default: 0.");
-  args.addOption({"-h", "--help"}, &printHelp, "print help");
+  args.addOption({"-m",  "--model"},       &options.mModelFile,  "GLTF model (.gltf or .glb)");
+  args.addOption({"-e",  "--environment"}, &options.mSkyboxFile, "Skybox image (in equirectangular projection)");
+  args.addOption({"-a",  "--animation"},   &options.mAnimation,  "Index of the animation to play. Default: 0, Use -1 to disable animations.");
+  args.addOption({"-ns", "--no-skins"},    &options.mNoSkins,    "Disable loading of skins");
+  args.addOption({"-nt", "--no-textures"}, &options.mNoTextures, "Disable loading of textures");
+  args.addOption({"-h",  "--help"},        &options.mPrintHelp,  "Print this help");
+  // clang-format on
 
   args.parse(argc, argv);
 
-  if (printHelp) {
+  if (options.mPrintHelp) {
     args.printHelp();
     return 0;
   }
@@ -126,7 +154,18 @@ int main(int argc, char* argv[]) {
   auto device = Illusion::Graphics::Device::create(engine->getPhysicalDevice());
   auto window = Illusion::Graphics::Window::create(engine, device);
 
-  auto model = Illusion::Graphics::GltfModel::create(device, modelFile);
+  Illusion::Graphics::GltfModel::OptionFlags modelOptions;
+  if (options.mAnimation >= 0) {
+    modelOptions |= Illusion::Graphics::GltfModel::OptionFlagBits::eAnimations;
+  }
+  if (!options.mNoSkins) {
+    modelOptions |= Illusion::Graphics::GltfModel::OptionFlagBits::eSkins;
+  }
+  if (!options.mNoTextures) {
+    modelOptions |= Illusion::Graphics::GltfModel::OptionFlagBits::eTextures;
+  }
+
+  auto model = Illusion::Graphics::GltfModel::create(device, options.mModelFile, modelOptions);
   model->printInfo();
 
   auto      modelBBox   = model->getRoot().getBoundingBox();
@@ -136,21 +175,24 @@ int main(int argc, char* argv[]) {
   modelMatrix           = glm::translate(modelMatrix, -modelCenter);
 
   auto brdflut = Illusion::Graphics::TextureUtils::createBRDFLuT(device, 128);
-  auto skybox =
-    Illusion::Graphics::TextureUtils::createCubemapFrom360PanoramaFile(device, skyboxFile, 1024);
+  auto skybox  = Illusion::Graphics::TextureUtils::createCubemapFrom360PanoramaFile(
+    device, options.mSkyboxFile, 1024);
   auto prefilteredIrradiance =
     Illusion::Graphics::TextureUtils::createPrefilteredIrradianceCubemap(device, 64, skybox);
   auto prefilteredReflection =
     Illusion::Graphics::TextureUtils::createPrefilteredReflectionCubemap(device, 128, skybox);
 
-  auto pbrShader = Illusion::Graphics::ShaderProgram::createFromFiles(
-    device, {"data/shaders/SimpleGltfShader.vert", "data/shaders/SimpleGltfShader.frag"});
+  auto pbrShader = Illusion::Graphics::ShaderProgram::createFromFiles(device,
+    {"data/shaders/SimpleGltfShader.vert", "data/shaders/SimpleGltfShader.frag"}, {"SkinUniforms"});
 
   auto skyShader = Illusion::Graphics::ShaderProgram::createFromFiles(
     device, {"data/shaders/Quad.vert", "data/shaders/Skybox.frag"});
 
+  auto uboAlignment =
+    engine->getPhysicalDevice()->getProperties().limits.minUniformBufferOffsetAlignment;
+
   Illusion::Core::RingBuffer<FrameResources, 2> frameResources{
-    FrameResources(device), FrameResources(device)};
+    FrameResources(device, uboAlignment), FrameResources(device, uboAlignment)};
 
   glm::vec3 cameraPolar(0.f, 0.f, 1.5f);
 
@@ -188,12 +230,14 @@ int main(int argc, char* argv[]) {
 
     window->processInput();
 
-    if (model->getAnimations().size() > animation) {
-      auto const& anim         = model->getAnimations()[animation];
+    if (options.mAnimation >= 0 && options.mAnimation < model->getAnimations().size()) {
+      auto const& anim         = model->getAnimations()[options.mAnimation];
       float modelAnimationTime = std::fmod((float)timer.getElapsed(), anim->mEnd - anim->mStart);
       modelAnimationTime += anim->mStart;
-      model->setAnimationTime(animation, modelAnimationTime);
+      model->setAnimationTime(options.mAnimation, modelAnimationTime);
     }
+
+    model->update();
 
     auto& res = frameResources.next();
 
@@ -219,9 +263,11 @@ int main(int argc, char* argv[]) {
                   cameraPolar.z,
         1.0);
 
+    res.mUniformBuffer->reset();
+
     camera.mViewMatrix =
       glm::lookAt(camera.mPosition.xyz(), glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
-    res.mUniformBuffer->updateData(camera);
+    res.mUniformBuffer->addData(camera);
 
     res.mCmd->beginRenderPass(res.mRenderPass);
 
@@ -254,8 +300,13 @@ int main(int argc, char* argv[]) {
     res.mCmd->bindVertexBuffers(0, {model->getVertexBuffer()});
     res.mCmd->bindIndexBuffer(model->getIndexBuffer(), 0, vk::IndexType::eUint32);
 
-    drawNodes(model->getRoot().mChildren, modelMatrix, camera.mViewMatrix, false, res);
-    drawNodes(model->getRoot().mChildren, modelMatrix, camera.mViewMatrix, true, res);
+    SkinUniforms ubo;
+    uint32_t     emptySkinDynamicOffset = res.mUniformBuffer->addData(ubo);
+
+    drawNodes(model->getRoot().mChildren, camera.mViewMatrix, modelMatrix, false,
+      emptySkinDynamicOffset, res);
+    drawNodes(model->getRoot().mChildren, camera.mViewMatrix, modelMatrix, true,
+      emptySkinDynamicOffset, res);
 
     res.mCmd->bindingState().clearSet(1);
     res.mCmd->bindingState().clearSet(2);

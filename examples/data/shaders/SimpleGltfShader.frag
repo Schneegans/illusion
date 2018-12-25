@@ -16,21 +16,22 @@ layout(location = 1) in vec3 vNormal;
 layout(location = 2) in vec2 vTexcoords;
 
 // uniforms
-layout(binding = 0, set = 1) uniform sampler2D   uBRDFLuT;
-layout(binding = 1, set = 1) uniform samplerCube uPrefilteredIrradiance;
-layout(binding = 2, set = 1) uniform samplerCube uPrefilteredReflection;
-
-layout(binding = 0, set = 2) uniform sampler2D uAlbedoTexture;
-layout(binding = 1, set = 2) uniform sampler2D mMetallicRoughnessTexture;
-layout(binding = 2, set = 2) uniform sampler2D mNormalTexture;
-layout(binding = 3, set = 2) uniform sampler2D uOcclusionTexture;
-layout(binding = 4, set = 2) uniform sampler2D uEmissiveTexture;
-
-layout(binding = 0, set = 0) uniform CameraUniforms {
+layout(set = 0, binding = 0) uniform CameraUniforms {
   vec4 mPosition;
   mat4 mViewMatrix; 
   mat4 mProjectionMatrix;
 } camera;
+
+layout(set = 1, binding = 0) uniform sampler2D   uBRDFLuT;
+layout(set = 1, binding = 1) uniform samplerCube uPrefilteredIrradiance;
+layout(set = 1, binding = 2) uniform samplerCube uPrefilteredReflection;
+
+layout(set = 3, binding = 0) uniform sampler2D uAlbedoTexture;
+layout(set = 3, binding = 1) uniform sampler2D mMetallicRoughnessTexture;
+layout(set = 3, binding = 2) uniform sampler2D mNormalTexture;
+layout(set = 3, binding = 3) uniform sampler2D uOcclusionTexture;
+layout(set = 3, binding = 4) uniform sampler2D uEmissiveTexture;
+
 
 // push constants
 struct Material {
@@ -43,9 +44,9 @@ struct Material {
   float mAlphaCutoff;
 };
 
-const int HasNormals   = 1 << 0; 
-const int HasTexcoords = 1 << 1; 
-const int HasSkins     = 1 << 2; 
+const int HAS_NORMALS   = 1 << 0; 
+const int HAS_TEXCOORDS = 1 << 1; 
+const int HAS_SKINS     = 1 << 2; 
 
 layout(push_constant, std430) uniform PushConstants {
   mat4     mModelMatrix;
@@ -182,13 +183,13 @@ void main() {
 
   vec3 normal;
 
-  if ((pushConstants.mVertexAttributes & HasNormals) > 0) {
+  if ((pushConstants.mVertexAttributes & HAS_NORMALS) > 0) {
     normal = normalize(vNormal);
   } else {
     normal = normalize(cross(dFdy(vPosition), dFdx(vPosition)));
   }
   
-  if ((pushConstants.mVertexAttributes & HasTexcoords) > 0) {
+  if ((pushConstants.mVertexAttributes & HAS_TEXCOORDS) > 0) {
     vec3 tangentNormal = texture(mNormalTexture, vTexcoords).rgb * 2.0 - 1.0;
     tangentNormal *= pushConstants.mMaterial.mNormalScale;
     if (dot(normal, viewDir) < 0) {
@@ -226,6 +227,5 @@ void main() {
 
   // Gamma correction
   outColor.rgb = pow(outColor.rgb, vec3(1.0 / 2.2));
-
- outColor.a = albedo.a;
+  outColor.a = albedo.a;
 }
