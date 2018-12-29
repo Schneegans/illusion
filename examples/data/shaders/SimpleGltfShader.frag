@@ -32,26 +32,21 @@ layout(set = 3, binding = 2) uniform sampler2D mNormalTexture;
 layout(set = 3, binding = 3) uniform sampler2D uOcclusionTexture;
 layout(set = 3, binding = 4) uniform sampler2D uEmissiveTexture;
 
-
 // push constants
-struct Material {
-  vec4  mAlbedoFactor;
-  vec3  mEmissiveFactor;
-  float mMetallicFactor;
-  float mRoughnessFactor;
-  float mNormalScale;
-  float mOcclusionStrength;
-  float mAlphaCutoff;
-};
-
 const int HAS_NORMALS   = 1 << 0; 
 const int HAS_TEXCOORDS = 1 << 1; 
 const int HAS_SKINS     = 1 << 2; 
 
 layout(push_constant, std430) uniform PushConstants {
-  mat4     mModelMatrix;
-  Material mMaterial;
-  int      mVertexAttributes; 
+  mat4  mModelMatrix;
+  vec4  mAlbedoFactor;
+  vec3  mEmissiveFactor;
+  bool  mSpecularGlossinessWorkflow;
+  vec3  mMetallicRoughnessFactor;
+  float mNormalScale;
+  float mOcclusionStrength;
+  float mAlphaCutoff;
+  int   mVertexAttributes; 
 } pushConstants;
 
 // outputs
@@ -170,14 +165,27 @@ vec4 sRGBtoLinear(vec4 color) {
   return vec4(pow(color.rgb, vec3(2.2)), color.a);
 }
 
-void main() {
-  vec4 albedo = sRGBtoLinear(texture(uAlbedoTexture, vTexcoords)) * pushConstants.mMaterial.mAlbedoFactor;
+// Gets metallic factor from specular glossiness workflow inputs 
+float convertMetallic(vec3 diffuse, vec3 specular, float maxSpecular) {
+  float perceivedDiffuse = sqrt(0.299 * diffuse.r * diffuse.r + 0.587 * diffuse.g * diffuse.g + 0.114 * diffuse.b * diffuse.b);
+  float perceivedSpecular = sqrt(0.299 * specular.r * specular.r + 0.587 * specular.g * specular.g + 0.114 * specular.b * specular.b);
+  if (perceivedSpecular < 0.04) {
+    return 0.0;
+  }
+  float a = 0.04;
+  float b = perceivedDiffuse * (1.0 - maxSpecular) / (1.0 - 0.04) + perceivedSpecular - 2.0 * 0.04;
+  float c = 0.04 - perceivedSpecular;
+  float D = max(b * b - 4.0 * a * c, 0.0);
+  return clamp((-b + sqrt(D)) / (2.0 * a), 0.0, 1.0);
+}
 
-  if (albedo.a < pushConstants.mMaterial.mAlphaCutoff) {
+void main() {
+  vec4 albedo = sRGBtoLinear(texture(uAlbedoTexture, vTexcoords)) * pushConstants.mAlbedoFactor;
+
+  if (albedo.a < pushConstants.mAlphaCutoff) {
     discard;
   }
 
-  vec3 emissive = sRGBtoLinear(texture(uEmissiveTexture, vTexcoords)).rgb * pushConstants.mMaterial.mEmissiveFactor;
 
   vec3 viewDir = normalize(camera.mPosition.xyz - vPosition);
 
@@ -191,7 +199,7 @@ void main() {
   
   if ((pushConstants.mVertexAttributes & HAS_TEXCOORDS) > 0) {
     vec3 tangentNormal = texture(mNormalTexture, vTexcoords).rgb * 2.0 - 1.0;
-    tangentNormal *= pushConstants.mMaterial.mNormalScale;
+    tangentNormal.xy *= pushConstants.mNormalScale;
     if (dot(normal, viewDir) < 0) {
      normal *= -1;
      tangentNormal.y *= -1;
@@ -201,11 +209,28 @@ void main() {
     normal = perturbNormal(normal, tangentNormal, vPosition, vTexcoords);
   }
 
-  float occlusion = mix(1.0, texture(uOcclusionTexture, vTexcoords).r, pushConstants.mMaterial.mOcclusionStrength);
-  float roughness = texture(mMetallicRoughnessTexture, vTexcoords).g * pushConstants.mMaterial.mRoughnessFactor;
-  roughness = clamp(roughness, 0.04, 1);
-  float metallic  = texture(mMetallicRoughnessTexture, vTexcoords).b * pushConstants.mMaterial.mMetallicFactor;
-  metallic = clamp(metallic, 0, 1);
+  float roughness = 1.0;
+  float metallic = 1.0;
+
+  if (pushConstants.mSpecularGlossinessWorkflow) {
+
+    roughness = 1.0 - texture(mMetallicRoughnessTexture, vTexcoords).a;
+
+    // Convert metallic value from specular glossiness inputs
+    vec3 specular = sRGBtoLinear(texture(mMetallicRoughnessTexture, vTexcoords)).rgb;
+    float maxSpecular = max(max(specular.r, specular.g), specular.b);
+    metallic = convertMetallic(albedo.rgb, specular, maxSpecular);
+
+    const float epsilon = 1e-6;
+    vec3 baseColorDiffusePart = albedo.rgb * ((1.0 - maxSpecular) / (1 - 0.04) / max(1 - metallic, epsilon)) * pushConstants.mAlbedoFactor.rgb;
+    vec3 baseColorSpecularPart = specular - (vec3(0.04) * (1 - metallic) * (1 / max(metallic, epsilon))) * pushConstants.mMetallicRoughnessFactor.rgb;
+    albedo = vec4(mix(baseColorDiffusePart, baseColorSpecularPart, metallic * metallic), albedo.a);
+
+  } else {
+    vec3 metallicRoughness = texture(mMetallicRoughnessTexture, vTexcoords).rgb * pushConstants.mMetallicRoughnessFactor;
+    roughness = clamp(metallicRoughness.g, 0.04, 1);
+    metallic = clamp(metallicRoughness.b, 0, 1);
+  }
 
   outColor.rgb = vec3(0.0);
 
@@ -218,7 +243,10 @@ void main() {
 
   outColor.rgb += imageBasedLighting(viewDir, normal, specularColor, albedo.rgb, metallic, roughness);
   
+  float occlusion = mix(1.0, texture(uOcclusionTexture, vTexcoords).r, pushConstants.mOcclusionStrength);
   outColor.rgb *= occlusion;
+
+  vec3 emissive = sRGBtoLinear(texture(uEmissiveTexture, vTexcoords)).rgb * pushConstants.mEmissiveFactor;
   outColor.rgb += emissive;
 
   // Tone mapping

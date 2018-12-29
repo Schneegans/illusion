@@ -42,9 +42,15 @@ void BindingState::setStorageImage(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void BindingState::setUniformBuffer(BackedBufferPtr const& buffer, vk::DeviceSize size,
+  vk::DeviceSize offset, uint32_t set, uint32_t binding) {
+  setBinding(UniformBufferBinding{buffer, size, offset}, set, binding);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void BindingState::setDynamicUniformBuffer(BackedBufferPtr const& buffer, vk::DeviceSize size,
   uint32_t offset, uint32_t set, uint32_t binding) {
-
   setBinding(DynamicUniformBufferBinding{buffer, size}, set, binding);
 
   if (getDynamicOffset(set, binding) != offset) {
@@ -55,23 +61,85 @@ void BindingState::setDynamicUniformBuffer(BackedBufferPtr const& buffer, vk::De
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void BindingState::setUniformBuffer(BackedBufferPtr const& buffer, vk::DeviceSize size,
+void BindingState::setStorageBuffer(BackedBufferPtr const& buffer, vk::DeviceSize size,
   vk::DeviceSize offset, uint32_t set, uint32_t binding) {
-
-  setBinding(UniformBufferBinding{buffer, size, offset}, set, binding);
+  setBinding(StorageBufferBinding{buffer, size, offset}, set, binding);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void BindingState::clearSet(uint32_t set) {
-  auto setIt = mSetBindings.find(set);
+void BindingState::setDynamicStorageBuffer(BackedBufferPtr const& buffer, vk::DeviceSize size,
+  uint32_t offset, uint32_t set, uint32_t binding) {
+  setBinding(DynamicStorageBufferBinding{buffer, size}, set, binding);
 
-  if (setIt != mSetBindings.end()) {
-    mSetBindings.erase(setIt);
-    mDynamicOffsets.erase(set);
-    mDirtySetBindings.insert(set);
+  if (getDynamicOffset(set, binding) != offset) {
+    mDynamicOffsets[set][binding] = offset;
     mDirtyDynamicOffsets.insert(set);
   }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void BindingState::reset(uint32_t set, uint32_t binding) {
+  {
+    auto setIt = mSetBindings.find(set);
+
+    if (setIt != mSetBindings.end()) {
+      auto bindingIt = setIt->second.find(binding);
+      if (bindingIt != setIt->second.end()) {
+        setIt->second.erase(bindingIt);
+        mDirtySetBindings.insert(set);
+      }
+    }
+  }
+
+  {
+    auto offsetIt = mDynamicOffsets.find(set);
+
+    if (offsetIt != mDynamicOffsets.end()) {
+      auto bindingIt = offsetIt->second.find(binding);
+      if (bindingIt != offsetIt->second.end()) {
+        offsetIt->second.erase(bindingIt);
+        mDirtyDynamicOffsets.insert(set);
+      }
+    }
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void BindingState::reset(uint32_t set) {
+  {
+    auto setIt = mSetBindings.find(set);
+
+    if (setIt != mSetBindings.end()) {
+      mSetBindings.erase(setIt);
+      mDirtySetBindings.insert(set);
+    }
+  }
+
+  {
+    auto offsetIt = mDynamicOffsets.find(set);
+
+    if (offsetIt != mDynamicOffsets.end()) {
+      mDynamicOffsets.erase(offsetIt);
+      mDirtyDynamicOffsets.insert(set);
+    }
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void BindingState::reset() {
+  for (auto const& setIt : mSetBindings) {
+    mDirtySetBindings.insert(setIt.first);
+  }
+  mSetBindings.clear();
+
+  for (auto const& offsetIt : mDynamicOffsets) {
+    mDirtyDynamicOffsets.insert(offsetIt.first);
+  }
+  mDynamicOffsets.clear();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

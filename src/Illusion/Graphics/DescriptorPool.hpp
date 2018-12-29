@@ -29,6 +29,7 @@ namespace Illusion::Graphics {
 
 class DescriptorPool {
  public:
+  // Syntactic sugar to create a std::shared_ptr for this class
   template <typename... Args>
   static DescriptorPoolPtr create(Args&&... args) {
     return std::make_shared<DescriptorPool>(args...);

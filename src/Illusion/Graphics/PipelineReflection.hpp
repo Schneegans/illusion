@@ -28,6 +28,7 @@ namespace Illusion::Graphics {
 
 class PipelineReflection {
  public:
+  // Syntactic sugar to create a std::shared_ptr for this class
   template <typename... Args>
   static PipelineReflectionPtr create(Args&&... args) {
     return std::make_shared<PipelineReflection>(args...);

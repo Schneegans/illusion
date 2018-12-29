@@ -65,21 +65,19 @@ class GltfModel {
     bool mDoubleSided     = false;
     bool mDoAlphaBlending = false;
 
-    struct PushConstants {
-      glm::vec4 mAlbedoFactor      = glm::vec4(1.f);
-      glm::vec3 mEmissiveFactor    = glm::vec3(0.f);
-      float     mMetallicFactor    = 1.f;
-      float     mRoughnessFactor   = 1.f;
-      float     mNormalScale       = 1.f;
-      float     mOcclusionStrength = 1.f;
-      float     mAlphaCutoff       = 0.5f;
-    } mPushConstants;
+    glm::vec4 mAlbedoFactor               = glm::vec4(1.f); // diffuse factor for SG-Workflow
+    glm::vec3 mEmissiveFactor             = glm::vec3(0.f);
+    bool      mSpecularGlossinessWorkflow = false;
+    glm::vec3 mMetallicRoughnessFactor    = glm::vec3(1.f); // specular factor for SG-Workflow
+    float     mNormalScale                = 1.f;
+    float     mOcclusionStrength          = 1.f;
+    float     mAlphaCutoff                = 0.5f;
 
-    TexturePtr mAlbedoTexture;
-    TexturePtr mMetallicRoughnessTexture;
-    TexturePtr mNormalTexture;
-    TexturePtr mOcclusionTexture;
-    TexturePtr mEmissiveTexture;
+    TexturePtr mAlbedoTexture;            // rgba: baseColor / diffuseColor
+    TexturePtr mEmissiveTexture;          // rgb:  emissivity
+    TexturePtr mMetallicRoughnessTexture; // g:    roughness, b: metallic / rgb specular glossiness
+    TexturePtr mOcclusionTexture;         // r:    ambient occlusion
+    TexturePtr mNormalTexture;            // rgb:  tangent space normal map
 
     std::string mName;
   };
@@ -241,6 +239,7 @@ class GltfModel {
     }
   };
 
+  // Syntactic sugar to create a std::shared_ptr for this class
   template <typename... Args>
   static GltfModelPtr create(Args&&... args) {
     return std::make_shared<GltfModel>(args...);

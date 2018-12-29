@@ -50,7 +50,10 @@ GraphicsState::GraphicsState(DevicePtr const& device)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// Color Blend State ------------------------------------------------------------------------------
+void GraphicsState::reset() { *this = GraphicsState(mDevice); }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void GraphicsState::setBlendLogicOpEnable(bool val) {
   if (mBlendLogicOpEnable != val) {
     mBlendLogicOpEnable = val;
@@ -58,7 +61,11 @@ void GraphicsState::setBlendLogicOpEnable(bool val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool GraphicsState::getBlendLogicOpEnable() const { return mBlendLogicOpEnable; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setBlendLogicOp(vk::LogicOp val) {
   if (mBlendLogicOp != val) {
@@ -67,7 +74,11 @@ void GraphicsState::setBlendLogicOp(vk::LogicOp val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 vk::LogicOp GraphicsState::getBlendLogicOp() const { return mBlendLogicOp; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setBlendConstants(std::array<float, 4> const& val) {
   if (mBlendConstants != val) {
@@ -76,12 +87,18 @@ void GraphicsState::setBlendConstants(std::array<float, 4> const& val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::array<float, 4> const& GraphicsState::getBlendConstants() const { return mBlendConstants; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::addBlendAttachment(BlendAttachment const& val) {
   mBlendAttachments.push_back(val);
   mDirty = true;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setBlendAttachments(std::vector<BlendAttachment> const& val) {
   if (mBlendAttachments != val) {
@@ -90,11 +107,14 @@ void GraphicsState::setBlendAttachments(std::vector<BlendAttachment> const& val)
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::vector<GraphicsState::BlendAttachment> const& GraphicsState::getBlendAttachments() const {
   return mBlendAttachments;
 }
 
-// Depth Stencil State ---------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void GraphicsState::setDepthTestEnable(bool val) {
   if (mDepthTestEnable != val) {
     mDepthTestEnable = val;
@@ -102,7 +122,11 @@ void GraphicsState::setDepthTestEnable(bool val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool GraphicsState::getDepthTestEnable() const { return mDepthTestEnable; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setDepthWriteEnable(bool val) {
   if (mDepthWriteEnable != val) {
@@ -111,7 +135,11 @@ void GraphicsState::setDepthWriteEnable(bool val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool GraphicsState::getDepthWriteEnable() const { return mDepthWriteEnable; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setDepthCompareOp(vk::CompareOp val) {
   if (mDepthCompareOp != val) {
@@ -120,7 +148,11 @@ void GraphicsState::setDepthCompareOp(vk::CompareOp val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 vk::CompareOp GraphicsState::getDepthCompareOp() const { return mDepthCompareOp; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setDepthBoundsTestEnable(bool val) {
   if (mDepthBoundsTestEnable != val) {
@@ -129,7 +161,11 @@ void GraphicsState::setDepthBoundsTestEnable(bool val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool GraphicsState::getDepthBoundsTestEnable() const { return mDepthBoundsTestEnable; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setStencilTestEnable(bool val) {
   if (mStencilTestEnable != val) {
@@ -138,7 +174,11 @@ void GraphicsState::setStencilTestEnable(bool val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool GraphicsState::getStencilTestEnable() const { return mStencilTestEnable; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setStencilFrontFailOp(vk::StencilOp val) {
   if (mStencilFrontFailOp != val) {
@@ -147,7 +187,11 @@ void GraphicsState::setStencilFrontFailOp(vk::StencilOp val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 vk::StencilOp GraphicsState::getStencilFrontFailOp() const { return mStencilFrontFailOp; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setStencilFrontPassOp(vk::StencilOp val) {
   if (mStencilFrontPassOp != val) {
@@ -156,7 +200,11 @@ void GraphicsState::setStencilFrontPassOp(vk::StencilOp val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 vk::StencilOp GraphicsState::getStencilFrontPassOp() const { return mStencilFrontPassOp; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setStencilFrontDepthFailOp(vk::StencilOp val) {
   if (mStencilFrontDepthFailOp != val) {
@@ -165,7 +213,11 @@ void GraphicsState::setStencilFrontDepthFailOp(vk::StencilOp val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 vk::StencilOp GraphicsState::getStencilFrontDepthFailOp() const { return mStencilFrontDepthFailOp; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setStencilFrontCompareOp(vk::CompareOp val) {
   if (mStencilFrontCompareOp != val) {
@@ -174,7 +226,11 @@ void GraphicsState::setStencilFrontCompareOp(vk::CompareOp val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 vk::CompareOp GraphicsState::getStencilFrontCompareOp() const { return mStencilFrontCompareOp; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setStencilFrontCompareMask(uint32_t val) {
   if (mStencilFrontCompareMask != val) {
@@ -183,7 +239,11 @@ void GraphicsState::setStencilFrontCompareMask(uint32_t val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 uint32_t GraphicsState::getStencilFrontCompareMask() const { return mStencilFrontCompareMask; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setStencilFrontWriteMask(uint32_t val) {
   if (mStencilFrontWriteMask != val) {
@@ -192,7 +252,11 @@ void GraphicsState::setStencilFrontWriteMask(uint32_t val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 uint32_t GraphicsState::getStencilFrontWriteMask() const { return mStencilFrontWriteMask; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setStencilFrontReference(uint32_t val) {
   if (mStencilFrontReference != val) {
@@ -201,7 +265,11 @@ void GraphicsState::setStencilFrontReference(uint32_t val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 uint32_t GraphicsState::getStencilFrontReference() const { return mStencilFrontReference; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setStencilBackFailOp(vk::StencilOp val) {
   if (mStencilBackFailOp != val) {
@@ -210,7 +278,11 @@ void GraphicsState::setStencilBackFailOp(vk::StencilOp val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 vk::StencilOp GraphicsState::getStencilBackFailOp() const { return mStencilBackFailOp; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setStencilBackPassOp(vk::StencilOp val) {
   if (mStencilBackPassOp != val) {
@@ -219,7 +291,11 @@ void GraphicsState::setStencilBackPassOp(vk::StencilOp val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 vk::StencilOp GraphicsState::getStencilBackPassOp() const { return mStencilBackPassOp; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setStencilBackDepthFailOp(vk::StencilOp val) {
   if (mStencilBackDepthFailOp != val) {
@@ -228,7 +304,11 @@ void GraphicsState::setStencilBackDepthFailOp(vk::StencilOp val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 vk::StencilOp GraphicsState::getStencilBackDepthFailOp() const { return mStencilBackDepthFailOp; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setStencilBackCompareOp(vk::CompareOp val) {
   if (mStencilBackCompareOp != val) {
@@ -237,7 +317,11 @@ void GraphicsState::setStencilBackCompareOp(vk::CompareOp val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 vk::CompareOp GraphicsState::getStencilBackCompareOp() const { return mStencilBackCompareOp; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setStencilBackCompareMask(uint32_t val) {
   if (mStencilBackCompareMask != val) {
@@ -246,7 +330,11 @@ void GraphicsState::setStencilBackCompareMask(uint32_t val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 uint32_t GraphicsState::getStencilBackCompareMask() const { return mStencilBackCompareMask; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setStencilBackWriteMask(uint32_t val) {
   if (mStencilBackWriteMask != val) {
@@ -255,7 +343,11 @@ void GraphicsState::setStencilBackWriteMask(uint32_t val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 uint32_t GraphicsState::getStencilBackWriteMask() const { return mStencilBackWriteMask; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setStencilBackReference(uint32_t val) {
   if (mStencilBackReference != val) {
@@ -264,7 +356,11 @@ void GraphicsState::setStencilBackReference(uint32_t val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 uint32_t GraphicsState::getStencilBackReference() const { return mStencilBackReference; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setMinDepthBounds(float val) {
   if (mMinDepthBounds != val) {
@@ -273,7 +369,11 @@ void GraphicsState::setMinDepthBounds(float val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 float GraphicsState::getMinDepthBounds() const { return mMinDepthBounds; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setMaxDepthBounds(float val) {
   if (mMaxDepthBounds != val) {
@@ -282,9 +382,12 @@ void GraphicsState::setMaxDepthBounds(float val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 float GraphicsState::getMaxDepthBounds() const { return mMaxDepthBounds; }
 
-// Input Assembly State --------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void GraphicsState::setTopology(vk::PrimitiveTopology val) {
   if (mTopology != val) {
     mTopology = val;
@@ -292,7 +395,11 @@ void GraphicsState::setTopology(vk::PrimitiveTopology val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 vk::PrimitiveTopology GraphicsState::getTopology() const { return mTopology; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setPrimitiveRestartEnable(bool val) {
   if (mPrimitiveRestartEnable != val) {
@@ -301,9 +408,12 @@ void GraphicsState::setPrimitiveRestartEnable(bool val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool GraphicsState::getPrimitiveRestartEnable() const { return mPrimitiveRestartEnable; }
 
-// Multisample State -----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void GraphicsState::setRasterizationSamples(vk::SampleCountFlagBits val) {
   if (mRasterizationSamples != val) {
     mRasterizationSamples = val;
@@ -311,9 +421,13 @@ void GraphicsState::setRasterizationSamples(vk::SampleCountFlagBits val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 vk::SampleCountFlagBits GraphicsState::getRasterizationSamples() const {
   return mRasterizationSamples;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setSampleShadingEnable(bool val) {
   if (mSampleShadingEnable != val) {
@@ -322,7 +436,11 @@ void GraphicsState::setSampleShadingEnable(bool val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool GraphicsState::getSampleShadingEnable() const { return mSampleShadingEnable; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setMinSampleShading(float val) {
   if (mMinSampleShading != val) {
@@ -331,7 +449,11 @@ void GraphicsState::setMinSampleShading(float val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 float GraphicsState::getMinSampleShading() const { return mMinSampleShading; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setAlphaToCoverageEnable(bool val) {
   if (mAlphaToCoverageEnable != val) {
@@ -340,7 +462,11 @@ void GraphicsState::setAlphaToCoverageEnable(bool val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool GraphicsState::getAlphaToCoverageEnable() const { return mAlphaToCoverageEnable; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setAlphaToOneEnable(bool val) {
   if (mAlphaToOneEnable != val) {
@@ -349,7 +475,11 @@ void GraphicsState::setAlphaToOneEnable(bool val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool GraphicsState::getAlphaToOneEnable() const { return mAlphaToOneEnable; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setSampleMask(std::vector<uint32_t> val) {
   if (mSampleMask != val) {
@@ -358,9 +488,12 @@ void GraphicsState::setSampleMask(std::vector<uint32_t> val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::vector<uint32_t> GraphicsState::getSampleMask() const { return mSampleMask; }
 
-// Rasterization State ---------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void GraphicsState::setDepthClampEnable(bool val) {
   if (mDepthClampEnable != val) {
     mDepthClampEnable = val;
@@ -368,7 +501,11 @@ void GraphicsState::setDepthClampEnable(bool val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool GraphicsState::getDepthClampEnable() const { return mDepthClampEnable; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setRasterizerDiscardEnable(bool val) {
   if (mRasterizerDiscardEnable != val) {
@@ -377,7 +514,11 @@ void GraphicsState::setRasterizerDiscardEnable(bool val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool GraphicsState::getRasterizerDiscardEnable() const { return mRasterizerDiscardEnable; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setPolygonMode(vk::PolygonMode val) {
   if (mPolygonMode != val) {
@@ -386,7 +527,11 @@ void GraphicsState::setPolygonMode(vk::PolygonMode val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 vk::PolygonMode GraphicsState::getPolygonMode() const { return mPolygonMode; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setCullMode(vk::CullModeFlags val) {
   if (mCullMode != val) {
@@ -395,7 +540,11 @@ void GraphicsState::setCullMode(vk::CullModeFlags val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 vk::CullModeFlags GraphicsState::getCullMode() const { return mCullMode; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setFrontFace(vk::FrontFace val) {
   if (mFrontFace != val) {
@@ -404,7 +553,11 @@ void GraphicsState::setFrontFace(vk::FrontFace val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 vk::FrontFace GraphicsState::getFrontFace() const { return mFrontFace; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setDepthBiasEnable(bool val) {
   if (mDepthBiasEnable != val) {
@@ -413,7 +566,11 @@ void GraphicsState::setDepthBiasEnable(bool val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool GraphicsState::getDepthBiasEnable() const { return mDepthBiasEnable; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setDepthBiasConstantFactor(float val) {
   if (mDepthBiasConstantFactor != val) {
@@ -422,7 +579,11 @@ void GraphicsState::setDepthBiasConstantFactor(float val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 float GraphicsState::getDepthBiasConstantFactor() const { return mDepthBiasConstantFactor; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setDepthBiasClamp(float val) {
   if (mDepthBiasClamp != val) {
@@ -431,7 +592,11 @@ void GraphicsState::setDepthBiasClamp(float val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 float GraphicsState::getDepthBiasClamp() const { return mDepthBiasClamp; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setDepthBiasSlopeFactor(float val) {
   if (mDepthBiasSlopeFactor != val) {
@@ -440,7 +605,11 @@ void GraphicsState::setDepthBiasSlopeFactor(float val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 float GraphicsState::getDepthBiasSlopeFactor() const { return mDepthBiasSlopeFactor; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setLineWidth(float val) {
   if (mLineWidth != val) {
@@ -449,9 +618,12 @@ void GraphicsState::setLineWidth(float val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 float GraphicsState::getLineWidth() const { return mLineWidth; }
 
-// Tesselation State -----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void GraphicsState::setTessellationPatchControlPoints(uint32_t val) {
   if (mTessellationPatchControlPoints != val) {
     mTessellationPatchControlPoints = val;
@@ -459,15 +631,20 @@ void GraphicsState::setTessellationPatchControlPoints(uint32_t val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 uint32_t GraphicsState::getTessellationPatchControlPoints() const {
   return mTessellationPatchControlPoints;
 }
 
-// Vertex Input State ----------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void GraphicsState::addVertexInputBinding(vk::VertexInputBindingDescription const& val) {
   mVertexInputBindings.push_back(val);
   mDirty = true;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setVertexInputBindings(
   std::vector<vk::VertexInputBindingDescription> const& val) {
@@ -477,15 +654,21 @@ void GraphicsState::setVertexInputBindings(
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::vector<vk::VertexInputBindingDescription> const&
 GraphicsState::getVertexInputBindings() const {
   return mVertexInputBindings;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void GraphicsState::addVertexInputAttribute(vk::VertexInputAttributeDescription const& val) {
   mVertexInputAttributes.push_back(val);
   mDirty = true;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setVertexInputAttributes(
   std::vector<vk::VertexInputAttributeDescription> const& val) {
@@ -495,17 +678,21 @@ void GraphicsState::setVertexInputAttributes(
   }
 }
 
-std::vector<vk::VertexInputAttributeDescription> const&
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
+std::vector<vk::VertexInputAttributeDescription> const&
 GraphicsState::getVertexInputAttributes() const {
   return mVertexInputAttributes;
 }
 
-// Viewport State --------------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void GraphicsState::addViewport(Viewport const& val) {
   mViewports.push_back(val);
   mDirty = true;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setViewports(std::vector<Viewport> const& val) {
   if (mViewports != val) {
@@ -514,14 +701,20 @@ void GraphicsState::setViewports(std::vector<Viewport> const& val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::vector<GraphicsState::Viewport> const& GraphicsState::getViewports() const {
   return mViewports;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::addScissor(Scissor const& val) {
   mScissors.push_back(val);
   mDirty = true;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::setScissors(std::vector<Scissor> const& val) {
   if (mScissors != val) {
@@ -530,15 +723,20 @@ void GraphicsState::setScissors(std::vector<Scissor> const& val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::vector<GraphicsState::Scissor> const& GraphicsState::getScissors() const { return mScissors; }
 
-// Dynamic State ---------------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void GraphicsState::addDynamicState(vk::DynamicState val) {
   if (mDynamicState.find(val) == mDynamicState.end()) {
     mDynamicState.insert(val);
     mDirty = true;
   }
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void GraphicsState::removeDynamicState(vk::DynamicState val) {
   if (mDynamicState.find(val) != mDynamicState.end()) {
@@ -547,12 +745,16 @@ void GraphicsState::removeDynamicState(vk::DynamicState val) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void GraphicsState::setDynamicState(std::set<vk::DynamicState> const& val) {
   if (mDynamicState != val) {
     mDynamicState = val;
     mDirty        = true;
   }
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::set<vk::DynamicState> const& GraphicsState::getDynamicState() const { return mDynamicState; }
 

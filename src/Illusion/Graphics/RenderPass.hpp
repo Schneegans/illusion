@@ -32,6 +32,7 @@ class RenderPass {
     std::vector<uint32_t> mOutputAttachments;
   };
 
+  // Syntactic sugar to create a std::shared_ptr for this class
   template <typename... Args>
   static RenderPassPtr create(Args&&... args) {
     return std::make_shared<RenderPass>(args...);

@@ -21,8 +21,8 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Swapchain {
-
  public:
+  // Syntactic sugar to create a std::shared_ptr for this class
   template <typename... Args>
   static SwapchainPtr create(Args&&... args) {
     return std::make_shared<Swapchain>(args...);

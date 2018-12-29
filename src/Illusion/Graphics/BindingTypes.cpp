@@ -34,6 +34,16 @@ bool CombinedImageSamplerBinding::operator!=(CombinedImageSamplerBinding const& 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+bool UniformBufferBinding::operator==(UniformBufferBinding const& other) const {
+  return mBuffer == other.mBuffer && mSize == other.mSize && mOffset == other.mOffset;
+}
+
+bool UniformBufferBinding::operator!=(UniformBufferBinding const& other) const {
+  return !(*this == other);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool DynamicUniformBufferBinding::operator==(DynamicUniformBufferBinding const& other) const {
   return mBuffer == other.mBuffer && mSize == other.mSize;
 }
@@ -44,11 +54,21 @@ bool DynamicUniformBufferBinding::operator!=(DynamicUniformBufferBinding const& 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool UniformBufferBinding::operator==(UniformBufferBinding const& other) const {
+bool StorageBufferBinding::operator==(StorageBufferBinding const& other) const {
   return mBuffer == other.mBuffer && mSize == other.mSize && mOffset == other.mOffset;
 }
 
-bool UniformBufferBinding::operator!=(UniformBufferBinding const& other) const {
+bool StorageBufferBinding::operator!=(StorageBufferBinding const& other) const {
+  return !(*this == other);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool DynamicStorageBufferBinding::operator==(DynamicStorageBufferBinding const& other) const {
+  return mBuffer == other.mBuffer && mSize == other.mSize;
+}
+
+bool DynamicStorageBufferBinding::operator!=(DynamicStorageBufferBinding const& other) const {
   return !(*this == other);
 }
 

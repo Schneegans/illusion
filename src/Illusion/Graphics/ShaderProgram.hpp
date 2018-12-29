@@ -31,6 +31,7 @@ class ShaderProgram {
     std::map<vk::ShaderStageFlagBits, std::string> const& sources,
     std::set<std::string> const&                          dynamicBuffers = {});
 
+  // Syntactic sugar to create a std::shared_ptr for this class
   template <typename... Args>
   static ShaderProgramPtr create(Args&&... args) {
     return std::make_shared<ShaderProgram>(args...);

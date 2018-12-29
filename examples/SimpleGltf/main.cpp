@@ -30,9 +30,15 @@
 #include <thread>
 
 struct PushConstants {
-  glm::mat4                                              mModelMatrix;
-  Illusion::Graphics::GltfModel::Material::PushConstants mMaterial;
-  int                                                    mVertexAttributes;
+  glm::mat4 mModelMatrix;
+  glm::vec4 mAlbedoFactor;
+  glm::vec3 mEmissiveFactor;
+  bool      mSpecularGlossinessWorkflow;
+  glm::vec3 mMetallicRoughnessFactor;
+  float     mNormalScale;
+  float     mOcclusionStrength;
+  float     mAlphaCutoff;
+  int       mVertexAttributes;
 };
 
 struct SkinUniforms {
@@ -99,9 +105,15 @@ void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::GltfModel::Node>>
 
         if (p.mMaterial->mDoAlphaBlending == doAlphaBlending) {
           PushConstants pushConstants;
-          pushConstants.mModelMatrix      = modelMatrix * nodeMatrix;
-          pushConstants.mMaterial         = p.mMaterial->mPushConstants;
-          pushConstants.mVertexAttributes = (int)p.mVertexAttributes;
+          pushConstants.mModelMatrix                = modelMatrix * nodeMatrix;
+          pushConstants.mAlbedoFactor               = p.mMaterial->mAlbedoFactor;
+          pushConstants.mEmissiveFactor             = p.mMaterial->mEmissiveFactor;
+          pushConstants.mSpecularGlossinessWorkflow = p.mMaterial->mSpecularGlossinessWorkflow;
+          pushConstants.mMetallicRoughnessFactor    = p.mMaterial->mMetallicRoughnessFactor;
+          pushConstants.mNormalScale                = p.mMaterial->mNormalScale;
+          pushConstants.mOcclusionStrength          = p.mMaterial->mOcclusionStrength;
+          pushConstants.mAlphaCutoff                = p.mMaterial->mAlphaCutoff;
+          pushConstants.mVertexAttributes           = (int)p.mVertexAttributes;
           res.mCmd->pushConstants(pushConstants);
 
           res.mCmd->bindingState().setTexture(p.mMaterial->mAlbedoTexture, 3, 0);
@@ -284,7 +296,7 @@ int main(int argc, char* argv[]) {
 
     res.mCmd->draw(4);
 
-    res.mCmd->bindingState().clearSet(1);
+    res.mCmd->bindingState().reset(1);
 
     res.mCmd->setShaderProgram(pbrShader);
     res.mCmd->bindingState().setTexture(brdflut, 1, 0);
@@ -307,9 +319,6 @@ int main(int argc, char* argv[]) {
       emptySkinDynamicOffset, res);
     drawNodes(model->getRoot().mChildren, camera.mViewMatrix, modelMatrix, true,
       emptySkinDynamicOffset, res);
-
-    res.mCmd->bindingState().clearSet(1);
-    res.mCmd->bindingState().clearSet(2);
 
     res.mCmd->endRenderPass();
     res.mCmd->end();

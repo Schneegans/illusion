@@ -22,10 +22,16 @@
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// This GraphicsState is used as a member of each CommandBuffer. Based on the stored information, //
+// a vk::Pipeline will be created by the CommandBuffer. The method getHash() can be used to cache //
+// vk::Pipelines.                                                                                 //
+// The default state of each property can be seen in the private part at the end of this file.    //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class GraphicsState {
  public:
+  // Inner types -----------------------------------------------------------------------------------
+
   struct BlendAttachment {
     bool                    mBlendEnable         = true;
     vk::BlendFactor         mSrcColorBlendFactor = vk::BlendFactor::eSrcAlpha;
@@ -57,9 +63,14 @@ class GraphicsState {
     bool operator==(Scissor const& other) const;
   };
 
+  // -----------------------------------------------------------------------------------------------
+
   GraphicsState(DevicePtr const& device);
 
+  void reset();
+
   // clang-format off
+
   // Color Blend State -----------------------------------------------------------------------------
   void                                setBlendLogicOpEnable(bool val);
   bool                                getBlendLogicOpEnable() const;
@@ -191,7 +202,7 @@ class GraphicsState {
   Core::BitHash getHash() const;
 
  private:
-  DevicePtr const& mDevice;
+  DevicePtr mDevice;
 
   // Color Blend State------------------------------------------------------------------------------
   bool                         mBlendLogicOpEnable = false;

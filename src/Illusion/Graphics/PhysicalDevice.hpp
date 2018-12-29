@@ -20,6 +20,7 @@ namespace Illusion::Graphics {
 
 class PhysicalDevice : public vk::PhysicalDevice {
  public:
+  // Syntactic sugar to create a std::shared_ptr for this class
   template <typename... Args>
   static PhysicalDevicePtr create(Args&&... args) {
     return std::make_shared<PhysicalDevice>(args...);

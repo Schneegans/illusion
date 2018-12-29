@@ -25,6 +25,7 @@ class ShaderModule {
  public:
   static std::vector<uint32_t> compileGlsl(std::string const& glsl, vk::ShaderStageFlagBits stage);
 
+  // Syntactic sugar to create a std::shared_ptr for this class
   template <typename... Args>
   static EnginePtr create(Args&&... args) {
     return std::make_shared<Engine>(args...);

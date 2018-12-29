@@ -18,6 +18,9 @@
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// These structs are used by the BindingState. Especially the std::variant at the bottom of this  //
+// file is used extensively to track the current descriptor set binding state (aliased as         //
+// BindingType). See BindingState.hpp for details.                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct StorageImageBinding {
@@ -28,6 +31,8 @@ struct StorageImageBinding {
   bool operator!=(StorageImageBinding const& other) const;
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct CombinedImageSamplerBinding {
   TexturePtr mTexture;
 
@@ -35,13 +40,7 @@ struct CombinedImageSamplerBinding {
   bool operator!=(CombinedImageSamplerBinding const& other) const;
 };
 
-struct DynamicUniformBufferBinding {
-  BackedBufferPtr mBuffer;
-  vk::DeviceSize  mSize;
-
-  bool operator==(DynamicUniformBufferBinding const& other) const;
-  bool operator!=(DynamicUniformBufferBinding const& other) const;
-};
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct UniformBufferBinding {
   BackedBufferPtr mBuffer;
@@ -52,8 +51,41 @@ struct UniformBufferBinding {
   bool operator!=(UniformBufferBinding const& other) const;
 };
 
-typedef std::variant<StorageImageBinding, CombinedImageSamplerBinding, DynamicUniformBufferBinding,
-  UniformBufferBinding>
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct DynamicUniformBufferBinding {
+  BackedBufferPtr mBuffer;
+  vk::DeviceSize  mSize;
+
+  bool operator==(DynamicUniformBufferBinding const& other) const;
+  bool operator!=(DynamicUniformBufferBinding const& other) const;
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct StorageBufferBinding {
+  BackedBufferPtr mBuffer;
+  vk::DeviceSize  mSize;
+  vk::DeviceSize  mOffset;
+
+  bool operator==(StorageBufferBinding const& other) const;
+  bool operator!=(StorageBufferBinding const& other) const;
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct DynamicStorageBufferBinding {
+  BackedBufferPtr mBuffer;
+  vk::DeviceSize  mSize;
+
+  bool operator==(DynamicStorageBufferBinding const& other) const;
+  bool operator!=(DynamicStorageBufferBinding const& other) const;
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+typedef std::variant<StorageImageBinding, CombinedImageSamplerBinding, UniformBufferBinding,
+  DynamicUniformBufferBinding, StorageBufferBinding, DynamicStorageBufferBinding>
   BindingType;
 
 } // namespace Illusion::Graphics

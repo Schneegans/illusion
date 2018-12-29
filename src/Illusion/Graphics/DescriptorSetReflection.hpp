@@ -27,6 +27,7 @@ namespace Illusion::Graphics {
 
 class DescriptorSetReflection {
  public:
+  // Syntactic sugar to create a std::shared_ptr for this class
   template <typename... Args>
   static DescriptorSetReflectionPtr create(Args&&... args) {
     return std::make_shared<DescriptorSetReflection>(args...);

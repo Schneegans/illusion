@@ -34,8 +34,12 @@ CommandBuffer::CommandBuffer(DevicePtr const& device, QueueType type, vk::Comman
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::reset() {
+  mBindingState.reset();
   mCurrentDescriptorSets.clear();
   mDescriptorSetCache.releaseAll();
+  mCurrentRenderPass.reset();
+  mCurrentSubPass = 0;
+
   mVkCmd->reset({});
 }
 
@@ -108,6 +112,21 @@ void CommandBuffer::endRenderPass() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+GraphicsState&       CommandBuffer::graphicsState() { return mGraphicsState; }
+GraphicsState const& CommandBuffer::graphicsState() const { return mGraphicsState; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+BindingState&       CommandBuffer::bindingState() { return mBindingState; }
+BindingState const& CommandBuffer::bindingState() const { return mBindingState; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CommandBuffer::setShaderProgram(ShaderProgramPtr const& val) { mCurrentShaderProgram = val; }
+ShaderProgramPtr const& CommandBuffer::getShaderProgram() const { return mCurrentShaderProgram; }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void CommandBuffer::bindIndexBuffer(
   BackedBufferPtr const& buffer, vk::DeviceSize offset, vk::IndexType indexType) const {
   mVkCmd->bindIndexBuffer(*buffer->mBuffer, offset, indexType);
@@ -147,52 +166,6 @@ void CommandBuffer::bindVertexBuffers(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::bindCombinedImageSampler(
-  TexturePtr const& texture, uint32_t set, uint32_t binding) const {}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CommandBuffer::draw(
-  uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) {
-
-  flush();
-  mVkCmd->draw(vertexCount, instanceCount, firstVertex, firstInstance);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CommandBuffer::drawIndexed(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex,
-  int32_t vertexOffset, uint32_t firstInstance) {
-
-  flush();
-  mVkCmd->drawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CommandBuffer::dispatch(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) {
-  flush();
-  mVkCmd->dispatch(groupCountX, groupCountY, groupCountZ);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void CommandBuffer::setShaderProgram(ShaderProgramPtr const& val) { mCurrentShaderProgram = val; }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-ShaderProgramPtr const& CommandBuffer::getShaderProgram() const { return mCurrentShaderProgram; }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-GraphicsState& CommandBuffer::graphicsState() { return mGraphicsState; }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-BindingState& CommandBuffer::bindingState() { return mBindingState; }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
 void CommandBuffer::pushConstants(const void* data, uint32_t size, uint32_t offset) const {
   auto const& reflection = mCurrentShaderProgram->getReflection();
   auto constants = reflection->getResources(PipelineResource::ResourceType::ePushConstantBuffer);
@@ -204,6 +177,29 @@ void CommandBuffer::pushConstants(const void* data, uint32_t size, uint32_t offs
 
   mVkCmd->pushConstants(
     *reflection->getLayout(), constants.begin()->second.mStages, offset, size, data);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CommandBuffer::draw(
+  uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) {
+  flush();
+  mVkCmd->draw(vertexCount, instanceCount, firstVertex, firstInstance);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CommandBuffer::drawIndexed(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex,
+  int32_t vertexOffset, uint32_t firstInstance) {
+  flush();
+  mVkCmd->drawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CommandBuffer::dispatch(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) {
+  flush();
+  mVkCmd->dispatch(groupCountX, groupCountY, groupCountZ);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -276,6 +272,7 @@ void CommandBuffer::blitImage(vk::Image src, vk::Image dst, glm::uvec2 const& sr
 
   blitImage(src, 0, dst, 0, srcSize, dstSize, 1, filter);
 }
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::blitImage(vk::Image src, uint32_t srcMipmapLevel, vk::Image dst,
@@ -380,85 +377,92 @@ void CommandBuffer::flush() {
       auto descriptorSet = mDescriptorSetCache.acquireHandle(
         mCurrentShaderProgram->getDescriptorSetReflections().at(setNum));
 
+      // get all bindings of the current descriptor set
+      auto const& bindings     = mBindingState.getBindings(setNum);
+      size_t      bindingCount = bindings.size();
+
       // this will store the offsets of dynamic uniform and storage buffers
       std::vector<uint32_t> dynamicOffsets;
 
       // write descriptor set for each binding
-      for (auto const& binding : mBindingState.getBindings(setNum)) {
+      vk::WriteDescriptorSet defaulWriteInfo;
+      defaulWriteInfo.dstSet          = *descriptorSet;
+      defaulWriteInfo.dstArrayElement = 0;
+      defaulWriteInfo.descriptorCount = 1;
+
+      std::vector<vk::WriteDescriptorSet>   writeInfos(bindingCount, defaulWriteInfo);
+      std::vector<vk::DescriptorImageInfo>  imageInfos(bindingCount);
+      std::vector<vk::DescriptorBufferInfo> bufferInfos(bindingCount);
+
+      uint32_t i = 0;
+
+      for (auto const& binding : bindings) {
+
+        writeInfos[i].dstBinding = binding.first;
 
         if (std::holds_alternative<CombinedImageSamplerBinding>(binding.second)) {
-          auto value = std::get<CombinedImageSamplerBinding>(binding.second);
 
-          vk::DescriptorImageInfo imageInfo;
-          imageInfo.imageLayout = value.mTexture->mBackedImage->mCurrentLayout;
-          imageInfo.imageView   = *value.mTexture->mBackedImage->mView;
-          imageInfo.sampler     = *value.mTexture->mSampler;
-
-          vk::WriteDescriptorSet info;
-          info.dstSet          = *descriptorSet;
-          info.dstBinding      = binding.first;
-          info.dstArrayElement = 0;
-          info.descriptorType  = vk::DescriptorType::eCombinedImageSampler;
-          info.descriptorCount = 1;
-          info.pImageInfo      = &imageInfo;
-
-          mDevice->getHandle()->updateDescriptorSets(info, nullptr);
+          auto value                   = std::get<CombinedImageSamplerBinding>(binding.second);
+          imageInfos[i].imageLayout    = value.mTexture->mBackedImage->mCurrentLayout;
+          imageInfos[i].imageView      = *value.mTexture->mBackedImage->mView;
+          imageInfos[i].sampler        = *value.mTexture->mSampler;
+          writeInfos[i].descriptorType = vk::DescriptorType::eCombinedImageSampler;
+          writeInfos[i].pImageInfo     = &imageInfos[i];
 
         } else if (std::holds_alternative<StorageImageBinding>(binding.second)) {
-          auto value = std::get<StorageImageBinding>(binding.second);
 
-          vk::DescriptorImageInfo imageInfo;
-          imageInfo.imageLayout = value.mImage->mBackedImage->mCurrentLayout;
-          imageInfo.imageView   = *(value.mView ? value.mView : value.mImage->mBackedImage->mView);
-          imageInfo.sampler     = *value.mImage->mSampler;
-
-          vk::WriteDescriptorSet info;
-          info.dstSet          = *descriptorSet;
-          info.dstBinding      = binding.first;
-          info.dstArrayElement = 0;
-          info.descriptorType  = vk::DescriptorType::eStorageImage;
-          info.descriptorCount = 1;
-          info.pImageInfo      = &imageInfo;
-
-          mDevice->getHandle()->updateDescriptorSets(info, nullptr);
+          auto value                = std::get<StorageImageBinding>(binding.second);
+          imageInfos[i].imageLayout = value.mImage->mBackedImage->mCurrentLayout;
+          imageInfos[i].imageView =
+            *(value.mView ? value.mView : value.mImage->mBackedImage->mView);
+          imageInfos[i].sampler        = *value.mImage->mSampler;
+          writeInfos[i].descriptorType = vk::DescriptorType::eStorageImage;
+          writeInfos[i].pImageInfo     = &imageInfos[i];
 
         } else if (std::holds_alternative<UniformBufferBinding>(binding.second)) {
-          auto value = std::get<UniformBufferBinding>(binding.second);
 
-          vk::DescriptorBufferInfo bufferInfo;
-          bufferInfo.buffer = *value.mBuffer->mBuffer;
-          bufferInfo.offset = value.mOffset;
-          bufferInfo.range  = value.mSize;
-
-          vk::WriteDescriptorSet info;
-          info.dstSet          = *descriptorSet;
-          info.dstBinding      = binding.first;
-          info.dstArrayElement = 0;
-          info.descriptorType  = vk::DescriptorType::eUniformBuffer;
-          info.descriptorCount = 1;
-          info.pBufferInfo     = &bufferInfo;
-
-          mDevice->getHandle()->updateDescriptorSets(info, nullptr);
+          auto value                   = std::get<UniformBufferBinding>(binding.second);
+          bufferInfos[i].buffer        = *value.mBuffer->mBuffer;
+          bufferInfos[i].offset        = value.mOffset;
+          bufferInfos[i].range         = value.mSize;
+          writeInfos[i].descriptorType = vk::DescriptorType::eUniformBuffer;
+          writeInfos[i].pBufferInfo    = &bufferInfos[i];
 
         } else if (std::holds_alternative<DynamicUniformBufferBinding>(binding.second)) {
-          auto value = std::get<DynamicUniformBufferBinding>(binding.second);
 
-          vk::DescriptorBufferInfo bufferInfo;
-          bufferInfo.buffer = *value.mBuffer->mBuffer;
-          bufferInfo.range  = value.mSize;
-
-          vk::WriteDescriptorSet info;
-          info.dstSet          = *descriptorSet;
-          info.dstBinding      = binding.first;
-          info.dstArrayElement = 0;
-          info.descriptorType  = vk::DescriptorType::eUniformBufferDynamic;
-          info.descriptorCount = 1;
-          info.pBufferInfo     = &bufferInfo;
+          auto value                   = std::get<DynamicUniformBufferBinding>(binding.second);
+          bufferInfos[i].buffer        = *value.mBuffer->mBuffer;
+          bufferInfos[i].range         = value.mSize;
+          writeInfos[i].descriptorType = vk::DescriptorType::eUniformBufferDynamic;
+          writeInfos[i].pBufferInfo    = &bufferInfos[i];
 
           dynamicOffsets.push_back(mBindingState.getDynamicOffset(setNum, binding.first));
 
-          mDevice->getHandle()->updateDescriptorSets(info, nullptr);
+        } else if (std::holds_alternative<StorageBufferBinding>(binding.second)) {
+
+          auto value                   = std::get<StorageBufferBinding>(binding.second);
+          bufferInfos[i].buffer        = *value.mBuffer->mBuffer;
+          bufferInfos[i].offset        = value.mOffset;
+          bufferInfos[i].range         = value.mSize;
+          writeInfos[i].descriptorType = vk::DescriptorType::eStorageBuffer;
+          writeInfos[i].pBufferInfo    = &bufferInfos[i];
+
+        } else if (std::holds_alternative<DynamicStorageBufferBinding>(binding.second)) {
+
+          auto value                   = std::get<DynamicStorageBufferBinding>(binding.second);
+          bufferInfos[i].buffer        = *value.mBuffer->mBuffer;
+          bufferInfos[i].range         = value.mSize;
+          writeInfos[i].descriptorType = vk::DescriptorType::eStorageBufferDynamic;
+          writeInfos[i].pBufferInfo    = &bufferInfos[i];
+
+          dynamicOffsets.push_back(mBindingState.getDynamicOffset(setNum, binding.first));
         }
+
+        ++i;
+      }
+
+      if (bindingCount > 0) {
+        mDevice->getHandle()->updateDescriptorSets(writeInfos, nullptr);
       }
 
       // now the descriptor set is up-to-date and we can bind it

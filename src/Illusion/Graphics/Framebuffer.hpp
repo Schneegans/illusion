@@ -22,6 +22,7 @@ namespace Illusion::Graphics {
 
 class Framebuffer {
  public:
+  // Syntactic sugar to create a std::shared_ptr for this class
   template <typename... Args>
   static FramebufferPtr create(Args&&... args) {
     return std::make_shared<Framebuffer>(args...);

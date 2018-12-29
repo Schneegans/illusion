@@ -46,6 +46,7 @@ class Window {
   Core::Signal<Input::JoystickId, Input::JoystickButtonId>      sOnJoystickButtonPressed;
   Core::Signal<Input::JoystickId, Input::JoystickButtonId>      sOnJoystickButtonReleased;
 
+  // Syntactic sugar to create a std::shared_ptr for this class
   template <typename... Args>
   static WindowPtr create(Args&&... args) {
     return std::make_shared<Window>(args...);

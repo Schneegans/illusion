@@ -251,9 +251,10 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
       m->mOcclusionTexture         = mDevice->getSinglePixelTexture({255, 255, 255, 255});
       m->mEmissiveTexture          = mDevice->getSinglePixelTexture({255, 255, 255, 255});
 
-      m->mPushConstants.mAlbedoFactor   = glm::vec4(0.5f, 0.5f, 0.5f, 1.f);
-      m->mPushConstants.mMetallicFactor = 0.f;
-      m->mDoubleSided                   = true;
+      m->mAlbedoFactor              = glm::vec4(0.5f, 0.5f, 0.5f, 1.f);
+      m->mMetallicRoughnessFactor.g = 1.f;
+      m->mMetallicRoughnessFactor.b = 0.f;
+      m->mDoubleSided               = true;
 
       mMaterials.emplace_back(m);
 
@@ -278,14 +279,55 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
                      p.second.TextureIndex() < mTextures.size()) {
             m->mMetallicRoughnessTexture = mTextures[p.second.TextureIndex()];
           } else if (p.first == "metallicFactor") {
-            m->mPushConstants.mMetallicFactor = p.second.Factor();
+            m->mMetallicRoughnessFactor.b = p.second.Factor();
           } else if (p.first == "roughnessFactor") {
-            m->mPushConstants.mRoughnessFactor = p.second.Factor();
+            m->mMetallicRoughnessFactor.g = p.second.Factor();
           } else if (p.first == "baseColorFactor") {
-            auto fac                        = p.second.ColorFactor();
-            m->mPushConstants.mAlbedoFactor = glm::vec4(fac[0], fac[1], fac[2], fac[3]);
+            auto fac         = p.second.ColorFactor();
+            m->mAlbedoFactor = glm::vec4(fac[0], fac[1], fac[2], fac[3]);
           } else {
             ILLUSION_WARNING << "Ignoring GLTF property \"" << p.first << "\" of material "
+                             << m->mName << "\"!" << std::endl;
+          }
+        }
+
+        for (auto const& p : material.extensions) {
+          if (p.first == "KHR_materials_pbrSpecularGlossiness") {
+            m->mSpecularGlossinessWorkflow = true;
+
+            auto val = p.second.Get("specularGlossinessTexture");
+            if (val.IsObject() && val.Get("index").Get<int>() < mTextures.size()) {
+              m->mMetallicRoughnessTexture = mTextures[val.Get("index").Get<int>()];
+            }
+
+            val = p.second.Get("diffuseTexture");
+            if (val.IsObject() && val.Get("index").Get<int>() < mTextures.size()) {
+              m->mAlbedoTexture = mTextures[val.Get("index").Get<int>()];
+            }
+
+            val = p.second.Get("diffuseFactor");
+            if (val.IsArray()) {
+              m->mAlbedoFactor.r =
+                val.Get(0).IsInt() ? val.Get(0).Get<int>() : val.Get(0).Get<double>();
+              m->mAlbedoFactor.g =
+                val.Get(1).IsInt() ? val.Get(1).Get<int>() : val.Get(1).Get<double>();
+              m->mAlbedoFactor.b =
+                val.Get(2).IsInt() ? val.Get(2).Get<int>() : val.Get(2).Get<double>();
+              m->mAlbedoFactor.a =
+                val.Get(3).IsInt() ? val.Get(3).Get<int>() : val.Get(3).Get<double>();
+            }
+
+            val = p.second.Get("specularFactor");
+            if (val.IsArray()) {
+              m->mMetallicRoughnessFactor.r =
+                val.Get(0).IsInt() ? val.Get(0).Get<int>() : val.Get(0).Get<double>();
+              m->mMetallicRoughnessFactor.g =
+                val.Get(1).IsInt() ? val.Get(1).Get<int>() : val.Get(1).Get<double>();
+              m->mMetallicRoughnessFactor.b =
+                val.Get(2).IsInt() ? val.Get(2).Get<int>() : val.Get(2).Get<double>();
+            }
+          } else {
+            ILLUSION_WARNING << "Ignoring GLTF extension \"" << p.first << "\" of material "
                              << m->mName << "\"!" << std::endl;
           }
         }
@@ -301,28 +343,28 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
           } else if (p.first == "emissiveTexture" && p.second.TextureIndex() < mTextures.size()) {
             m->mEmissiveTexture = mTextures[p.second.TextureIndex()];
           } else if (p.first == "normalScale") {
-            m->mPushConstants.mNormalScale = p.second.Factor();
+            m->mNormalScale = p.second.Factor();
           } else if (p.first == "alphaCutoff") {
             if (!ignoreCutoff) {
-              m->mPushConstants.mAlphaCutoff = p.second.Factor();
+              m->mAlphaCutoff = p.second.Factor();
             }
           } else if (p.first == "occlusionStrength") {
-            m->mPushConstants.mOcclusionStrength = p.second.Factor();
+            m->mOcclusionStrength = p.second.Factor();
           } else if (p.first == "emissiveFactor") {
-            auto fac                          = p.second.ColorFactor();
-            m->mPushConstants.mEmissiveFactor = glm::vec3(fac[0], fac[1], fac[2]);
+            auto fac           = p.second.ColorFactor();
+            m->mEmissiveFactor = glm::vec3(fac[0], fac[1], fac[2]);
           } else if (p.first == "alphaMode") {
             hasBlendMode = true;
             if (p.second.string_value == "BLEND") {
-              m->mDoAlphaBlending            = true;
-              m->mPushConstants.mAlphaCutoff = 0.f;
-              ignoreCutoff                   = true;
+              m->mDoAlphaBlending = true;
+              m->mAlphaCutoff     = 0.f;
+              ignoreCutoff        = true;
             } else if (p.second.string_value == "MASK") {
               m->mDoAlphaBlending = false;
             } else {
-              m->mDoAlphaBlending            = false;
-              m->mPushConstants.mAlphaCutoff = 1.f;
-              ignoreCutoff                   = true;
+              m->mDoAlphaBlending = false;
+              m->mAlphaCutoff     = 1.f;
+              ignoreCutoff        = true;
             }
           } else if (p.first == "doubleSided") {
             m->mDoubleSided = p.second.bool_value;
@@ -335,7 +377,7 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
         }
 
         if (!hasBlendMode) {
-          m->mPushConstants.mAlphaCutoff = 0.f;
+          m->mAlphaCutoff = 0.f;
         }
 
         mMaterials.emplace_back(m);
@@ -901,6 +943,7 @@ void GltfModel::printInfo() const {
   ILLUSION_MESSAGE << "Materials:" << std::endl;
   for (auto const& m : mMaterials) {
     ILLUSION_MESSAGE << "  " << m << ": " << m->mName << std::endl;
+    ILLUSION_MESSAGE << "    SpecularGlossinessWF:     " << m->mSpecularGlossinessWorkflow << std::endl;
     ILLUSION_MESSAGE << "    AlbedoTexture:            " << m->mAlbedoTexture << std::endl;
     ILLUSION_MESSAGE << "    MetallicRoughnessTexture: " << m->mMetallicRoughnessTexture << std::endl;
     ILLUSION_MESSAGE << "    NormalTexture:            " << m->mNormalTexture << std::endl;
@@ -908,13 +951,12 @@ void GltfModel::printInfo() const {
     ILLUSION_MESSAGE << "    EmissiveTexture:          " << m->mEmissiveTexture << std::endl;
     ILLUSION_MESSAGE << "    DoAlphaBlending:          " << m->mDoAlphaBlending << std::endl;
     ILLUSION_MESSAGE << "    DoubleSided:              " << m->mDoubleSided << std::endl;
-    ILLUSION_MESSAGE << "    AlbedoFactor:             " << m->mPushConstants.mAlbedoFactor << std::endl;
-    ILLUSION_MESSAGE << "    EmissiveFactor:           " << m->mPushConstants.mEmissiveFactor << std::endl;
-    ILLUSION_MESSAGE << "    MetallicFactor:           " << m->mPushConstants.mMetallicFactor << std::endl;
-    ILLUSION_MESSAGE << "    RoughnessFactor:          " << m->mPushConstants.mRoughnessFactor << std::endl;
-    ILLUSION_MESSAGE << "    NormalScale:              " << m->mPushConstants.mNormalScale << std::endl;
-    ILLUSION_MESSAGE << "    OcclusionStrength:        " << m->mPushConstants.mOcclusionStrength << std::endl;
-    ILLUSION_MESSAGE << "    AlphaCutoff:              " << m->mPushConstants.mAlphaCutoff << std::endl;
+    ILLUSION_MESSAGE << "    AlbedoFactor:             " << m->mAlbedoFactor << std::endl;
+    ILLUSION_MESSAGE << "    EmissiveFactor:           " << m->mEmissiveFactor << std::endl;
+    ILLUSION_MESSAGE << "    MetallicRoughnessFactor:  " << m->mMetallicRoughnessFactor << std::endl;
+    ILLUSION_MESSAGE << "    NormalScale:              " << m->mNormalScale << std::endl;
+    ILLUSION_MESSAGE << "    OcclusionStrength:        " << m->mOcclusionStrength << std::endl;
+    ILLUSION_MESSAGE << "    AlphaCutoff:              " << m->mAlphaCutoff << std::endl;
   }
 
   ILLUSION_MESSAGE << "Meshes:" << std::endl;

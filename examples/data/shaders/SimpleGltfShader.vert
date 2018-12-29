@@ -29,24 +29,20 @@ layout(set = 2, binding = 0) uniform SkinUniforms {
 } skin;
 
 // push constants
-struct Material {
-  vec4  mBaseColorFactor;
-  vec3  mEmissiveFactor;
-  float mMetallicFactor;
-  float mRoughnessFactor;
-  float mNormalScale;
-  float mOcclusionStrength;
-  float mAlphaCutoff;
-};
-
 const int HAS_NORMALS   = 1 << 0; 
 const int HAS_TEXCOORDS = 1 << 1; 
 const int HAS_SKINS     = 1 << 2; 
 
 layout(push_constant, std430) uniform PushConstants {
-  mat4     mModelMatrix;
-  Material mMaterial;
-  int      mVertexAttributes; 
+  mat4  mModelMatrix;
+  vec4  mAlbedoFactor;
+  vec3  mEmissiveFactor;
+  bool  mSpecularGlossinessWorkflow;
+  vec3  mMetallicRoughnessFactor;
+  float mNormalScale;
+  float mOcclusionStrength;
+  float mAlphaCutoff;
+  int   mVertexAttributes; 
 } pushConstants;
 
 // outputs
