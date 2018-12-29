@@ -31,8 +31,8 @@ const std::vector<const char*> DEVICE_EXTENSIONS{VK_KHR_SWAPCHAIN_EXTENSION_NAME
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Device::Device(PhysicalDevicePtr const& physicalDevice)
-  : mPhysicalDevice(physicalDevice)
-  , mDevice(createDevice()) {
+    : mPhysicalDevice(physicalDevice)
+    , mDevice(createDevice()) {
 
   ILLUSION_TRACE << "Creating Device." << std::endl;
 
@@ -49,13 +49,16 @@ Device::Device(PhysicalDevicePtr const& physicalDevice)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Device::~Device() { ILLUSION_TRACE << "Deleting Device." << std::endl; }
+Device::~Device() {
+  ILLUSION_TRACE << "Deleting Device." << std::endl;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 BackedImagePtr Device::createBackedImage(vk::ImageCreateInfo imageInfo, vk::ImageViewType viewType,
-  vk::ImageAspectFlags imageAspectMask, vk::MemoryPropertyFlags properties, vk::ImageLayout layout,
-  vk::ComponentMapping const& componentMapping, vk::DeviceSize dataSize, const void* data) const {
+    vk::ImageAspectFlags imageAspectMask, vk::MemoryPropertyFlags properties,
+    vk::ImageLayout layout, vk::ComponentMapping const& componentMapping, vk::DeviceSize dataSize,
+    const void* data) const {
 
   auto result = std::make_shared<BackedImage>();
 
@@ -73,7 +76,7 @@ BackedImagePtr Device::createBackedImage(vk::ImageCreateInfo imageInfo, vk::Imag
 
   result->mMemoryInfo.allocationSize = requirements.size;
   result->mMemoryInfo.memoryTypeIndex =
-    mPhysicalDevice->findMemoryType(requirements.memoryTypeBits, properties);
+      mPhysicalDevice->findMemoryType(requirements.memoryTypeBits, properties);
   result->mMemory = createMemory(result->mMemoryInfo);
   mDevice->bindImageMemory(*result->mImage, *result->mMemory, 0);
 
@@ -95,8 +98,8 @@ BackedImagePtr Device::createBackedImage(vk::ImageCreateInfo imageInfo, vk::Imag
     cmd->begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
 
     auto stagingBuffer = createBackedBuffer(vk::BufferUsageFlagBits::eTransferSrc,
-      vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-      dataSize, data);
+        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+        dataSize, data);
 
     vk::ImageMemoryBarrier barrier;
     barrier.srcQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
@@ -109,7 +112,7 @@ BackedImagePtr Device::createBackedImage(vk::ImageCreateInfo imageInfo, vk::Imag
     barrier.newLayout                   = vk::ImageLayout::eTransferDstOptimal;
 
     cmd->pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
-      vk::DependencyFlagBits(), nullptr, nullptr, barrier);
+        vk::DependencyFlagBits(), nullptr, nullptr, barrier);
 
     std::vector<vk::BufferImageCopy> infos;
     uint64_t                         offset    = 0;
@@ -141,13 +144,13 @@ BackedImagePtr Device::createBackedImage(vk::ImageCreateInfo imageInfo, vk::Imag
     }
 
     cmd->copyBufferToImage(
-      *stagingBuffer->mBuffer, *result->mImage, vk::ImageLayout::eTransferDstOptimal, infos);
+        *stagingBuffer->mBuffer, *result->mImage, vk::ImageLayout::eTransferDstOptimal, infos);
 
     barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
     barrier.newLayout = layout;
 
     cmd->pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
-      vk::DependencyFlagBits(), nullptr, nullptr, barrier);
+        vk::DependencyFlagBits(), nullptr, nullptr, barrier);
 
     result->mCurrentLayout = layout;
 
@@ -177,7 +180,7 @@ BackedImagePtr Device::createBackedImage(vk::ImageCreateInfo imageInfo, vk::Imag
     barrier.newLayout                   = layout;
 
     cmd->pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
-      vk::DependencyFlagBits(), nullptr, nullptr, barrier);
+        vk::DependencyFlagBits(), nullptr, nullptr, barrier);
 
     result->mCurrentLayout = layout;
 
@@ -198,7 +201,7 @@ BackedImagePtr Device::createBackedImage(vk::ImageCreateInfo imageInfo, vk::Imag
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 BackedBufferPtr Device::createBackedBuffer(vk::BufferUsageFlags usage,
-  vk::MemoryPropertyFlags properties, vk::DeviceSize dataSize, const void* data) const {
+    vk::MemoryPropertyFlags properties, vk::DeviceSize dataSize, const void* data) const {
 
   auto result = std::make_shared<BackedBuffer>();
 
@@ -208,7 +211,7 @@ BackedBufferPtr Device::createBackedBuffer(vk::BufferUsageFlags usage,
 
   // if data upload will use a staging buffer, we need to make sure transferDst is set!
   if (data && (!(properties & vk::MemoryPropertyFlagBits::eHostVisible) ||
-                !(properties & vk::MemoryPropertyFlagBits::eHostCoherent))) {
+                  !(properties & vk::MemoryPropertyFlagBits::eHostCoherent))) {
     result->mBufferInfo.usage |= vk::BufferUsageFlagBits::eTransferDst;
   }
 
@@ -218,7 +221,7 @@ BackedBufferPtr Device::createBackedBuffer(vk::BufferUsageFlags usage,
 
   result->mMemoryInfo.allocationSize = requirements.size;
   result->mMemoryInfo.memoryTypeIndex =
-    mPhysicalDevice->findMemoryType(requirements.memoryTypeBits, properties);
+      mPhysicalDevice->findMemoryType(requirements.memoryTypeBits, properties);
 
   result->mMemory = createMemory(result->mMemoryInfo);
 
@@ -238,8 +241,8 @@ BackedBufferPtr Device::createBackedBuffer(vk::BufferUsageFlags usage,
 
       // more difficult case, we need a staging buffer!
       auto stagingBuffer = createBackedBuffer(vk::BufferUsageFlagBits::eTransferSrc,
-        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-        dataSize, data);
+          vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+          dataSize, data);
 
       auto cmd = allocateCommandBuffer();
       cmd->begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
@@ -265,35 +268,35 @@ BackedBufferPtr Device::createBackedBuffer(vk::BufferUsageFlags usage,
 
 BackedBufferPtr Device::createVertexBuffer(vk::DeviceSize dataSize, const void* data) const {
   return createBackedBuffer(vk::BufferUsageFlagBits::eVertexBuffer,
-    vk::MemoryPropertyFlagBits::eDeviceLocal, dataSize, data);
+      vk::MemoryPropertyFlagBits::eDeviceLocal, dataSize, data);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 BackedBufferPtr Device::createIndexBuffer(vk::DeviceSize dataSize, const void* data) const {
   return createBackedBuffer(vk::BufferUsageFlagBits::eIndexBuffer,
-    vk::MemoryPropertyFlagBits::eDeviceLocal, dataSize, data);
+      vk::MemoryPropertyFlagBits::eDeviceLocal, dataSize, data);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 BackedBufferPtr Device::createUniformBuffer(vk::DeviceSize size) const {
   return createBackedBuffer(
-    vk::BufferUsageFlagBits::eUniformBuffer | vk::BufferUsageFlagBits::eTransferDst,
-    vk::MemoryPropertyFlagBits::eDeviceLocal, size);
+      vk::BufferUsageFlagBits::eUniformBuffer | vk::BufferUsageFlagBits::eTransferDst,
+      vk::MemoryPropertyFlagBits::eDeviceLocal, size);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TexturePtr Device::createTexture(vk::ImageCreateInfo imageInfo, vk::SamplerCreateInfo samplerInfo,
-  vk::ImageViewType viewType, vk::ImageAspectFlags imageAspectMask, vk::ImageLayout layout,
-  vk::ComponentMapping const& componentMapping, vk::DeviceSize dataSize, const void* data) const {
+    vk::ImageViewType viewType, vk::ImageAspectFlags imageAspectMask, vk::ImageLayout layout,
+    vk::ComponentMapping const& componentMapping, vk::DeviceSize dataSize, const void* data) const {
 
   auto result = std::make_shared<Texture>();
 
   // create backed image for texture
   result->mBackedImage = createBackedImage(imageInfo, viewType, imageAspectMask,
-    vk::MemoryPropertyFlagBits::eDeviceLocal, layout, componentMapping, dataSize, data);
+      vk::MemoryPropertyFlagBits::eDeviceLocal, layout, componentMapping, dataSize, data);
 
   // create sampler
   result->mSamplerInfo = samplerInfo;
@@ -305,10 +308,10 @@ TexturePtr Device::createTexture(vk::ImageCreateInfo imageInfo, vk::SamplerCreat
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 vk::SamplerCreateInfo Device::createSamplerInfo(
-  vk::Filter filter, vk::SamplerMipmapMode mipmapMode, vk::SamplerAddressMode addressMode) {
+    vk::Filter filter, vk::SamplerMipmapMode mipmapMode, vk::SamplerAddressMode addressMode) {
 
   return vk::SamplerCreateInfo(
-    vk::SamplerCreateFlags(), filter, filter, mipmapMode, addressMode, addressMode);
+      vk::SamplerCreateFlags(), filter, filter, mipmapMode, addressMode, addressMode);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -337,8 +340,8 @@ TexturePtr Device::getSinglePixelTexture(std::array<uint8_t, 4> const& color) {
   vk::SamplerCreateInfo samplerInfo = createSamplerInfo();
 
   auto texture =
-    createTexture(imageInfo, samplerInfo, vk::ImageViewType::e2D, vk::ImageAspectFlagBits::eColor,
-      vk::ImageLayout::eShaderReadOnlyOptimal, vk::ComponentMapping(), 4, &color[0]);
+      createTexture(imageInfo, samplerInfo, vk::ImageViewType::e2D, vk::ImageAspectFlagBits::eColor,
+          vk::ImageLayout::eShaderReadOnlyOptimal, vk::ComponentMapping(), 4, &color[0]);
 
   mSinglePixelTextures[color] = texture;
 
@@ -348,7 +351,7 @@ TexturePtr Device::getSinglePixelTexture(std::array<uint8_t, 4> const& color) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 vk::CommandBufferPtr Device::allocateCommandBuffer(
-  QueueType type, vk::CommandBufferLevel level) const {
+    QueueType type, vk::CommandBufferLevel level) const {
   vk::CommandBufferAllocateInfo info;
   info.level              = vk::CommandBufferLevel::ePrimary;
   info.commandPool        = *mCommandPools[Core::enumCast(type)];
@@ -360,11 +363,11 @@ vk::CommandBufferPtr Device::allocateCommandBuffer(
   auto pool{mCommandPools[Core::enumCast(type)]};
 
   return Utils::makeVulkanPtr(
-    mDevice->allocateCommandBuffers(info)[0], [device, pool](vk::CommandBuffer* obj) {
-      ILLUSION_TRACE << "Freeing CommandBuffer." << std::endl;
-      device->freeCommandBuffers(*pool, *obj);
-      delete obj;
-    });
+      mDevice->allocateCommandBuffers(info)[0], [device, pool](vk::CommandBuffer* obj) {
+        ILLUSION_TRACE << "Freeing CommandBuffer." << std::endl;
+        device->freeCommandBuffers(*pool, *obj);
+        delete obj;
+      });
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -397,25 +400,25 @@ vk::DescriptorPoolPtr Device::createDescriptorPool(vk::DescriptorPoolCreateInfo 
   ILLUSION_TRACE << "Creating vk::DescriptorPool." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(
-    device->createDescriptorPool(info), [device](vk::DescriptorPool* obj) {
-      ILLUSION_TRACE << "Deleting vk::DescriptorPool." << std::endl;
-      device->destroyDescriptorPool(*obj);
-      delete obj;
-    });
+      device->createDescriptorPool(info), [device](vk::DescriptorPool* obj) {
+        ILLUSION_TRACE << "Deleting vk::DescriptorPool." << std::endl;
+        device->destroyDescriptorPool(*obj);
+        delete obj;
+      });
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 vk::DescriptorSetLayoutPtr Device::createDescriptorSetLayout(
-  vk::DescriptorSetLayoutCreateInfo const& info) const {
+    vk::DescriptorSetLayoutCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::DescriptorSetLayout." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(
-    device->createDescriptorSetLayout(info), [device](vk::DescriptorSetLayout* obj) {
-      ILLUSION_TRACE << "Deleting vk::DescriptorSetLayout." << std::endl;
-      device->destroyDescriptorSetLayout(*obj);
-      delete obj;
-    });
+      device->createDescriptorSetLayout(info), [device](vk::DescriptorSetLayout* obj) {
+        ILLUSION_TRACE << "Deleting vk::DescriptorSetLayout." << std::endl;
+        device->destroyDescriptorSetLayout(*obj);
+        delete obj;
+      });
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -484,11 +487,11 @@ vk::PipelinePtr Device::createComputePipeline(vk::ComputePipelineCreateInfo cons
   ILLUSION_TRACE << "Creating vk::Pipeline (compute)." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(
-    device->createComputePipeline(nullptr, info), [device](vk::Pipeline* obj) {
-      ILLUSION_TRACE << "Deleting vk::Pipeline (compute)." << std::endl;
-      device->destroyPipeline(*obj);
-      delete obj;
-    });
+      device->createComputePipeline(nullptr, info), [device](vk::Pipeline* obj) {
+        ILLUSION_TRACE << "Deleting vk::Pipeline (compute)." << std::endl;
+        device->destroyPipeline(*obj);
+        delete obj;
+      });
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -497,11 +500,11 @@ vk::PipelinePtr Device::createGraphicsPipeline(vk::GraphicsPipelineCreateInfo co
   ILLUSION_TRACE << "Creating vk::Pipeline (graphics)." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(
-    device->createGraphicsPipeline(nullptr, info), [device](vk::Pipeline* obj) {
-      ILLUSION_TRACE << "Deleting vk::Pipeline (graphics)." << std::endl;
-      device->destroyPipeline(*obj);
-      delete obj;
-    });
+      device->createGraphicsPipeline(nullptr, info), [device](vk::Pipeline* obj) {
+        ILLUSION_TRACE << "Deleting vk::Pipeline (graphics)." << std::endl;
+        device->destroyPipeline(*obj);
+        delete obj;
+      });
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -510,11 +513,11 @@ vk::PipelineLayoutPtr Device::createPipelineLayout(vk::PipelineLayoutCreateInfo 
   ILLUSION_TRACE << "Creating vk::PipelineLayout." << std::endl;
   auto device{mDevice};
   return Utils::makeVulkanPtr(
-    device->createPipelineLayout(info), [device](vk::PipelineLayout* obj) {
-      ILLUSION_TRACE << "Deleting vk::PipelineLayout." << std::endl;
-      device->destroyPipelineLayout(*obj);
-      delete obj;
-    });
+      device->createPipelineLayout(info), [device](vk::PipelineLayout* obj) {
+        ILLUSION_TRACE << "Deleting vk::PipelineLayout." << std::endl;
+        device->destroyPipelineLayout(*obj);
+        delete obj;
+      });
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -579,12 +582,14 @@ vk::SwapchainKHRPtr Device::createSwapChainKhr(vk::SwapchainCreateInfoKHR const&
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::Queue const& Device::getQueue(QueueType type) const { return mQueues[Core::enumCast(type)]; }
+vk::Queue const& Device::getQueue(QueueType type) const {
+  return mQueues[Core::enumCast(type)];
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Device::waitForFences(
-  vk::ArrayProxy<const vk::Fence> const& fences, bool waitAll, uint64_t timeout) {
+    vk::ArrayProxy<const vk::Fence> const& fences, bool waitAll, uint64_t timeout) {
   mDevice->waitForFences(fences, waitAll, timeout);
 }
 
@@ -592,7 +597,9 @@ void Device::resetFences(vk::ArrayProxy<const vk::Fence> const& fences) {
   mDevice->resetFences(fences);
 }
 
-void Device::waitIdle() { mDevice->waitIdle(); }
+void Device::waitIdle() {
+  mDevice->waitIdle();
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -602,9 +609,9 @@ vk::DevicePtr Device::createDevice() const {
 
   const float              queuePriority{1.0f};
   const std::set<uint32_t> uniqueQueueFamilies{
-    (uint32_t)mPhysicalDevice->getQueueFamily(QueueType::eGeneric),
-    (uint32_t)mPhysicalDevice->getQueueFamily(QueueType::eCompute),
-    (uint32_t)mPhysicalDevice->getQueueFamily(QueueType::eTransfer)};
+      (uint32_t)mPhysicalDevice->getQueueFamily(QueueType::eGeneric),
+      (uint32_t)mPhysicalDevice->getQueueFamily(QueueType::eCompute),
+      (uint32_t)mPhysicalDevice->getQueueFamily(QueueType::eTransfer)};
 
   for (uint32_t queueFamily : uniqueQueueFamilies) {
     vk::DeviceQueueCreateInfo queueCreateInfo;

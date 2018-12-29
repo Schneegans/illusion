@@ -34,8 +34,8 @@ bool glfwInitialized{false};
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 VkBool32 messageCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT type,
-  uint64_t object, size_t location, int32_t code, const char* layer, const char* message,
-  void* userData) {
+    uint64_t object, size_t location, int32_t code, const char* layer, const char* message,
+    void* userData) {
 
   std::stringstream buf;
   buf << "[" << layer << "] " << message << " (code: " << code << ")" << std::endl;
@@ -96,15 +96,15 @@ std::vector<const char*> getRequiredInstanceExtensions(bool debugMode) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Engine::Engine(std::string const& app, bool debugMode)
-  : mDebugMode(debugMode)
-  , mInstance(createInstance("Illusion", app))
-  , mDebugCallback(createDebugCallback()) {
+    : mDebugMode(debugMode)
+    , mInstance(createInstance("Illusion", app))
+    , mDebugCallback(createDebugCallback()) {
 
   ILLUSION_TRACE << "Creating Engine." << std::endl;
 
   for (auto const& vkPhysicalDevice : mInstance->enumeratePhysicalDevices()) {
     mPhysicalDevices.push_back(
-      std::make_shared<PhysicalDevice>(*mInstance.get(), vkPhysicalDevice));
+        std::make_shared<PhysicalDevice>(*mInstance.get(), vkPhysicalDevice));
   }
 }
 
@@ -219,7 +219,7 @@ vk::DebugReportCallbackEXTPtr Engine::createDebugCallback() const {
   }
 
   auto createCallback{
-    (PFN_vkCreateDebugReportCallbackEXT)mInstance->getProcAddr("vkCreateDebugReportCallbackEXT")};
+      (PFN_vkCreateDebugReportCallbackEXT)mInstance->getProcAddr("vkCreateDebugReportCallbackEXT")};
 
   vk::DebugReportCallbackCreateInfoEXT info;
   info.flags = vk::DebugReportFlagBitsEXT::eInformation | vk::DebugReportFlagBitsEXT::eWarning |
@@ -235,13 +235,13 @@ vk::DebugReportCallbackEXTPtr Engine::createDebugCallback() const {
   ILLUSION_TRACE << "Creating vk::DebugReportCallbackEXT." << std::endl;
   auto instance{mInstance};
   return Utils::makeVulkanPtr(
-    vk::DebugReportCallbackEXT(tmp), [instance](vk::DebugReportCallbackEXT* obj) {
-      auto destroyCallback = (PFN_vkDestroyDebugReportCallbackEXT)instance->getProcAddr(
-        "vkDestroyDebugReportCallbackEXT");
-      ILLUSION_TRACE << "Deleting vk::DebugReportCallbackEXT." << std::endl;
-      destroyCallback(*instance, *obj, nullptr);
-      delete obj;
-    });
+      vk::DebugReportCallbackEXT(tmp), [instance](vk::DebugReportCallbackEXT* obj) {
+        auto destroyCallback = (PFN_vkDestroyDebugReportCallbackEXT)instance->getProcAddr(
+            "vkDestroyDebugReportCallbackEXT");
+        ILLUSION_TRACE << "Deleting vk::DebugReportCallbackEXT." << std::endl;
+        destroyCallback(*instance, *obj, nullptr);
+        delete obj;
+      });
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

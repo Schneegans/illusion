@@ -24,12 +24,13 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 CommandBuffer::CommandBuffer(DevicePtr const& device, QueueType type, vk::CommandBufferLevel level)
-  : mDevice(device)
-  , mVkCmd(device->allocateCommandBuffer(type, level))
-  , mType(type)
-  , mLevel(level)
-  , mGraphicsState(device)
-  , mDescriptorSetCache(device) {}
+    : mDevice(device)
+    , mVkCmd(device->allocateCommandBuffer(type, level))
+    , mType(type)
+    , mLevel(level)
+    , mGraphicsState(device)
+    , mDescriptorSetCache(device) {
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -45,17 +46,21 @@ void CommandBuffer::reset() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::begin(vk::CommandBufferUsageFlagBits usage) const { mVkCmd->begin({usage}); }
+void CommandBuffer::begin(vk::CommandBufferUsageFlagBits usage) const {
+  mVkCmd->begin({usage});
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::end() const { mVkCmd->end(); }
+void CommandBuffer::end() const {
+  mVkCmd->end();
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::submit(std::vector<vk::Semaphore> const& waitSemaphores,
-  std::vector<vk::PipelineStageFlags> const&                 waitStages,
-  std::vector<vk::Semaphore> const& signalSemaphores, vk::Fence const& fence) const {
+    std::vector<vk::PipelineStageFlags> const&               waitStages,
+    std::vector<vk::Semaphore> const& signalSemaphores, vk::Fence const& fence) const {
 
   vk::CommandBuffer bufs[] = {*mVkCmd};
 
@@ -73,7 +78,9 @@ void CommandBuffer::submit(std::vector<vk::Semaphore> const& waitSemaphores,
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::waitIdle() const { mDevice->getQueue(mType).waitIdle(); }
+void CommandBuffer::waitIdle() const {
+  mDevice->getQueue(mType).waitIdle();
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -112,30 +119,42 @@ void CommandBuffer::endRenderPass() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-GraphicsState&       CommandBuffer::graphicsState() { return mGraphicsState; }
-GraphicsState const& CommandBuffer::graphicsState() const { return mGraphicsState; }
+GraphicsState& CommandBuffer::graphicsState() {
+  return mGraphicsState;
+}
+GraphicsState const& CommandBuffer::graphicsState() const {
+  return mGraphicsState;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BindingState&       CommandBuffer::bindingState() { return mBindingState; }
-BindingState const& CommandBuffer::bindingState() const { return mBindingState; }
+BindingState& CommandBuffer::bindingState() {
+  return mBindingState;
+}
+BindingState const& CommandBuffer::bindingState() const {
+  return mBindingState;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::setShaderProgram(ShaderProgramPtr const& val) { mCurrentShaderProgram = val; }
-ShaderProgramPtr const& CommandBuffer::getShaderProgram() const { return mCurrentShaderProgram; }
+void CommandBuffer::setShaderProgram(ShaderProgramPtr const& val) {
+  mCurrentShaderProgram = val;
+}
+ShaderProgramPtr const& CommandBuffer::getShaderProgram() const {
+  return mCurrentShaderProgram;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::bindIndexBuffer(
-  BackedBufferPtr const& buffer, vk::DeviceSize offset, vk::IndexType indexType) const {
+    BackedBufferPtr const& buffer, vk::DeviceSize offset, vk::IndexType indexType) const {
   mVkCmd->bindIndexBuffer(*buffer->mBuffer, offset, indexType);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::bindVertexBuffers(uint32_t                   firstBinding,
-  std::vector<std::pair<BackedBufferPtr, vk::DeviceSize>> const& buffersAndOffsets) const {
+void CommandBuffer::bindVertexBuffers(uint32_t                     firstBinding,
+    std::vector<std::pair<BackedBufferPtr, vk::DeviceSize>> const& buffersAndOffsets) const {
 
   std::vector<vk::Buffer>     buffers;
   std::vector<vk::DeviceSize> offsets;
@@ -151,7 +170,7 @@ void CommandBuffer::bindVertexBuffers(uint32_t                   firstBinding,
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::bindVertexBuffers(
-  uint32_t firstBinding, std::vector<BackedBufferPtr> const& buffs) const {
+    uint32_t firstBinding, std::vector<BackedBufferPtr> const& buffs) const {
 
   std::vector<vk::Buffer>     buffers;
   std::vector<vk::DeviceSize> offsets;
@@ -176,13 +195,13 @@ void CommandBuffer::pushConstants(const void* data, uint32_t size, uint32_t offs
   }
 
   mVkCmd->pushConstants(
-    *reflection->getLayout(), constants.begin()->second.mStages, offset, size, data);
+      *reflection->getLayout(), constants.begin()->second.mStages, offset, size, data);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::draw(
-  uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) {
+    uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) {
   flush();
   mVkCmd->draw(vertexCount, instanceCount, firstVertex, firstInstance);
 }
@@ -190,7 +209,7 @@ void CommandBuffer::draw(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::drawIndexed(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex,
-  int32_t vertexOffset, uint32_t firstInstance) {
+    int32_t vertexOffset, uint32_t firstInstance) {
   flush();
   mVkCmd->drawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
 }
@@ -205,8 +224,8 @@ void CommandBuffer::dispatch(uint32_t groupCountX, uint32_t groupCountY, uint32_
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout,
-  vk::ImageLayout newLayout, vk::PipelineStageFlagBits srcStage, vk::PipelineStageFlagBits dstStage,
-  vk::ImageSubresourceRange range) const {
+    vk::ImageLayout newLayout, vk::PipelineStageFlagBits srcStage,
+    vk::PipelineStageFlagBits dstStage, vk::ImageSubresourceRange range) const {
 
   // clang-format off
   static const std::unordered_map<vk::ImageLayout, vk::AccessFlags> accessMapping = {
@@ -262,13 +281,13 @@ void CommandBuffer::copyImage(vk::Image src, vk::Image dst, glm::uvec2 const& si
   region.extent.depth   = 1;
 
   mVkCmd->copyImage(
-    src, vk::ImageLayout::eTransferSrcOptimal, dst, vk::ImageLayout::eTransferDstOptimal, region);
+      src, vk::ImageLayout::eTransferSrcOptimal, dst, vk::ImageLayout::eTransferDstOptimal, region);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::blitImage(vk::Image src, vk::Image dst, glm::uvec2 const& srcSize,
-  glm::uvec2 const& dstSize, vk::Filter filter) const {
+    glm::uvec2 const& dstSize, vk::Filter filter) const {
 
   blitImage(src, 0, dst, 0, srcSize, dstSize, 1, filter);
 }
@@ -276,8 +295,8 @@ void CommandBuffer::blitImage(vk::Image src, vk::Image dst, glm::uvec2 const& sr
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::blitImage(vk::Image src, uint32_t srcMipmapLevel, vk::Image dst,
-  uint32_t dstMipmapLevel, glm::uvec2 const& srcSize, glm::uvec2 const& dstSize,
-  uint32_t layerCount, vk::Filter filter) const {
+    uint32_t dstMipmapLevel, glm::uvec2 const& srcSize, glm::uvec2 const& dstSize,
+    uint32_t layerCount, vk::Filter filter) const {
 
   vk::ImageBlit info;
   info.srcSubresource.aspectMask = vk::ImageAspectFlagBits::eColor;
@@ -292,13 +311,13 @@ void CommandBuffer::blitImage(vk::Image src, uint32_t srcMipmapLevel, vk::Image 
   info.dstOffsets[1]             = vk::Offset3D(dstSize.x, dstSize.y, 1);
 
   mVkCmd->blitImage(src, vk::ImageLayout::eTransferSrcOptimal, dst,
-    vk::ImageLayout::eTransferDstOptimal, info, filter);
+      vk::ImageLayout::eTransferDstOptimal, info, filter);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::resolveImage(vk::Image src, vk::ImageLayout srcLayout, vk::Image dst,
-  vk::ImageLayout dstLayout, vk::ImageResolve region) const {
+    vk::ImageLayout dstLayout, vk::ImageResolve region) const {
   mVkCmd->resolveImage(src, srcLayout, dst, dstLayout, region);
 }
 
@@ -314,7 +333,7 @@ void CommandBuffer::copyBuffer(vk::Buffer src, vk::Buffer dst, vk::DeviceSize si
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::copyBufferToImage(vk::Buffer src, vk::Image dst, vk::ImageLayout dstLayout,
-  std::vector<vk::BufferImageCopy> const& infos) const {
+    std::vector<vk::BufferImageCopy> const& infos) const {
 
   mVkCmd->copyBufferToImage(src, dst, dstLayout, infos);
 }
@@ -375,7 +394,7 @@ void CommandBuffer::flush() {
 
       // acquire an unused descriptor set
       auto descriptorSet = mDescriptorSetCache.acquireHandle(
-        mCurrentShaderProgram->getDescriptorSetReflections().at(setNum));
+          mCurrentShaderProgram->getDescriptorSetReflections().at(setNum));
 
       // get all bindings of the current descriptor set
       auto const& bindings     = mBindingState.getBindings(setNum);
@@ -414,7 +433,7 @@ void CommandBuffer::flush() {
           auto value                = std::get<StorageImageBinding>(binding.second);
           imageInfos[i].imageLayout = value.mImage->mBackedImage->mCurrentLayout;
           imageInfos[i].imageView =
-            *(value.mView ? value.mView : value.mImage->mBackedImage->mView);
+              *(value.mView ? value.mView : value.mImage->mBackedImage->mView);
           imageInfos[i].sampler        = *value.mImage->mSampler;
           writeInfos[i].descriptorType = vk::DescriptorType::eStorageImage;
           writeInfos[i].pImageInfo     = &imageInfos[i];
@@ -467,7 +486,7 @@ void CommandBuffer::flush() {
 
       // now the descriptor set is up-to-date and we can bind it
       mVkCmd->bindDescriptorSets(bindPoint, *mCurrentShaderProgram->getReflection()->getLayout(),
-        setNum, *descriptorSet, dynamicOffsets);
+          setNum, *descriptorSet, dynamicOffsets);
 
       // store the hash of the descriptor set layout so that we can check for
       // compatibility if a new program is bound
@@ -488,7 +507,7 @@ void CommandBuffer::flush() {
       }
 
       mVkCmd->bindDescriptorSets(bindPoint, *mCurrentShaderProgram->getReflection()->getLayout(),
-        setNum, *currentSetIt->second.mSet, dynamicOffsets);
+          setNum, *currentSetIt->second.mSet, dynamicOffsets);
     }
   }
 
@@ -518,7 +537,7 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
 
     if (mCurrentShaderProgram->getModules().size() != 1) {
       throw std::runtime_error(
-        "Failed to create compute pipeline: There must be exactly one ShaderModule!");
+          "Failed to create compute pipeline: There must be exactly one ShaderModule!");
     }
 
     info.stage.stage               = mCurrentShaderProgram->getModules()[0]->getStage();
@@ -590,7 +609,7 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
   std::vector<vk::Rect2D>             scissors;
   for (auto const& i : mGraphicsState.getViewports()) {
     viewports.push_back(
-      {i.mOffset[0], i.mOffset[1], i.mExtend[0], i.mExtend[1], i.mMinDepth, i.mMaxDepth});
+        {i.mOffset[0], i.mOffset[1], i.mExtend[0], i.mExtend[1], i.mMinDepth, i.mMaxDepth});
   }
 
   // use viewport as scissors if no scissors are defined
@@ -601,7 +620,7 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
   } else {
     for (auto const& i : mGraphicsState.getViewports()) {
       scissors.push_back({{(int32_t)i.mOffset[0], (int32_t)i.mOffset[1]},
-        {(uint32_t)i.mExtend[0], (uint32_t)i.mExtend[1]}});
+          {(uint32_t)i.mExtend[0], (uint32_t)i.mExtend[1]}});
     }
   }
   viewportStateInfo.viewportCount = viewports.size();
@@ -639,13 +658,13 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
   depthStencilStateInfo.depthBoundsTestEnable = mGraphicsState.getDepthBoundsTestEnable();
   depthStencilStateInfo.stencilTestEnable     = mGraphicsState.getStencilTestEnable();
   depthStencilStateInfo.front                 = {mGraphicsState.getStencilFrontFailOp(),
-    mGraphicsState.getStencilFrontPassOp(), mGraphicsState.getStencilFrontDepthFailOp(),
-    mGraphicsState.getStencilFrontCompareOp(), mGraphicsState.getStencilFrontCompareMask(),
-    mGraphicsState.getStencilFrontWriteMask(), mGraphicsState.getStencilFrontReference()};
+      mGraphicsState.getStencilFrontPassOp(), mGraphicsState.getStencilFrontDepthFailOp(),
+      mGraphicsState.getStencilFrontCompareOp(), mGraphicsState.getStencilFrontCompareMask(),
+      mGraphicsState.getStencilFrontWriteMask(), mGraphicsState.getStencilFrontReference()};
   depthStencilStateInfo.back                  = {mGraphicsState.getStencilBackFailOp(),
-    mGraphicsState.getStencilBackPassOp(), mGraphicsState.getStencilBackDepthFailOp(),
-    mGraphicsState.getStencilBackCompareOp(), mGraphicsState.getStencilBackCompareMask(),
-    mGraphicsState.getStencilBackWriteMask(), mGraphicsState.getStencilBackReference()};
+      mGraphicsState.getStencilBackPassOp(), mGraphicsState.getStencilBackDepthFailOp(),
+      mGraphicsState.getStencilBackCompareOp(), mGraphicsState.getStencilBackCompareMask(),
+      mGraphicsState.getStencilBackWriteMask(), mGraphicsState.getStencilBackReference()};
   depthStencilStateInfo.minDepthBounds        = mGraphicsState.getMinDepthBounds();
   depthStencilStateInfo.maxDepthBounds        = mGraphicsState.getMaxDepthBounds();
 
@@ -654,8 +673,8 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
   std::vector<vk::PipelineColorBlendAttachmentState> pipelineColorBlendAttachments;
   for (auto const& i : mGraphicsState.getBlendAttachments()) {
     pipelineColorBlendAttachments.push_back(
-      {i.mBlendEnable, i.mSrcColorBlendFactor, i.mDstColorBlendFactor, i.mColorBlendOp,
-        i.mSrcAlphaBlendFactor, i.mDstAlphaBlendFactor, i.mAlphaBlendOp, i.mColorWriteMask});
+        {i.mBlendEnable, i.mSrcColorBlendFactor, i.mDstColorBlendFactor, i.mColorBlendOp,
+            i.mSrcAlphaBlendFactor, i.mDstAlphaBlendFactor, i.mAlphaBlendOp, i.mColorWriteMask});
   }
   colorBlendStateInfo.logicOpEnable     = mGraphicsState.getBlendLogicOpEnable();
   colorBlendStateInfo.logicOp           = mGraphicsState.getBlendLogicOp();
@@ -669,7 +688,7 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
   // -----------------------------------------------------------------------------------------------
   vk::PipelineDynamicStateCreateInfo dynamicStateInfo;
   std::vector<vk::DynamicState>      dynamicState(
-    mGraphicsState.getDynamicState().begin(), mGraphicsState.getDynamicState().end());
+      mGraphicsState.getDynamicState().begin(), mGraphicsState.getDynamicState().end());
   dynamicStateInfo.dynamicStateCount = dynamicState.size();
   dynamicStateInfo.pDynamicStates    = dynamicState.data();
 

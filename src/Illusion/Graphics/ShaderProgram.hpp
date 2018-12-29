@@ -25,11 +25,11 @@ class ShaderProgram {
 
  public:
   static ShaderProgramPtr createFromFiles(DevicePtr const& device,
-    std::vector<std::string> const& files, std::set<std::string> const& dynamicBuffers = {});
+      std::vector<std::string> const& files, std::set<std::string> const& dynamicBuffers = {});
 
-  static ShaderProgramPtr createFromGlsl(DevicePtr const& device,
-    std::map<vk::ShaderStageFlagBits, std::string> const& sources,
-    std::set<std::string> const&                          dynamicBuffers = {});
+  static ShaderProgramPtr createFromGlsl(DevicePtr const&   device,
+      std::map<vk::ShaderStageFlagBits, std::string> const& sources,
+      std::set<std::string> const&                          dynamicBuffers = {});
 
   // Syntactic sugar to create a std::shared_ptr for this class
   template <typename... Args>

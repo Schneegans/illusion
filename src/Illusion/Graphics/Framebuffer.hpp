@@ -29,12 +29,16 @@ class Framebuffer {
   };
 
   Framebuffer(DevicePtr const& device, vk::RenderPassPtr const& renderPass,
-    glm::uvec2 const& extent, std::vector<vk::Format> const& attachments);
+      glm::uvec2 const& extent, std::vector<vk::Format> const& attachments);
 
   virtual ~Framebuffer();
 
-  vk::FramebufferPtr const&          getHandle() const { return mFramebuffer; }
-  std::vector<BackedImagePtr> const& getImages() const { return mImageStore; }
+  vk::FramebufferPtr const& getHandle() const {
+    return mFramebuffer;
+  }
+  std::vector<BackedImagePtr> const& getImages() const {
+    return mImageStore;
+  }
 
  private:
   DevicePtr         mDevice;

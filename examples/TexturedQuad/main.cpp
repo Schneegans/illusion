@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
 
   auto texture = Illusion::Graphics::TextureUtils::createFromFile(device, "data/textures/box.dds");
   auto shader  = Illusion::Graphics::ShaderProgram::createFromFiles(
-    device, {"data/shaders/Quad.vert", "data/shaders/TexturedQuad.frag"});
+      device, {"data/shaders/Quad.vert", "data/shaders/TexturedQuad.frag"});
 
   auto renderPass = Illusion::Graphics::RenderPass::create(device);
   renderPass->addAttachment(vk::Format::eR8G8B8A8Unorm);
@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
     cmd->submit({}, {}, {*renderFinishedSemaphore});
 
     window->present(
-      renderPass->getFramebuffer()->getImages()[0], renderFinishedSemaphore, renderFinishedFence);
+        renderPass->getFramebuffer()->getImages()[0], renderFinishedSemaphore, renderFinishedFence);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
   }

@@ -23,14 +23,16 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 RenderPass::RenderPass(DevicePtr const& device)
-  : mDevice(device) {
+    : mDevice(device) {
 
   ILLUSION_TRACE << "Creating RenderPass." << std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-RenderPass::~RenderPass() { ILLUSION_TRACE << "Deleting RenderPass." << std::endl; }
+RenderPass::~RenderPass() {
+  ILLUSION_TRACE << "Deleting RenderPass." << std::endl;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -43,7 +45,7 @@ void RenderPass::init() {
 
     mRenderPass = createRenderPass();
     mFramebuffer =
-      std::make_shared<Framebuffer>(mDevice, mRenderPass, mExtent, mFrameBufferAttachmentFormats);
+        std::make_shared<Framebuffer>(mDevice, mRenderPass, mExtent, mFrameBufferAttachmentFormats);
 
     mAttachmentsDirty = false;
   }
@@ -74,15 +76,21 @@ void RenderPass::setExtent(glm::uvec2 const& extent) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-glm::uvec2 const& RenderPass::getExtent() const { return mExtent; }
+glm::uvec2 const& RenderPass::getExtent() const {
+  return mExtent;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-FramebufferPtr const& RenderPass::getFramebuffer() const { return mFramebuffer; }
+FramebufferPtr const& RenderPass::getFramebuffer() const {
+  return mFramebuffer;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::RenderPassPtr const& RenderPass::getHandle() const { return mRenderPass; }
+vk::RenderPassPtr const& RenderPass::getHandle() const {
+  return mRenderPass;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -200,7 +208,7 @@ vk::RenderPassPtr RenderPass::createRenderPass() const {
       dependency.srcAccessMask = vk::AccessFlagBits::eMemoryRead;
       dependency.dstStageMask  = vk::PipelineStageFlagBits::eColorAttachmentOutput;
       dependency.dstAccessMask =
-        vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
+          vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
       dependencies.emplace_back(dependency);
     }
   }

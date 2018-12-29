@@ -66,7 +66,7 @@ class Window {
   glm::vec2 getCursorPos() const;
 
   void present(BackedImagePtr const& image, vk::SemaphorePtr const& renderFinishedSemaphore,
-    vk::FencePtr const& signalFence);
+      vk::FencePtr const& signalFence);
 
  private:
   void updateJoysticks();
@@ -80,12 +80,12 @@ class Window {
   SwapchainPtr      mSwapchain;
 
   std::array<std::array<float, Core::enumCast(Input::JoystickAxisId::eJoystickAxisNum)>,
-    Core::enumCast(Input::JoystickId::eJoystickNum)>
-    mJoystickAxisCache;
+      Core::enumCast(Input::JoystickId::eJoystickNum)>
+      mJoystickAxisCache;
 
   std::array<std::array<int, Core::enumCast(Input::JoystickButtonId::eJoystickButtonNum)>,
-    Core::enumCast(Input::JoystickId::eJoystickNum)>
-    mJoystickButtonCache;
+      Core::enumCast(Input::JoystickId::eJoystickNum)>
+      mJoystickButtonCache;
 
   glm::ivec2 mOrigSize = glm::ivec2(640, 480), mOrigPos = glm::ivec2(0, 0);
 };

@@ -30,16 +30,20 @@ class Flags {
   typedef typename std::underlying_type<BitType>::type MaskType;
 
   Flags()
-    : mMask(0) {}
+      : mMask(0) {
+  }
 
   Flags(BitType bit)
-    : mMask(static_cast<MaskType>(bit)) {}
+      : mMask(static_cast<MaskType>(bit)) {
+  }
 
   Flags(Flags<BitType> const& rhs)
-    : mMask(rhs.mMask) {}
+      : mMask(rhs.mMask) {
+  }
 
   explicit Flags(MaskType flags)
-    : mMask(flags) {}
+      : mMask(flags) {
+  }
 
   Flags<BitType>& operator=(Flags<BitType> const& rhs) {
     mMask = rhs.mMask;
@@ -79,7 +83,9 @@ class Flags {
     return result;
   }
 
-  bool operator!() const { return !mMask; }
+  bool operator!() const {
+    return !mMask;
+  }
 
   Flags<BitType> operator~() const {
     Flags<BitType> result(*this);
@@ -87,13 +93,21 @@ class Flags {
     return result;
   }
 
-  bool operator==(Flags<BitType> const& rhs) const { return mMask == rhs.mMask; }
+  bool operator==(Flags<BitType> const& rhs) const {
+    return mMask == rhs.mMask;
+  }
 
-  bool operator!=(Flags<BitType> const& rhs) const { return mMask != rhs.mMask; }
+  bool operator!=(Flags<BitType> const& rhs) const {
+    return mMask != rhs.mMask;
+  }
 
-  explicit operator bool() const { return !!mMask; }
+  explicit operator bool() const {
+    return !!mMask;
+  }
 
-  explicit operator MaskType() const { return mMask; }
+  explicit operator MaskType() const {
+    return mMask;
+  }
 
  private:
   MaskType mMask;

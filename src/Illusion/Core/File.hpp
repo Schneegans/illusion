@@ -35,15 +35,17 @@ class File {
  public:
   // This constructs a invalid File.
   File()
-    : mFileName("")
-    , mContent()
-    , mIsLoaded(false) {}
+      : mFileName("")
+      , mContent()
+      , mIsLoaded(false) {
+  }
 
   // This constructs a File for a given name.
   explicit File(std::string const& fileName)
-    : mFileName(fileName)
-    , mContent()
-    , mIsLoaded(false) {}
+      : mFileName(fileName)
+      , mContent()
+      , mIsLoaded(false) {
+  }
 
   // Returns if the given file is valid.
   bool isValid() const {
@@ -115,7 +117,9 @@ class File {
   }
 
   // Returns the given file's name.
-  std::string const& getFileName() const { return mFileName; }
+  std::string const& getFileName() const {
+    return mFileName;
+  }
 
  private:
   std::string  mFileName;

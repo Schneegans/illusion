@@ -21,10 +21,10 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Framebuffer::Framebuffer(DevicePtr const& device, vk::RenderPassPtr const& renderPass,
-  glm::uvec2 const& extent, std::vector<vk::Format> const& attachments)
-  : mDevice(device)
-  , mRenderPass(renderPass)
-  , mExtent(extent) {
+    glm::uvec2 const& extent, std::vector<vk::Format> const& attachments)
+    : mDevice(device)
+    , mRenderPass(renderPass)
+    , mExtent(extent) {
 
   ILLUSION_TRACE << "Creating Framebuffer." << std::endl;
 
@@ -43,7 +43,7 @@ Framebuffer::Framebuffer(DevicePtr const& device, vk::RenderPassPtr const& rende
     // eTransferSrc is actually only required for the attachment which will be blitted to the
     // swapchain images
     vk::ImageUsageFlags usage =
-      vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc;
+        vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc;
     vk::ImageLayout layout = vk::ImageLayout::eColorAttachmentOptimal;
 
     if (Utils::isDepthFormat(attachment)) {
@@ -65,8 +65,8 @@ Framebuffer::Framebuffer(DevicePtr const& device, vk::RenderPassPtr const& rende
     imageInfo.sharingMode   = vk::SharingMode::eExclusive;
     imageInfo.initialLayout = vk::ImageLayout::eUndefined;
 
-    auto image = mDevice->createBackedImage(
-      imageInfo, vk::ImageViewType::e2D, aspect, vk::MemoryPropertyFlagBits::eDeviceLocal, layout);
+    auto image = mDevice->createBackedImage(imageInfo, vk::ImageViewType::e2D, aspect,
+        vk::MemoryPropertyFlagBits::eDeviceLocal, layout);
 
     mImageStore.push_back(image);
   }
@@ -90,7 +90,9 @@ Framebuffer::Framebuffer(DevicePtr const& device, vk::RenderPassPtr const& rende
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Framebuffer::~Framebuffer() { ILLUSION_TRACE << "Deleting Framebuffer." << std::endl; }
+Framebuffer::~Framebuffer() {
+  ILLUSION_TRACE << "Deleting Framebuffer." << std::endl;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

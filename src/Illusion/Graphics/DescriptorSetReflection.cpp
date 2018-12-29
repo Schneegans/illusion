@@ -21,31 +21,33 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 const std::unordered_map<PipelineResource::ResourceType, vk::DescriptorType> resourceTypeMapping = {
-  {PipelineResource::ResourceType::eCombinedImageSampler,
-    vk::DescriptorType::eCombinedImageSampler},
-  {PipelineResource::ResourceType::eInputAttachment, vk::DescriptorType::eInputAttachment},
-  {PipelineResource::ResourceType::eSampledImage, vk::DescriptorType::eSampledImage},
-  {PipelineResource::ResourceType::eSampler, vk::DescriptorType::eSampler},
-  {PipelineResource::ResourceType::eStorageBuffer, vk::DescriptorType::eStorageBuffer},
-  {PipelineResource::ResourceType::eStorageBufferDynamic,
-    vk::DescriptorType::eStorageBufferDynamic},
-  {PipelineResource::ResourceType::eStorageImage, vk::DescriptorType::eStorageImage},
-  {PipelineResource::ResourceType::eStorageTexelBuffer, vk::DescriptorType::eStorageTexelBuffer},
-  {PipelineResource::ResourceType::eUniformBuffer, vk::DescriptorType::eUniformBuffer},
-  {PipelineResource::ResourceType::eUniformBufferDynamic,
-    vk::DescriptorType::eUniformBufferDynamic},
-  {PipelineResource::ResourceType::eUniformTexelBuffer, vk::DescriptorType::eUniformTexelBuffer},
+    {PipelineResource::ResourceType::eCombinedImageSampler,
+        vk::DescriptorType::eCombinedImageSampler},
+    {PipelineResource::ResourceType::eInputAttachment, vk::DescriptorType::eInputAttachment},
+    {PipelineResource::ResourceType::eSampledImage, vk::DescriptorType::eSampledImage},
+    {PipelineResource::ResourceType::eSampler, vk::DescriptorType::eSampler},
+    {PipelineResource::ResourceType::eStorageBuffer, vk::DescriptorType::eStorageBuffer},
+    {PipelineResource::ResourceType::eStorageBufferDynamic,
+        vk::DescriptorType::eStorageBufferDynamic},
+    {PipelineResource::ResourceType::eStorageImage, vk::DescriptorType::eStorageImage},
+    {PipelineResource::ResourceType::eStorageTexelBuffer, vk::DescriptorType::eStorageTexelBuffer},
+    {PipelineResource::ResourceType::eUniformBuffer, vk::DescriptorType::eUniformBuffer},
+    {PipelineResource::ResourceType::eUniformBufferDynamic,
+        vk::DescriptorType::eUniformBufferDynamic},
+    {PipelineResource::ResourceType::eUniformTexelBuffer, vk::DescriptorType::eUniformTexelBuffer},
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 DescriptorSetReflection::DescriptorSetReflection(DevicePtr const& device, uint32_t set)
-  : mDevice(device)
-  , mSet(set) {}
+    : mDevice(device)
+    , mSet(set) {
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-DescriptorSetReflection::~DescriptorSetReflection() {}
+DescriptorSetReflection::~DescriptorSetReflection() {
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -56,13 +58,13 @@ void DescriptorSetReflection::addResource(PipelineResource const& resource) {
       resource.mResourceType == PipelineResource::ResourceType::ePushConstantBuffer) {
 
     throw std::runtime_error(
-      "Failed to add resource to DescriptorSetReflection: Types Input, Output and "
-      "PushConstantBuffer are not allowed.");
+        "Failed to add resource to DescriptorSetReflection: Types Input, Output and "
+        "PushConstantBuffer are not allowed.");
   }
 
   if (resource.mSet != mSet) {
     throw std::runtime_error(
-      "Failed to add resource to DescriptorSetReflection: resource does not belong to this set.");
+        "Failed to add resource to DescriptorSetReflection: resource does not belong to this set.");
   }
 
   // reset lazy members
@@ -87,7 +89,7 @@ std::map<std::string, PipelineResource> const& DescriptorSetReflection::getResou
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::map<std::string, PipelineResource> DescriptorSetReflection::getResources(
-  PipelineResource::ResourceType type) const {
+    PipelineResource::ResourceType type) const {
 
   std::map<std::string, PipelineResource> result;
 
@@ -102,7 +104,9 @@ std::map<std::string, PipelineResource> DescriptorSetReflection::getResources(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-uint32_t DescriptorSetReflection::getSet() const { return mSet; }
+uint32_t DescriptorSetReflection::getSet() const {
+  return mSet;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -114,7 +118,7 @@ vk::DescriptorSetLayoutPtr DescriptorSetReflection::getLayout() const {
     for (auto const& r : mResources) {
       auto t = r.second.mResourceType;
       bindings.push_back(
-        {r.second.mBinding, resourceTypeMapping.at(t), r.second.mArraySize, r.second.mStages});
+          {r.second.mBinding, resourceTypeMapping.at(t), r.second.mArraySize, r.second.mStages});
     }
 
     vk::DescriptorSetLayoutCreateInfo descriptorSetLayoutInfo;
@@ -131,41 +135,42 @@ vk::DescriptorSetLayoutPtr DescriptorSetReflection::getLayout() const {
 
 void DescriptorSetReflection::printInfo() const {
   const std::unordered_map<PipelineResource::BaseType, std::string> baseTypes = {
-    {PipelineResource::BaseType::eBool, "bool"}, {PipelineResource::BaseType::eChar, "char"},
-    {PipelineResource::BaseType::eInt, "int"}, {PipelineResource::BaseType::eUint, "uint"},
-    {PipelineResource::BaseType::eUint64, "uint64"}, {PipelineResource::BaseType::eHalf, "half"},
-    {PipelineResource::BaseType::eFloat, "float"}, {PipelineResource::BaseType::eDouble, "double"},
-    {PipelineResource::BaseType::eStruct, "struct"}, {PipelineResource::BaseType::eNone, "none"}};
+      {PipelineResource::BaseType::eBool, "bool"}, {PipelineResource::BaseType::eChar, "char"},
+      {PipelineResource::BaseType::eInt, "int"}, {PipelineResource::BaseType::eUint, "uint"},
+      {PipelineResource::BaseType::eUint64, "uint64"}, {PipelineResource::BaseType::eHalf, "half"},
+      {PipelineResource::BaseType::eFloat, "float"},
+      {PipelineResource::BaseType::eDouble, "double"},
+      {PipelineResource::BaseType::eStruct, "struct"}, {PipelineResource::BaseType::eNone, "none"}};
 
   const std::unordered_map<PipelineResource::ResourceType, std::string> resourceTypes = {
-    {PipelineResource::ResourceType::eInput, "input"},
-    {PipelineResource::ResourceType::eOutput, "output"},
-    {PipelineResource::ResourceType::eSampler, "sampler"},
-    {PipelineResource::ResourceType::eCombinedImageSampler, "combined_image_sampler"},
-    {PipelineResource::ResourceType::eSampledImage, "sampled_image"},
-    {PipelineResource::ResourceType::eStorageImage, "storage_image"},
-    {PipelineResource::ResourceType::eUniformTexelBuffer, "uniform_texel_buffer"},
-    {PipelineResource::ResourceType::eStorageTexelBuffer, "storage_texel_buffer"},
-    {PipelineResource::ResourceType::eUniformBuffer, "uniform_buffer"},
-    {PipelineResource::ResourceType::eUniformBufferDynamic, "uniform_buffer_dynamic"},
-    {PipelineResource::ResourceType::eStorageBuffer, "storage_buffer"},
-    {PipelineResource::ResourceType::eStorageBufferDynamic, "storage_buffer_dynamic"},
-    {PipelineResource::ResourceType::eInputAttachment, "input_attachment"},
-    {PipelineResource::ResourceType::ePushConstantBuffer, "push_constant_buffer"},
-    {PipelineResource::ResourceType::eNone, "none"}};
+      {PipelineResource::ResourceType::eInput, "input"},
+      {PipelineResource::ResourceType::eOutput, "output"},
+      {PipelineResource::ResourceType::eSampler, "sampler"},
+      {PipelineResource::ResourceType::eCombinedImageSampler, "combined_image_sampler"},
+      {PipelineResource::ResourceType::eSampledImage, "sampled_image"},
+      {PipelineResource::ResourceType::eStorageImage, "storage_image"},
+      {PipelineResource::ResourceType::eUniformTexelBuffer, "uniform_texel_buffer"},
+      {PipelineResource::ResourceType::eStorageTexelBuffer, "storage_texel_buffer"},
+      {PipelineResource::ResourceType::eUniformBuffer, "uniform_buffer"},
+      {PipelineResource::ResourceType::eUniformBufferDynamic, "uniform_buffer_dynamic"},
+      {PipelineResource::ResourceType::eStorageBuffer, "storage_buffer"},
+      {PipelineResource::ResourceType::eStorageBufferDynamic, "storage_buffer_dynamic"},
+      {PipelineResource::ResourceType::eInputAttachment, "input_attachment"},
+      {PipelineResource::ResourceType::ePushConstantBuffer, "push_constant_buffer"},
+      {PipelineResource::ResourceType::eNone, "none"}};
 
   std::function<void(PipelineResource::Member const&, int)> printMemberInfo =
-    [&printMemberInfo, &baseTypes](PipelineResource::Member const& m, int indent) {
+      [&printMemberInfo, &baseTypes](PipelineResource::Member const& m, int indent) {
 
-      ILLUSION_MESSAGE << std::string(indent * 2, ' ') << "- \"" << m.mName
-                       << "\", type: " << baseTypes.find(m.mBaseType)->second
-                       << ", dims: " << m.mColumns << "x" << m.mVecSize << "[" << m.mArraySize
-                       << "], size: " << m.mSize << ", offset: " << m.mOffset << std::endl;
+        ILLUSION_MESSAGE << std::string(indent * 2, ' ') << "- \"" << m.mName
+                         << "\", type: " << baseTypes.find(m.mBaseType)->second
+                         << ", dims: " << m.mColumns << "x" << m.mVecSize << "[" << m.mArraySize
+                         << "], size: " << m.mSize << ", offset: " << m.mOffset << std::endl;
 
-      for (auto const& member : m.mMembers) {
-        printMemberInfo(member, indent + 1);
-      }
-    };
+        for (auto const& member : m.mMembers) {
+          printMemberInfo(member, indent + 1);
+        }
+      };
 
   ILLUSION_MESSAGE << "Set: " << mSet << std::endl;
   for (auto const& pair : mResources) {

@@ -36,21 +36,21 @@ void BindingState::setStorageImage(TexturePtr const& image, uint32_t set, uint32
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void BindingState::setStorageImage(
-  TexturePtr const& image, vk::ImageViewPtr const& view, uint32_t set, uint32_t binding) {
+    TexturePtr const& image, vk::ImageViewPtr const& view, uint32_t set, uint32_t binding) {
   setBinding(StorageImageBinding{image, view}, set, binding);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void BindingState::setUniformBuffer(BackedBufferPtr const& buffer, vk::DeviceSize size,
-  vk::DeviceSize offset, uint32_t set, uint32_t binding) {
+    vk::DeviceSize offset, uint32_t set, uint32_t binding) {
   setBinding(UniformBufferBinding{buffer, size, offset}, set, binding);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void BindingState::setDynamicUniformBuffer(BackedBufferPtr const& buffer, vk::DeviceSize size,
-  uint32_t offset, uint32_t set, uint32_t binding) {
+    uint32_t offset, uint32_t set, uint32_t binding) {
   setBinding(DynamicUniformBufferBinding{buffer, size}, set, binding);
 
   if (getDynamicOffset(set, binding) != offset) {
@@ -62,14 +62,14 @@ void BindingState::setDynamicUniformBuffer(BackedBufferPtr const& buffer, vk::De
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void BindingState::setStorageBuffer(BackedBufferPtr const& buffer, vk::DeviceSize size,
-  vk::DeviceSize offset, uint32_t set, uint32_t binding) {
+    vk::DeviceSize offset, uint32_t set, uint32_t binding) {
   setBinding(StorageBufferBinding{buffer, size, offset}, set, binding);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void BindingState::setDynamicStorageBuffer(BackedBufferPtr const& buffer, vk::DeviceSize size,
-  uint32_t offset, uint32_t set, uint32_t binding) {
+    uint32_t offset, uint32_t set, uint32_t binding) {
   setBinding(DynamicStorageBufferBinding{buffer, size}, set, binding);
 
   if (getDynamicOffset(set, binding) != offset) {
@@ -175,11 +175,15 @@ std::map<uint32_t, BindingType> const& BindingState::getBindings(uint32_t set) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::set<uint32_t> const& BindingState::getDirtySets() const { return mDirtySetBindings; }
+std::set<uint32_t> const& BindingState::getDirtySets() const {
+  return mDirtySetBindings;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void BindingState::clearDirtySets() { mDirtySetBindings.clear(); }
+void BindingState::clearDirtySets() {
+  mDirtySetBindings.clear();
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -220,7 +224,9 @@ std::set<uint32_t> const& BindingState::getDirtyDynamicOffsets() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void BindingState::clearDirtyDynamicOffsets() { mDirtyDynamicOffsets.clear(); }
+void BindingState::clearDirtyDynamicOffsets() {
+  mDirtyDynamicOffsets.clear();
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

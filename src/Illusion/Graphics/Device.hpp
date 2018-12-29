@@ -71,12 +71,12 @@ class Device {
 
   // high-level create methods ---------------------------------------------------------------------
   BackedImagePtr createBackedImage(vk::ImageCreateInfo info, vk::ImageViewType viewType,
-    vk::ImageAspectFlags imageAspectMask, vk::MemoryPropertyFlags properties,
-    vk::ImageLayout layout, vk::ComponentMapping const& componentMapping = vk::ComponentMapping(),
-    vk::DeviceSize dataSize = 0, const void* data = nullptr) const;
+      vk::ImageAspectFlags imageAspectMask, vk::MemoryPropertyFlags properties,
+      vk::ImageLayout layout, vk::ComponentMapping const& componentMapping = vk::ComponentMapping(),
+      vk::DeviceSize dataSize = 0, const void* data = nullptr) const;
 
   BackedBufferPtr createBackedBuffer(vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties,
-    vk::DeviceSize dataSize, const void* data = nullptr) const;
+      vk::DeviceSize dataSize, const void* data = nullptr) const;
 
   BackedBufferPtr createVertexBuffer(vk::DeviceSize dataSize, const void* data) const;
   BackedBufferPtr createIndexBuffer(vk::DeviceSize dataSize, const void* data) const;
@@ -94,15 +94,15 @@ class Device {
   BackedBufferPtr createUniformBuffer(vk::DeviceSize size) const;
 
   TexturePtr createTexture(vk::ImageCreateInfo imageInfo, vk::SamplerCreateInfo samplerInfo,
-    vk::ImageViewType viewType, vk::ImageAspectFlags imageAspectMask, vk::ImageLayout layout,
-    vk::ComponentMapping const& componentMapping = vk::ComponentMapping(),
-    vk::DeviceSize dataSize = 0, const void* data = nullptr) const;
+      vk::ImageViewType viewType, vk::ImageAspectFlags imageAspectMask, vk::ImageLayout layout,
+      vk::ComponentMapping const& componentMapping = vk::ComponentMapping(),
+      vk::DeviceSize dataSize = 0, const void* data = nullptr) const;
 
   TexturePtr getSinglePixelTexture(std::array<uint8_t, 4> const& color);
 
   static vk::SamplerCreateInfo createSamplerInfo(vk::Filter filter = vk::Filter::eLinear,
-    vk::SamplerMipmapMode  mipmapMode                              = vk::SamplerMipmapMode::eLinear,
-    vk::SamplerAddressMode addressMode = vk::SamplerAddressMode::eClampToEdge);
+      vk::SamplerMipmapMode  mipmapMode                            = vk::SamplerMipmapMode::eLinear,
+      vk::SamplerAddressMode addressMode = vk::SamplerAddressMode::eClampToEdge);
 
   // low-level create methods ----------------------------------------------------------------------
   // clang-format off
@@ -127,9 +127,13 @@ class Device {
   // clang-format on
 
   // vulkan getters --------------------------------------------------------------------------------
-  vk::DevicePtr const&     getHandle() const { return mDevice; }
-  PhysicalDevicePtr const& getPhysicalDevice() const { return mPhysicalDevice; }
-  vk::Queue const&         getQueue(QueueType type) const;
+  vk::DevicePtr const& getHandle() const {
+    return mDevice;
+  }
+  PhysicalDevicePtr const& getPhysicalDevice() const {
+    return mPhysicalDevice;
+  }
+  vk::Queue const& getQueue(QueueType type) const;
 
   // device interface forwarding -------------------------------------------------------------------
   void waitForFences(vk::ArrayProxy<const vk::Fence> const& fences, bool waitAll, uint64_t timeout);

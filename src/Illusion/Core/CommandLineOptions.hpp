@@ -28,7 +28,7 @@ class CommandLineOptions {
   explicit CommandLineOptions(std::string const& description);
 
   void addOption(
-    std::vector<std::string> const& optionNames, OptionValue value, std::string const& help);
+      std::vector<std::string> const& optionNames, OptionValue value, std::string const& help);
 
   void printHelp() const;
 

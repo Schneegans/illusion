@@ -33,7 +33,7 @@ struct Identity {
 
 template <typename T>
 std::shared_ptr<T> makeVulkanPtr(
-  T const& vkObject, typename Identity<std::function<void(T* obj)>>::type deleter) {
+    T const& vkObject, typename Identity<std::function<void(T* obj)>>::type deleter) {
   return std::shared_ptr<T>(new T{vkObject}, deleter);
 }
 

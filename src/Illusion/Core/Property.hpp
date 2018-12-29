@@ -34,26 +34,34 @@ class Property {
   Property() = default;
 
   Property(T const& val)
-    : mValue(val) {}
+      : mValue(val) {
+  }
 
   Property(T&& val)
-    : mValue(std::move(val)) {}
+      : mValue(std::move(val)) {
+  }
 
   Property(Property<T> const& toCopy)
-    : mValue(toCopy.mValue) {}
+      : mValue(toCopy.mValue) {
+  }
 
   Property(Property<T>&& toCopy)
-    : mValue(std::move(toCopy.mValue)) {}
+      : mValue(std::move(toCopy.mValue)) {
+  }
 
   virtual ~Property() = default;
 
   // returns a Signal which is fired when the internal value will be changed.
   // The old value is passed as parameter.
-  virtual Signal<T> const& beforeChange() const { return mBeforeChange; }
+  virtual Signal<T> const& beforeChange() const {
+    return mBeforeChange;
+  }
 
   // returns a Signal which is fired when the internal value has been changed.
   // The new value is passed as parameter.
-  virtual Signal<T> const& onChange() const { return mOnChange; }
+  virtual Signal<T> const& onChange() const {
+    return mOnChange;
+  }
 
   // sets the Property to a new value. beforeChange() and onChange() will be emitted.
   virtual void set(T const& value) {
@@ -65,7 +73,9 @@ class Property {
   }
 
   // sets the Property to a new value. beforeChange() and onChange() will not be emitted
-  void setWithNoEmit(T const& value) { mValue = value; }
+  void setWithNoEmit(T const& value) {
+    mValue = value;
+  }
 
   // emits beforeChange() and onChange() even if the value did not change
   void touch() {
@@ -74,7 +84,9 @@ class Property {
   }
 
   // returns the internal value
-  virtual T const& get() const { return mValue; }
+  virtual T const& get() const {
+    return mValue;
+  }
 
   // connects two Properties to each other. If the source's value is changed,
   // this' value will be changed as well
@@ -117,16 +129,28 @@ class Property {
   }
 
   // compares the values of two Properties
-  bool operator==(Property<T> const& rhs) const { return Property<T>::get() == rhs.get(); }
-  bool operator!=(Property<T> const& rhs) const { return Property<T>::get() != rhs.get(); }
+  bool operator==(Property<T> const& rhs) const {
+    return Property<T>::get() == rhs.get();
+  }
+  bool operator!=(Property<T> const& rhs) const {
+    return Property<T>::get() != rhs.get();
+  }
 
   // compares the values of the Property to another value
-  bool operator==(T const& rhs) const { return Property<T>::get() == rhs; }
-  bool operator!=(T const& rhs) const { return Property<T>::get() != rhs; }
+  bool operator==(T const& rhs) const {
+    return Property<T>::get() == rhs;
+  }
+  bool operator!=(T const& rhs) const {
+    return Property<T>::get() != rhs;
+  }
 
   // returns the value of this Property
-           operator T() const { return Property<T>::get(); }
-  T const& operator()() const { return Property<T>::get(); }
+  operator T() const {
+    return Property<T>::get();
+  }
+  T const& operator()() const {
+    return Property<T>::get();
+  }
 
  private:
   // ------------------------------------------------------------------------------- private members

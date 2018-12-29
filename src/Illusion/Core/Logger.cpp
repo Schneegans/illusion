@@ -65,7 +65,9 @@ namespace {
 
 class NullBuffer : public std::streambuf {
  public:
-  int overflow(int c) { return c; }
+  int overflow(int c) {
+    return c;
+  }
 };
 
 NullBuffer   nullBuffer;
@@ -92,7 +94,7 @@ std::string locationString(const char* f, int l) {
 }
 
 std::ostream& print(
-  bool enable, std::string const& header, std::string const& color, const char* file, int line) {
+    bool enable, std::string const& header, std::string const& color, const char* file, int line) {
   if (enable) {
     return std::cout << color << header << locationString(file, line) << Logger::PRINT_RESET << " ";
   } else {

@@ -50,29 +50,29 @@ class BindingState {
   // Stores the given Texture as StorageImageBinding. The ImageView parameter can be used to store a
   // specific part of the Image (e.g. one specific mipmap level),
   void setStorageImage(
-    TexturePtr const& image, vk::ImageViewPtr const& view, uint32_t set, uint32_t binding);
+      TexturePtr const& image, vk::ImageViewPtr const& view, uint32_t set, uint32_t binding);
 
   // Stores the given BackedBuffer range as UniformBufferBinding.
   void setUniformBuffer(BackedBufferPtr const& buffer, vk::DeviceSize size, vk::DeviceSize offset,
-    uint32_t set, uint32_t binding);
+      uint32_t set, uint32_t binding);
 
   // Stores the given BackedBuffer range as DynamicUniformBufferBinding. When the same buffer and
   // size were bound before (only the offset changed) the set will not become dirty. Only the
   // dynamic offset for this set will be dirty which means that the currently bound descriptor sets
   // needs to be re-bound
   void setDynamicUniformBuffer(BackedBufferPtr const& buffer, vk::DeviceSize size, uint32_t offset,
-    uint32_t set, uint32_t binding);
+      uint32_t set, uint32_t binding);
 
   // Stores the given BackedBuffer range as StorageBufferBinding.
   void setStorageBuffer(BackedBufferPtr const& buffer, vk::DeviceSize size, vk::DeviceSize offset,
-    uint32_t set, uint32_t binding);
+      uint32_t set, uint32_t binding);
 
   // Stores the given BackedBuffer range as DynamicStorageBufferBinding. When the same buffer and
   // size were bound before (only the offset changed) the set will not become dirty. Only the
   // dynamic offset for this set will be dirty which means that the currently bound descriptor sets
   // needs to be re-bound
   void setDynamicStorageBuffer(BackedBufferPtr const& buffer, vk::DeviceSize size, uint32_t offset,
-    uint32_t set, uint32_t binding);
+      uint32_t set, uint32_t binding);
 
   // Removes the given binding for the given set. The dynamic offset (if set) will be removed as
   // well. The set and the dynamic offsets will be flagged as being dirty.

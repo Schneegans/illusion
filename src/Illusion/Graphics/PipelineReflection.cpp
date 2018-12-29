@@ -21,11 +21,13 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 PipelineReflection::PipelineReflection(DevicePtr const& device)
-  : mDevice(device) {}
+    : mDevice(device) {
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-PipelineReflection::~PipelineReflection() {}
+PipelineReflection::~PipelineReflection() {
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -69,7 +71,7 @@ void PipelineReflection::addResource(PipelineResource const& resource) {
 
   while (mDescriptorSetReflections.size() <= resource.mSet) {
     mDescriptorSetReflections.emplace_back(
-      std::make_shared<DescriptorSetReflection>(mDevice, mDescriptorSetReflections.size()));
+        std::make_shared<DescriptorSetReflection>(mDevice, mDescriptorSetReflections.size()));
   }
 
   mDescriptorSetReflections[resource.mSet]->addResource(resource);
@@ -85,7 +87,7 @@ PipelineReflection::getDescriptorSetReflections() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::map<std::string, PipelineResource> PipelineReflection::getResources(
-  PipelineResource::ResourceType type) const {
+    PipelineResource::ResourceType type) const {
 
   if (type == PipelineResource::ResourceType::eInput) {
     return mInputs;

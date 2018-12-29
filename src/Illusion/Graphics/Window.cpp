@@ -23,8 +23,8 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Window::Window(EnginePtr const& engine, DevicePtr const& device)
-  : mEngine(engine)
-  , mDevice(device) {
+    : mEngine(engine)
+    , mDevice(device) {
 
   ILLUSION_TRACE << "Creating Window." << std::endl;
 
@@ -79,7 +79,7 @@ Window::Window(EnginePtr const& engine, DevicePtr const& device)
         glfwGetWindowPos(mWindow, &mOrigPos.x, &mOrigPos.y);
         glfwGetWindowSize(mWindow, &mOrigSize.x, &mOrigSize.y);
         glfwSetWindowMonitor(
-          mWindow, glfwGetPrimaryMonitor(), 0, 0, mode->width, mode->height, mode->refreshRate);
+            mWindow, glfwGetPrimaryMonitor(), 0, 0, mode->width, mode->height, mode->refreshRate);
 
       } else {
         glfwSetWindowMonitor(mWindow, nullptr, mOrigPos.x, mOrigPos.y, mOrigSize.x, mOrigSize.y, 0);
@@ -131,7 +131,7 @@ void Window::open() {
     if (pFullscreen()) {
       auto mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
       mWindow   = glfwCreateWindow(
-        mode->width, mode->height, pTitle().c_str(), glfwGetPrimaryMonitor(), nullptr);
+          mode->width, mode->height, pTitle().c_str(), glfwGetPrimaryMonitor(), nullptr);
     } else {
       mWindow = glfwCreateWindow(pExtent().x, pExtent().y, pTitle().c_str(), nullptr, nullptr);
     }
@@ -200,7 +200,9 @@ void Window::close() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool Window::shouldClose() const { return glfwWindowShouldClose(mWindow); }
+bool Window::shouldClose() const {
+  return glfwWindowShouldClose(mWindow);
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -258,7 +260,7 @@ glm::vec2 Window::getCursorPos() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Window::present(BackedImagePtr const& image, vk::SemaphorePtr const& renderFinishedSemaphore,
-  vk::FencePtr const& signalFence) {
+    vk::FencePtr const& signalFence) {
   mSwapchain->present(image, renderFinishedSemaphore, signalFence);
 }
 

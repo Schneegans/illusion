@@ -22,15 +22,17 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Swapchain::Swapchain(DevicePtr const& device, vk::SurfaceKHRPtr const& surface)
-  : mDevice(device)
-  , mSurface(surface) {
+    : mDevice(device)
+    , mSurface(surface) {
 
   ILLUSION_TRACE << "Creating Swapchain." << std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Swapchain::~Swapchain() { ILLUSION_TRACE << "Deleting Swapchain." << std::endl; }
+Swapchain::~Swapchain() {
+  ILLUSION_TRACE << "Deleting Swapchain." << std::endl;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -43,16 +45,20 @@ void Swapchain::setEnableVsync(bool enable) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Swapchain::markDirty() { mDirty = true; }
+void Swapchain::markDirty() {
+  mDirty = true;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-glm::uvec2 const& Swapchain::getExtent() const { return mExtent; }
+glm::uvec2 const& Swapchain::getExtent() const {
+  return mExtent;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Swapchain::present(BackedImagePtr const& image,
-  vk::SemaphorePtr const& renderFinishedSemaphore, vk::FencePtr const& signalFence) {
+    vk::SemaphorePtr const& renderFinishedSemaphore, vk::FencePtr const& signalFence) {
 
   if (mDirty) {
     mDevice->waitIdle();
@@ -74,8 +80,8 @@ void Swapchain::present(BackedImagePtr const& image,
     cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
     for (auto const& image : mImages) {
       cmd->transitionImageLayout(image, vk::ImageLayout::eUndefined,
-        vk::ImageLayout::ePresentSrcKHR, vk::PipelineStageFlagBits::eTopOfPipe,
-        vk::PipelineStageFlagBits::eTransfer);
+          vk::ImageLayout::ePresentSrcKHR, vk::PipelineStageFlagBits::eTopOfPipe,
+          vk::PipelineStageFlagBits::eTransfer);
     }
     cmd->end();
     cmd->submit();
@@ -90,8 +96,8 @@ void Swapchain::present(BackedImagePtr const& image,
   mCurrentPresentIndex = (mCurrentPresentIndex + 1) % mImages.size();
 
   auto result =
-    mDevice->getHandle()->acquireNextImageKHR(*mSwapchain, std::numeric_limits<uint64_t>::max(),
-      *mImageAvailableSemaphores[mCurrentPresentIndex], nullptr, &mCurrentImageIndex);
+      mDevice->getHandle()->acquireNextImageKHR(*mSwapchain, std::numeric_limits<uint64_t>::max(),
+          *mImageAvailableSemaphores[mCurrentPresentIndex], nullptr, &mCurrentImageIndex);
 
   if (result == vk::Result::eErrorOutOfDateKHR) {
     // mark dirty and call this method again
@@ -127,33 +133,33 @@ void Swapchain::present(BackedImagePtr const& image,
       region.extent.depth   = 1;
 
       cmd->resolveImage(*image->mImage, vk::ImageLayout::eTransferSrcOptimal,
-        mImages[mCurrentImageIndex], vk::ImageLayout::eTransferDstOptimal, region);
+          mImages[mCurrentImageIndex], vk::ImageLayout::eTransferDstOptimal, region);
     }
     // Else do an image blit.
     else {
       cmd->transitionImageLayout(*image->mImage, vk::ImageLayout::eColorAttachmentOptimal,
-        vk::ImageLayout::eTransferSrcOptimal, vk::PipelineStageFlagBits::eColorAttachmentOutput,
-        vk::PipelineStageFlagBits::eTransfer);
+          vk::ImageLayout::eTransferSrcOptimal, vk::PipelineStageFlagBits::eColorAttachmentOutput,
+          vk::PipelineStageFlagBits::eTransfer);
       cmd->transitionImageLayout(mImages[mCurrentImageIndex], vk::ImageLayout::ePresentSrcKHR,
-        vk::ImageLayout::eTransferDstOptimal, vk::PipelineStageFlagBits::eTransfer,
-        vk::PipelineStageFlagBits::eTransfer);
+          vk::ImageLayout::eTransferDstOptimal, vk::PipelineStageFlagBits::eTransfer,
+          vk::PipelineStageFlagBits::eTransfer);
       vk::ImageBlit info;
       cmd->blitImage(*image->mImage, mImages[mCurrentImageIndex],
-        {image->mImageInfo.extent.width, image->mImageInfo.extent.height}, mExtent,
-        vk::Filter::eNearest);
+          {image->mImageInfo.extent.width, image->mImageInfo.extent.height}, mExtent,
+          vk::Filter::eNearest);
       cmd->transitionImageLayout(*image->mImage, vk::ImageLayout::eTransferSrcOptimal,
-        vk::ImageLayout::eColorAttachmentOptimal, vk::PipelineStageFlagBits::eTransfer,
-        vk::PipelineStageFlagBits::eColorAttachmentOutput);
+          vk::ImageLayout::eColorAttachmentOptimal, vk::PipelineStageFlagBits::eTransfer,
+          vk::PipelineStageFlagBits::eColorAttachmentOutput);
       cmd->transitionImageLayout(mImages[mCurrentImageIndex], vk::ImageLayout::eTransferDstOptimal,
-        vk::ImageLayout::ePresentSrcKHR, vk::PipelineStageFlagBits::eTransfer,
-        vk::PipelineStageFlagBits::eTransfer);
+          vk::ImageLayout::ePresentSrcKHR, vk::PipelineStageFlagBits::eTransfer,
+          vk::PipelineStageFlagBits::eTransfer);
     }
 
     cmd->end();
 
     cmd->submit({*renderFinishedSemaphore, *mImageAvailableSemaphores[mCurrentPresentIndex]},
-      {2, vk::PipelineStageFlagBits::eColorAttachmentOutput},
-      {*mCopyFinishedSemaphores[mCurrentPresentIndex]}, *signalFence);
+        {2, vk::PipelineStageFlagBits::eColorAttachmentOutput},
+        {*mCopyFinishedSemaphores[mCurrentPresentIndex]}, *signalFence);
   }
 
   // present on mOutputWindow ----------------------------------------------------------------------
@@ -197,9 +203,9 @@ void Swapchain::chooseExtent() {
     mExtent = {500, 500};
 
     mExtent.x = std::max(
-      capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, mExtent.x));
-    mExtent.y = std::max(
-      capabilities.minImageExtent.height, std::min(capabilities.maxImageExtent.height, mExtent.y));
+        capabilities.minImageExtent.width, std::min(capabilities.maxImageExtent.width, mExtent.x));
+    mExtent.y = std::max(capabilities.minImageExtent.height,
+        std::min(capabilities.maxImageExtent.height, mExtent.y));
   }
 }
 
@@ -279,7 +285,7 @@ void Swapchain::createSwapchain() {
   // when only glfwGetPhysicalDevicePresentationSupport was used to check for
   // presentation support
   if (!mDevice->getPhysicalDevice()->getSurfaceSupportKHR(
-        mDevice->getPhysicalDevice()->getQueueFamily(QueueType::eGeneric), *mSurface)) {
+          mDevice->getPhysicalDevice()->getQueueFamily(QueueType::eGeneric), *mSurface)) {
     ILLUSION_ERROR << "The selected queue family does not "
                    << "support presentation!" << std::endl;
   }

@@ -82,14 +82,14 @@ std::string printMax(S val, T ref) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice const& device)
-  : vk::PhysicalDevice(device) {
+    : vk::PhysicalDevice(device) {
 
   auto available = getQueueFamilyProperties();
 
   // first find a family which can do everything
   for (size_t i(0); i < available.size(); ++i) {
     vk::QueueFlags required(
-      vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute | vk::QueueFlagBits::eTransfer);
+        vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute | vk::QueueFlagBits::eTransfer);
 
     if (available[i].queueCount > 0 && (available[i].queueFlags & required) == required &&
         glfwGetPhysicalDevicePresentationSupport(instance, *this, i)) {
@@ -142,27 +142,27 @@ PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice 
   if (mQueueFamilies[Core::enumCast(QueueType::eCompute)] == -1) {
 
     mQueueFamilies[Core::enumCast(QueueType::eCompute)] =
-      mQueueFamilies[Core::enumCast(QueueType::eGeneric)];
+        mQueueFamilies[Core::enumCast(QueueType::eGeneric)];
     mQueueIndices[Core::enumCast(QueueType::eCompute)] =
-      std::min(available[mQueueFamilies[Core::enumCast(QueueType::eCompute)]].queueCount - 1,
-        mQueueIndices[Core::enumCast(QueueType::eGeneric)] + 1);
+        std::min(available[mQueueFamilies[Core::enumCast(QueueType::eCompute)]].queueCount - 1,
+            mQueueIndices[Core::enumCast(QueueType::eGeneric)] + 1);
   }
 
   // if we did not find a transfer queue different from the generic one, we will use the same but
   // another index, if possible
   if (mQueueFamilies[Core::enumCast(QueueType::eTransfer)] == -1) {
     mQueueFamilies[Core::enumCast(QueueType::eTransfer)] =
-      mQueueFamilies[Core::enumCast(QueueType::eGeneric)];
+        mQueueFamilies[Core::enumCast(QueueType::eGeneric)];
     mQueueIndices[Core::enumCast(QueueType::eTransfer)] =
-      std::min(available[mQueueFamilies[Core::enumCast(QueueType::eTransfer)]].queueCount - 1,
-        mQueueIndices[Core::enumCast(QueueType::eCompute)] + 1);
+        std::min(available[mQueueFamilies[Core::enumCast(QueueType::eTransfer)]].queueCount - 1,
+            mQueueIndices[Core::enumCast(QueueType::eCompute)] + 1);
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 uint32_t PhysicalDevice::findMemoryType(
-  uint32_t typeFilter, vk::MemoryPropertyFlags properties) const {
+    uint32_t typeFilter, vk::MemoryPropertyFlags properties) const {
 
   auto memProperties{getMemoryProperties()};
 
@@ -208,13 +208,13 @@ void PhysicalDevice::printInfo() {
                    << std::endl;
   for (unsigned i{0}; i < memoryProperties.memoryTypeCount; ++i) {
     printVal("Memory type " + std::to_string(i),
-      {vk::to_string(memoryProperties.memoryTypes[i].propertyFlags)});
+        {vk::to_string(memoryProperties.memoryTypes[i].propertyFlags)});
   }
 
   for (unsigned i{0}; i < memoryProperties.memoryHeapCount; ++i) {
     printVal("Memory heap " + std::to_string(i),
-      {std::to_string(memoryProperties.memoryHeaps[i].size / (1024 * 1024)) + " MB " +
-        vk::to_string(memoryProperties.memoryHeaps[i].flags)});
+        {std::to_string(memoryProperties.memoryHeaps[i].size / (1024 * 1024)) + " MB " +
+            vk::to_string(memoryProperties.memoryHeaps[i].flags)});
   }
 
   // clang-format off

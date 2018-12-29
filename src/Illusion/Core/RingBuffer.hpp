@@ -24,7 +24,8 @@ class RingBuffer {
  public:
   template <typename... Args>
   explicit RingBuffer(Args&&... a)
-    : mBuffer{a...} {}
+      : mBuffer{a...} {
+  }
 
   virtual ~RingBuffer() = default;
 
@@ -33,7 +34,9 @@ class RingBuffer {
     return current();
   }
 
-  T& current() { return mBuffer[mIndex]; }
+  T& current() {
+    return mBuffer[mIndex];
+  }
 
  protected:
   std::array<T, ringBufferSize> mBuffer;

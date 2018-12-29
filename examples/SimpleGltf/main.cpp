@@ -53,12 +53,12 @@ struct CameraUniforms {
 
 struct FrameResources {
   FrameResources(Illusion::Graphics::DevicePtr const& device, vk::DeviceSize uboAlignment)
-    : mCmd(Illusion::Graphics::CommandBuffer::create(device))
-    , mRenderPass(Illusion::Graphics::RenderPass::create(device))
-    , mUniformBuffer(
-        Illusion::Graphics::CoherentUniformBuffer::create(device, std::pow(2, 20), uboAlignment))
-    , mRenderFinishedFence(device->createFence())
-    , mRenderFinishedSemaphore(device->createSemaphore()) {
+      : mCmd(Illusion::Graphics::CommandBuffer::create(device))
+      , mRenderPass(Illusion::Graphics::RenderPass::create(device))
+      , mUniformBuffer(Illusion::Graphics::CoherentUniformBuffer::create(
+            device, std::pow(2, 20), uboAlignment))
+      , mRenderFinishedFence(device->createFence())
+      , mRenderFinishedSemaphore(device->createSemaphore()) {
 
     mRenderPass->addAttachment(vk::Format::eR8G8B8A8Unorm);
     mRenderPass->addAttachment(vk::Format::eD32Sfloat);
@@ -74,8 +74,8 @@ struct FrameResources {
 };
 
 void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::GltfModel::Node>> const& nodes,
-  glm::mat4 const& viewMatrix, glm::mat4 const& modelMatrix, bool doAlphaBlending,
-  uint32_t emptySkinDynamicOffset, FrameResources const& res) {
+    glm::mat4 const& viewMatrix, glm::mat4 const& modelMatrix, bool doAlphaBlending,
+    uint32_t emptySkinDynamicOffset, FrameResources const& res) {
 
   res.mCmd->graphicsState().setBlendAttachments({{doAlphaBlending}});
 
@@ -93,10 +93,10 @@ void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::GltfModel::Node>>
 
       auto skinDynamicOffset = res.mUniformBuffer->addData(skin);
       res.mCmd->bindingState().setDynamicUniformBuffer(
-        res.mUniformBuffer->getBuffer(), sizeof(SkinUniforms), skinDynamicOffset, 2, 0);
+          res.mUniformBuffer->getBuffer(), sizeof(SkinUniforms), skinDynamicOffset, 2, 0);
     } else {
       res.mCmd->bindingState().setDynamicUniformBuffer(
-        res.mUniformBuffer->getBuffer(), sizeof(SkinUniforms), emptySkinDynamicOffset, 2, 0);
+          res.mUniformBuffer->getBuffer(), sizeof(SkinUniforms), emptySkinDynamicOffset, 2, 0);
     }
 
     if (n->mMesh) {
@@ -122,8 +122,9 @@ void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::GltfModel::Node>>
           res.mCmd->bindingState().setTexture(p.mMaterial->mOcclusionTexture, 3, 3);
           res.mCmd->bindingState().setTexture(p.mMaterial->mEmissiveTexture, 3, 4);
           res.mCmd->graphicsState().setTopology(p.mTopology);
-          res.mCmd->graphicsState().setCullMode(
-            p.mMaterial->mDoubleSided ? vk::CullModeFlagBits::eNone : vk::CullModeFlagBits::eBack);
+          res.mCmd->graphicsState().setCullMode(p.mMaterial->mDoubleSided
+                                                    ? vk::CullModeFlagBits::eNone
+                                                    : vk::CullModeFlagBits::eBack);
           res.mCmd->drawIndexed(p.mIndexCount, 1, p.mIndexOffset, 0, 0);
         }
       }
@@ -188,23 +189,24 @@ int main(int argc, char* argv[]) {
 
   auto brdflut = Illusion::Graphics::TextureUtils::createBRDFLuT(device, 128);
   auto skybox  = Illusion::Graphics::TextureUtils::createCubemapFrom360PanoramaFile(
-    device, options.mSkyboxFile, 1024);
+      device, options.mSkyboxFile, 1024);
   auto prefilteredIrradiance =
-    Illusion::Graphics::TextureUtils::createPrefilteredIrradianceCubemap(device, 64, skybox);
+      Illusion::Graphics::TextureUtils::createPrefilteredIrradianceCubemap(device, 64, skybox);
   auto prefilteredReflection =
-    Illusion::Graphics::TextureUtils::createPrefilteredReflectionCubemap(device, 128, skybox);
+      Illusion::Graphics::TextureUtils::createPrefilteredReflectionCubemap(device, 128, skybox);
 
   auto pbrShader = Illusion::Graphics::ShaderProgram::createFromFiles(device,
-    {"data/shaders/SimpleGltfShader.vert", "data/shaders/SimpleGltfShader.frag"}, {"SkinUniforms"});
+      {"data/shaders/SimpleGltfShader.vert", "data/shaders/SimpleGltfShader.frag"},
+      {"SkinUniforms"});
 
   auto skyShader = Illusion::Graphics::ShaderProgram::createFromFiles(
-    device, {"data/shaders/Quad.vert", "data/shaders/Skybox.frag"});
+      device, {"data/shaders/Quad.vert", "data/shaders/Skybox.frag"});
 
   auto uboAlignment =
-    engine->getPhysicalDevice()->getProperties().limits.minUniformBufferOffsetAlignment;
+      engine->getPhysicalDevice()->getProperties().limits.minUniformBufferOffsetAlignment;
 
   Illusion::Core::RingBuffer<FrameResources, 2> frameResources{
-    FrameResources(device, uboAlignment), FrameResources(device, uboAlignment)};
+      FrameResources(device, uboAlignment), FrameResources(device, uboAlignment)};
 
   glm::vec3 cameraPolar(0.f, 0.f, 1.5f);
 
@@ -221,7 +223,7 @@ int main(int argc, char* argv[]) {
         cameraPolar.y += dY * 0.005f;
 
         cameraPolar.y = glm::clamp(
-          cameraPolar.y, -glm::pi<float>() * 0.5f + 0.1f, glm::pi<float>() * 0.5f - 0.1f);
+            cameraPolar.y, -glm::pi<float>() * 0.5f + 0.1f, glm::pi<float>() * 0.5f - 0.1f);
       }
 
       lastX = e.mX;
@@ -261,30 +263,30 @@ int main(int argc, char* argv[]) {
 
     res.mRenderPass->setExtent(window->pExtent.get());
     res.mCmd->graphicsState().setViewports(
-      {{glm::vec2(0), glm::vec2(window->pExtent.get()), 0.f, 1.f}});
+        {{glm::vec2(0), glm::vec2(window->pExtent.get()), 0.f, 1.f}});
 
     CameraUniforms camera;
     camera.mProjectionMatrix = glm::perspectiveZO(glm::radians(50.f),
-      static_cast<float>(window->pExtent.get().x) / static_cast<float>(window->pExtent.get().y),
-      0.01f, 10.0f);
+        static_cast<float>(window->pExtent.get().x) / static_cast<float>(window->pExtent.get().y),
+        0.01f, 10.0f);
     camera.mProjectionMatrix[1][1] *= -1;
 
     camera.mPosition =
-      glm::vec4(glm::vec3(std::cos(cameraPolar.y) * std::sin(cameraPolar.x),
-                  -std::sin(cameraPolar.y), std::cos(cameraPolar.y) * std::cos(cameraPolar.x)) *
-                  cameraPolar.z,
-        1.0);
+        glm::vec4(glm::vec3(std::cos(cameraPolar.y) * std::sin(cameraPolar.x),
+                      -std::sin(cameraPolar.y), std::cos(cameraPolar.y) * std::cos(cameraPolar.x)) *
+                      cameraPolar.z,
+            1.0);
 
     res.mUniformBuffer->reset();
 
     camera.mViewMatrix =
-      glm::lookAt(camera.mPosition.xyz(), glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
+        glm::lookAt(camera.mPosition.xyz(), glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
     res.mUniformBuffer->addData(camera);
 
     res.mCmd->beginRenderPass(res.mRenderPass);
 
     res.mCmd->bindingState().setUniformBuffer(
-      res.mUniformBuffer->getBuffer(), sizeof(CameraUniforms), 0, 0, 0);
+        res.mUniformBuffer->getBuffer(), sizeof(CameraUniforms), 0, 0, 0);
 
     res.mCmd->setShaderProgram(skyShader);
     res.mCmd->bindingState().setTexture(skybox, 1, 0);
@@ -305,9 +307,9 @@ int main(int argc, char* argv[]) {
     res.mCmd->graphicsState().setDepthTestEnable(true);
     res.mCmd->graphicsState().setDepthWriteEnable(true);
     res.mCmd->graphicsState().setVertexInputAttributes(
-      Illusion::Graphics::GltfModel::getVertexInputAttributes());
+        Illusion::Graphics::GltfModel::getVertexInputAttributes());
     res.mCmd->graphicsState().setVertexInputBindings(
-      Illusion::Graphics::GltfModel::getVertexInputBindings());
+        Illusion::Graphics::GltfModel::getVertexInputBindings());
 
     res.mCmd->bindVertexBuffers(0, {model->getVertexBuffer()});
     res.mCmd->bindIndexBuffer(model->getIndexBuffer(), 0, vk::IndexType::eUint32);
@@ -316,9 +318,9 @@ int main(int argc, char* argv[]) {
     uint32_t     emptySkinDynamicOffset = res.mUniformBuffer->addData(ubo);
 
     drawNodes(model->getRoot().mChildren, camera.mViewMatrix, modelMatrix, false,
-      emptySkinDynamicOffset, res);
+        emptySkinDynamicOffset, res);
     drawNodes(model->getRoot().mChildren, camera.mViewMatrix, modelMatrix, true,
-      emptySkinDynamicOffset, res);
+        emptySkinDynamicOffset, res);
 
     res.mCmd->endRenderPass();
     res.mCmd->end();
@@ -326,7 +328,7 @@ int main(int argc, char* argv[]) {
     res.mCmd->submit({}, {}, {*res.mRenderFinishedSemaphore});
 
     window->present(res.mRenderPass->getFramebuffer()->getImages()[0], res.mRenderFinishedSemaphore,
-      res.mRenderFinishedFence);
+        res.mRenderFinishedFence);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
   }

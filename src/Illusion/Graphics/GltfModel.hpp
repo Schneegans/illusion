@@ -46,14 +46,16 @@ class GltfModel {
     enum class Channel { eRed, eGreen, eBlue };
 
     TextureChannelMapping()
-      : mOcclusion(Channel::eRed)
-      , mRoughness(Channel::eGreen)
-      , mMetallic(Channel::eBlue) {}
+        : mOcclusion(Channel::eRed)
+        , mRoughness(Channel::eGreen)
+        , mMetallic(Channel::eBlue) {
+    }
 
     TextureChannelMapping(Channel occlusion, Channel roughness, Channel metallic)
-      : mOcclusion(occlusion)
-      , mRoughness(roughness)
-      , mMetallic(metallic) {}
+        : mOcclusion(occlusion)
+        , mRoughness(roughness)
+        , mMetallic(metallic) {
+    }
 
     Channel mOcclusion;
     Channel mRoughness;
@@ -232,7 +234,7 @@ class GltfModel {
 
       for (size_t i(0); i < mJoints.size(); i++) {
         jointMatrices[i] =
-          inverseMeshTransform * mJoints[i]->mGlobalTransform * mInverseBindMatrices[i];
+            inverseMeshTransform * mJoints[i]->mGlobalTransform * mInverseBindMatrices[i];
       }
 
       return jointMatrices;
@@ -256,8 +258,8 @@ class GltfModel {
   typedef Core::Flags<OptionFlagBits> OptionFlags;
 
   GltfModel(DevicePtr const& device, std::string const& file,
-    OptionFlags                  options         = OptionFlagBits::eAll,
-    TextureChannelMapping const& textureChannels = TextureChannelMapping());
+      OptionFlags                  options         = OptionFlagBits::eAll,
+      TextureChannelMapping const& textureChannels = TextureChannelMapping());
 
   void setAnimationTime(uint32_t animationIndex, float time);
 
@@ -271,7 +273,9 @@ class GltfModel {
   std::vector<NodePtr> const&      getNodes() const;
   std::vector<AnimationPtr> const& getAnimations() const;
 
-  void update() { mRootNode.update(glm::mat4(1.f)); }
+  void update() {
+    mRootNode.update(glm::mat4(1.f));
+  }
 
   void printInfo() const;
 

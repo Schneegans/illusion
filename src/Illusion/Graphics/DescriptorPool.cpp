@@ -23,28 +23,28 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 const std::unordered_map<PipelineResource::ResourceType, vk::DescriptorType> resourceTypeMapping = {
-  {PipelineResource::ResourceType::eCombinedImageSampler,
-    vk::DescriptorType::eCombinedImageSampler},
-  {PipelineResource::ResourceType::eInputAttachment, vk::DescriptorType::eInputAttachment},
-  {PipelineResource::ResourceType::eSampledImage, vk::DescriptorType::eSampledImage},
-  {PipelineResource::ResourceType::eSampler, vk::DescriptorType::eSampler},
-  {PipelineResource::ResourceType::eStorageBuffer, vk::DescriptorType::eStorageBuffer},
-  {PipelineResource::ResourceType::eStorageBufferDynamic,
-    vk::DescriptorType::eStorageBufferDynamic},
-  {PipelineResource::ResourceType::eStorageImage, vk::DescriptorType::eStorageImage},
-  {PipelineResource::ResourceType::eStorageTexelBuffer, vk::DescriptorType::eStorageTexelBuffer},
-  {PipelineResource::ResourceType::eUniformBuffer, vk::DescriptorType::eUniformBuffer},
-  {PipelineResource::ResourceType::eUniformBufferDynamic,
-    vk::DescriptorType::eUniformBufferDynamic},
-  {PipelineResource::ResourceType::eUniformTexelBuffer, vk::DescriptorType::eUniformTexelBuffer},
+    {PipelineResource::ResourceType::eCombinedImageSampler,
+        vk::DescriptorType::eCombinedImageSampler},
+    {PipelineResource::ResourceType::eInputAttachment, vk::DescriptorType::eInputAttachment},
+    {PipelineResource::ResourceType::eSampledImage, vk::DescriptorType::eSampledImage},
+    {PipelineResource::ResourceType::eSampler, vk::DescriptorType::eSampler},
+    {PipelineResource::ResourceType::eStorageBuffer, vk::DescriptorType::eStorageBuffer},
+    {PipelineResource::ResourceType::eStorageBufferDynamic,
+        vk::DescriptorType::eStorageBufferDynamic},
+    {PipelineResource::ResourceType::eStorageImage, vk::DescriptorType::eStorageImage},
+    {PipelineResource::ResourceType::eStorageTexelBuffer, vk::DescriptorType::eStorageTexelBuffer},
+    {PipelineResource::ResourceType::eUniformBuffer, vk::DescriptorType::eUniformBuffer},
+    {PipelineResource::ResourceType::eUniformBufferDynamic,
+        vk::DescriptorType::eUniformBufferDynamic},
+    {PipelineResource::ResourceType::eUniformTexelBuffer, vk::DescriptorType::eUniformTexelBuffer},
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 DescriptorPool::DescriptorPool(
-  DevicePtr const& device, DescriptorSetReflectionPtr const& reflection)
-  : mDevice(device)
-  , mReflection(reflection) {
+    DevicePtr const& device, DescriptorSetReflectionPtr const& reflection)
+    : mDevice(device)
+    , mReflection(reflection) {
 
   ILLUSION_TRACE << "Creating DescriptorPool." << std::endl;
 
@@ -64,7 +64,9 @@ DescriptorPool::DescriptorPool(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-DescriptorPool::~DescriptorPool() { ILLUSION_TRACE << "Deleting DescriptorPool." << std::endl; }
+DescriptorPool::~DescriptorPool() {
+  ILLUSION_TRACE << "Deleting DescriptorPool." << std::endl;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -72,7 +74,7 @@ vk::DescriptorSetPtr DescriptorPool::allocateDescriptorSet() {
 
   if (mPoolSizes.size() == 0) {
     throw std::runtime_error(
-      "Cannot allocated DescriptorSet: Set does not contain any active resources!");
+        "Cannot allocated DescriptorSet: Set does not contain any active resources!");
   }
 
   // find a free pool
@@ -112,12 +114,12 @@ vk::DescriptorSetPtr DescriptorPool::allocateDescriptorSet() {
 
   auto device{mDevice->getHandle()};
   return Utils::makeVulkanPtr(
-    device->allocateDescriptorSets(info)[0], [device, pool](vk::DescriptorSet* obj) {
-      ILLUSION_TRACE << "Freeing DescriptorSet." << std::endl;
-      --pool->mAllocationCount;
-      device->freeDescriptorSets(*pool->mPool, *obj);
-      delete obj;
-    });
+      device->allocateDescriptorSets(info)[0], [device, pool](vk::DescriptorSet* obj) {
+        ILLUSION_TRACE << "Freeing DescriptorSet." << std::endl;
+        --pool->mAllocationCount;
+        device->freeDescriptorSets(*pool->mPool, *obj);
+        delete obj;
+      });
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

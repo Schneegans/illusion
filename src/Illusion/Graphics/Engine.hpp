@@ -33,7 +33,7 @@ class Engine {
   virtual ~Engine();
 
   PhysicalDevicePtr getPhysicalDevice(
-    std::vector<std::string> const& extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME}) const;
+      std::vector<std::string> const& extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME}) const;
 
   vk::SurfaceKHRPtr createSurface(GLFWwindow* window) const;
 

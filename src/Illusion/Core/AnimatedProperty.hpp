@@ -38,26 +38,29 @@ class AnimatedProperty : public Property<T> {
   Signal<> onFinish;
 
   AnimatedProperty()
-    : Property<T>()
-    , mStart()
-    , mEnd() {}
+      : Property<T>()
+      , mStart()
+      , mEnd() {
+  }
 
   AnimatedProperty(T const& val)
-    : Property<T>(val)
-    , mStart(val)
-    , mEnd(val) {}
+      : Property<T>(val)
+      , mStart(val)
+      , mEnd(val) {
+  }
 
   AnimatedProperty(T const& start, T const& end, double dur = 1.0,
-    AnimationDirection dir = AnimationDirection::eInOut, AnimationLoop loop = AnimationLoop::eNone,
-    double exp = 0.0, double delay = 0.0)
-    : Property<T>(start)
-    , mDirection(dir)
-    , mLoop(loop)
-    , mDuration(dur)
-    , mExponent(exp)
-    , mDelay(delay)
-    , mStart(start)
-    , mEnd(end) {}
+      AnimationDirection dir = AnimationDirection::eInOut,
+      AnimationLoop loop = AnimationLoop::eNone, double exp = 0.0, double delay = 0.0)
+      : Property<T>(start)
+      , mDirection(dir)
+      , mLoop(loop)
+      , mDuration(dur)
+      , mExponent(exp)
+      , mDelay(delay)
+      , mStart(start)
+      , mEnd(end) {
+  }
 
   void set(T const& value, double dur, double del = 0.0) {
     mStart    = this->get();
@@ -124,8 +127,12 @@ class AnimatedProperty : public Property<T> {
     Property<T>::set(mStart);
     set(mEnd, mDuration);
   }
-  inline T const&              start() const { return mStart; }
-  inline T const&              end() const { return mEnd; }
+  inline T const& start() const {
+    return mStart;
+  }
+  inline T const& end() const {
+    return mEnd;
+  }
   virtual AnimatedProperty<T>& operator=(T const& rhs) override {
     set(rhs);
     return *this;
@@ -174,13 +181,16 @@ std::istream& operator>>(std::istream& is, AnimationLoop& value);
 class AnimatedFloat : public AnimatedProperty<float> {
  public:
   AnimatedFloat()
-    : AnimatedProperty<float>(0.f) {}
+      : AnimatedProperty<float>(0.f) {
+  }
   AnimatedFloat(float val)
-    : AnimatedProperty<float>(val) {}
+      : AnimatedProperty<float>(val) {
+  }
   AnimatedFloat(float const& start, float const& end, double duration = 1.0,
-    AnimationDirection direction = AnimationDirection::eInOut,
-    AnimationLoop loop = AnimationLoop::eNone, double exponent = 0.0, double delay = 0.0)
-    : AnimatedProperty<float>(start, end, duration, direction, loop, exponent, delay) {}
+      AnimationDirection direction = AnimationDirection::eInOut,
+      AnimationLoop loop = AnimationLoop::eNone, double exponent = 0.0, double delay = 0.0)
+      : AnimatedProperty<float>(start, end, duration, direction, loop, exponent, delay) {
+  }
 
   AnimatedFloat& operator=(AnimatedFloat const& other) {
     mDirection = other.mDirection;
@@ -203,13 +213,16 @@ class AnimatedFloat : public AnimatedProperty<float> {
 class AnimatedDouble : public AnimatedProperty<double> {
  public:
   AnimatedDouble()
-    : AnimatedProperty<double>(0.0) {}
+      : AnimatedProperty<double>(0.0) {
+  }
   AnimatedDouble(double val)
-    : AnimatedProperty<double>(val) {}
+      : AnimatedProperty<double>(val) {
+  }
   AnimatedDouble(double const& start, double const& end, double duration = 1.0,
-    AnimationDirection direction = AnimationDirection::eInOut,
-    AnimationLoop loop = AnimationLoop::eNone, double exponent = 0.0, double delay = 0.0)
-    : AnimatedProperty<double>(start, end, duration, direction, loop, exponent, delay) {}
+      AnimationDirection direction = AnimationDirection::eInOut,
+      AnimationLoop loop = AnimationLoop::eNone, double exponent = 0.0, double delay = 0.0)
+      : AnimatedProperty<double>(start, end, duration, direction, loop, exponent, delay) {
+  }
 
   AnimatedDouble& operator=(AnimatedDouble const& other) {
     mDirection = other.mDirection;

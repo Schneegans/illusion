@@ -107,8 +107,8 @@ vk::PrimitiveTopology convertPrimitiveTopology(int value) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFlags options,
-  TextureChannelMapping const& textureChannels)
-  : mDevice(device) {
+    TextureChannelMapping const& textureChannels)
+    : mDevice(device) {
 
   // load the file ---------------------------------------------------------------------------------
   tinygltf::Model model;
@@ -126,7 +126,7 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
       success = loader.LoadASCIIFromFile(&model, &error, &warn, file);
     } else {
       throw std::runtime_error(
-        "Error loading GLTF file " + file + ": Unknown extension " + extension);
+          "Error loading GLTF file " + file + ": Unknown extension " + extension);
     }
 
     if (!error.empty()) {
@@ -181,13 +181,13 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
         // TODO: if no image data has been loaded, try loading it on our own
         if (image.image.empty()) {
           throw std::runtime_error(
-            "Failed to load GLTF model: Non-tinygltf texture loading is not implemented yet!");
+              "Failed to load GLTF model: Non-tinygltf texture loading is not implemented yet!");
         } else {
           // if there is image data, create an appropriate texture object for it
           vk::ImageCreateInfo imageInfo;
           imageInfo.imageType = vk::ImageType::e2D;
           imageInfo.format =
-            image.component == 3 ? vk::Format::eR8G8B8Unorm : vk::Format::eR8G8B8A8Unorm;
+              image.component == 3 ? vk::Format::eR8G8B8Unorm : vk::Format::eR8G8B8A8Unorm;
           imageInfo.extent.width  = image.width;
           imageInfo.extent.height = image.height;
           imageInfo.extent.depth  = 1;
@@ -206,9 +206,9 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
           // red channel, roughness to green and metallic to blue.
           vk::ComponentMapping componentMapping;
           static const std::unordered_map<TextureChannelMapping::Channel, vk::ComponentSwizzle>
-            convert = {{TextureChannelMapping::Channel::eRed, vk::ComponentSwizzle::eR},
-              {TextureChannelMapping::Channel::eGreen, vk::ComponentSwizzle::eG},
-              {TextureChannelMapping::Channel::eBlue, vk::ComponentSwizzle::eB}};
+              convert = {{TextureChannelMapping::Channel::eRed, vk::ComponentSwizzle::eR},
+                  {TextureChannelMapping::Channel::eGreen, vk::ComponentSwizzle::eG},
+                  {TextureChannelMapping::Channel::eBlue, vk::ComponentSwizzle::eB}};
 
           for (auto const& material : model.materials) {
             for (auto const& p : material.values) {
@@ -228,8 +228,8 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
 
           // create the texture
           auto texture = mDevice->createTexture(imageInfo, samplerInfo, vk::ImageViewType::e2D,
-            vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eShaderReadOnlyOptimal,
-            componentMapping, image.image.size(), (void*)image.image.data());
+              vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eShaderReadOnlyOptimal,
+              componentMapping, image.image.size(), (void*)image.image.data());
 
           TextureUtils::updateMipmaps(mDevice, texture);
 
@@ -308,23 +308,23 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
             val = p.second.Get("diffuseFactor");
             if (val.IsArray()) {
               m->mAlbedoFactor.r =
-                val.Get(0).IsInt() ? val.Get(0).Get<int>() : val.Get(0).Get<double>();
+                  val.Get(0).IsInt() ? val.Get(0).Get<int>() : val.Get(0).Get<double>();
               m->mAlbedoFactor.g =
-                val.Get(1).IsInt() ? val.Get(1).Get<int>() : val.Get(1).Get<double>();
+                  val.Get(1).IsInt() ? val.Get(1).Get<int>() : val.Get(1).Get<double>();
               m->mAlbedoFactor.b =
-                val.Get(2).IsInt() ? val.Get(2).Get<int>() : val.Get(2).Get<double>();
+                  val.Get(2).IsInt() ? val.Get(2).Get<int>() : val.Get(2).Get<double>();
               m->mAlbedoFactor.a =
-                val.Get(3).IsInt() ? val.Get(3).Get<int>() : val.Get(3).Get<double>();
+                  val.Get(3).IsInt() ? val.Get(3).Get<int>() : val.Get(3).Get<double>();
             }
 
             val = p.second.Get("specularFactor");
             if (val.IsArray()) {
               m->mMetallicRoughnessFactor.r =
-                val.Get(0).IsInt() ? val.Get(0).Get<int>() : val.Get(0).Get<double>();
+                  val.Get(0).IsInt() ? val.Get(0).Get<int>() : val.Get(0).Get<double>();
               m->mMetallicRoughnessFactor.g =
-                val.Get(1).IsInt() ? val.Get(1).Get<int>() : val.Get(1).Get<double>();
+                  val.Get(1).IsInt() ? val.Get(1).Get<int>() : val.Get(1).Get<double>();
               m->mMetallicRoughnessFactor.b =
-                val.Get(2).IsInt() ? val.Get(2).Get<int>() : val.Get(2).Get<double>();
+                  val.Get(2).IsInt() ? val.Get(2).Get<int>() : val.Get(2).Get<double>();
             }
           } else {
             ILLUSION_WARNING << "Ignoring GLTF extension \"" << p.first << "\" of material "
@@ -419,13 +419,13 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
 
           if (a.componentType != TINYGLTF_COMPONENT_TYPE_FLOAT) {
             throw std::runtime_error(
-              "Failed to load GLTF model: Unsupported component type for positions!");
+                "Failed to load GLTF model: Unsupported component type for positions!");
           }
 
           uint32_t s = v.byteStride == 0 ? sizeof(glm::vec3) : v.byteStride;
           for (uint32_t i(0); i < vertexCount; ++i) {
             vertexBuffer[vertexStart + i].mPosition = *reinterpret_cast<glm::vec3*>(
-              &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]));
+                &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]));
             primitve.mBoundingBox.add(vertexBuffer[vertexStart + i].mPosition);
           }
         }
@@ -439,13 +439,13 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
 
           if (a.componentType != TINYGLTF_COMPONENT_TYPE_FLOAT) {
             throw std::runtime_error(
-              "Failed to load GLTF model: Unsupported component type for normals!");
+                "Failed to load GLTF model: Unsupported component type for normals!");
           }
 
           uint32_t s = v.byteStride == 0 ? sizeof(glm::vec3) : v.byteStride;
           for (uint32_t i(0); i < vertexCount; ++i) {
             vertexBuffer[vertexStart + i].mNormal = *reinterpret_cast<glm::vec3*>(
-              &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]));
+                &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]));
           }
         }
 
@@ -461,7 +461,7 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
             uint32_t s = v.byteStride == 0 ? sizeof(glm::vec2) : v.byteStride;
             for (uint32_t i(0); i < vertexCount; ++i) {
               vertexBuffer[vertexStart + i].mTexcoords = *reinterpret_cast<glm::vec2*>(
-                &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]));
+                  &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]));
             }
             break;
           }
@@ -469,9 +469,9 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
             uint32_t s = v.byteStride == 0 ? sizeof(glm::u8vec2) : v.byteStride;
             for (uint32_t i(0); i < vertexCount; ++i) {
               vertexBuffer[vertexStart + i].mTexcoords =
-                glm::vec2(*reinterpret_cast<glm::u8vec2*>(
-                  &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]))) /
-                255.f;
+                  glm::vec2(*reinterpret_cast<glm::u8vec2*>(
+                      &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]))) /
+                  255.f;
             }
             break;
           }
@@ -479,15 +479,15 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
             uint32_t s = v.byteStride == 0 ? sizeof(glm::u16vec2) : v.byteStride;
             for (uint32_t i(0); i < vertexCount; ++i) {
               vertexBuffer[vertexStart + i].mTexcoords =
-                glm::vec2(*reinterpret_cast<glm::u16vec2*>(
-                  &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]))) /
-                65535.f;
+                  glm::vec2(*reinterpret_cast<glm::u16vec2*>(
+                      &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]))) /
+                  65535.f;
             }
             break;
           }
           default:
             throw std::runtime_error(
-              "Failed to load GLTF model: Unsupported component type for texcoords!");
+                "Failed to load GLTF model: Unsupported component type for texcoords!");
           }
         }
 
@@ -507,7 +507,7 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
               uint32_t s = v.byteStride == 0 ? sizeof(glm::u8vec4) : v.byteStride;
               for (uint32_t i(0); i < vertexCount; ++i) {
                 vertexBuffer[vertexStart + i].mJoint0 = glm::vec4(*reinterpret_cast<glm::u8vec4*>(
-                  &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s])));
+                    &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s])));
               }
               break;
             }
@@ -515,13 +515,13 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
               uint32_t s = v.byteStride == 0 ? sizeof(glm::u16vec4) : v.byteStride;
               for (uint32_t i(0); i < vertexCount; ++i) {
                 vertexBuffer[vertexStart + i].mJoint0 = glm::vec4(*reinterpret_cast<glm::u16vec4*>(
-                  &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s])));
+                    &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s])));
               }
               break;
             }
             default:
               throw std::runtime_error(
-                "Failed to load GLTF model: Unsupported component type for joints!");
+                  "Failed to load GLTF model: Unsupported component type for joints!");
             }
           }
 
@@ -534,7 +534,7 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
               uint32_t s = v.byteStride == 0 ? sizeof(glm::vec4) : v.byteStride;
               for (uint32_t i(0); i < vertexCount; ++i) {
                 vertexBuffer[vertexStart + i].mWeight0 = *reinterpret_cast<glm::vec4*>(
-                  &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]));
+                    &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]));
               }
               break;
             }
@@ -542,9 +542,9 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
               uint32_t s = v.byteStride == 0 ? sizeof(glm::u8vec4) : v.byteStride;
               for (uint32_t i(0); i < vertexCount; ++i) {
                 vertexBuffer[vertexStart + i].mWeight0 =
-                  glm::vec4(*reinterpret_cast<glm::u8vec4*>(
-                    &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]))) /
-                  255.f;
+                    glm::vec4(*reinterpret_cast<glm::u8vec4*>(
+                        &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]))) /
+                    255.f;
               }
               break;
             }
@@ -552,15 +552,15 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
               uint32_t s = v.byteStride == 0 ? sizeof(glm::u16vec4) : v.byteStride;
               for (uint32_t i(0); i < vertexCount; ++i) {
                 vertexBuffer[vertexStart + i].mWeight0 =
-                  glm::vec4(*reinterpret_cast<glm::u16vec4*>(
-                    &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]))) /
-                  65535.f;
+                    glm::vec4(*reinterpret_cast<glm::u16vec4*>(
+                        &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]))) /
+                    65535.f;
               }
               break;
             }
             default:
               throw std::runtime_error(
-                "Failed to load GLTF model: Unsupported component type for weights!");
+                  "Failed to load GLTF model: Unsupported component type for weights!");
             }
 
             // normalize weights - is this the correct way of handling cases where the sum of the
@@ -598,7 +598,7 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
           switch (a.componentType) {
           case TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT: {
             auto data = reinterpret_cast<const uint32_t*>(
-              &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+                &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
             for (uint32_t i = 0; i < primitve.mIndexCount; ++i) {
               indexBuffer.push_back(data[i] + vertexStart);
             }
@@ -606,7 +606,7 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
           }
           case TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT: {
             auto data = reinterpret_cast<const uint16_t*>(
-              &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+                &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
             for (uint32_t i = 0; i < primitve.mIndexCount; ++i) {
               indexBuffer.push_back(data[i] + vertexStart);
             }
@@ -614,7 +614,7 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
           }
           case TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE: {
             auto data = reinterpret_cast<const uint8_t*>(
-              &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+                &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
             for (uint32_t i = 0; i < primitve.mIndexCount; ++i) {
               indexBuffer.push_back(data[i] + vertexStart);
             }
@@ -657,7 +657,8 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
         auto const& v = model.bufferViews[a.bufferView];
         skin->mInverseBindMatrices.resize(a.count);
         std::memcpy(skin->mInverseBindMatrices.data(),
-          &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset], a.count * sizeof(glm::mat4));
+            &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset],
+            a.count * sizeof(glm::mat4));
       }
 
       mSkins.emplace_back(skin);
@@ -731,7 +732,7 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
           auto const& v = model.bufferViews[a.bufferView];
 
           auto data = reinterpret_cast<const float*>(
-            &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+              &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
 
           for (size_t i(0); i < a.count; ++i) {
             sampler.mKeyFrames.push_back(data[i]);
@@ -747,25 +748,25 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
 
           if (a.type == TINYGLTF_TYPE_SCALAR) {
             auto data = reinterpret_cast<const float*>(
-              &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+                &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
             for (size_t i(0); i < a.count; ++i) {
               sampler.mValues.emplace_back(glm::vec4(data[i], 0.f, 0.f, 0.f));
             }
           } else if (a.type == TINYGLTF_TYPE_VEC2) {
             auto data = reinterpret_cast<const glm::vec2*>(
-              &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+                &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
             for (size_t i(0); i < a.count; ++i) {
               sampler.mValues.emplace_back(glm::vec4(data[i], 0.f, 0.f));
             }
           } else if (a.type == TINYGLTF_TYPE_VEC3) {
             auto data = reinterpret_cast<const glm::vec3*>(
-              &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+                &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
             for (size_t i(0); i < a.count; ++i) {
               sampler.mValues.emplace_back(glm::vec4(data[i], 0.f));
             }
           } else if (a.type == TINYGLTF_TYPE_VEC4) {
             auto data = reinterpret_cast<const glm::vec4*>(
-              &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+                &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
             for (size_t i(0); i < a.count; ++i) {
               sampler.mValues.emplace_back(data[i]);
             }
@@ -821,9 +822,9 @@ void GltfModel::setAnimationTime(uint32_t animationIndex, float time) {
     auto const& sampler = mAnimations[animationIndex]->mSamplers[channel.mSamplerIndex];
 
     if ((sampler.mType == Animation::Sampler::Type::eCubicSpline &&
-          sampler.mKeyFrames.size() * 3 != sampler.mValues.size()) ||
+            sampler.mKeyFrames.size() * 3 != sampler.mValues.size()) ||
         (sampler.mType != Animation::Sampler::Type::eCubicSpline &&
-          sampler.mKeyFrames.size() != sampler.mValues.size())) {
+            sampler.mKeyFrames.size() != sampler.mValues.size())) {
       ILLUSION_WARNING << "Failed to update GLTF animation: Number of data points does not match "
                           "the number of keyframes. This should not happen!"
                        << std::endl;
@@ -848,7 +849,8 @@ void GltfModel::setAnimationTime(uint32_t animationIndex, float time) {
       }
       s = e - 1;
       t = glm::clamp(
-        (time - sampler.mKeyFrames[s]) / (sampler.mKeyFrames[e] - sampler.mKeyFrames[s]), 0.f, 1.f);
+          (time - sampler.mKeyFrames[s]) / (sampler.mKeyFrames[e] - sampler.mKeyFrames[s]), 0.f,
+          1.f);
     }
 
     if (sampler.mType == Animation::Sampler::Type::eStep) {
@@ -898,35 +900,51 @@ void GltfModel::setAnimationTime(uint32_t animationIndex, float time) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-GltfModel::Node const& GltfModel::getRoot() const { return mRootNode; }
+GltfModel::Node const& GltfModel::getRoot() const {
+  return mRootNode;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BackedBufferPtr const& GltfModel::getIndexBuffer() const { return mIndexBuffer; }
+BackedBufferPtr const& GltfModel::getIndexBuffer() const {
+  return mIndexBuffer;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BackedBufferPtr const& GltfModel::getVertexBuffer() const { return mVertexBuffer; }
+BackedBufferPtr const& GltfModel::getVertexBuffer() const {
+  return mVertexBuffer;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<TexturePtr> const& GltfModel::getTextures() const { return mTextures; }
+std::vector<TexturePtr> const& GltfModel::getTextures() const {
+  return mTextures;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<GltfModel::MaterialPtr> const& GltfModel::getMaterials() const { return mMaterials; }
+std::vector<GltfModel::MaterialPtr> const& GltfModel::getMaterials() const {
+  return mMaterials;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<GltfModel::MeshPtr> const& GltfModel::getMeshes() const { return mMeshes; }
+std::vector<GltfModel::MeshPtr> const& GltfModel::getMeshes() const {
+  return mMeshes;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<GltfModel::NodePtr> const& GltfModel::getNodes() const { return mNodes; }
+std::vector<GltfModel::NodePtr> const& GltfModel::getNodes() const {
+  return mNodes;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<GltfModel::AnimationPtr> const& GltfModel::getAnimations() const { return mAnimations; }
+std::vector<GltfModel::AnimationPtr> const& GltfModel::getAnimations() const {
+  return mAnimations;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1019,10 +1037,10 @@ std::vector<vk::VertexInputBindingDescription> GltfModel::getVertexInputBindings
 
 std::vector<vk::VertexInputAttributeDescription> GltfModel::getVertexInputAttributes() {
   return {{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(struct Vertex, mPosition)},
-    {1, 0, vk::Format::eR32G32B32Sfloat, offsetof(struct Vertex, mNormal)},
-    {2, 0, vk::Format::eR32G32Sfloat, offsetof(struct Vertex, mTexcoords)},
-    {3, 0, vk::Format::eR32G32B32A32Sfloat, offsetof(struct Vertex, mJoint0)},
-    {4, 0, vk::Format::eR32G32B32A32Sfloat, offsetof(struct Vertex, mWeight0)}};
+      {1, 0, vk::Format::eR32G32B32Sfloat, offsetof(struct Vertex, mNormal)},
+      {2, 0, vk::Format::eR32G32Sfloat, offsetof(struct Vertex, mTexcoords)},
+      {3, 0, vk::Format::eR32G32B32A32Sfloat, offsetof(struct Vertex, mJoint0)},
+      {4, 0, vk::Format::eR32G32B32A32Sfloat, offsetof(struct Vertex, mWeight0)}};
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

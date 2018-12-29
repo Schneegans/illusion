@@ -23,17 +23,17 @@ bool formatSupportsLinearSampling(DevicePtr const& device, vk::Format format);
 uint32_t getMaxMipmapLevels(uint32_t width, uint32_t height);
 
 TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
-  vk::SamplerCreateInfo samplerInfo = Device::createSamplerInfo(), bool generateMipmaps = true,
-  vk::ComponentMapping const& componentMapping = vk::ComponentMapping());
+    vk::SamplerCreateInfo samplerInfo = Device::createSamplerInfo(), bool generateMipmaps = true,
+    vk::ComponentMapping const& componentMapping = vk::ComponentMapping());
 
 TexturePtr createCubemapFrom360PanoramaFile(DevicePtr const& device, std::string const& fileName,
-  uint32_t size, vk::SamplerCreateInfo samplerInfo = Device::createSamplerInfo(),
-  bool generateMipmaps = true);
+    uint32_t size, vk::SamplerCreateInfo samplerInfo = Device::createSamplerInfo(),
+    bool generateMipmaps = true);
 
 TexturePtr createPrefilteredIrradianceCubemap(
-  DevicePtr const& device, uint32_t size, TexturePtr const& inputCubemap);
+    DevicePtr const& device, uint32_t size, TexturePtr const& inputCubemap);
 TexturePtr createPrefilteredReflectionCubemap(
-  DevicePtr const& device, uint32_t size, TexturePtr const& inputCubemap);
+    DevicePtr const& device, uint32_t size, TexturePtr const& inputCubemap);
 TexturePtr createBRDFLuT(DevicePtr const& device, uint32_t size);
 
 void updateMipmaps(DevicePtr const& device, TexturePtr const& texture);

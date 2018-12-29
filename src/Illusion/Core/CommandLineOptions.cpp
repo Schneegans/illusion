@@ -22,12 +22,13 @@ namespace Illusion::Core {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 CommandLineOptions::CommandLineOptions(std::string const& description)
-  : mDescription(description) {}
+    : mDescription(description) {
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandLineOptions::addOption(
-  std::vector<std::string> const& optionNames, OptionValue value, std::string const& help) {
+    std::vector<std::string> const& optionNames, OptionValue value, std::string const& help) {
 
   mOptions.emplace_back(Option{optionNames, value, help});
 }
@@ -105,22 +106,22 @@ void CommandLineOptions::parse(int argc, char* argv[]) const {
         if (std::holds_alternative<bool*>(option.mValue)) {
           if (value.size() > 0 && value != "true" && value != "false") {
             throw std::runtime_error(
-              "Failed to parse command line arguments: Value for bool type option \"" + name +
-              "\" must be empty, true or false!");
+                "Failed to parse command line arguments: Value for bool type option \"" + name +
+                "\" must be empty, true or false!");
           }
           *std::get<bool*>(option.mValue) = (value != "false");
         } else if (value == "") {
           throw std::runtime_error(
-            "Failed to parse command line arguments: Missing value for option \"" + name + "\"!");
+              "Failed to parse command line arguments: Missing value for option \"" + name + "\"!");
         } else if (std::holds_alternative<std::string*>(option.mValue)) {
           *std::get<std::string*>(option.mValue) = value;
         } else {
           std::visit(
-            [&value](auto&& arg) {
-              std::stringstream sstr(value);
-              sstr >> *arg;
-            },
-            option.mValue);
+              [&value](auto&& arg) {
+                std::stringstream sstr(value);
+                sstr >> *arg;
+              },
+              option.mValue);
         }
 
         break;

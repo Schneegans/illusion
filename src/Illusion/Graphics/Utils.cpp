@@ -399,7 +399,7 @@ uint8_t getByteCount(vk::Format format) {
   case vk::Format::ePvrtc22BppSrgbBlockIMG:
   case vk::Format::ePvrtc24BppSrgbBlockIMG:
     throw std::runtime_error(
-      "Failed to get byte count for " + vk::to_string(format) + ": Not implemented!");
+        "Failed to get byte count for " + vk::to_string(format) + ": Not implemented!");
   }
 }
 

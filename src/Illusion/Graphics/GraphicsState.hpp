@@ -41,8 +41,8 @@ class GraphicsState {
     vk::BlendFactor         mDstAlphaBlendFactor = vk::BlendFactor::eZero;
     vk::BlendOp             mAlphaBlendOp        = vk::BlendOp::eAdd;
     vk::ColorComponentFlags mColorWriteMask =
-      vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
-      vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+        vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
+        vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
 
     bool operator==(BlendAttachment const& other) const;
   };

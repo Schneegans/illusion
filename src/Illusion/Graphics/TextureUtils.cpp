@@ -26,7 +26,7 @@ namespace Illusion::Graphics::TextureUtils {
 
 bool formatSupportsLinearSampling(DevicePtr const& device, vk::Format format) {
   auto const& features =
-    device->getPhysicalDevice()->getFormatProperties(format).optimalTilingFeatures;
+      device->getPhysicalDevice()->getFormatProperties(format).optimalTilingFeatures;
 
   return (bool)(features & vk::FormatFeatureFlagBits::eSampledImageFilterLinear);
 }
@@ -40,8 +40,8 @@ uint32_t getMaxMipmapLevels(uint32_t width, uint32_t height) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
-  vk::SamplerCreateInfo samplerInfo, bool generateMipmaps,
-  vk::ComponentMapping const& componentMapping) {
+    vk::SamplerCreateInfo samplerInfo, bool generateMipmaps,
+    vk::ComponentMapping const& componentMapping) {
 
   // first try loading with gli
   gli::texture texture(gli::load(fileName));
@@ -57,7 +57,7 @@ TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
       type = vk::ImageViewType::eCube;
     } else {
       throw std::runtime_error(
-        "Failed to load texture " + fileName + ": Unsupported texture target!");
+          "Failed to load texture " + fileName + ": Unsupported texture target!");
     }
 
     vk::Format format(static_cast<vk::Format>(texture.format()));
@@ -93,8 +93,8 @@ TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
     }
 
     auto outputImage = device->createTexture(imageInfo, samplerInfo, vk::ImageViewType::e2D,
-      vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eShaderReadOnlyOptimal, componentMapping,
-      texture.size(), texture.data());
+        vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eShaderReadOnlyOptimal, componentMapping,
+        texture.size(), texture.data());
 
     if (generateMipmaps) {
       updateMipmaps(device, outputImage);
@@ -148,8 +148,8 @@ TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
     }
 
     auto result = device->createTexture(imageInfo, samplerInfo, vk::ImageViewType::e2D,
-      vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eShaderReadOnlyOptimal, componentMapping,
-      size, data);
+        vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eShaderReadOnlyOptimal, componentMapping,
+        size, data);
 
     stbi_image_free(data);
 
@@ -168,7 +168,7 @@ TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TexturePtr createCubemapFrom360PanoramaFile(DevicePtr const& device, std::string const& fileName,
-  uint32_t size, vk::SamplerCreateInfo samplerInfo, bool generateMipmaps) {
+    uint32_t size, vk::SamplerCreateInfo samplerInfo, bool generateMipmaps) {
 
   std::string glsl = R"(
     #version 450
@@ -218,9 +218,9 @@ TexturePtr createCubemapFrom360PanoramaFile(DevicePtr const& device, std::string
   )";
 
   auto panorama = createFromFile(device, fileName,
-    vk::SamplerCreateInfo(vk::SamplerCreateFlags(), vk::Filter::eLinear, vk::Filter::eLinear,
-      vk::SamplerMipmapMode::eLinear, vk::SamplerAddressMode::eRepeat,
-      vk::SamplerAddressMode::eClampToEdge));
+      vk::SamplerCreateInfo(vk::SamplerCreateFlags(), vk::Filter::eLinear, vk::Filter::eLinear,
+          vk::SamplerMipmapMode::eLinear, vk::SamplerAddressMode::eRepeat,
+          vk::SamplerAddressMode::eClampToEdge));
   auto shader = ShaderProgram::createFromGlsl(device, {{vk::ShaderStageFlagBits::eCompute, glsl}});
 
   vk::ImageCreateInfo imageInfo;
@@ -246,7 +246,7 @@ TexturePtr createCubemapFrom360PanoramaFile(DevicePtr const& device, std::string
   }
 
   auto outputCubemap = device->createTexture(imageInfo, samplerInfo, vk::ImageViewType::eCube,
-    vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eGeneral);
+      vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eGeneral);
 
   auto cmd = CommandBuffer::create(device, QueueType::eCompute);
   cmd->bindingState().setTexture(panorama, 0, 0);
@@ -271,7 +271,7 @@ TexturePtr createCubemapFrom360PanoramaFile(DevicePtr const& device, std::string
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TexturePtr createPrefilteredIrradianceCubemap(
-  DevicePtr const& device, uint32_t size, TexturePtr const& inputCubemap) {
+    DevicePtr const& device, uint32_t size, TexturePtr const& inputCubemap) {
   std::string glsl = R"(
     #version 450
 
@@ -366,7 +366,7 @@ TexturePtr createPrefilteredIrradianceCubemap(
   imageInfo.initialLayout = vk::ImageLayout::eUndefined;
 
   auto outputCubemap = device->createTexture(imageInfo, device->createSamplerInfo(),
-    vk::ImageViewType::eCube, vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eGeneral);
+      vk::ImageViewType::eCube, vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eGeneral);
 
   auto cmd = CommandBuffer::create(device, QueueType::eCompute);
   cmd->bindingState().setTexture(inputCubemap, 0, 0);
@@ -387,7 +387,7 @@ TexturePtr createPrefilteredIrradianceCubemap(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 TexturePtr createPrefilteredReflectionCubemap(
-  DevicePtr const& device, uint32_t size, TexturePtr const& inputCubemap) {
+    DevicePtr const& device, uint32_t size, TexturePtr const& inputCubemap) {
   std::string glsl = R"(
     #version 450
 
@@ -548,7 +548,7 @@ TexturePtr createPrefilteredReflectionCubemap(
   samplerInfo.maxLod = imageInfo.mipLevels;
 
   auto outputCubemap = device->createTexture(imageInfo, samplerInfo, vk::ImageViewType::eCube,
-    vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eGeneral);
+      vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eGeneral);
 
   auto cmd = CommandBuffer::create(device, QueueType::eCompute);
   cmd->bindingState().setTexture(inputCubemap, 0, 0);
@@ -708,7 +708,7 @@ TexturePtr createBRDFLuT(DevicePtr const& device, uint32_t size) {
   imageInfo.initialLayout = vk::ImageLayout::eUndefined;
 
   auto outputImage = device->createTexture(imageInfo, device->createSamplerInfo(),
-    vk::ImageViewType::e2D, vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eGeneral);
+      vk::ImageViewType::e2D, vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eGeneral);
 
   auto cmd = CommandBuffer::create(device, QueueType::eCompute);
   cmd->bindingState().setStorageImage(outputImage, 0, 0);
@@ -731,7 +731,7 @@ void updateMipmaps(DevicePtr const& device, TexturePtr const& texture) {
 
   if (!formatSupportsLinearSampling(device, texture->mBackedImage->mImageInfo.format)) {
     throw std::runtime_error(
-      "Failed to generate mipmaps: Texture format does not support linear sampling!");
+        "Failed to generate mipmaps: Texture format does not support linear sampling!");
   }
 
   auto cmd = CommandBuffer::create(device, QueueType::eGeneric);
@@ -748,26 +748,26 @@ void updateMipmaps(DevicePtr const& device, TexturePtr const& texture) {
   uint32_t mipHeight = texture->mBackedImage->mImageInfo.extent.height;
 
   cmd->transitionImageLayout(*texture->mBackedImage->mImage, texture->mBackedImage->mCurrentLayout,
-    vk::ImageLayout::eTransferSrcOptimal, vk::PipelineStageFlagBits::eFragmentShader,
-    vk::PipelineStageFlagBits::eTransfer, subresourceRange);
+      vk::ImageLayout::eTransferSrcOptimal, vk::PipelineStageFlagBits::eFragmentShader,
+      vk::PipelineStageFlagBits::eTransfer, subresourceRange);
 
   for (uint32_t i = 1; i < texture->mBackedImage->mImageInfo.mipLevels; ++i) {
 
     subresourceRange.baseMipLevel = i;
 
     cmd->transitionImageLayout(*texture->mBackedImage->mImage,
-      texture->mBackedImage->mCurrentLayout, vk::ImageLayout::eTransferDstOptimal,
-      vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eTransfer,
-      subresourceRange);
+        texture->mBackedImage->mCurrentLayout, vk::ImageLayout::eTransferDstOptimal,
+        vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eTransfer,
+        subresourceRange);
 
     cmd->blitImage(*texture->mBackedImage->mImage, i - 1, *texture->mBackedImage->mImage, i,
-      glm::uvec2(mipWidth, mipHeight),
-      glm::uvec2(std::max(mipWidth / 2, 1u), std::max(mipHeight / 2, 1u)),
-      subresourceRange.layerCount, vk::Filter::eLinear);
+        glm::uvec2(mipWidth, mipHeight),
+        glm::uvec2(std::max(mipWidth / 2, 1u), std::max(mipHeight / 2, 1u)),
+        subresourceRange.layerCount, vk::Filter::eLinear);
 
     cmd->transitionImageLayout(*texture->mBackedImage->mImage, vk::ImageLayout::eTransferDstOptimal,
-      vk::ImageLayout::eTransferSrcOptimal, vk::PipelineStageFlagBits::eTransfer,
-      vk::PipelineStageFlagBits::eTransfer, subresourceRange);
+        vk::ImageLayout::eTransferSrcOptimal, vk::PipelineStageFlagBits::eTransfer,
+        vk::PipelineStageFlagBits::eTransfer, subresourceRange);
 
     mipWidth  = std::max(mipWidth / 2, 1u);
     mipHeight = std::max(mipHeight / 2, 1u);
@@ -777,8 +777,8 @@ void updateMipmaps(DevicePtr const& device, TexturePtr const& texture) {
   subresourceRange.baseMipLevel = 0;
 
   cmd->transitionImageLayout(*texture->mBackedImage->mImage, vk::ImageLayout::eTransferSrcOptimal,
-    vk::ImageLayout::eShaderReadOnlyOptimal, vk::PipelineStageFlagBits::eTransfer,
-    vk::PipelineStageFlagBits::eFragmentShader, subresourceRange);
+      vk::ImageLayout::eShaderReadOnlyOptimal, vk::PipelineStageFlagBits::eTransfer,
+      vk::PipelineStageFlagBits::eFragmentShader, subresourceRange);
 
   texture->mBackedImage->mCurrentLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
 

@@ -17,14 +17,15 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 CoherentUniformBuffer::CoherentUniformBuffer(
-  DevicePtr const& device, vk::DeviceSize size, vk::DeviceSize alignment)
-  : mDevice(device)
-  , mBuffer(device->createBackedBuffer(vk::BufferUsageFlagBits::eUniformBuffer,
-      vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible, size))
-  , mAlignment(alignment) {
+    DevicePtr const& device, vk::DeviceSize size, vk::DeviceSize alignment)
+    : mDevice(device)
+    , mBuffer(device->createBackedBuffer(vk::BufferUsageFlagBits::eUniformBuffer,
+          vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible,
+          size))
+    , mAlignment(alignment) {
 
   mMappedData = (uint8_t*)mDevice->getHandle()->mapMemory(
-    *mBuffer->mMemory, 0, mBuffer->mMemoryInfo.allocationSize);
+      *mBuffer->mMemory, 0, mBuffer->mMemoryInfo.allocationSize);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -35,7 +36,9 @@ CoherentUniformBuffer::~CoherentUniformBuffer() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CoherentUniformBuffer::reset() { mCurrentWriteOffset = 0; }
+void CoherentUniformBuffer::reset() {
+  mCurrentWriteOffset = 0;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -54,7 +57,7 @@ vk::DeviceSize CoherentUniformBuffer::addData(uint8_t const* data, vk::DeviceSiz
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 vk::DeviceSize CoherentUniformBuffer::updateData(
-  uint8_t const* data, vk::DeviceSize count, vk::DeviceSize offset) {
+    uint8_t const* data, vk::DeviceSize count, vk::DeviceSize offset) {
 
   if (offset + count > mBuffer->mMemoryInfo.allocationSize) {
     throw std::runtime_error("Failed to set uniform data: Preallocated memory exhausted!");
@@ -65,7 +68,9 @@ vk::DeviceSize CoherentUniformBuffer::updateData(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BackedBufferPtr const& CoherentUniformBuffer::getBuffer() const { return mBuffer; }
+BackedBufferPtr const& CoherentUniformBuffer::getBuffer() const {
+  return mBuffer;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

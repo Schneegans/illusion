@@ -24,15 +24,15 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 const std::unordered_map<std::string, vk::ShaderStageFlagBits> extensionMapping = {
-  {"frag", vk::ShaderStageFlagBits::eFragment}, {"vert", vk::ShaderStageFlagBits::eVertex},
-  {"geom", vk::ShaderStageFlagBits::eGeometry}, {"comp", vk::ShaderStageFlagBits::eCompute},
-  {"tesc", vk::ShaderStageFlagBits::eTessellationControl},
-  {"tese", vk::ShaderStageFlagBits::eTessellationEvaluation}};
+    {"frag", vk::ShaderStageFlagBits::eFragment}, {"vert", vk::ShaderStageFlagBits::eVertex},
+    {"geom", vk::ShaderStageFlagBits::eGeometry}, {"comp", vk::ShaderStageFlagBits::eCompute},
+    {"tesc", vk::ShaderStageFlagBits::eTessellationControl},
+    {"tese", vk::ShaderStageFlagBits::eTessellationEvaluation}};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ShaderProgramPtr ShaderProgram::createFromFiles(DevicePtr const& device,
-  std::vector<std::string> const& files, std::set<std::string> const& dynamicBuffers) {
+    std::vector<std::string> const& files, std::set<std::string> const& dynamicBuffers) {
 
   std::vector<ShaderModulePtr> modules;
 
@@ -42,7 +42,7 @@ ShaderProgramPtr ShaderProgram::createFromFiles(DevicePtr const& device,
     auto stage = extensionMapping.find(extension);
     if (stage == extensionMapping.end()) {
       throw std::runtime_error(
-        "Failed to add shader stage: File " + file + " has an unknown extension!");
+          "Failed to add shader stage: File " + file + " has an unknown extension!");
     }
 
     auto glsl = Illusion::Core::File<std::string>(file).getContent();
@@ -55,14 +55,14 @@ ShaderProgramPtr ShaderProgram::createFromFiles(DevicePtr const& device,
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ShaderProgramPtr ShaderProgram::createFromGlsl(DevicePtr const& device,
-  std::map<vk::ShaderStageFlagBits, std::string> const&         sources,
-  std::set<std::string> const&                                  dynamicBuffers) {
+    std::map<vk::ShaderStageFlagBits, std::string> const&       sources,
+    std::set<std::string> const&                                dynamicBuffers) {
 
   std::vector<ShaderModulePtr> modules;
 
   for (auto const& source : sources) {
     modules.push_back(
-      std::make_shared<ShaderModule>(device, source.second, source.first, dynamicBuffers));
+        std::make_shared<ShaderModule>(device, source.second, source.first, dynamicBuffers));
   }
 
   return std::make_shared<ShaderProgram>(device, modules);
@@ -71,8 +71,8 @@ ShaderProgramPtr ShaderProgram::createFromGlsl(DevicePtr const& device,
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ShaderProgram::ShaderProgram(DevicePtr const& device, std::vector<ShaderModulePtr> const& modules)
-  : mDevice(device)
-  , mModules(modules) {
+    : mDevice(device)
+    , mModules(modules) {
 
   ILLUSION_TRACE << "Creating ShaderProgram." << std::endl;
 
@@ -81,15 +81,21 @@ ShaderProgram::ShaderProgram(DevicePtr const& device, std::vector<ShaderModulePt
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ShaderProgram::~ShaderProgram() { ILLUSION_TRACE << "Deleting ShaderProgram." << std::endl; }
+ShaderProgram::~ShaderProgram() {
+  ILLUSION_TRACE << "Deleting ShaderProgram." << std::endl;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<ShaderModulePtr> const& ShaderProgram::getModules() const { return mModules; }
+std::vector<ShaderModulePtr> const& ShaderProgram::getModules() const {
+  return mModules;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-PipelineReflectionPtr const& ShaderProgram::getReflection() const { return mReflection; }
+PipelineReflectionPtr const& ShaderProgram::getReflection() const {
+  return mReflection;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

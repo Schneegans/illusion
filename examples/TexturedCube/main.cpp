@@ -57,11 +57,11 @@ const std::array<uint32_t, 36> INDICES = {
 
 struct FrameResources {
   FrameResources(Illusion::Graphics::DevicePtr const& device)
-    : mCmd(Illusion::Graphics::CommandBuffer::create(device))
-    , mRenderPass(Illusion::Graphics::RenderPass::create(device))
-    , mUniformBuffer(Illusion::Graphics::CoherentUniformBuffer::create(device, sizeof(glm::mat4)))
-    , mRenderFinishedFence(device->createFence())
-    , mRenderFinishedSemaphore(device->createSemaphore()) {
+      : mCmd(Illusion::Graphics::CommandBuffer::create(device))
+      , mRenderPass(Illusion::Graphics::RenderPass::create(device))
+      , mUniformBuffer(Illusion::Graphics::CoherentUniformBuffer::create(device, sizeof(glm::mat4)))
+      , mRenderFinishedFence(device->createFence())
+      , mRenderFinishedSemaphore(device->createSemaphore()) {
 
     mRenderPass->addAttachment(vk::Format::eR8G8B8A8Unorm);
     mRenderPass->addAttachment(vk::Format::eD32Sfloat);
@@ -69,11 +69,11 @@ struct FrameResources {
     mCmd->graphicsState().addBlendAttachment({});
     mCmd->graphicsState().setTopology(vk::PrimitiveTopology::eTriangleList);
     mCmd->graphicsState().setVertexInputBindings(
-      {{0, sizeof(glm::vec3), vk::VertexInputRate::eVertex},
-        {1, sizeof(glm::vec3), vk::VertexInputRate::eVertex},
-        {2, sizeof(glm::vec2), vk::VertexInputRate::eVertex}});
+        {{0, sizeof(glm::vec3), vk::VertexInputRate::eVertex},
+            {1, sizeof(glm::vec3), vk::VertexInputRate::eVertex},
+            {2, sizeof(glm::vec2), vk::VertexInputRate::eVertex}});
     mCmd->graphicsState().setVertexInputAttributes({{0, 0, vk::Format::eR32G32B32Sfloat, 0},
-      {1, 1, vk::Format::eR32G32B32Sfloat, 0}, {2, 2, vk::Format::eR32G32Sfloat, 0}});
+        {1, 1, vk::Format::eR32G32B32Sfloat, 0}, {2, 2, vk::Format::eR32G32Sfloat, 0}});
   }
 
   Illusion::Graphics::CommandBufferPtr         mCmd;
@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
 
   auto texture = Illusion::Graphics::TextureUtils::createFromFile(device, "data/textures/box.dds");
   auto shader  = Illusion::Graphics::ShaderProgram::createFromFiles(
-    device, {"data/shaders/TexturedCube.vert", "data/shaders/TexturedCube.frag"});
+      device, {"data/shaders/TexturedCube.vert", "data/shaders/TexturedCube.frag"});
 
   auto positionBuffer = device->createVertexBuffer(POSITIONS);
   auto normalBuffer   = device->createVertexBuffer(NORMALS);
@@ -101,7 +101,7 @@ int main(int argc, char* argv[]) {
   auto indexBuffer    = device->createIndexBuffer(INDICES);
 
   Illusion::Core::RingBuffer<FrameResources, 2> frameResources{
-    FrameResources(device), FrameResources(device)};
+      FrameResources(device), FrameResources(device)};
 
   float time = 0.f;
 
@@ -122,15 +122,15 @@ int main(int argc, char* argv[]) {
     res.mCmd->setShaderProgram(shader);
     res.mRenderPass->setExtent(window->pExtent.get());
     res.mCmd->graphicsState().setViewports(
-      {{glm::vec2(0), glm::vec2(window->pExtent.get()), 0.f, 1.f}});
+        {{glm::vec2(0), glm::vec2(window->pExtent.get()), 0.f, 1.f}});
 
     res.mCmd->bindingState().setUniformBuffer(
-      res.mUniformBuffer->getBuffer(), sizeof(glm::mat4), 0, 0, 0);
+        res.mUniformBuffer->getBuffer(), sizeof(glm::mat4), 0, 0, 0);
     res.mCmd->bindingState().setTexture(texture, 1, 0);
 
     glm::mat4 projection = glm::perspectiveZO(glm::radians(60.f),
-      static_cast<float>(window->pExtent.get().x) / static_cast<float>(window->pExtent.get().y),
-      0.1f, 100.0f);
+        static_cast<float>(window->pExtent.get().x) / static_cast<float>(window->pExtent.get().y),
+        0.1f, 100.0f);
     projection[1][1] *= -1;
     res.mUniformBuffer->updateData(projection);
 
@@ -152,7 +152,7 @@ int main(int argc, char* argv[]) {
     res.mCmd->submit({}, {}, {*res.mRenderFinishedSemaphore});
 
     window->present(res.mRenderPass->getFramebuffer()->getImages()[0], res.mRenderFinishedSemaphore,
-      res.mRenderFinishedFence);
+        res.mRenderFinishedFence);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
   }

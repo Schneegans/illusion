@@ -36,7 +36,7 @@ class Swapchain {
   glm::uvec2 const& getExtent() const;
 
   void present(BackedImagePtr const& image, vk::SemaphorePtr const& renderFinishedSemaphore,
-    vk::FencePtr const& signalFence);
+      vk::FencePtr const& signalFence);
 
  private:
   void chooseExtent();

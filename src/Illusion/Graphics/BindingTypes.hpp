@@ -85,8 +85,8 @@ struct DynamicStorageBufferBinding {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 typedef std::variant<StorageImageBinding, CombinedImageSamplerBinding, UniformBufferBinding,
-  DynamicUniformBufferBinding, StorageBufferBinding, DynamicStorageBufferBinding>
-  BindingType;
+    DynamicUniformBufferBinding, StorageBufferBinding, DynamicStorageBufferBinding>
+    BindingType;
 
 } // namespace Illusion::Graphics
 

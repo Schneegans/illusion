@@ -32,10 +32,10 @@ class ShaderModule {
   };
 
   ShaderModule(DevicePtr const& device, std::string const& glsl, vk::ShaderStageFlagBits stage,
-    std::set<std::string> const& dynamicBuffers);
+      std::set<std::string> const& dynamicBuffers);
 
   ShaderModule(DevicePtr const& device, std::vector<uint32_t>&& spirv,
-    vk::ShaderStageFlagBits stage, std::set<std::string> const& dynamicBuffers);
+      vk::ShaderStageFlagBits stage, std::set<std::string> const& dynamicBuffers);
 
   virtual ~ShaderModule();
 

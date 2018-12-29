@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
   auto device = Illusion::Graphics::Device::create(engine->getPhysicalDevice());
   auto window = Illusion::Graphics::Window::create(engine, device);
   auto shader = Illusion::Graphics::ShaderProgram::createFromFiles(
-    device, {"data/shaders/Triangle.vert", "data/shaders/Triangle.frag"});
+      device, {"data/shaders/Triangle.vert", "data/shaders/Triangle.frag"});
 
   auto renderPass = Illusion::Graphics::RenderPass::create(device);
   renderPass->addAttachment(vk::Format::eR8G8B8A8Unorm);
@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
     cmd->submit({}, {}, {*renderFinishedSemaphore});
 
     window->present(
-      renderPass->getFramebuffer()->getImages()[0], renderFinishedSemaphore, renderFinishedFence);
+        renderPass->getFramebuffer()->getImages()[0], renderFinishedSemaphore, renderFinishedFence);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
   }

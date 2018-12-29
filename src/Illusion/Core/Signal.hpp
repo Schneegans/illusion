@@ -32,7 +32,8 @@ class Signal {
   Signal() = default;
 
   // copy creates new signal
-  Signal(Signal const& other) {}
+  Signal(Signal const& other) {
+  }
 
   // connects a member function of a given object to this Signal
   template <typename F, typename... Args>
@@ -77,7 +78,9 @@ class Signal {
   }
 
   // assignment creates new Signal
-  Signal& operator=(Signal const& other) { disconnectAll(); }
+  Signal& operator=(Signal const& other) {
+    disconnectAll();
+  }
 
  private:
   mutable std::map<int, std::function<bool(Parameters...)>> mCallbacks;

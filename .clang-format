@@ -4,14 +4,15 @@ AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
 AlignOperands: true
 AllowShortBlocksOnASingleLine: true
+AllowShortFunctionsOnASingleLine: false
 AlwaysBreakAfterReturnType: None
 AlwaysBreakTemplateDeclarations: true
 BinPackArguments: true
 BinPackParameters: true
 BreakConstructorInitializersBeforeComma: true
 ColumnLimit: 100
-ConstructorInitializerIndentWidth: 2
-ContinuationIndentWidth: 2
+ConstructorInitializerIndentWidth: 4
+ContinuationIndentWidth: 4
 DerivePointerAlignment: false
 PointerAlignment: Left
 Standard: Cpp11

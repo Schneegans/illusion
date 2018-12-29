@@ -37,7 +37,7 @@ class CommandBuffer {
 
   // Allocates a new vk::CommandBuffer from the device.
   CommandBuffer(DevicePtr const& device, QueueType type = QueueType::eGeneric,
-    vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);
+      vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);
 
   // basic operations ------------------------------------------------------------------------------
 
@@ -46,18 +46,18 @@ class CommandBuffer {
   void reset();
 
   // Begins the internal vk::CommandBuffer.
-  void begin(
-    vk::CommandBufferUsageFlagBits usage = vk::CommandBufferUsageFlagBits::eSimultaneousUse) const;
+  void begin(vk::CommandBufferUsageFlagBits usage =
+                 vk::CommandBufferUsageFlagBits::eSimultaneousUse) const;
 
   // Ends the internal vk::CommandBuffer.
   void end() const;
 
   // Submits the internal vk::CommandBuffer to the Device's queue matching the QueueType given to
   // this CommandBuffer at construction time.
-  void submit(std::vector<vk::Semaphore> const& waitSemaphores   = {},
-    std::vector<vk::PipelineStageFlags> const&  waitStages       = {},
-    std::vector<vk::Semaphore> const&           signalSemaphores = {},
-    vk::Fence const&                            fence            = nullptr) const;
+  void submit(std::vector<vk::Semaphore> const&  waitSemaphores   = {},
+      std::vector<vk::PipelineStageFlags> const& waitStages       = {},
+      std::vector<vk::Semaphore> const&          signalSemaphores = {},
+      vk::Fence const&                           fence            = nullptr) const;
 
   // Calls waitIdle() on the Device's queue matching the QueueType given to this CommandBuffer at
   // construction time.
@@ -89,12 +89,12 @@ class CommandBuffer {
   // Binds the given BackedBuffer as index buffer. This is directly recorded to the internal
   // vk::CommandBuffer.
   void bindIndexBuffer(
-    BackedBufferPtr const& buffer, vk::DeviceSize offset, vk::IndexType indexType) const;
+      BackedBufferPtr const& buffer, vk::DeviceSize offset, vk::IndexType indexType) const;
 
   // Binds the given BackedBuffer as vertex buffer. Compared to the method below, this method allows
   // for additional offsets. This is directly recorded to the internal vk::CommandBuffer.
-  void bindVertexBuffers(uint32_t                                  firstBinding,
-    std::vector<std::pair<BackedBufferPtr, vk::DeviceSize>> const& buffersAndOffsets) const;
+  void bindVertexBuffers(uint32_t                                    firstBinding,
+      std::vector<std::pair<BackedBufferPtr, vk::DeviceSize>> const& buffersAndOffsets) const;
 
   // Binds the given BackedBuffer as vertex buffer. This is directly recorded to the internal
   // vk::CommandBuffer.
@@ -119,33 +119,33 @@ class CommandBuffer {
   // vk::Pipeline. This pipeline will be bound. Then, based on the binding state, descriptor sets
   // will be allocated, updated and bound.
   void draw(uint32_t vertexCount, uint32_t instanceCount = 1, uint32_t firstVertex = 0,
-    uint32_t firstInstance = 0);
+      uint32_t firstInstance = 0);
   void drawIndexed(uint32_t indexCount, uint32_t instanceCount = 1, uint32_t firstIndex = 0,
-    int32_t vertexOffset = 0, uint32_t firstInstance = 0);
+      int32_t vertexOffset = 0, uint32_t firstInstance = 0);
   void dispatch(uint32_t groupCountX, uint32_t groupCountY = 1, uint32_t groupCountZ = 1);
 
   // convenience methods ---------------------------------------------------------------------------
 
   void transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout,
-    vk::PipelineStageFlagBits srcStage, vk::PipelineStageFlagBits dstStage,
-    vk::ImageSubresourceRange range = {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}) const;
+      vk::PipelineStageFlagBits srcStage, vk::PipelineStageFlagBits dstStage,
+      vk::ImageSubresourceRange range = {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}) const;
 
   void copyImage(vk::Image src, vk::Image dst, glm::uvec2 const& size) const;
 
   void blitImage(vk::Image src, vk::Image dst, glm::uvec2 const& srcSize, glm::uvec2 const& dstSize,
-    vk::Filter filter) const;
+      vk::Filter filter) const;
 
   void blitImage(vk::Image src, uint32_t srcMipmapLevel, vk::Image dst, uint32_t dstMipmapLevel,
-    glm::uvec2 const& srcSize, glm::uvec2 const& dstSize, uint32_t layerCount,
-    vk::Filter filter) const;
+      glm::uvec2 const& srcSize, glm::uvec2 const& dstSize, uint32_t layerCount,
+      vk::Filter filter) const;
 
   void resolveImage(vk::Image src, vk::ImageLayout srcLayout, vk::Image dst,
-    vk::ImageLayout dstLayout, vk::ImageResolve region) const;
+      vk::ImageLayout dstLayout, vk::ImageResolve region) const;
 
   void copyBuffer(vk::Buffer src, vk::Buffer dst, vk::DeviceSize size) const;
 
   void copyBufferToImage(vk::Buffer src, vk::Image dst, vk::ImageLayout dstLayout,
-    std::vector<vk::BufferImageCopy> const& infos) const;
+      std::vector<vk::BufferImageCopy> const& infos) const;
 
  private:
   void            flush();
