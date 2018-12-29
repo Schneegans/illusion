@@ -45,5 +45,7 @@ void main() {
 
   // Tone mapping
   outColor.rgb = Uncharted2Tonemap(outColor.rgb * 2);
-  outColor.rgb = outColor.rgb * (1.0 / Uncharted2Tonemap(vec3(11.2)));  
+  outColor.rgb = outColor.rgb * (1.0 / Uncharted2Tonemap(vec3(11.2)));
+
+  outColor.rgb = pow(outColor.rgb, vec3(1.0 / 2.2));
 }
