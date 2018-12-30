@@ -4,8 +4,10 @@
 
 In order to learn the concepts behind Vulkan, I am creating Illusion. For now, Illusion is a convenience layer on top of Vulkan, similar in spirit to [V-EZ](https://github.com/GPUOpen-LibrariesAndSDKs/V-EZ). However, I plan to add more features as I progress in learning. It uses C++17 and can be build on Linux (gcc or clang) and Windows (msvc).
 
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-![Code](https://img.shields.io/badge/code-c++-orange.svg)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+![code](https://img.shields.io/badge/code-C++17-orange.svg)
+![platform](https://img.shields.io/badge/platform-linux-d77.svg)
+![platform](https://img.shields.io/badge/platform-windows-d77.svg)
 
 ### Features
 
