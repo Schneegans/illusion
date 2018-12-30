@@ -41,7 +41,7 @@ Link | Description | Screenshot
 [Triangle](examples/Triangle) | A simple triangle without vertex or index buffers that uses a pre-recorded command buffer and no per-frame resources. | ![screenshot](examples/Triangle/screenshot.jpg)
 [TexturedQuad](examples/TexturedQuad) | Similar to the triangle, in addition a texture is loaded and bound as fragment shader input. | ![screenshot](examples/TexturedQuad/screenshot.jpg)
 [TexturedCube](examples/TexturedCube) | A more complex example using vertex buffers and an index buffer. Camera information is uploaded as uniform buffer, the cube's transformation is set via push constants. The command buffer is re-recorded every frame. The uniform buffer and the command buffer are per-frame resources. | ![screenshot](examples/TexturedCube/screenshot.jpg)
-[SimpleGltf](examples/SimpleGltf) | A viewer for glTF files. There are several command line options; have a look a `SimpleGltf --help`. Most [glTFSample Models](https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0) are supported, including those with skinned animations. | ![screenshot](examples/SimpleGltf/screenshot.jpg)
+[GltfViewer](examples/GltfViewer) | A viewer for glTF files. There are several command line options; have a look a `GltfViewer --help`. Most [glTFSample Models](https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0) are supported, including those with skinned animations. | ![screenshot](examples/GltfViewer/screenshot.jpg)
 
 ### MIT License
 

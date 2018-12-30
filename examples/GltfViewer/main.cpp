@@ -147,7 +147,7 @@ int main(int argc, char* argv[]) {
   } options;
 
   // clang-format off
-  Illusion::Core::CommandLineOptions args("Simple loader for GLTF files.");
+  Illusion::Core::CommandLineOptions args("Simple viewer for GLTF files.");
   args.addOption({"-m",  "--model"},       &options.mModelFile,  "GLTF model (.gltf or .glb)");
   args.addOption({"-e",  "--environment"}, &options.mSkyboxFile, "Skybox image (in equirectangular projection)");
   args.addOption({"-a",  "--animation"},   &options.mAnimation,  "Index of the animation to play. Default: 0, Use -1 to disable animations.");

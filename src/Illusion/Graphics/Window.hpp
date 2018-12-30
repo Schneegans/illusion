@@ -29,7 +29,7 @@ class Window {
  public:
   enum class Cursor { ePointer, eIBeam, eCross, eHand, eHResize, eVResize };
 
-  Core::String           pTitle      = std::string("Illusion3D");
+  Core::String           pTitle      = std::string("Illusion");
   Core::UVec2            pExtent     = glm::uvec2(640, 480);
   Core::IVec2            pPosition   = glm::ivec2(-1, -1);
   Core::Bool             pLockAspect = false;
