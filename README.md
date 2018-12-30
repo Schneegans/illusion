@@ -6,16 +6,27 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
 
 ### Features
 
-- [x] A ring-buffer for per-frame resources
-- [x] Automatic creation of pipeline layouts using glslang and spirv-cross
-- [x] Automatic allocation and updates of descriptor sets
-- [x] Loading of GLTF models (no support formorph targets yet)
-- [x] Conversion of equirectangular panoramas to cubemaps
-- [x] Creation of prefiltered irradiance and reflectance maps for physically based shading
-- [ ] Automatic image layout transitions
-- [ ] Parallel command buffer recording
-- [ ] A frame or render-graph to automatically create renderpasses and subpasses with dependencies
-- [ ] ...
+- [ ] Vulkan convenience layer
+  - [x] Automatic shader program reflection using [glslang](https://github.com/KhronosGroup/glslang) and [spirv-cross](https://github.com/KhronosGroup/SPIRV-Cross)
+  - [x] Automatic creation of pipeline layouts
+  - [x] Automatic allocation and updates of descriptor sets
+  - [x] A ring-buffer for per-frame resources
+  - [x] Per-frame resource count is independent from swapchain image count
+  - [x] Conversion of equirectangular panoramas to cubemaps
+  - [x] Creation of prefiltered irradiance and reflectance maps for physically based shading
+  - [ ] Automatic image layout transitions
+  - [ ] Parallel command buffer recording
+  - [ ] A frame or render-graph to automatically create renderpasses and subpasses with dependencies
+  - [ ] ...
+- [x] texture loading ([stb](https://github.com/nothings/stb) and [gli](https://github.com/g-truc/gli) - dds, hdr, jpg, png, tga, bmp, ...)
+- [ ] glTF loading ([tinygltf](https://github.com/syoyo/tinygltf))
+  - [x] Metallic-roughness materials
+  - [x] Specular-glossiness materials
+  - [x] Animations
+  - [x] Skins
+  - [ ] Morph targets
+  - [ ] Sparse accessors
+  - [ ] Multiple texture coordinates
 
 ### Dependencies
 
