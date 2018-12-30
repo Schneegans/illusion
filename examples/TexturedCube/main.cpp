@@ -113,7 +113,7 @@ int main(int argc, char* argv[]) {
 
     auto& res = frameResources.next();
 
-    device->waitForFences(*res.mRenderFinishedFence, true, ~0);
+    device->waitForFences(*res.mRenderFinishedFence);
     device->resetFences(*res.mRenderFinishedFence);
 
     res.mCmd->reset();

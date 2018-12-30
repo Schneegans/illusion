@@ -134,7 +134,8 @@ class Device {
   vk::Queue const& getQueue(QueueType type) const;
 
   // device interface forwarding -------------------------------------------------------------------
-  void waitForFences(vk::ArrayProxy<const vk::Fence> const& fences, bool waitAll, uint64_t timeout);
+  void waitForFences(
+      vk::ArrayProxy<const vk::Fence> const& fences, bool waitAll = true, uint64_t timeout = ~0);
   void resetFences(vk::ArrayProxy<const vk::Fence> const& fences);
   void waitIdle();
 

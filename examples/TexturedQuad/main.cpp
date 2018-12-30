@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
   while (!window->shouldClose()) {
     window->processInput();
 
-    device->waitForFences(*renderFinishedFence, true, ~0);
+    device->waitForFences(*renderFinishedFence);
     device->resetFences(*renderFinishedFence);
 
     cmd->submit({}, {}, {*renderFinishedSemaphore});
