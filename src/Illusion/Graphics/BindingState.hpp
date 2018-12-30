@@ -14,6 +14,7 @@
 #include "../Core/BitHash.hpp"
 #include "BindingTypes.hpp"
 
+#include <optional>
 #include <map>
 #include <set>
 
