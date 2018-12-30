@@ -21,7 +21,7 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
   - [ ] Parallel command buffer recording
   - [ ] A frame or render-graph to automatically create renderpasses and subpasses with dependencies
   - [ ] ...
-- [x] texture loading ([stb](https://github.com/nothings/stb) and [gli](https://github.com/g-truc/gli) - dds, hdr, jpg, png, tga, bmp, ...)
+- [x] LDR and HDR texture loading ([stb](https://github.com/nothings/stb) and [gli](https://github.com/g-truc/gli) - dds, hdr, jpg, png, tga, bmp, ...)
 - [ ] glTF loading ([tinygltf](https://github.com/syoyo/tinygltf))
   - [x] Metallic-roughness materials
   - [x] Specular-glossiness materials
@@ -50,6 +50,8 @@ make -j install
 
 ### Included Examples
 
+When compiled with the commands above, the examples will be located in `illusion/build/install/bin`. You can run them either by double-clicking or from the command line.
+
 Link | Description | Screenshot
 -----|-------------|-----------
 [Triangle](examples/Triangle) | A simple triangle without vertex or index buffers that uses a pre-recorded command buffer and no per-frame resources. | ![screenshot](examples/Triangle/screenshot.jpg)
@@ -61,6 +63,7 @@ Link | Description | Screenshot
 
 Here are some resources I am using while developing this software.
 
+* [Vulkan Tutorial](https://vulkan-tutorial.com/): A great starting point for learning Vulkan.
 * [Tutorials by Sascha Willems](https://github.com/SaschaWillems/Vulkan-glTF-PBR/): In particular the glTF example was very useful to understand some concepts.
 * [V-EZ](https://github.com/GPUOpen-LibrariesAndSDKs/V-EZ): Especially the shader reflection of Illusion is based on code of V-EZ.
 * [Granite](https://github.com/Themaister/Granite): I learned a lot from this great Vulkan engine. 
