@@ -37,16 +37,32 @@ Most dependencies are included as [git submodules](externals). Additionally you 
 
 ### Building Illusion
 
+Illusion uses CMake for project file generation. Below are some exemplary instructions for Linux and Windows (here Visual Studio 2017) which you should adapt to your system.
+
 ##### Linux
 
 ```bash
 git clone https://github.com/Simmesimme/illusion.git
 cd illusion
 git submodule update --init
-mkdir build && build
+mkdir build
+cd build
 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install ..
 make -j install
 ```
+
+##### Windows
+
+```bash
+git clone https://github.com/Simmesimme/illusion.git
+cd illusion
+git submodule update --init
+mkdir build
+cd build
+cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_INSTALL_PREFIX=install ..
+```
+
+And then open the illusion.sln and build the ALL_BUILD and INSTALL targets.
 
 ### Included Examples
 
