@@ -9,7 +9,7 @@
 #--------------------------------------------------------------------------------------------------#
 
 cmake_minimum_required(VERSION 3.8)
-project(illusion-3d VERSION 0.0.1 LANGUAGES CXX)
+project(illusion VERSION 0.0.1 LANGUAGES CXX)
 
 # global settings ----------------------------------------------------------------------------------
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
