@@ -2,7 +2,7 @@
   <img src ="doc/logo.svg" />
 </p>
 
-In order to learn the concepts behind Vulkan, I am creating Illusion. For now, Illusion is a convenience layer on top of Vulkan, similar in spirit to [V-EZ](https://github.com/GPUOpen-LibrariesAndSDKs/V-EZ). However, I plan to add more features as I progress in learning.
+In order to learn the concepts behind Vulkan, I am creating Illusion. For now, Illusion is a convenience layer on top of Vulkan, similar in spirit to [V-EZ](https://github.com/GPUOpen-LibrariesAndSDKs/V-EZ). However, I plan to add more features as I progress in learning. It uses C++17 and can be build on Linux (gcc or clang) and Windows (msvc).
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 ![Code](https://img.shields.io/badge/code-c++-orange.svg)
@@ -13,6 +13,7 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
   - [x] Automatic shader program reflection using [glslang](https://github.com/KhronosGroup/glslang) and [spirv-cross](https://github.com/KhronosGroup/SPIRV-Cross)
   - [x] Automatic creation of pipeline layouts
   - [x] Automatic allocation and updates of descriptor sets
+  - [x] Automatic Vulkan object lifetime management using reference counting
   - [x] A ring-buffer for per-frame resources
   - [x] Per-frame resource count is independent from swapchain image count
   - [x] Conversion of equirectangular panoramas to cubemaps
