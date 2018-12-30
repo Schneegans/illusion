@@ -54,7 +54,8 @@ class DescriptorSetReflection {
   // maps could be considered an improvement.
   std::map<std::string, PipelineResource> getResources(PipelineResource::ResourceType type) const;
 
-  // Returns the set number all resources belong to.
+  // Returns the set number all resources belong to. This has been given to this
+  // DescriptorSetReflection in the constructor.
   uint32_t getSet() const;
 
   // Creates a vk::DescriptorSetLayout for this reflection. It is created lazily; the first call to

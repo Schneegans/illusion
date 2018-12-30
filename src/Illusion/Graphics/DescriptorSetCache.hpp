@@ -40,11 +40,12 @@ class DescriptorSetCache {
   // vk::DescriptorSet.
   void releaseHandle(vk::DescriptorSetPtr const& handle);
 
-  // Calls releaseHandle() for all DescriptoSets which have been created by this DescriptorSetCache.
+  // Calls releaseHandle() for all DescriptorSets which have been created by this
+  // DescriptorSetCache.
   void releaseAll();
 
-  // Clears all references to DescriptoSets created by this DescriptorSetCache. This will most
-  // likely cause the deletion of the all cached DescriptoSets.
+  // Clears all references to DescriptorSets created by this DescriptorSetCache. This will cause the
+  // deletion of the all cached DescriptorSets if there are no other references around.
   void deleteAll();
 
  private:
