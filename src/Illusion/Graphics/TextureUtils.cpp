@@ -561,7 +561,7 @@ TexturePtr createPrefilteredReflectionCubemap(
   for (uint32_t i(0); i < mipLevels; ++i) {
     uint32_t groupCount = std::ceil(static_cast<float>(size) / 16.f);
 
-    auto mipViewInfo                          = outputCubemap->mBackedImage->mViewInfo;
+    auto mipViewInfo                          = outputCubemap->mViewInfo;
     mipViewInfo.subresourceRange.baseMipLevel = i;
     mipViewInfo.subresourceRange.levelCount   = 1;
     auto mipView                              = device->createImageView(mipViewInfo);
@@ -729,7 +729,7 @@ TexturePtr createBRDFLuT(DevicePtr const& device, uint32_t size) {
 
 void updateMipmaps(DevicePtr const& device, TexturePtr const& texture) {
 
-  if (!formatSupportsLinearSampling(device, texture->mBackedImage->mImageInfo.format)) {
+  if (!formatSupportsLinearSampling(device, texture->mImageInfo.format)) {
     throw std::runtime_error(
         "Failed to generate mipmaps: Texture format does not support linear sampling!");
   }
@@ -741,31 +741,29 @@ void updateMipmaps(DevicePtr const& device, TexturePtr const& texture) {
   subresourceRange.aspectMask   = vk::ImageAspectFlagBits::eColor;
   subresourceRange.baseMipLevel = 0;
   subresourceRange.levelCount   = 1;
-  subresourceRange.layerCount   = texture->mBackedImage->mImageInfo.arrayLayers;
+  subresourceRange.layerCount   = texture->mImageInfo.arrayLayers;
   subresourceRange.baseMipLevel = 0;
 
-  uint32_t mipWidth  = texture->mBackedImage->mImageInfo.extent.width;
-  uint32_t mipHeight = texture->mBackedImage->mImageInfo.extent.height;
+  uint32_t mipWidth  = texture->mImageInfo.extent.width;
+  uint32_t mipHeight = texture->mImageInfo.extent.height;
 
-  cmd->transitionImageLayout(*texture->mBackedImage->mImage, texture->mBackedImage->mCurrentLayout,
+  cmd->transitionImageLayout(*texture->mImage, texture->mCurrentLayout,
       vk::ImageLayout::eTransferSrcOptimal, vk::PipelineStageFlagBits::eFragmentShader,
       vk::PipelineStageFlagBits::eTransfer, subresourceRange);
 
-  for (uint32_t i = 1; i < texture->mBackedImage->mImageInfo.mipLevels; ++i) {
+  for (uint32_t i = 1; i < texture->mImageInfo.mipLevels; ++i) {
 
     subresourceRange.baseMipLevel = i;
 
-    cmd->transitionImageLayout(*texture->mBackedImage->mImage,
-        texture->mBackedImage->mCurrentLayout, vk::ImageLayout::eTransferDstOptimal,
-        vk::PipelineStageFlagBits::eFragmentShader, vk::PipelineStageFlagBits::eTransfer,
-        subresourceRange);
+    cmd->transitionImageLayout(*texture->mImage, texture->mCurrentLayout,
+        vk::ImageLayout::eTransferDstOptimal, vk::PipelineStageFlagBits::eFragmentShader,
+        vk::PipelineStageFlagBits::eTransfer, subresourceRange);
 
-    cmd->blitImage(*texture->mBackedImage->mImage, i - 1, *texture->mBackedImage->mImage, i,
-        glm::uvec2(mipWidth, mipHeight),
+    cmd->blitImage(*texture->mImage, i - 1, *texture->mImage, i, glm::uvec2(mipWidth, mipHeight),
         glm::uvec2(std::max(mipWidth / 2, 1u), std::max(mipHeight / 2, 1u)),
         subresourceRange.layerCount, vk::Filter::eLinear);
 
-    cmd->transitionImageLayout(*texture->mBackedImage->mImage, vk::ImageLayout::eTransferDstOptimal,
+    cmd->transitionImageLayout(*texture->mImage, vk::ImageLayout::eTransferDstOptimal,
         vk::ImageLayout::eTransferSrcOptimal, vk::PipelineStageFlagBits::eTransfer,
         vk::PipelineStageFlagBits::eTransfer, subresourceRange);
 
@@ -773,14 +771,14 @@ void updateMipmaps(DevicePtr const& device, TexturePtr const& texture) {
     mipHeight = std::max(mipHeight / 2, 1u);
   }
 
-  subresourceRange.levelCount   = texture->mBackedImage->mImageInfo.mipLevels;
+  subresourceRange.levelCount   = texture->mImageInfo.mipLevels;
   subresourceRange.baseMipLevel = 0;
 
-  cmd->transitionImageLayout(*texture->mBackedImage->mImage, vk::ImageLayout::eTransferSrcOptimal,
+  cmd->transitionImageLayout(*texture->mImage, vk::ImageLayout::eTransferSrcOptimal,
       vk::ImageLayout::eShaderReadOnlyOptimal, vk::PipelineStageFlagBits::eTransfer,
       vk::PipelineStageFlagBits::eFragmentShader, subresourceRange);
 
-  texture->mBackedImage->mCurrentLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+  texture->mCurrentLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
 
   cmd->end();
   cmd->submit();

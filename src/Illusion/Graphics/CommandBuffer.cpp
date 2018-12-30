@@ -422,18 +422,17 @@ void CommandBuffer::flush() {
         if (std::holds_alternative<CombinedImageSamplerBinding>(binding.second)) {
 
           auto value                   = std::get<CombinedImageSamplerBinding>(binding.second);
-          imageInfos[i].imageLayout    = value.mTexture->mBackedImage->mCurrentLayout;
-          imageInfos[i].imageView      = *value.mTexture->mBackedImage->mView;
+          imageInfos[i].imageLayout    = value.mTexture->mCurrentLayout;
+          imageInfos[i].imageView      = *value.mTexture->mView;
           imageInfos[i].sampler        = *value.mTexture->mSampler;
           writeInfos[i].descriptorType = vk::DescriptorType::eCombinedImageSampler;
           writeInfos[i].pImageInfo     = &imageInfos[i];
 
         } else if (std::holds_alternative<StorageImageBinding>(binding.second)) {
 
-          auto value                = std::get<StorageImageBinding>(binding.second);
-          imageInfos[i].imageLayout = value.mImage->mBackedImage->mCurrentLayout;
-          imageInfos[i].imageView =
-              *(value.mView ? value.mView : value.mImage->mBackedImage->mView);
+          auto value                   = std::get<StorageImageBinding>(binding.second);
+          imageInfos[i].imageLayout    = value.mImage->mCurrentLayout;
+          imageInfos[i].imageView      = *(value.mView ? value.mView : value.mImage->mView);
           imageInfos[i].sampler        = *value.mImage->mSampler;
           writeInfos[i].descriptorType = vk::DescriptorType::eStorageImage;
           writeInfos[i].pImageInfo     = &imageInfos[i];

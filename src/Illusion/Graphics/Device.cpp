@@ -295,8 +295,16 @@ TexturePtr Device::createTexture(vk::ImageCreateInfo imageInfo, vk::SamplerCreat
   auto result = std::make_shared<Texture>();
 
   // create backed image for texture
-  result->mBackedImage = createBackedImage(imageInfo, viewType, imageAspectMask,
+  auto image = createBackedImage(imageInfo, viewType, imageAspectMask,
       vk::MemoryPropertyFlagBits::eDeviceLocal, layout, componentMapping, dataSize, data);
+
+  result->mImage         = image->mImage;
+  result->mImageInfo     = image->mImageInfo;
+  result->mView          = image->mView;
+  result->mViewInfo      = image->mViewInfo;
+  result->mMemory        = image->mMemory;
+  result->mMemoryInfo    = image->mMemoryInfo;
+  result->mCurrentLayout = image->mCurrentLayout;
 
   // create sampler
   result->mSamplerInfo = samplerInfo;

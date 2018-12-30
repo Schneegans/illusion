@@ -953,9 +953,9 @@ void GltfModel::printInfo() const {
   // clang-format off
   ILLUSION_MESSAGE << "Textures:" << std::endl;
   for (auto const& t : mTextures) {
-    ILLUSION_MESSAGE << "  " << t << ": " << t->mBackedImage->mImageInfo.extent.width << "x"
-                     << t->mBackedImage->mImageInfo.extent.width << ", "
-                     << vk::to_string(t->mBackedImage->mImageInfo.format) << std::endl;
+    ILLUSION_MESSAGE << "  " << t << ": " << t->mImageInfo.extent.width << "x"
+                     << t->mImageInfo.extent.width << ", "
+                     << vk::to_string(t->mImageInfo.format) << std::endl;
   }
 
   ILLUSION_MESSAGE << "Materials:" << std::endl;

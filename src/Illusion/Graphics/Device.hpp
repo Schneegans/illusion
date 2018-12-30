@@ -38,9 +38,7 @@ struct BackedImage {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct Texture {
-  std::shared_ptr<BackedImage> mBackedImage;
-
+struct Texture : public BackedImage {
   vk::SamplerPtr        mSampler;
   vk::SamplerCreateInfo mSamplerInfo;
 };
