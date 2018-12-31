@@ -36,8 +36,11 @@ void CommandLineOptions::addOption(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandLineOptions::printHelp() const {
+
+  // print the general description
   ILLUSION_MESSAGE << mDescription << std::endl;
 
+  // find the option with the longest combined name length (in order to align the help messages)
   uint32_t maxNameLength = 0;
 
   for (auto const& option : mOptions) {
@@ -49,6 +52,7 @@ void CommandLineOptions::printHelp() const {
     maxNameLength = std::max(maxNameLength, nameLength);
   }
 
+  // print each option
   for (auto const& option : mOptions) {
 
     std::string names;
@@ -60,6 +64,8 @@ void CommandLineOptions::printHelp() const {
     std::stringstream sstr;
     sstr << std::left << std::setw(maxNameLength) << names.substr(0, names.size() - 2);
 
+    // Print the help for each option. This is a bit more involved since we do line wrapping for
+    // long descriptions.
     size_t currentSpacePos  = 0;
     size_t currentLineWidth = 0;
     while (currentSpacePos != std::string::npos) {
@@ -81,41 +87,55 @@ void CommandLineOptions::printHelp() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandLineOptions::parse(int argc, char* argv[]) const {
+
+  // skip the first argument (name of the program)
   int i = 1;
   while (i < argc) {
+
+    // we assume that the entire argument is an option name
     std::string name(argv[i]);
     std::string value;
+    bool        valueIsSeperate = false;
 
+    // if there is an '=' in the name, the part after the '=' is actually the value
     size_t equalPos = name.find('=');
     if (equalPos != std::string::npos) {
       value = name.substr(equalPos + 1);
       name  = name.substr(0, equalPos);
     }
-
-    if (i + 1 < argc && argv[i + 1][0] != '-') {
-      value = argv[i + 1];
-      ++i;
+    // else the following argument is the value
+    else if (i + 1 < argc) {
+      value           = argv[i + 1];
+      valueIsSeperate = true;
+      ;
     }
 
+    // search for an option with the provided name
     bool foundOption = false;
 
     for (auto const& option : mOptions) {
       if (std::find(option.mNames.begin(), option.mNames.end(), name) != option.mNames.end()) {
         foundOption = true;
 
+        // In the case of booleans, there must not be a value present. So if the value is neither
+        // 'true' nor 'false' it is considered to be the next argument
         if (std::holds_alternative<bool*>(option.mValue)) {
           if (value.size() > 0 && value != "true" && value != "false") {
-            throw std::runtime_error(
-                "Failed to parse command line arguments: Value for bool type option \"" + name +
-                "\" must be empty, true or false!");
+            valueIsSeperate = false;
           }
           *std::get<bool*>(option.mValue) = (value != "false");
-        } else if (value == "") {
+        }
+        // In all other cases there must be a value
+        else if (value == "") {
           throw std::runtime_error(
               "Failed to parse command line arguments: Missing value for option \"" + name + "\"!");
-        } else if (std::holds_alternative<std::string*>(option.mValue)) {
+        }
+        // For a std::string, we take the entire value
+        else if (std::holds_alternative<std::string*>(option.mValue)) {
           *std::get<std::string*>(option.mValue) = value;
-        } else {
+        }
+        // In all other cases we use a std::stringstream to convert the value
+        else {
           std::visit(
               [&value](auto&& arg) {
                 std::stringstream sstr(value);
@@ -128,8 +148,13 @@ void CommandLineOptions::parse(int argc, char* argv[]) const {
       }
     }
 
+    // Print a warning if there was an unknown option
     if (!foundOption) {
       ILLUSION_WARNING << "Ignoring unknown command line option \"" << name << "\"." << std::endl;
+    }
+
+    if (foundOption && valueIsSeperate) {
+      ++i;
     }
 
     ++i;

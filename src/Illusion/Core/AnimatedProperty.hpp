@@ -18,7 +18,7 @@
 namespace Illusion::Core {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-/// A class for smooth value interpolation.                                                       //
+// A class for smooth value interpolation.                                                        //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 enum class AnimationDirection { eIn, eOut, eInOut, eOutIn, eLinear };
