@@ -17,11 +17,11 @@ matrix:
       addons:
         apt:
           packages:
-            - clang-5.0
+            - clang-7
           sources:
-            - llvm-toolchain-trusty-5.0
+            - llvm-toolchain-trusty-7
       env:
-        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
+        - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7"
 before_install:
   - eval "${MATRIX_EVAL}"
 install:
@@ -33,5 +33,6 @@ install:
   - SDK_VERSION="$(ls vulkan-sdk)"
   - export VULKAN_SDK=$(pwd)/vulkan-sdk/$SDK_VERSION/x86_64
 script:
-  - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install .
+  - mkdir build && cd build
+  - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install ..
   - make -j2 install
