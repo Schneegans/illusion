@@ -1,10 +1,10 @@
 language: cpp
-sudo: required
-os: linux
-dist: trusty
 matrix:
   include:
-    - name: gcc
+    - name: Linux GCC
+      os: linux
+      dist: trusty
+      sudo: required
       addons:
         apt:
           packages:
@@ -13,15 +13,18 @@ matrix:
             - ubuntu-toolchain-r-test
       env:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
-    - name: clang
+    - name: Linux Clang
+      os: linux
+      dist: trusty
+      sudo: required
       addons:
         apt:
           packages:
-            - clang-7
+            - clang-6.0
           sources:
-            - llvm-toolchain-trusty-7
+            - llvm-toolchain-trusty-6.0
       env:
-        - MATRIX_EVAL="CC=clang-7 && CXX=clang++-7"
+        - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
 before_install:
   - eval "${MATRIX_EVAL}"
 install:
