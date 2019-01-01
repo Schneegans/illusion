@@ -27,10 +27,10 @@ matrix:
     - name: Windows
       os: windows
       install:
+        - choco uninstall python
         - choco install python3
 script:
   - mkdir build && cd build
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install ..; fi
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then  make -j2 install; fi
-  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_INSTALL_PREFIX=install ..; fi
-  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then msbuild illusion.sln /p:Configuration=Release; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then cmake ..; fi
+  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then cmake -G "Visual Studio 15 2017 Win64" ..; fi
+  - cmake --build .
