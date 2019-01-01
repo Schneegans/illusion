@@ -21,7 +21,7 @@
 	url = ../../syoyo/tinygltf.git
 [submodule "externals/vulkan-headers"]
 	path = externals/vulkan-headers
-	url = ../../Vulkan-Headers.git
+	url = ../../KhronosGroup/Vulkan-Headers.git
 [submodule "externals/vulkan-loader"]
 	path = externals/vulkan-loader
-	url = ../../Vulkan-Loader.git
+	url = ../../KhronosGroup/Vulkan-Loader.git
