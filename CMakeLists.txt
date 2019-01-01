@@ -18,10 +18,9 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_CXX_STANDARD 17)
 add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
 
-# find dependencies --------------------------------------------------------------------------------
-# find vulkan
-find_package(Vulkan REQUIRED)
-
+# build dependencies -------------------------------------------------------------------------------
+include(externals/vulkan-headers.cmake)
+include(externals/vulkan-loader.cmake)
 include(externals/glfw.cmake)
 include(externals/glm.cmake)
 include(externals/gli.cmake)
