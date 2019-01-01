@@ -3,7 +3,7 @@ matrix:
   include:
     - name: Linux GCC
       os: linux
-      dist: trusty
+      dist: xenial
       sudo: required
       addons:
         apt:
@@ -15,14 +15,14 @@ matrix:
         - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
     - name: Linux Clang
       os: linux
-      dist: trusty
+      dist: xenial
       sudo: required
       addons:
         apt:
           packages:
             - clang-6.0
           sources:
-            - llvm-toolchain-trusty-6.0
+            - llvm-toolchain-xenial-6.0
       env:
         - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
 before_install:
