@@ -1,23 +1,38 @@
-dist: xenial
+language: cpp
 sudo: required
-language:
-  - cpp
+os: linux
+dist: trusty
+matrix:
+  include:
+    - os: linux
+      env: COMPILER_NAME=gcc CXX=g++-7 CC=gcc-7
+      addons:
+        apt:
+          packages:
+            - g++-7
+          sources:
+            - ubuntu-toolchain-r-test
+    - os: linux
+      env: COMPILER_NAME=clang CXX=clang++-5.0 CC=clang-5.0
+      addons:
+        apt:
+          packages:
+            - clang-5.0
+          sources:
+            - llvm-toolchain-trusty-5.0
 compiler:
+  - clang
   - gcc
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - gcc-8
-      - g++-8
-      - cmake
-env:
-  global:
-  - export CC=/usr/bin/gcc-8
-  - export CXX=/usr/bin/g++-8
+before_script:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y libassimp-dev libx11-xcb-dev libxrandr-dev
+  - wget https://sdk.lunarg.com/sdk/download/latest/linux/vulkan-sdk.tar.gz
+  - mkdir vulkan-sdk
+  - tar -xf vulkan-sdk.tar.gz -C vulkan-sdk
+  - SDK_VERSION="$(ls vulkan-sdk)"
+  - VULKAN_SDK=$(pwd)/$SDK_VERSION/x86_64
+  - echo $VULKAN_SDK
 script:
-  - cmake --version
-  - mkdir build && cd build
-  - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install ..
-  - make -j install
+  - echo $VULKAN_SDK
+  - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install .
+  - make
