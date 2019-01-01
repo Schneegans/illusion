@@ -8,6 +8,7 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
 ![code](https://img.shields.io/badge/code-C++17-orange.svg)
 ![platform](https://img.shields.io/badge/platform-linux-d77.svg)
 ![platform](https://img.shields.io/badge/platform-windows-d77.svg)
+[![Build Status](https://travis-ci.org/Simmesimme/illusion.svg?branch=feature%2Ftravis)](https://travis-ci.org/Simmesimme/illusion)
 
 ### Features
 
