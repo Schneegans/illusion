@@ -19,7 +19,9 @@ set(CMAKE_CXX_STANDARD 17)
 add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
 
 # workaround for clang with vulkan sdk 1.1.70
-add_compile_options("-DVULKAN_HPP_NO_SMART_HANDLE")
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_compile_options("-DVULKAN_HPP_NO_SMART_HANDLE -stdlib=libc++")
+endif()
 
 # find dependencies --------------------------------------------------------------------------------
 # find vulkan
