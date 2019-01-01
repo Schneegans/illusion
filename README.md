@@ -36,7 +36,7 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
 
 ### Dependencies
 
-Most dependencies are included as [git submodules](externals). Additionally you will need a C++ compiler, CMake and the [Vulkan SDK](https://www.lunarg.com/vulkan-sdk/).
+Most dependencies are included as [git submodules](externals). Additionally you will need a C++ compiler and CMake.
 
 ### Building Illusion
 
