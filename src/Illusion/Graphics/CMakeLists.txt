@@ -25,7 +25,8 @@ target_link_libraries(illusion-graphics
     PUBLIC glslang-default-resource-limits
     PUBLIC spirv-cross
     PUBLIC SPIRV
-    PUBLIC Vulkan::Vulkan
+    PUBLIC vulkan
+    PUBLIC vulkan-headers
 )
 
 target_include_directories(illusion-graphics
