@@ -56,7 +56,7 @@ vk::DeviceSize CoherentUniformBuffer::addData(uint8_t const* data, vk::DeviceSiz
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::DeviceSize CoherentUniformBuffer::updateData(
+void CoherentUniformBuffer::updateData(
     uint8_t const* data, vk::DeviceSize count, vk::DeviceSize offset) {
 
   if (offset + count > mBuffer->mMemoryInfo.allocationSize) {

@@ -29,7 +29,7 @@ before_install:
   - eval "${MATRIX_EVAL}"
 install:
   - sudo apt-get -qq update
-  - sudo apt-get install -y xorg-dev
+  - sudo apt-get install -y xorg-dev libc++-dev
   - wget https://sdk.lunarg.com/sdk/download/latest/linux/vulkan-sdk.tar.gz
   - mkdir vulkan-sdk
   - tar -xf vulkan-sdk.tar.gz -C vulkan-sdk

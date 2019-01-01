@@ -37,7 +37,7 @@ class CoherentUniformBuffer {
     return addData((uint8_t*)&data, sizeof(data));
   }
 
-  vk::DeviceSize updateData(uint8_t const* data, vk::DeviceSize count, vk::DeviceSize offset);
+  void updateData(uint8_t const* data, vk::DeviceSize count, vk::DeviceSize offset);
 
   template <typename T>
   void updateData(T const& data, vk::DeviceSize offset = 0) {
