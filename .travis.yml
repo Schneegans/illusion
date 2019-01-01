@@ -21,4 +21,6 @@ script:
   # - export CXX=/usr/bin/g++-8
   # Check versions of gcc, g++ and cmake
   - gcc -v && g++ -v && cmake --version
-  
+  - mkdir build && cd build
+  - cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install ..
+  - make -j install
