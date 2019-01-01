@@ -5,32 +5,35 @@ dist: trusty
 matrix:
   include:
     - os: linux
-      env: COMPILER_NAME=gcc CXX=g++-7 CC=gcc-7
       addons:
         apt:
           packages:
             - g++-7
           sources:
             - ubuntu-toolchain-r-test
+      env:
+        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
     - os: linux
-      env: COMPILER_NAME=clang CXX=clang++-5.0 CC=clang-5.0
       addons:
         apt:
           packages:
             - clang-5.0
           sources:
             - llvm-toolchain-trusty-5.0
+      env:
+        - MATRIX_EVAL="CC=clang-5.0 && CXX=clang++-5.0"
 compiler:
   - clang
   - gcc
-before_script:
+install:
+  - eval "${MATRIX_EVAL}"
   - sudo apt-get -qq update
   - sudo apt-get install -y libassimp-dev libx11-xcb-dev libxrandr-dev
   - wget https://sdk.lunarg.com/sdk/download/latest/linux/vulkan-sdk.tar.gz
   - mkdir vulkan-sdk
   - tar -xf vulkan-sdk.tar.gz -C vulkan-sdk
   - SDK_VERSION="$(ls vulkan-sdk)"
-  - VULKAN_SDK=$(pwd)/$SDK_VERSION/x86_64
+  - VULKAN_SDK=$(pwd)/vulkan-sdk/$SDK_VERSION/x86_64
   - echo $VULKAN_SDK
 script:
   - echo $VULKAN_SDK
