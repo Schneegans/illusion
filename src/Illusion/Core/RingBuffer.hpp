@@ -16,6 +16,9 @@
 namespace Illusion::Core {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// A simple wrapper for a std::array acting as a ring buffer. The arguments passed to the         //
+// constructor are directly forwarded to the internal std::array. Use the members next() and      //
+// current() to access the ring buffer elements.                                                  //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 template <typename T, int ringBufferSize>

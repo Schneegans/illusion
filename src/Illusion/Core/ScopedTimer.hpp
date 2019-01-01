@@ -22,6 +22,9 @@ namespace Illusion::Core {
 class ScopedTimer {
  public:
   explicit ScopedTimer(std::string const& name);
+
+  // The desctructor will print the time elapsed since the constructor was called. The print is done
+  // using ILLUSION_DEBUG from the Logger class.
   virtual ~ScopedTimer();
 
  private:

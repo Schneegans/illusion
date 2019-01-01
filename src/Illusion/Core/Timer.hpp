@@ -25,13 +25,15 @@ class Timer {
   void   start();
   double reset();
 
+  // In seconds.
   double getElapsed() const;
-  bool   isRunning() const;
+
+  bool isRunning() const;
 
   static double getNow();
 
  private:
-  double mStart = 1.0;
+  double mStart = 0.0;
 };
 
 } // namespace Illusion::Core

@@ -19,7 +19,7 @@ namespace Illusion::Core {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Prints beautiful messages to the console output. You can use the macros at the bottom of this  //
 // file like this:                                                                                //
-// LOG_MESSAGE << "hello world" << std::endl;                                                     //
+// ILLUSION_MESSAGE << "hello world" << std::endl;                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Logger {

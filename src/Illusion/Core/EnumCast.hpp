@@ -15,6 +15,7 @@
 
 namespace Illusion::Core {
 
+// A template to cast an enum class to its underlying type.
 template <typename T>
 constexpr typename std::underlying_type<T>::type enumCast(T val) {
   return static_cast<typename std::underlying_type<T>::type>(val);

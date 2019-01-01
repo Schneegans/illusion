@@ -11,7 +11,6 @@
 #ifndef ILLUSION_CORE_PROPERTY_HPP
 #define ILLUSION_CORE_PROPERTY_HPP
 
-// ---------------------------------------------------------------------------------------- includes
 #include "Signal.hpp"
 
 #include <glm/glm.hpp>
@@ -23,14 +22,12 @@ namespace Illusion::Core {
 // applied to this value.                                                                         //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// -------------------------------------------------------------------------------------------------
 template <typename T>
 class Property {
 
  public:
   typedef T value_type;
 
-  // -------------------------------------------------------------------------------- public methods
   Property() = default;
 
   Property(T const& val)
@@ -51,19 +48,19 @@ class Property {
 
   virtual ~Property() = default;
 
-  // returns a Signal which is fired when the internal value will be changed.
+  // Returns a Signal which is fired when the internal value will be changed.
   // The old value is passed as parameter.
   virtual Signal<T> const& beforeChange() const {
     return mBeforeChange;
   }
 
-  // returns a Signal which is fired when the internal value has been changed.
+  // Returns a Signal which is fired when the internal value has been changed.
   // The new value is passed as parameter.
   virtual Signal<T> const& onChange() const {
     return mOnChange;
   }
 
-  // sets the Property to a new value. beforeChange() and onChange() will be emitted.
+  // Sets the Property to a new value. beforeChange() and onChange() will be emitted.
   virtual void set(T const& value) {
     if (value != mValue) {
       mBeforeChange.emit(value);
@@ -72,23 +69,23 @@ class Property {
     }
   }
 
-  // sets the Property to a new value. beforeChange() and onChange() will not be emitted
+  // Sets the Property to a new value. beforeChange() and onChange() will not be emitted
   void setWithNoEmit(T const& value) {
     mValue = value;
   }
 
-  // emits beforeChange() and onChange() even if the value did not change
+  // Emits beforeChange() and onChange() even if the value did not change
   void touch() {
     mBeforeChange.emit(mValue);
     mOnChange.emit(mValue);
   }
 
-  // returns the internal value
+  // Returns the internal value
   virtual T const& get() const {
     return mValue;
   }
 
-  // connects two Properties to each other. If the source's value is changed,
+  // Connects two Properties to each other. If the source's value is changed,
   // this' value will be changed as well
   virtual void connectFrom(Property<T> const& source) {
     disconnect();
@@ -100,7 +97,7 @@ class Property {
     set(source.get());
   }
 
-  // if this Property is connected from another property, it will e disconnected
+  // If this Property is connected from another property, it will e disconnected
   virtual void disconnect() {
     if (mConnection) {
       mConnection->onChange().disconnect(mConnectionId);
@@ -109,26 +106,26 @@ class Property {
     }
   }
 
-  // if there are any Properties connected to this Property,
+  // If there are any Properties connected to this Property,
   // they won't be notified of any further changes
   virtual void disconnectAuditors() {
     mOnChange.disconnectAll();
     mBeforeChange.disconnectAll();
   }
 
-  // assigns the value of another Property
+  // Assigns the value of another Property
   virtual Property<T>& operator=(Property<T> const& rhs) {
     set(rhs.mValue);
     return *this;
   }
 
-  // assigns a new value to this Property
+  // Assigns a new value to this Property
   virtual Property<T>& operator=(T const& rhs) {
     set(rhs);
     return *this;
   }
 
-  // compares the values of two Properties
+  // Compares the values of two Properties
   bool operator==(Property<T> const& rhs) const {
     return Property<T>::get() == rhs.get();
   }
@@ -136,7 +133,7 @@ class Property {
     return Property<T>::get() != rhs.get();
   }
 
-  // compares the values of the Property to another value
+  // Compares the values of the Property to another value
   bool operator==(T const& rhs) const {
     return Property<T>::get() == rhs;
   }
@@ -144,7 +141,7 @@ class Property {
     return Property<T>::get() != rhs;
   }
 
-  // returns the value of this Property
+  // Returns the value of this Property
   operator T() const {
     return Property<T>::get();
   }
@@ -153,7 +150,6 @@ class Property {
   }
 
  private:
-  // ------------------------------------------------------------------------------- private members
   T         mValue;
   Signal<T> mOnChange;
   Signal<T> mBeforeChange;
@@ -162,7 +158,7 @@ class Property {
   int                mConnectionId = -1;
 };
 
-// -------------------------------------------------------------------------------- stream operators
+// stream operators
 template <typename T>
 std::ostream& operator<<(std::ostream& outStream, Property<T> const& val) {
   outStream << val.get();
@@ -177,7 +173,7 @@ std::istream& operator>>(std::istream& inStream, Property<T>& val) {
   return inStream;
 }
 
-// ---------------------------------------------------------------------------------------- typedefs
+// typedefs
 typedef Property<double>      Double;
 typedef Property<float>       Float;
 typedef Property<int8_t>      Int8;
