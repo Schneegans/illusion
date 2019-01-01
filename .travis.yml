@@ -1,36 +1,28 @@
 language: cpp
+addons:
+  apt:
+    packages:
+      - g++-7
+      - clang-6.0
+    sources:
+      - ubuntu-toolchain-r-test
+      - llvm-toolchain-xenial-6.0
 matrix:
   include:
     - name: Linux GCC
       os: linux
       dist: xenial
       sudo: required
-      addons:
-        apt:
-          packages:
-            - g++-7
-          sources:
-            - ubuntu-toolchain-r-test
-      env:
-        - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+      before_install:
+        - CC=gcc-7 && CXX=g++-7
     - name: Linux Clang
       os: linux
       dist: xenial
       sudo: required
-      addons:
-        apt:
-          packages:
-            - g++-7
-            - clang-6.0
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-xenial-6.0
-      env:
-        - MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
+      before_install:
+        - CC=clang-6.0 && CXX=clang++-6.0
     - name: Windows
       os: windows
-before_install:
-  - eval "${MATRIX_EVAL}"
 install:
   - |
     if [ "$TRAVIS_OS_NAME" == "linux" ]; then
@@ -44,7 +36,12 @@ install:
     fi
   - |
     if [ "$TRAVIS_OS_NAME" == "windows" ]; then
-      echo "install on windows!"
+      wget https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.zip
+      mkdir vulkan-sdk
+      7x x vulkan-sdk.zip -o vulkan-sdk
+      SDK_VERSION="$(ls vulkan-sdk)"
+      export VULKAN_SDK=$(pwd)/vulkan-sdk/$SDK_VERSION/x86_64
+      echo "$VULKAN_SDK"
     fi
 script:
   - |
