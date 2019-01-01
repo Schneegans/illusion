@@ -4,6 +4,8 @@ addons:
     packages:
       - g++-7
       - clang-6.0
+      - xorg-dev
+      - libc++-dev
     sources:
       - ubuntu-toolchain-r-test
       - llvm-toolchain-xenial-6.0
@@ -23,36 +25,9 @@ matrix:
         - CC=clang-6.0 && CXX=clang++-6.0
     - name: Windows
       os: windows
-install:
-  - |
-    if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-      sudo apt-get -qq update
-      sudo apt-get install -y xorg-dev libc++-dev
-      wget -q https://sdk.lunarg.com/sdk/download/latest/linux/vulkan-sdk.tar.gz
-      mkdir vulkan-sdk
-      tar -xf vulkan-sdk.tar.gz -C vulkan-sdk
-      SDK_VERSION="$(ls vulkan-sdk)"
-      export VULKAN_SDK=$(pwd)/vulkan-sdk/$SDK_VERSION/x86_64
-    fi
-  - |
-    if [ "$TRAVIS_OS_NAME" == "windows" ]; then
-      wget -q https://sdk.lunarg.com/sdk/download/latest/windows/vulkan-sdk.zip
-      mkdir vulkan-sdk
-      7z x vulkan-sdk.zip -ovulkan-sdk
-      SDK_VERSION="$(ls vulkan-sdk)"
-      export VULKAN_SDK=$(pwd)/vulkan-sdk/$SDK_VERSION/x86_64
-      echo "$VULKAN_SDK"
-    fi
 script:
-  - |
-    if [ "$TRAVIS_OS_NAME" == "linux" ]; then
-      mkdir build && cd build
-      cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install ..
-      make -j2 install
-    fi
-  - |
-    if [ "$TRAVIS_OS_NAME" == "windows" ]; then
-      mkdir build && cd build
-      cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_INSTALL_PREFIX=install ..
-      msbuild illusion.sln /p:Configuration=Release
-    fi
+  - mkdir build && cd build
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install ..; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then  make -j2 install; fi
+  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_INSTALL_PREFIX=install ..; fi
+  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then msbuild illusion.sln /p:Configuration=Release; fi
