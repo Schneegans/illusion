@@ -4,11 +4,9 @@
 
 In order to learn the concepts behind Vulkan, I am creating Illusion. For now, Illusion is a convenience layer on top of Vulkan, similar in spirit to [V-EZ](https://github.com/GPUOpen-LibrariesAndSDKs/V-EZ). However, I plan to add more features as I progress in learning. It uses C++17 and can be build on Linux (gcc or clang) and Windows (msvc).
 
-[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-![code](https://img.shields.io/badge/code-C++17-orange.svg)
-![ubuntu with clang](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=ubuntu%20with%20clang&env=LABEL=XenialClang)
-![ubuntu with gcc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=ubuntu%20with%20gcc&env=LABEL=XenialGCC)
-![windows with msvc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=windows%20with%20msvc&env=LABEL=WindowsMSVC)
+[![ubuntu with clang](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=ubuntu%20with%20clang&env=LABEL=XenialClang)](https://travis-ci.org/Simmesimme/illusion)
+[![ubuntu with gcc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=ubuntu%20with%20gcc&env=LABEL=XenialGCC)](https://travis-ci.org/Simmesimme/illusion)
+[![windows with msvc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=windows%20with%20msvc&env=LABEL=WindowsMSVC)](https://travis-ci.org/Simmesimme/illusion)
 
 ### Features
 
