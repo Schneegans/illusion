@@ -37,6 +37,8 @@ matrix:
       env: LABEL=OSX
       os: osx
       osx_image: xcode10.1
+      before_script:
+        - MACOSX_DEPLOYMENT_TARGET=10.14
 script:
   - mkdir build && cd build
   - if [ "$TRAVIS_OS_NAME" == "linux" ];   then cmake ..; fi
