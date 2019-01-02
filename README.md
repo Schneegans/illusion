@@ -2,7 +2,7 @@
   <img src ="doc/logo.svg" />
 </p>
 
-In order to learn the concepts behind Vulkan, I am creating Illusion. For now, Illusion is a convenience layer on top of Vulkan, similar in spirit to [V-EZ](https://github.com/GPUOpen-LibrariesAndSDKs/V-EZ). However, I plan to add more features as I progress in learning. It uses C++17 and can be build on Linux (gcc or clang) and Windows (msvc).
+In order to learn the concepts behind Vulkan, I am creating Illusion. For now, Illusion is a convenience layer on top of Vulkan, similar in spirit to [V-EZ](https://github.com/GPUOpen-LibrariesAndSDKs/V-EZ). However, I plan to add more features as I progress in learning. It uses C++17 and can be build on Linux (gcc or clang), Windows (msvc) and OS X (xcode).
 
 ### Build Status
 
@@ -11,7 +11,7 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
 [![windows msvc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=windows%20msvc&env=LABEL=WindowsMSVC)](https://travis-ci.org/Simmesimme/illusion)
 [![osx](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=osx&env=LABEL=OSX)](https://travis-ci.org/Simmesimme/illusion)
 
-### Features
+## Features
 
 - [ ] Vulkan convenience layer
   - [x] Automatic shader program reflection using [glslang](https://github.com/KhronosGroup/glslang) and [spirv-cross](https://github.com/KhronosGroup/SPIRV-Cross)
@@ -35,16 +35,17 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
   - [ ] Morph targets
   - [ ] Sparse accessors
   - [ ] Multiple texture coordinates
+- [x] Mouse and joystick input ([glfw](https://github.com/glfw/glfw))
+
+## Building Illusion
+
+Illusion uses CMake for project file generation. Below are some exemplary instructions for Linux and Windows (here Visual Studio 2017) which you should adapt to your system.
 
 ### Dependencies
 
 Most dependencies are included as [git submodules](externals). Additionally you will need a C++ compiler and CMake.
 
-### Building Illusion
-
-Illusion uses CMake for project file generation. Below are some exemplary instructions for Linux and Windows (here Visual Studio 2017) which you should adapt to your system.
-
-##### Linux
+### Linux
 
 ```bash
 git clone https://github.com/Simmesimme/illusion.git
@@ -56,7 +57,7 @@ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install ..
 make -j install
 ```
 
-##### Windows
+### Windows
 
 ```bash
 git clone https://github.com/Simmesimme/illusion.git
@@ -69,7 +70,7 @@ cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_INSTALL_PREFIX=install ..
 
 And then open the illusion.sln and build the ALL_BUILD and INSTALL targets.
 
-### Included Examples
+## Included Examples
 
 When compiled with the commands above, the examples will be located in `illusion/build/install/bin`. You can run them either by double-clicking or from the command line.
 
@@ -80,7 +81,7 @@ Link | Description | Screenshot
 [TexturedCube](examples/TexturedCube) | A more complex example using vertex buffers and an index buffer. Camera information is uploaded as uniform buffer, the cube's transformation is set via push constants. The command buffer is re-recorded every frame. The uniform buffer and the command buffer are per-frame resources. | ![screenshot](examples/TexturedCube/screenshot.jpg)
 [GltfViewer](examples/GltfViewer) | A viewer for glTF files. There are several command line options; have a look a `GltfViewer --help`. Most [glTFSample Models](https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0) are supported, including those with skinned animations. | ![screenshot](examples/GltfViewer/screenshot.jpg)
 
-### Documentation
+## Documentation
 
 For now, there is no documentation in addition to the example applications and the inline code comments. This will change once the API is more or less stable. Right now, entire classes may change completely in one commit.
 
