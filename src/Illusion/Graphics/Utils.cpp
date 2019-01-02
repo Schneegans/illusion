@@ -401,6 +401,8 @@ uint8_t getByteCount(vk::Format format) {
     throw std::runtime_error(
         "Failed to get byte count for " + vk::to_string(format) + ": Not implemented!");
   }
+
+  return 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

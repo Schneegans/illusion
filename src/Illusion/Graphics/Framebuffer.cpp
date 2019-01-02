@@ -79,7 +79,7 @@ Framebuffer::Framebuffer(DevicePtr const& device, vk::RenderPassPtr const& rende
 
   vk::FramebufferCreateInfo info;
   info.renderPass      = *mRenderPass;
-  info.attachmentCount = imageViews.size();
+  info.attachmentCount = static_cast<uint32_t>(imageViews.size());
   info.pAttachments    = imageViews.data();
   info.width           = mExtent.x;
   info.height          = mExtent.y;

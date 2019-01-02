@@ -139,7 +139,7 @@ class GltfModel {
     MaterialPtr                      mMaterial;
     vk::PrimitiveTopology            mTopology;
     vk::DeviceSize                   mIndexCount;
-    vk::DeviceSize                   mIndexOffset;
+    uint32_t                         mIndexOffset;
     BoundingBox                      mBoundingBox;
   };
 

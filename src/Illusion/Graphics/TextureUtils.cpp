@@ -73,8 +73,8 @@ TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
     imageInfo.extent.width  = texture.extent().x;
     imageInfo.extent.height = texture.extent().y;
     imageInfo.extent.depth  = 1;
-    imageInfo.mipLevels     = texture.levels();
-    imageInfo.arrayLayers   = texture.layers();
+    imageInfo.mipLevels     = static_cast<uint32_t>(texture.levels());
+    imageInfo.arrayLayers   = static_cast<uint32_t>(texture.layers());
     imageInfo.samples       = vk::SampleCountFlagBits::e1;
     imageInfo.tiling        = vk::ImageTiling::eOptimal;
     imageInfo.usage         = vk::ImageUsageFlagBits::eSampled;
@@ -89,7 +89,7 @@ TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
       imageInfo.mipLevels = getMaxMipmapLevels(imageInfo.extent.width, imageInfo.extent.height);
       imageInfo.usage |= vk::ImageUsageFlagBits::eTransferSrc;
       imageInfo.usage |= vk::ImageUsageFlagBits::eTransferDst;
-      samplerInfo.maxLod = imageInfo.mipLevels;
+      samplerInfo.maxLod = static_cast<float>(imageInfo.mipLevels);
     }
 
     auto outputImage = device->createTexture(imageInfo, samplerInfo, vk::ImageViewType::e2D,
@@ -144,7 +144,7 @@ TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
       imageInfo.mipLevels = getMaxMipmapLevels(width, height);
       imageInfo.usage |= vk::ImageUsageFlagBits::eTransferSrc;
       imageInfo.usage |= vk::ImageUsageFlagBits::eTransferDst;
-      samplerInfo.maxLod = imageInfo.mipLevels;
+      samplerInfo.maxLod = static_cast<float>(imageInfo.mipLevels);
     }
 
     auto result = device->createTexture(imageInfo, samplerInfo, vk::ImageViewType::e2D,
@@ -242,7 +242,7 @@ TexturePtr createCubemapFrom360PanoramaFile(DevicePtr const& device, std::string
     imageInfo.mipLevels = getMaxMipmapLevels(size, size);
     imageInfo.usage |= vk::ImageUsageFlagBits::eTransferSrc;
     imageInfo.usage |= vk::ImageUsageFlagBits::eTransferDst;
-    samplerInfo.maxLod = imageInfo.mipLevels;
+    samplerInfo.maxLod = static_cast<uint32_t>(imageInfo.mipLevels);
   }
 
   auto outputCubemap = device->createTexture(imageInfo, samplerInfo, vk::ImageViewType::eCube,
@@ -255,7 +255,7 @@ TexturePtr createCubemapFrom360PanoramaFile(DevicePtr const& device, std::string
   cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
   cmd->setShaderProgram(shader);
 
-  uint32_t groupCount = std::ceil(static_cast<float>(size) / 16.f);
+  uint32_t groupCount = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / 16.f));
   cmd->dispatch(groupCount, groupCount, 6);
   cmd->end();
   cmd->submit();
@@ -375,7 +375,7 @@ TexturePtr createPrefilteredIrradianceCubemap(
   cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
   cmd->setShaderProgram(shader);
 
-  uint32_t groupCount = std::ceil(static_cast<float>(size) / 16.f);
+  uint32_t groupCount = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / 16.f));
   cmd->dispatch(groupCount, groupCount, 6);
   cmd->end();
   cmd->submit();
@@ -545,7 +545,7 @@ TexturePtr createPrefilteredReflectionCubemap(
   imageInfo.initialLayout = vk::ImageLayout::eUndefined;
 
   auto samplerInfo   = device->createSamplerInfo();
-  samplerInfo.maxLod = imageInfo.mipLevels;
+  samplerInfo.maxLod = static_cast<float>(imageInfo.mipLevels);
 
   auto outputCubemap = device->createTexture(imageInfo, samplerInfo, vk::ImageViewType::eCube,
       vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eGeneral);
@@ -559,7 +559,7 @@ TexturePtr createPrefilteredReflectionCubemap(
   std::vector<vk::ImageViewPtr> mipViews;
 
   for (uint32_t i(0); i < mipLevels; ++i) {
-    uint32_t groupCount = std::ceil(static_cast<float>(size) / 16.f);
+    uint32_t groupCount = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / 16.f));
 
     auto mipViewInfo                          = outputCubemap->mViewInfo;
     mipViewInfo.subresourceRange.baseMipLevel = i;
@@ -716,7 +716,7 @@ TexturePtr createBRDFLuT(DevicePtr const& device, uint32_t size) {
   cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
   cmd->setShaderProgram(shader);
 
-  uint32_t groupCount = std::ceil(static_cast<float>(size) / 16.f);
+  uint32_t groupCount = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / 16.f));
   cmd->dispatch(groupCount, groupCount, 1);
   cmd->end();
   cmd->submit();

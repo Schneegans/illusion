@@ -68,9 +68,9 @@ void CommandBuffer::submit(std::vector<vk::Semaphore> const& waitSemaphores,
   info.pWaitDstStageMask    = waitStages.data();
   info.commandBufferCount   = 1;
   info.pCommandBuffers      = bufs;
-  info.signalSemaphoreCount = signalSemaphores.size();
+  info.signalSemaphoreCount = static_cast<uint32_t>(signalSemaphores.size());
   info.pSignalSemaphores    = signalSemaphores.data();
-  info.waitSemaphoreCount   = waitSemaphores.size();
+  info.waitSemaphoreCount   = static_cast<uint32_t>(waitSemaphores.size());
   info.pWaitSemaphores      = waitSemaphores.data();
 
   mDevice->getQueue(mType).submit(info, fence);
@@ -98,10 +98,10 @@ void CommandBuffer::beginRenderPass(RenderPassPtr const& renderPass) {
   clearValues.push_back(vk::ClearColorValue(std::array<float, 4>{{0.f, 0.f, 0.f, 0.f}}));
 
   if (renderPass->hasDepthAttachment()) {
-    clearValues.push_back(vk::ClearDepthStencilValue(1.f, 0.f));
+    clearValues.push_back(vk::ClearDepthStencilValue(1.f, 0u));
   }
 
-  passInfo.clearValueCount = clearValues.size();
+  passInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
   passInfo.pClearValues    = clearValues.data();
 
   mVkCmd->beginRenderPass(passInfo, vk::SubpassContents::eInline);
@@ -588,10 +588,12 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
   for (auto const& i : mGraphicsState.getVertexInputAttributes()) {
     vertexInputAttributeDescriptions.push_back({i.location, i.binding, i.format, i.offset});
   }
-  vertexInputStateInfo.vertexBindingDescriptionCount   = vertexInputBindingDescriptions.size();
-  vertexInputStateInfo.pVertexBindingDescriptions      = vertexInputBindingDescriptions.data();
-  vertexInputStateInfo.vertexAttributeDescriptionCount = vertexInputAttributeDescriptions.size();
-  vertexInputStateInfo.pVertexAttributeDescriptions    = vertexInputAttributeDescriptions.data();
+  vertexInputStateInfo.vertexBindingDescriptionCount =
+      static_cast<uint32_t>(vertexInputBindingDescriptions.size());
+  vertexInputStateInfo.pVertexBindingDescriptions = vertexInputBindingDescriptions.data();
+  vertexInputStateInfo.vertexAttributeDescriptionCount =
+      static_cast<uint32_t>(vertexInputAttributeDescriptions.size());
+  vertexInputStateInfo.pVertexAttributeDescriptions = vertexInputAttributeDescriptions.data();
 
   // -----------------------------------------------------------------------------------------------
   vk::PipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo;
@@ -622,9 +624,9 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
           {(uint32_t)i.mExtend[0], (uint32_t)i.mExtend[1]}});
     }
   }
-  viewportStateInfo.viewportCount = viewports.size();
+  viewportStateInfo.viewportCount = static_cast<uint32_t>(viewports.size());
   viewportStateInfo.pViewports    = viewports.data();
-  viewportStateInfo.scissorCount  = scissors.size();
+  viewportStateInfo.scissorCount  = static_cast<uint32_t>(scissors.size());
   viewportStateInfo.pScissors     = scissors.data();
 
   // -----------------------------------------------------------------------------------------------
@@ -675,10 +677,10 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
         {i.mBlendEnable, i.mSrcColorBlendFactor, i.mDstColorBlendFactor, i.mColorBlendOp,
             i.mSrcAlphaBlendFactor, i.mDstAlphaBlendFactor, i.mAlphaBlendOp, i.mColorWriteMask});
   }
-  colorBlendStateInfo.logicOpEnable     = mGraphicsState.getBlendLogicOpEnable();
-  colorBlendStateInfo.logicOp           = mGraphicsState.getBlendLogicOp();
-  colorBlendStateInfo.attachmentCount   = pipelineColorBlendAttachments.size();
-  colorBlendStateInfo.pAttachments      = pipelineColorBlendAttachments.data();
+  colorBlendStateInfo.logicOpEnable   = mGraphicsState.getBlendLogicOpEnable();
+  colorBlendStateInfo.logicOp         = mGraphicsState.getBlendLogicOp();
+  colorBlendStateInfo.attachmentCount = static_cast<uint32_t>(pipelineColorBlendAttachments.size());
+  colorBlendStateInfo.pAttachments    = pipelineColorBlendAttachments.data();
   colorBlendStateInfo.blendConstants[0] = mGraphicsState.getBlendConstants()[0];
   colorBlendStateInfo.blendConstants[1] = mGraphicsState.getBlendConstants()[1];
   colorBlendStateInfo.blendConstants[2] = mGraphicsState.getBlendConstants()[2];
@@ -688,12 +690,12 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
   vk::PipelineDynamicStateCreateInfo dynamicStateInfo;
   std::vector<vk::DynamicState>      dynamicState(
       mGraphicsState.getDynamicState().begin(), mGraphicsState.getDynamicState().end());
-  dynamicStateInfo.dynamicStateCount = dynamicState.size();
+  dynamicStateInfo.dynamicStateCount = static_cast<uint32_t>(dynamicState.size());
   dynamicStateInfo.pDynamicStates    = dynamicState.data();
 
   // -----------------------------------------------------------------------------------------------
   vk::GraphicsPipelineCreateInfo info;
-  info.stageCount          = stageInfos.size();
+  info.stageCount          = static_cast<uint32_t>(stageInfos.size());
   info.pStages             = stageInfos.data();
   info.pVertexInputState   = &vertexInputStateInfo;
   info.pInputAssemblyState = &inputAssemblyStateInfo;

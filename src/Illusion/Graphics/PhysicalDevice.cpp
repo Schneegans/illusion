@@ -92,9 +92,9 @@ PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice 
         vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute | vk::QueueFlagBits::eTransfer);
 
     if (available[i].queueCount > 0 && (available[i].queueFlags & required) == required &&
-        glfwGetPhysicalDevicePresentationSupport(instance, *this, i)) {
+        glfwGetPhysicalDevicePresentationSupport(instance, *this, static_cast<uint32_t>(i))) {
 
-      mQueueFamilies[Core::enumCast(QueueType::eGeneric)] = i;
+      mQueueFamilies[Core::enumCast(QueueType::eGeneric)] = static_cast<uint32_t>(i);
       break;
     }
   }
@@ -106,7 +106,7 @@ PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice 
     if (available[i].queueCount > 0 && (available[i].queueFlags & required) == required &&
         i != mQueueFamilies[Core::enumCast(QueueType::eGeneric)]) {
 
-      mQueueFamilies[Core::enumCast(QueueType::eCompute)] = i;
+      mQueueFamilies[Core::enumCast(QueueType::eCompute)] = static_cast<uint32_t>(i);
       break;
     }
   }
@@ -119,7 +119,7 @@ PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice 
         i != mQueueFamilies[Core::enumCast(QueueType::eGeneric)] &&
         i != mQueueFamilies[Core::enumCast(QueueType::eCompute)]) {
 
-      mQueueFamilies[Core::enumCast(QueueType::eTransfer)] = i;
+      mQueueFamilies[Core::enumCast(QueueType::eTransfer)] = static_cast<uint32_t>(i);
       break;
     }
   }
@@ -132,7 +132,7 @@ PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice 
     if (available[i].queueCount > 0 && (available[i].queueFlags & required) == required &&
         i != mQueueFamilies[Core::enumCast(QueueType::eGeneric)]) {
 
-      mQueueFamilies[Core::enumCast(QueueType::eTransfer)] = i;
+      mQueueFamilies[Core::enumCast(QueueType::eTransfer)] = static_cast<uint32_t>(i);
       break;
     }
   }

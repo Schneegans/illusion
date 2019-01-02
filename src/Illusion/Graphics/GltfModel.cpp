@@ -176,7 +176,8 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
         samplerInfo.mipmapMode              = convertSamplerMipmapMode(sampler.minFilter);
         samplerInfo.mipLodBias              = 0.f;
         samplerInfo.minLod                  = 0.f;
-        samplerInfo.maxLod = TextureUtils::getMaxMipmapLevels(image.width, image.height);
+        samplerInfo.maxLod =
+            static_cast<float>(TextureUtils::getMaxMipmapLevels(image.width, image.height));
 
         // TODO: if no image data has been loaded, try loading it on our own
         if (image.image.empty()) {
@@ -191,7 +192,7 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
           imageInfo.extent.width  = image.width;
           imageInfo.extent.height = image.height;
           imageInfo.extent.depth  = 1;
-          imageInfo.mipLevels     = samplerInfo.maxLod;
+          imageInfo.mipLevels     = static_cast<uint32_t>(samplerInfo.maxLod);
           imageInfo.arrayLayers   = 1;
           imageInfo.samples       = vk::SampleCountFlagBits::e1;
           imageInfo.tiling        = vk::ImageTiling::eOptimal;
@@ -343,13 +344,13 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
           } else if (p.first == "emissiveTexture" && p.second.TextureIndex() < mTextures.size()) {
             m->mEmissiveTexture = mTextures[p.second.TextureIndex()];
           } else if (p.first == "normalScale") {
-            m->mNormalScale = p.second.Factor();
+            m->mNormalScale = static_cast<float>(p.second.Factor());
           } else if (p.first == "alphaCutoff") {
             if (!ignoreCutoff) {
-              m->mAlphaCutoff = p.second.Factor();
+              m->mAlphaCutoff = static_cast<float>(p.second.Factor());
             }
           } else if (p.first == "occlusionStrength") {
-            m->mOcclusionStrength = p.second.Factor();
+            m->mOcclusionStrength = static_cast<float>(p.second.Factor());
           } else if (p.first == "emissiveFactor") {
             auto fac           = p.second.ColorFactor();
             m->mEmissiveFactor = glm::vec3(fac[0], fac[1], fac[2]);
@@ -402,14 +403,14 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
         primitve.mMaterial = mMaterials[std::max(0, p.material)];
         primitve.mTopology = convertPrimitiveTopology(p.mode);
 
-        uint32_t vertexStart = static_cast<uint32_t>(vertexBuffer.size());
+        size_t vertexStart = vertexBuffer.size();
 
         auto positions = p.attributes.find("POSITION");
         if (positions == p.attributes.end()) {
           throw std::runtime_error("Failed to load GLTF model: Primitve has no vertex data!");
         }
 
-        uint32_t vertexCount = model.accessors[positions->second].count;
+        size_t vertexCount = model.accessors[positions->second].count;
         vertexBuffer.resize(vertexStart + vertexCount);
 
         // positions
@@ -422,8 +423,8 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
                 "Failed to load GLTF model: Unsupported component type for positions!");
           }
 
-          uint32_t s = v.byteStride == 0 ? sizeof(glm::vec3) : v.byteStride;
-          for (uint32_t i(0); i < vertexCount; ++i) {
+          size_t s = v.byteStride == 0 ? sizeof(glm::vec3) : v.byteStride;
+          for (size_t i(0); i < vertexCount; ++i) {
             vertexBuffer[vertexStart + i].mPosition = *reinterpret_cast<glm::vec3*>(
                 &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]));
             primitve.mBoundingBox.add(vertexBuffer[vertexStart + i].mPosition);
@@ -442,8 +443,8 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
                 "Failed to load GLTF model: Unsupported component type for normals!");
           }
 
-          uint32_t s = v.byteStride == 0 ? sizeof(glm::vec3) : v.byteStride;
-          for (uint32_t i(0); i < vertexCount; ++i) {
+          size_t s = v.byteStride == 0 ? sizeof(glm::vec3) : v.byteStride;
+          for (size_t i(0); i < vertexCount; ++i) {
             vertexBuffer[vertexStart + i].mNormal = *reinterpret_cast<glm::vec3*>(
                 &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]));
           }
@@ -458,16 +459,16 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
 
           switch (a.componentType) {
           case TINYGLTF_COMPONENT_TYPE_FLOAT: {
-            uint32_t s = v.byteStride == 0 ? sizeof(glm::vec2) : v.byteStride;
-            for (uint32_t i(0); i < vertexCount; ++i) {
+            size_t s = v.byteStride == 0 ? sizeof(glm::vec2) : v.byteStride;
+            for (size_t i(0); i < vertexCount; ++i) {
               vertexBuffer[vertexStart + i].mTexcoords = *reinterpret_cast<glm::vec2*>(
                   &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]));
             }
             break;
           }
           case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
-            uint32_t s = v.byteStride == 0 ? sizeof(glm::u8vec2) : v.byteStride;
-            for (uint32_t i(0); i < vertexCount; ++i) {
+            size_t s = v.byteStride == 0 ? sizeof(glm::u8vec2) : v.byteStride;
+            for (size_t i(0); i < vertexCount; ++i) {
               vertexBuffer[vertexStart + i].mTexcoords =
                   glm::vec2(*reinterpret_cast<glm::u8vec2*>(
                       &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]))) /
@@ -476,8 +477,8 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
             break;
           }
           case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
-            uint32_t s = v.byteStride == 0 ? sizeof(glm::u16vec2) : v.byteStride;
-            for (uint32_t i(0); i < vertexCount; ++i) {
+            size_t s = v.byteStride == 0 ? sizeof(glm::u16vec2) : v.byteStride;
+            for (size_t i(0); i < vertexCount; ++i) {
               vertexBuffer[vertexStart + i].mTexcoords =
                   glm::vec2(*reinterpret_cast<glm::u16vec2*>(
                       &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]))) /
@@ -504,16 +505,16 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
 
             switch (a.componentType) {
             case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
-              uint32_t s = v.byteStride == 0 ? sizeof(glm::u8vec4) : v.byteStride;
-              for (uint32_t i(0); i < vertexCount; ++i) {
+              size_t s = v.byteStride == 0 ? sizeof(glm::u8vec4) : v.byteStride;
+              for (size_t i(0); i < vertexCount; ++i) {
                 vertexBuffer[vertexStart + i].mJoint0 = glm::vec4(*reinterpret_cast<glm::u8vec4*>(
                     &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s])));
               }
               break;
             }
             case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
-              uint32_t s = v.byteStride == 0 ? sizeof(glm::u16vec4) : v.byteStride;
-              for (uint32_t i(0); i < vertexCount; ++i) {
+              size_t s = v.byteStride == 0 ? sizeof(glm::u16vec4) : v.byteStride;
+              for (size_t i(0); i < vertexCount; ++i) {
                 vertexBuffer[vertexStart + i].mJoint0 = glm::vec4(*reinterpret_cast<glm::u16vec4*>(
                     &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s])));
               }
@@ -531,16 +532,16 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
 
             switch (a.componentType) {
             case TINYGLTF_COMPONENT_TYPE_FLOAT: {
-              uint32_t s = v.byteStride == 0 ? sizeof(glm::vec4) : v.byteStride;
-              for (uint32_t i(0); i < vertexCount; ++i) {
+              size_t s = v.byteStride == 0 ? sizeof(glm::vec4) : v.byteStride;
+              for (size_t i(0); i < vertexCount; ++i) {
                 vertexBuffer[vertexStart + i].mWeight0 = *reinterpret_cast<glm::vec4*>(
                     &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]));
               }
               break;
             }
             case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
-              uint32_t s = v.byteStride == 0 ? sizeof(glm::u8vec4) : v.byteStride;
-              for (uint32_t i(0); i < vertexCount; ++i) {
+              size_t s = v.byteStride == 0 ? sizeof(glm::u8vec4) : v.byteStride;
+              for (size_t i(0); i < vertexCount; ++i) {
                 vertexBuffer[vertexStart + i].mWeight0 =
                     glm::vec4(*reinterpret_cast<glm::u8vec4*>(
                         &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]))) /
@@ -549,8 +550,8 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
               break;
             }
             case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
-              uint32_t s = v.byteStride == 0 ? sizeof(glm::u16vec4) : v.byteStride;
-              for (uint32_t i(0); i < vertexCount; ++i) {
+              size_t s = v.byteStride == 0 ? sizeof(glm::u16vec4) : v.byteStride;
+              for (size_t i(0); i < vertexCount; ++i) {
                 vertexBuffer[vertexStart + i].mWeight0 =
                     glm::vec4(*reinterpret_cast<glm::u16vec4*>(
                         &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]))) /
@@ -565,7 +566,7 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
 
             // normalize weights - is this the correct way of handling cases where the sum of the
             // weights is not equal to one?
-            for (uint32_t i(0); i < vertexCount; ++i) {
+            for (size_t i(0); i < vertexCount; ++i) {
               float sum = vertexBuffer[vertexStart + i].mWeight0.x +
                           vertexBuffer[vertexStart + i].mWeight0.y +
                           vertexBuffer[vertexStart + i].mWeight0.z +
@@ -583,7 +584,7 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
           primitve.mIndexOffset = static_cast<uint32_t>(indexBuffer.size());
           primitve.mIndexCount  = vertexCount;
 
-          for (uint32_t i(0); i < vertexCount; ++i) {
+          for (size_t i(0); i < vertexCount; ++i) {
             indexBuffer.push_back(i + vertexStart);
           }
 

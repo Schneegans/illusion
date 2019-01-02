@@ -75,7 +75,7 @@ struct FrameResources {
 
 void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::GltfModel::Node>> const& nodes,
     glm::mat4 const& viewMatrix, glm::mat4 const& modelMatrix, bool doAlphaBlending,
-    uint32_t emptySkinDynamicOffset, FrameResources const& res) {
+    vk::DeviceSize emptySkinDynamicOffset, FrameResources const& res) {
 
   res.mCmd->graphicsState().setBlendAttachments({{doAlphaBlending}});
 
@@ -92,11 +92,11 @@ void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::GltfModel::Node>>
       }
 
       auto skinDynamicOffset = res.mUniformBuffer->addData(skin);
-      res.mCmd->bindingState().setDynamicUniformBuffer(
-          res.mUniformBuffer->getBuffer(), sizeof(SkinUniforms), skinDynamicOffset, 2, 0);
+      res.mCmd->bindingState().setDynamicUniformBuffer(res.mUniformBuffer->getBuffer(),
+          sizeof(SkinUniforms), static_cast<uint32_t>(skinDynamicOffset), 2, 0);
     } else {
-      res.mCmd->bindingState().setDynamicUniformBuffer(
-          res.mUniformBuffer->getBuffer(), sizeof(SkinUniforms), emptySkinDynamicOffset, 2, 0);
+      res.mCmd->bindingState().setDynamicUniformBuffer(res.mUniformBuffer->getBuffer(),
+          sizeof(SkinUniforms), static_cast<uint32_t>(emptySkinDynamicOffset), 2, 0);
     }
 
     if (n->mMesh) {

@@ -136,7 +136,7 @@ int main(int argc, char* argv[]) {
 
     res.mCmd->beginRenderPass(res.mRenderPass);
 
-    time += 0.01;
+    time += 0.01f;
     glm::mat4 modelView(1.f);
     modelView = glm::translate(modelView, glm::vec3(0, 0, -3));
     modelView = glm::rotate(modelView, -time * 0.5f, glm::vec3(0, 1, 0));
@@ -145,7 +145,7 @@ int main(int argc, char* argv[]) {
     res.mCmd->pushConstants(modelView);
     res.mCmd->bindVertexBuffers(0, {positionBuffer, normalBuffer, texcoordBuffer});
     res.mCmd->bindIndexBuffer(indexBuffer, 0, vk::IndexType::eUint32);
-    res.mCmd->drawIndexed(INDICES.size(), 1, 0, 0, 0);
+    res.mCmd->drawIndexed(static_cast<uint32_t>(INDICES.size()), 1, 0, 0, 0);
     res.mCmd->endRenderPass();
     res.mCmd->end();
 

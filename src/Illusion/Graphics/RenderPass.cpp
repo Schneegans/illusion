@@ -136,7 +136,7 @@ vk::RenderPassPtr RenderPass::createRenderPass() const {
     }
 
     attachmentRef.layout     = attachment.finalLayout;
-    attachmentRef.attachment = attachments.size();
+    attachmentRef.attachment = static_cast<uint32_t>(attachments.size());
 
     attachments.emplace_back(attachment);
     attachmentRefs.emplace_back(attachmentRef);
@@ -157,7 +157,7 @@ vk::RenderPassPtr RenderPass::createRenderPass() const {
 
     vk::SubpassDescription subPass;
     subPass.pipelineBindPoint    = vk::PipelineBindPoint::eGraphics;
-    subPass.colorAttachmentCount = colorAttachmentRefs.size();
+    subPass.colorAttachmentCount = static_cast<uint32_t>(colorAttachmentRefs.size());
     subPass.pColorAttachments    = colorAttachmentRefs.data();
 
     if (depthStencilAttachmentRef >= 0) {
@@ -165,7 +165,7 @@ vk::RenderPassPtr RenderPass::createRenderPass() const {
     }
 
     vk::RenderPassCreateInfo info;
-    info.attachmentCount = attachments.size();
+    info.attachmentCount = static_cast<uint32_t>(attachments.size());
     info.pAttachments    = attachments.data();
     info.subpassCount    = 1;
     info.pSubpasses      = &subPass;
@@ -192,9 +192,9 @@ vk::RenderPassPtr RenderPass::createRenderPass() const {
     }
 
     subPasses[i].pipelineBindPoint    = vk::PipelineBindPoint::eGraphics;
-    subPasses[i].inputAttachmentCount = inputAttachmentRefs[i].size();
+    subPasses[i].inputAttachmentCount = static_cast<uint32_t>(inputAttachmentRefs[i].size());
     subPasses[i].pInputAttachments    = inputAttachmentRefs[i].data();
-    subPasses[i].colorAttachmentCount = outputAttachmentRefs[i].size();
+    subPasses[i].colorAttachmentCount = static_cast<uint32_t>(outputAttachmentRefs[i].size());
     subPasses[i].pColorAttachments    = outputAttachmentRefs[i].data();
   }
 
@@ -214,11 +214,11 @@ vk::RenderPassPtr RenderPass::createRenderPass() const {
   }
 
   vk::RenderPassCreateInfo info;
-  info.attachmentCount = attachments.size();
+  info.attachmentCount = static_cast<uint32_t>(attachments.size());
   info.pAttachments    = attachments.data();
-  info.subpassCount    = subPasses.size();
+  info.subpassCount    = static_cast<uint32_t>(subPasses.size());
   info.pSubpasses      = subPasses.data();
-  info.dependencyCount = dependencies.size();
+  info.dependencyCount = static_cast<uint32_t>(dependencies.size());
   info.pDependencies   = dependencies.data();
 
   return mDevice->createRenderPass(info);
