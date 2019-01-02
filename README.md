@@ -6,9 +6,9 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
 
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 ![code](https://img.shields.io/badge/code-C++17-orange.svg)
-![platform](https://img.shields.io/badge/platform-linux-d77.svg)
-![platform](https://img.shields.io/badge/platform-windows-d77.svg)
-[![Build Status](https://travis-ci.org/Simmesimme/illusion.svg?branch=feature%2Ftravis)](https://travis-ci.org/Simmesimme/illusion)
+![ubuntu with clang](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=ubuntu%20with%20clang&env=LABEL=XenialClang)
+![ubuntu with gcc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=ubuntu%20with%20gcc&env=LABEL=XenialGCC)
+![windows with msvc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=windows%20with%20msvc&env=LABEL=WindowsMSVC)
 
 ### Features
 
