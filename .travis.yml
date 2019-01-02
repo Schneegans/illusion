@@ -10,15 +10,18 @@ addons:
     sources:
       - ubuntu-toolchain-r-test
       - llvm-toolchain-xenial-6.0
+  homebrew:
+    packages:
+      - llvm
 matrix:
   include:
-    - name: Linux GCC
+    - name: Xenial GCC
       os: linux
       dist: xenial
       sudo: required
       before_script:
         - CC=gcc-7 && CXX=g++-7
-    - name: Linux Clang
+    - name: Xenial Clang
       os: linux
       dist: xenial
       sudo: required
@@ -32,7 +35,6 @@ matrix:
       os: osx
 script:
   - mkdir build && cd build
-  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then cmake ..; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then cmake ..; fi
-  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then ls /c/Python37 ; cmake -G "Visual Studio 15 2017 Win64" -DPYTHON_EXECUTABLE:FILEPATH=/c/Python37 ..; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ] || [ "$TRAVIS_OS_NAME" == "osx" ]; then cmake ..; fi
+  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then cmake -G "Visual Studio 15 2017 Win64" -DPYTHON_EXECUTABLE=/c/Python37/python.exe ..; fi
   - cmake --build .
