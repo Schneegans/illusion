@@ -37,8 +37,7 @@ matrix:
       os: osx
       sudo: required
       before_script:
-        - find /usr/local/include
-        - find /Applications/Xcode*
+        - find /Applications/Xcode-9.4.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/
         # - sudo cp /usr/local/opt/llvm/include/c++/v1/variant /usr/include/c++ 
 script:
   - mkdir build && cd build
