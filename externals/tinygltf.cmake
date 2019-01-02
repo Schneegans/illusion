@@ -9,6 +9,6 @@
 #--------------------------------------------------------------------------------------------------#
 
 add_library(tinygltf INTERFACE)
-target_include_directories(tinygltf
+target_include_directories(tinygltf SYSTEM
   INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/externals/tinygltf
 )

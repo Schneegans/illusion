@@ -9,6 +9,6 @@
 #--------------------------------------------------------------------------------------------------#
 
 add_library(gli INTERFACE)
-target_include_directories(gli
+target_include_directories(gli SYSTEM
   INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/externals/gli
 )
