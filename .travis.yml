@@ -13,6 +13,7 @@ addons:
 matrix:
   include:
     - name: Xenial GCC
+      env: LABEL=XenialGCC
       os: linux
       dist: xenial
       sudo: required
@@ -20,13 +21,15 @@ matrix:
         - CC=gcc-7
         - CXX=g++-7
     - name: Xenial Clang
+      env: LABEL=XenialClang
       os: linux
       dist: xenial
       sudo: required
       before_script:
         - CC=clang-6.0
         - CXX=clang++-6.0
-    - name: Windows
+    - name: Windows MSVC
+      env: LABEL=WindowsMSVC
       os: windows
       install:
         - choco install python3
