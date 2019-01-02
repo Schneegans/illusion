@@ -6,9 +6,10 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
 
 ### Build Status
 
-[![ubuntu with clang](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=ubuntu%20clang&env=LABEL=XenialClang)](https://travis-ci.org/Simmesimme/illusion)
-[![ubuntu with gcc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=ubuntu%20gcc&env=LABEL=XenialGCC)](https://travis-ci.org/Simmesimme/illusion)
-[![windows with msvc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=windows%20msvc&env=LABEL=WindowsMSVC)](https://travis-ci.org/Simmesimme/illusion)
+[![ubuntu clang](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=ubuntu%20clang&env=LABEL=XenialClang)](https://travis-ci.org/Simmesimme/illusion)
+[![ubuntu gcc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=ubuntu%20gcc&env=LABEL=XenialGCC)](https://travis-ci.org/Simmesimme/illusion)
+[![windows msvc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=windows%20msvc&env=LABEL=WindowsMSVC)](https://travis-ci.org/Simmesimme/illusion)
+[![osx](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=osx&env=LABEL=OSX)](https://travis-ci.org/Simmesimme/illusion)
 
 ### Features
 
