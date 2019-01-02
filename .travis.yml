@@ -37,6 +37,7 @@ matrix:
       os: osx
 script:
   - mkdir build && cd build
+  - ls /usr/local/opt/llvm/include
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then cmake ..; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ]; then cmake -DCMAKE_CXX_FLAGS=-I/usr/local/opt/llvm/include\ -L/usr/local/opt/llvm/lib ..; fi
   - if [ "$TRAVIS_OS_NAME" == "windows" ]; then cmake -G "Visual Studio 15 2017 Win64" -DPYTHON_EXECUTABLE=/c/Python37/python.exe ..; fi
