@@ -35,10 +35,13 @@ matrix:
         - choco install python3
     - name: OS X
       os: osx
+      sudo: required
+      before_script:
+        - find /usr/include/c++
+        - sudo cp /usr/local/opt/llvm/include/c++/v1/variant /usr/include/c++ 
 script:
   - mkdir build && cd build
-  - find /usr/local/opt/llvm/lib
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then cmake ..; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then cmake -DCMAKE_CXX_FLAGS=-I/usr/local/opt/llvm/include/c++/v1\ -L/usr/local/opt/llvm/lib ..; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then cmake ..; fi
   - if [ "$TRAVIS_OS_NAME" == "windows" ]; then cmake -G "Visual Studio 15 2017 Win64" -DPYTHON_EXECUTABLE=/c/Python37/python.exe ..; fi
   - cmake --build .
