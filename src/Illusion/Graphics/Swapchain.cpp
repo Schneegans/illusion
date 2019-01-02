@@ -184,7 +184,7 @@ void Swapchain::present(BackedImagePtr const& image,
         // when does this happen?
         ILLUSION_ERROR << "out of date 2!" << std::endl;
       }
-    } catch (vk::OutOfDateKHRError const& e) { mDirty = true; }
+    } catch (...) { mDirty = true; }
   }
 }
 

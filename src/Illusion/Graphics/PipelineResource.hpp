@@ -58,7 +58,7 @@ struct PipelineResource {
   struct Member {
     BaseType            mBaseType  = BaseType::eNone;
     uint32_t            mOffset    = 0;
-    uint32_t            mSize      = 0;
+    size_t              mSize      = 0;
     uint32_t            mVecSize   = 0;
     uint32_t            mColumns   = 0;
     uint32_t            mArraySize = 0;

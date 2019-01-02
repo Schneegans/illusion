@@ -361,7 +361,7 @@ TexturePtr Device::getSinglePixelTexture(std::array<uint8_t, 4> const& color) {
 vk::CommandBufferPtr Device::allocateCommandBuffer(
     QueueType type, vk::CommandBufferLevel level) const {
   vk::CommandBufferAllocateInfo info;
-  info.level              = vk::CommandBufferLevel::ePrimary;
+  info.level              = level;
   info.commandPool        = *mCommandPools[Core::enumCast(type)];
   info.commandBufferCount = 1;
 

@@ -33,9 +33,9 @@ bool glfwInitialized{false};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-VkBool32 messageCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT type,
-    uint64_t object, size_t location, int32_t code, const char* layer, const char* message,
-    void* userData) {
+VkBool32 messageCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT /*type*/,
+    uint64_t /*object*/, size_t /*location*/, int32_t code, const char* layer, const char* message,
+    void* /*userData*/) {
 
   std::stringstream buf;
   buf << "[" << layer << "] " << message << " (code: " << code << ")" << std::endl;
@@ -168,7 +168,7 @@ vk::InstancePtr Engine::createInstance(std::string const& engine, std::string co
       throw std::runtime_error("Failed to initialize GLFW.");
     }
 
-    glfwSetErrorCallback([](int error, const char* description) {
+    glfwSetErrorCallback([](int /*error*/, const char* description) {
       throw std::runtime_error("GLFW: " + std::string(description));
     });
 

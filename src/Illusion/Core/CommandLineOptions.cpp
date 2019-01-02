@@ -46,7 +46,7 @@ void CommandLineOptions::printHelp() const {
   for (auto const& option : mOptions) {
     uint32_t nameLength = 0;
     for (auto const& name : option.mNames) {
-      nameLength += name.size() + 2;
+      nameLength += static_cast<uint32_t>(name.size()) + 2;
     }
 
     maxNameLength = std::max(maxNameLength, nameLength);

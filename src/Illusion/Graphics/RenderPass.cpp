@@ -203,7 +203,7 @@ vk::RenderPassPtr RenderPass::createRenderPass() const {
     for (auto src : mSubPasses[dst].mPreSubPasses) {
       vk::SubpassDependency dependency;
       dependency.srcSubpass    = src;
-      dependency.dstSubpass    = dst;
+      dependency.dstSubpass    = static_cast<uint32_t>(dst);
       dependency.srcStageMask  = vk::PipelineStageFlagBits::eBottomOfPipe;
       dependency.srcAccessMask = vk::AccessFlagBits::eMemoryRead;
       dependency.dstStageMask  = vk::PipelineStageFlagBits::eColorAttachmentOutput;

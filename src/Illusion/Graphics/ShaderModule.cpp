@@ -134,13 +134,13 @@ static std::vector<PipelineResource::Member> ParseMembers(
 
     // Create a new VezMemberInfo entry.
     PipelineResource::Member member;
-    member.mBaseType  = spirvTypeToBaseType.at(memberType.basetype);
-    member.mOffset    = compiler.type_struct_member_offset(spirType, i);
-    member.mSize      = compiler.get_declared_struct_member_size(spirType, i);
-    member.mVecSize   = memberType.vecsize;
-    member.mColumns   = memberType.columns;
+    member.mBaseType = spirvTypeToBaseType.at(memberType.basetype);
+    member.mOffset   = compiler.type_struct_member_offset(spirType, static_cast<uint32_t>(i));
+    member.mSize     = compiler.get_declared_struct_member_size(spirType, static_cast<uint32_t>(i));
+    member.mVecSize  = memberType.vecsize;
+    member.mColumns  = memberType.columns;
     member.mArraySize = (memberType.array.size() == 0) ? 1 : memberType.array[0];
-    member.mName      = compiler.get_member_name(spirType.self, i);
+    member.mName      = compiler.get_member_name(spirType.self, static_cast<uint32_t>(i));
 
     // Recursively process members that are structs.
     if (memberType.basetype == spirv_cross::SPIRType::Struct) {
@@ -499,8 +499,8 @@ void ShaderModule::createReflection(std::set<std::string> const& dynamicBuffers)
     uint32_t offset = ~0;
     for (size_t i(0); i < spirType.member_types.size(); ++i) {
       auto memberType = compiler.get_type(spirType.member_types[i]);
-      offset =
-          std::min(offset, compiler.get_member_decoration(spirType.self, i, spv::DecorationOffset));
+      offset          = std::min(offset, compiler.get_member_decoration(spirType.self,
+                                    static_cast<uint32_t>(i), spv::DecorationOffset));
     }
 
     PipelineResource pipelineResource;

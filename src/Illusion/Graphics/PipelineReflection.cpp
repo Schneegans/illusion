@@ -142,7 +142,7 @@ vk::PipelineLayoutPtr const& PipelineReflection::getLayout() const {
     }
 
     vk::PipelineLayoutCreateInfo pipelineLayoutInfo;
-    pipelineLayoutInfo.setLayoutCount         = descriptorSetLayouts.size();
+    pipelineLayoutInfo.setLayoutCount         = static_cast<uint32_t>(descriptorSetLayouts.size());
     pipelineLayoutInfo.pSetLayouts            = descriptorSetLayouts.data();
     pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(pushConstantRanges.size());
     pipelineLayoutInfo.pPushConstantRanges    = pushConstantRanges.data();

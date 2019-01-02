@@ -242,7 +242,7 @@ TexturePtr createCubemapFrom360PanoramaFile(DevicePtr const& device, std::string
     imageInfo.mipLevels = getMaxMipmapLevels(size, size);
     imageInfo.usage |= vk::ImageUsageFlagBits::eTransferSrc;
     imageInfo.usage |= vk::ImageUsageFlagBits::eTransferDst;
-    samplerInfo.maxLod = static_cast<uint32_t>(imageInfo.mipLevels);
+    samplerInfo.maxLod = static_cast<float>(imageInfo.mipLevels);
   }
 
   auto outputCubemap = device->createTexture(imageInfo, samplerInfo, vk::ImageViewType::eCube,
