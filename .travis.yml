@@ -37,8 +37,9 @@ matrix:
       os: osx
       sudo: required
       before_script:
-        - find /usr/include/c++
-        - sudo cp /usr/local/opt/llvm/include/c++/v1/variant /usr/include/c++ 
+        - find /usr/local/include
+        - find /Applications/Xcode*
+        # - sudo cp /usr/local/opt/llvm/include/c++/v1/variant /usr/include/c++ 
 script:
   - mkdir build && cd build
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then cmake ..; fi
