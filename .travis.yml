@@ -37,7 +37,9 @@ matrix:
       os: osx
       sudo: required
       before_script:
-        - sudo cp /usr/local/opt/llvm/include/c++/v1/variant /Applications/Xcode-9.4.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain//usr/include/c++/v1 
+        - PATH="/usr/local/opt/llvm/bin:$PATH"
+        - LDFLAGS=-L/usr/local/opt/llvm/lib
+        - CPPFLAGS=-I/usr/local/opt/llvm/include
 script:
   - mkdir build && cd build
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then cmake ..; fi
