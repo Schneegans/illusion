@@ -4,7 +4,7 @@
 
 In order to learn the concepts behind Vulkan, I am creating Illusion. For now, Illusion is a convenience layer on top of Vulkan, similar in spirit to [V-EZ](https://github.com/GPUOpen-LibrariesAndSDKs/V-EZ). However, I plan to add more features as I progress in learning. It uses C++17 and can be build on Linux (gcc or clang), Windows (msvc) and OS X (xcode).
 
-### Build Status
+### Build Status of Develop Branch
 
 [![ubuntu clang](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=ubuntu%20clang&env=LABEL=XenialClang)](https://travis-ci.org/Simmesimme/illusion)
 [![ubuntu gcc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=ubuntu%20gcc&env=LABEL=XenialGCC)](https://travis-ci.org/Simmesimme/illusion)
@@ -18,7 +18,9 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
   - [x] Automatic creation of pipeline layouts
   - [x] Automatic allocation and updates of descriptor sets
   - [x] Automatic Vulkan object lifetime management using reference counting
+  - [x] Automatic resource re-creation on swapchain changes
   - [x] A ring-buffer for per-frame resources
+  - [x] Explicit graphics state per command buffer
   - [x] Per-frame resource count is independent from swapchain image count
   - [x] Conversion of equirectangular panoramas to cubemaps
   - [x] Creation of prefiltered irradiance and reflectance maps for physically based shading
