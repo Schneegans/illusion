@@ -280,9 +280,9 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
                      p.second.TextureIndex() < mTextures.size()) {
             m->mMetallicRoughnessTexture = mTextures[p.second.TextureIndex()];
           } else if (p.first == "metallicFactor") {
-            m->mMetallicRoughnessFactor.b = p.second.Factor();
+            m->mMetallicRoughnessFactor.b = static_cast<float>(p.second.Factor());
           } else if (p.first == "roughnessFactor") {
-            m->mMetallicRoughnessFactor.g = p.second.Factor();
+            m->mMetallicRoughnessFactor.g = static_cast<float>(p.second.Factor());
           } else if (p.first == "baseColorFactor") {
             auto fac         = p.second.ColorFactor();
             m->mAlbedoFactor = glm::vec4(fac[0], fac[1], fac[2], fac[3]);
@@ -308,24 +308,24 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
 
             val = p.second.Get("diffuseFactor");
             if (val.IsArray()) {
-              m->mAlbedoFactor.r =
-                  val.Get(0).IsInt() ? val.Get(0).Get<int>() : val.Get(0).Get<double>();
-              m->mAlbedoFactor.g =
-                  val.Get(1).IsInt() ? val.Get(1).Get<int>() : val.Get(1).Get<double>();
-              m->mAlbedoFactor.b =
-                  val.Get(2).IsInt() ? val.Get(2).Get<int>() : val.Get(2).Get<double>();
-              m->mAlbedoFactor.a =
-                  val.Get(3).IsInt() ? val.Get(3).Get<int>() : val.Get(3).Get<double>();
+              m->mAlbedoFactor.r = static_cast<float>(
+                  val.Get(0).IsInt() ? val.Get(0).Get<int>() : val.Get(0).Get<double>());
+              m->mAlbedoFactor.g = static_cast<float>(
+                  val.Get(1).IsInt() ? val.Get(1).Get<int>() : val.Get(1).Get<double>());
+              m->mAlbedoFactor.b = static_cast<float>(
+                  val.Get(2).IsInt() ? val.Get(2).Get<int>() : val.Get(2).Get<double>());
+              m->mAlbedoFactor.a = static_cast<float>(
+                  val.Get(3).IsInt() ? val.Get(3).Get<int>() : val.Get(3).Get<double>());
             }
 
             val = p.second.Get("specularFactor");
             if (val.IsArray()) {
-              m->mMetallicRoughnessFactor.r =
-                  val.Get(0).IsInt() ? val.Get(0).Get<int>() : val.Get(0).Get<double>();
-              m->mMetallicRoughnessFactor.g =
-                  val.Get(1).IsInt() ? val.Get(1).Get<int>() : val.Get(1).Get<double>();
-              m->mMetallicRoughnessFactor.b =
-                  val.Get(2).IsInt() ? val.Get(2).Get<int>() : val.Get(2).Get<double>();
+              m->mMetallicRoughnessFactor.r = static_cast<float>(
+                  val.Get(0).IsInt() ? val.Get(0).Get<int>() : val.Get(0).Get<double>());
+              m->mMetallicRoughnessFactor.g = static_cast<float>(
+                  val.Get(1).IsInt() ? val.Get(1).Get<int>() : val.Get(1).Get<double>());
+              m->mMetallicRoughnessFactor.b = static_cast<float>(
+                  val.Get(2).IsInt() ? val.Get(2).Get<int>() : val.Get(2).Get<double>());
             }
           } else {
             ILLUSION_WARNING << "Ignoring GLTF extension \"" << p.first << "\" of material "

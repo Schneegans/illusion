@@ -137,7 +137,8 @@ vk::PipelineLayoutPtr const& PipelineReflection::getLayout() const {
     std::vector<vk::PushConstantRange> pushConstantRanges;
     for (auto const& r : mPushConstantBuffers) {
       if (r.second.mStages) {
-        pushConstantRanges.push_back({r.second.mStages, r.second.mOffset, r.second.mSize});
+        pushConstantRanges.push_back(
+            {r.second.mStages, r.second.mOffset, static_cast<uint32_t>(r.second.mSize)});
       }
     }
 

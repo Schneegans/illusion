@@ -168,7 +168,8 @@ class CustomCompiler : public spirv_cross::CompilerGLSL {
     // but it's own reflection code does not :-(
     auto all_members_flag_mask = spirv_cross::Bitset(~0ULL);
     for (size_t i(0); i < type.member_types.size(); ++i)
-      all_members_flag_mask.merge_and(get_member_decoration_bitset(type.self, i));
+      all_members_flag_mask.merge_and(
+          get_member_decoration_bitset(type.self, static_cast<uint32_t>(i)));
 
     auto base_flags = ir.meta[type.self].decoration.decoration_flags;
     base_flags.merge_or(spirv_cross::Bitset(all_members_flag_mask));

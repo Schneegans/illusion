@@ -83,7 +83,7 @@ struct FrameResources {
   vk::SemaphorePtr                             mRenderFinishedSemaphore;
 };
 
-int main(int argc, char* argv[]) {
+int main() {
 
   Illusion::Core::Logger::enableTrace = true;
 
