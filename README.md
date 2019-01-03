@@ -21,6 +21,7 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
   - [x] Automatic resource re-creation on swapchain changes
   - [x] A ring-buffer for per-frame resources
   - [x] Explicit graphics state per command buffer
+  - [x] Explicit binding state per command buffer
   - [x] Per-frame resource count is independent from swapchain image count
   - [x] Conversion of equirectangular panoramas to cubemaps
   - [x] Creation of prefiltered irradiance and reflectance maps for physically based shading
