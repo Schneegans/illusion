@@ -244,7 +244,8 @@ int main(int argc, char* argv[]) {
 
     window->processInput();
 
-    if (options.mAnimation >= 0 && options.mAnimation < model->getAnimations().size()) {
+    if (options.mAnimation >= 0 &&
+        static_cast<size_t>(options.mAnimation) < model->getAnimations().size()) {
       auto const& anim         = model->getAnimations()[options.mAnimation];
       float modelAnimationTime = std::fmod((float)timer.getElapsed(), anim->mEnd - anim->mStart);
       modelAnimationTime += anim->mStart;

@@ -49,12 +49,15 @@ TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
 
     ILLUSION_TRACE << "Creating Texture for file " << fileName << " with gli." << std::endl;
 
-    vk::ImageViewType type;
+    vk::ImageType     type;
+    vk::ImageViewType viewType;
 
     if (texture.target() == gli::target::TARGET_2D) {
-      type = vk::ImageViewType::e2D;
-    } else if (texture.target() == gli::target::TARGET_CUBE) {
-      type = vk::ImageViewType::eCube;
+      type     = vk::ImageType::e2D;
+      viewType = vk::ImageViewType::e2D;
+    } else if (texture.target() == gli::target::TARGET_3D) {
+      type     = vk::ImageType::e3D;
+      viewType = vk::ImageViewType::e3D;
     } else {
       throw std::runtime_error(
           "Failed to load texture " + fileName + ": Unsupported texture target!");
@@ -68,11 +71,11 @@ TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
     }
 
     vk::ImageCreateInfo imageInfo;
-    imageInfo.imageType     = vk::ImageType::e2D;
+    imageInfo.imageType     = type;
     imageInfo.format        = format;
     imageInfo.extent.width  = texture.extent().x;
     imageInfo.extent.height = texture.extent().y;
-    imageInfo.extent.depth  = 1;
+    imageInfo.extent.depth  = texture.extent().z;
     imageInfo.mipLevels     = static_cast<uint32_t>(texture.levels());
     imageInfo.arrayLayers   = static_cast<uint32_t>(texture.layers());
     imageInfo.samples       = vk::SampleCountFlagBits::e1;
@@ -92,7 +95,7 @@ TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
       samplerInfo.maxLod = static_cast<float>(imageInfo.mipLevels);
     }
 
-    auto outputImage = device->createTexture(imageInfo, samplerInfo, vk::ImageViewType::e2D,
+    auto outputImage = device->createTexture(imageInfo, samplerInfo, viewType,
         vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eShaderReadOnlyOptimal, componentMapping,
         texture.size(), texture.data());
 

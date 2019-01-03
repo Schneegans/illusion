@@ -169,12 +169,12 @@ void Window::open() {
       window->sOnMouseEvent.emit(Input::MouseEvent(static_cast<int>(x), static_cast<int>(y)));
     });
 
-    glfwSetMouseButtonCallback(mWindow, [](GLFWwindow* w, int button, int action, int mods) {
+    glfwSetMouseButtonCallback(mWindow, [](GLFWwindow* w, int button, int action, int /*mods*/) {
       auto window(static_cast<Window*>(glfwGetWindowUserPointer(w)));
       window->sOnMouseEvent.emit(Input::MouseEvent(button, action == GLFW_PRESS));
     });
 
-    glfwSetScrollCallback(mWindow, [](GLFWwindow* w, double x, double y) {
+    glfwSetScrollCallback(mWindow, [](GLFWwindow* w, double /*x*/, double y) {
       auto window(static_cast<Window*>(glfwGetWindowUserPointer(w)));
       window->sOnMouseEvent.emit(Input::MouseEvent(static_cast<int>(y * 10.0)));
     });

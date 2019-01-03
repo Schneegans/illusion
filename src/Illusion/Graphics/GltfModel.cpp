@@ -213,14 +213,16 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
 
           for (auto const& material : model.materials) {
             for (auto const& p : material.values) {
-              if (p.first == "metallicRoughnessTexture" && p.second.TextureIndex() == i) {
+              if (p.first == "metallicRoughnessTexture" &&
+                  static_cast<size_t>(p.second.TextureIndex()) == i) {
                 componentMapping.g = convert.at(textureChannels.mRoughness);
                 componentMapping.b = convert.at(textureChannels.mMetallic);
                 break;
               }
             }
             for (auto const& p : material.additionalValues) {
-              if (p.first == "occlusionTexture" && p.second.TextureIndex() == i) {
+              if (p.first == "occlusionTexture" &&
+                  static_cast<size_t>(p.second.TextureIndex()) == i) {
                 componentMapping.r = convert.at(textureChannels.mOcclusion);
                 break;
               }
@@ -274,10 +276,11 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
         m->mName = material.name;
 
         for (auto const& p : material.values) {
-          if (p.first == "baseColorTexture" && p.second.TextureIndex() < mTextures.size()) {
+          if (p.first == "baseColorTexture" &&
+              static_cast<size_t>(p.second.TextureIndex()) < mTextures.size()) {
             m->mAlbedoTexture = mTextures[p.second.TextureIndex()];
           } else if (p.first == "metallicRoughnessTexture" &&
-                     p.second.TextureIndex() < mTextures.size()) {
+                     static_cast<size_t>(p.second.TextureIndex()) < mTextures.size()) {
             m->mMetallicRoughnessTexture = mTextures[p.second.TextureIndex()];
           } else if (p.first == "metallicFactor") {
             m->mMetallicRoughnessFactor.b = static_cast<float>(p.second.Factor());
@@ -297,12 +300,14 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
             m->mSpecularGlossinessWorkflow = true;
 
             auto val = p.second.Get("specularGlossinessTexture");
-            if (val.IsObject() && val.Get("index").Get<int>() < mTextures.size()) {
+            if (val.IsObject() &&
+                static_cast<size_t>(val.Get("index").Get<int>()) < mTextures.size()) {
               m->mMetallicRoughnessTexture = mTextures[val.Get("index").Get<int>()];
             }
 
             val = p.second.Get("diffuseTexture");
-            if (val.IsObject() && val.Get("index").Get<int>() < mTextures.size()) {
+            if (val.IsObject() &&
+                static_cast<size_t>(val.Get("index").Get<int>()) < mTextures.size()) {
               m->mAlbedoTexture = mTextures[val.Get("index").Get<int>()];
             }
 
@@ -337,11 +342,14 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
         bool hasBlendMode = false;
 
         for (auto const& p : material.additionalValues) {
-          if (p.first == "normalTexture" && p.second.TextureIndex() < mTextures.size()) {
+          if (p.first == "normalTexture" &&
+              static_cast<size_t>(p.second.TextureIndex()) < mTextures.size()) {
             m->mNormalTexture = mTextures[p.second.TextureIndex()];
-          } else if (p.first == "occlusionTexture" && p.second.TextureIndex() < mTextures.size()) {
+          } else if (p.first == "occlusionTexture" &&
+                     static_cast<size_t>(p.second.TextureIndex()) < mTextures.size()) {
             m->mOcclusionTexture = mTextures[p.second.TextureIndex()];
-          } else if (p.first == "emissiveTexture" && p.second.TextureIndex() < mTextures.size()) {
+          } else if (p.first == "emissiveTexture" &&
+                     static_cast<size_t>(p.second.TextureIndex()) < mTextures.size()) {
             m->mEmissiveTexture = mTextures[p.second.TextureIndex()];
           } else if (p.first == "normalScale") {
             m->mNormalScale = static_cast<float>(p.second.Factor());
@@ -648,7 +656,7 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
       skin->mName = s.name;
 
       for (int j : s.joints) {
-        if (j >= 0 && j < mNodes.size()) {
+        if (j >= 0 && static_cast<size_t>(j) < mNodes.size()) {
           skin->mJoints.push_back(mNodes[j]);
         }
       }

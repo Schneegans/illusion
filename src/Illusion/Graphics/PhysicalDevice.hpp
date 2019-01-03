@@ -31,13 +31,13 @@ class PhysicalDevice : public vk::PhysicalDevice {
   uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) const;
 
   // queues of this family can do graphics, compute, transfer and presentation
-  int32_t  getQueueFamily(QueueType type) const;
+  uint32_t getQueueFamily(QueueType type) const;
   uint32_t getQueueIndex(QueueType type) const;
 
   void printInfo();
 
  private:
-  std::array<int32_t, 3>  mQueueFamilies = {-1, -1, -1};
+  std::array<uint32_t, 3> mQueueFamilies = {0, 0, 0};
   std::array<uint32_t, 3> mQueueIndices  = {0, 0, 0};
 };
 
