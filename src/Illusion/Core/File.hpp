@@ -12,14 +12,12 @@
 #define ILLUSION_CORE_FILE_HPP
 
 #include "Logger.hpp"
+#include "filesystem.hpp"
 
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include <experimental/filesystem>
-namespace fs = std::experimental::filesystem;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // This class is used to read and write text files. The template parameter specifies the type the //
@@ -120,8 +118,8 @@ class File {
   }
 
   // Returns the last write time as reported from std::filesystem
-  fs::file_time_type getLastWriteTime() const {
-    return fs::last_write_time(mPath);
+  std::filesystem::file_time_type getLastWriteTime() const {
+    return std::filesystem::last_write_time(mPath);
   }
 
   // Polls for changes to this file
@@ -135,10 +133,10 @@ class File {
   }
 
  private:
-  fs::path                   mPath;
-  mutable fs::file_time_type mLastWriteTime;
-  mutable T                  mContent;
-  mutable bool               mIsLoaded;
+  std::filesystem::path                   mPath;
+  mutable std::filesystem::file_time_type mLastWriteTime;
+  mutable T                               mContent;
+  mutable bool                            mIsLoaded;
 };
 
 } // namespace Illusion::Core
