@@ -19,11 +19,7 @@ target_link_libraries(illusion-core
     PUBLIC glm
 )
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
-  target_link_libraries(illusion-core 
-    PUBLIC c++experimental
-  )
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
   target_link_libraries(illusion-core 
     PUBLIC stdc++fs
   )
