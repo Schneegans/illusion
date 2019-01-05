@@ -13,9 +13,9 @@
 #include <Illusion/Graphics/CoherentUniformBuffer.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/Engine.hpp>
+#include <Illusion/Graphics/GlslShader.hpp>
 #include <Illusion/Graphics/PipelineReflection.hpp>
 #include <Illusion/Graphics/RenderPass.hpp>
-#include <Illusion/Graphics/ShaderProgram.hpp>
 #include <Illusion/Graphics/TextureUtils.hpp>
 #include <Illusion/Graphics/Window.hpp>
 
@@ -92,7 +92,7 @@ int main() {
   auto window = Illusion::Graphics::Window::create(engine, device);
 
   auto texture = Illusion::Graphics::TextureUtils::createFromFile(device, "data/textures/box.dds");
-  auto shader  = Illusion::Graphics::ShaderProgram::createFromFiles(
+  auto shader  = Illusion::Graphics::GlslShader::create(
       device, {"data/shaders/TexturedCube.vert", "data/shaders/TexturedCube.frag"});
 
   auto positionBuffer = device->createVertexBuffer(POSITIONS);
@@ -119,7 +119,7 @@ int main() {
     res.mCmd->reset();
     res.mCmd->begin();
 
-    res.mCmd->setShaderProgram(shader);
+    res.mCmd->setShader(shader);
     res.mRenderPass->setExtent(window->pExtent.get());
     res.mCmd->graphicsState().setViewports(
         {{glm::vec2(0), glm::vec2(window->pExtent.get()), 0.f, 1.f}});

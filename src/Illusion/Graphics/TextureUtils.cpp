@@ -14,7 +14,8 @@
 #include "CommandBuffer.hpp"
 #include "Device.hpp"
 #include "PhysicalDevice.hpp"
-#include "ShaderProgram.hpp"
+#include "Shader.hpp"
+#include "ShaderModule.hpp"
 
 #include <gli/gli.hpp>
 #include <iostream>
@@ -224,7 +225,8 @@ TexturePtr createCubemapFrom360PanoramaFile(DevicePtr const& device, std::string
       vk::SamplerCreateInfo(vk::SamplerCreateFlags(), vk::Filter::eLinear, vk::Filter::eLinear,
           vk::SamplerMipmapMode::eLinear, vk::SamplerAddressMode::eRepeat,
           vk::SamplerAddressMode::eClampToEdge));
-  auto shader = ShaderProgram::createFromGlsl(device, {{vk::ShaderStageFlagBits::eCompute, glsl}});
+  auto shader   = Shader::create(
+      device, {ShaderModule::create(device, glsl, vk::ShaderStageFlagBits::eCompute)});
 
   vk::ImageCreateInfo imageInfo;
   imageInfo.flags         = vk::ImageCreateFlagBits::eCubeCompatible;
@@ -256,7 +258,7 @@ TexturePtr createCubemapFrom360PanoramaFile(DevicePtr const& device, std::string
   cmd->bindingState().setStorageImage(outputCubemap, 0, 1);
 
   cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
-  cmd->setShaderProgram(shader);
+  cmd->setShader(shader);
 
   uint32_t groupCount = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / 16.f));
   cmd->dispatch(groupCount, groupCount, 6);
@@ -351,7 +353,8 @@ TexturePtr createPrefilteredIrradianceCubemap(
     }
   )";
 
-  auto shader = ShaderProgram::createFromGlsl(device, {{vk::ShaderStageFlagBits::eCompute, glsl}});
+  auto shader = Shader::create(
+      device, {ShaderModule::create(device, glsl, vk::ShaderStageFlagBits::eCompute)});
 
   vk::ImageCreateInfo imageInfo;
   imageInfo.flags         = vk::ImageCreateFlagBits::eCubeCompatible;
@@ -376,7 +379,7 @@ TexturePtr createPrefilteredIrradianceCubemap(
   cmd->bindingState().setStorageImage(outputCubemap, 0, 1);
 
   cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
-  cmd->setShaderProgram(shader);
+  cmd->setShader(shader);
 
   uint32_t groupCount = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / 16.f));
   cmd->dispatch(groupCount, groupCount, 6);
@@ -528,7 +531,8 @@ TexturePtr createPrefilteredReflectionCubemap(
     }
   )";
 
-  auto shader = ShaderProgram::createFromGlsl(device, {{vk::ShaderStageFlagBits::eCompute, glsl}});
+  auto shader = Shader::create(
+      device, {ShaderModule::create(device, glsl, vk::ShaderStageFlagBits::eCompute)});
 
   uint32_t mipLevels = getMaxMipmapLevels(size, size);
 
@@ -557,7 +561,7 @@ TexturePtr createPrefilteredReflectionCubemap(
   cmd->bindingState().setTexture(inputCubemap, 0, 0);
 
   cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
-  cmd->setShaderProgram(shader);
+  cmd->setShader(shader);
 
   std::vector<vk::ImageViewPtr> mipViews;
 
@@ -694,7 +698,8 @@ TexturePtr createBRDFLuT(DevicePtr const& device, uint32_t size) {
     }
   )";
 
-  auto shader = ShaderProgram::createFromGlsl(device, {{vk::ShaderStageFlagBits::eCompute, glsl}});
+  auto shader = Shader::create(
+      device, {ShaderModule::create(device, glsl, vk::ShaderStageFlagBits::eCompute)});
 
   vk::ImageCreateInfo imageInfo;
   imageInfo.imageType     = vk::ImageType::e2D;
@@ -717,7 +722,7 @@ TexturePtr createBRDFLuT(DevicePtr const& device, uint32_t size) {
   cmd->bindingState().setStorageImage(outputImage, 0, 0);
 
   cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
-  cmd->setShaderProgram(shader);
+  cmd->setShader(shader);
 
   uint32_t groupCount = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / 16.f));
   cmd->dispatch(groupCount, groupCount, 1);

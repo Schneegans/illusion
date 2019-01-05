@@ -8,9 +8,10 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_SHADER_PROGRAM_HPP
-#define ILLUSION_GRAPHICS_SHADER_PROGRAM_HPP
+#ifndef ILLUSION_GRAPHICS_SHADER_HPP
+#define ILLUSION_GRAPHICS_SHADER_HPP
 
+#include "../Core/File.hpp"
 #include "DescriptorPool.hpp"
 
 #include <map>
@@ -21,31 +22,24 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class ShaderProgram {
+class Shader {
 
  public:
-  static ShaderProgramPtr createFromFiles(DevicePtr const& device,
-      std::vector<std::string> const& files, std::set<std::string> const& dynamicBuffers = {});
-
-  static ShaderProgramPtr createFromGlsl(DevicePtr const&   device,
-      std::map<vk::ShaderStageFlagBits, std::string> const& sources,
-      std::set<std::string> const&                          dynamicBuffers = {});
-
   // Syntactic sugar to create a std::shared_ptr for this class
-  template <typename... Args>
-  static ShaderProgramPtr create(Args&&... args) {
-    return std::make_shared<ShaderProgram>(args...);
-  };
+  static ShaderPtr create(DevicePtr const& device, std::vector<ShaderModulePtr> const& modules) {
+    return std::make_shared<Shader>(device, modules);
+  }
 
-  ShaderProgram(DevicePtr const& device, std::vector<ShaderModulePtr> const& modules);
-  virtual ~ShaderProgram();
+  Shader() = default;
+  Shader(DevicePtr const& device, std::vector<ShaderModulePtr> const& modules);
 
-  std::vector<ShaderModulePtr> const& getModules() const;
+  virtual ~Shader();
 
-  PipelineReflectionPtr const&                   getReflection() const;
-  std::vector<DescriptorSetReflectionPtr> const& getDescriptorSetReflections() const;
+  virtual std::vector<ShaderModulePtr> const&            getModules();
+  virtual PipelineReflectionPtr const&                   getReflection();
+  virtual std::vector<DescriptorSetReflectionPtr> const& getDescriptorSetReflections();
 
- private:
+ protected:
   void createReflection();
 
   DevicePtr                    mDevice;
@@ -54,4 +48,4 @@ class ShaderProgram {
 };
 } // namespace Illusion::Graphics
 
-#endif // ILLUSION_GRAPHICS_SHADER_PROGRAM_HPP
+#endif // ILLUSION_GRAPHICS_SHADER_HPP

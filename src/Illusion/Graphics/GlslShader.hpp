@@ -8,12 +8,12 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_SHADERMODULE_HPP
-#define ILLUSION_GRAPHICS_SHADERMODULE_HPP
+#ifndef ILLUSION_GRAPHICS_GLSL_SHADER_HPP
+#define ILLUSION_GRAPHICS_GLSL_SHADER_HPP
 
-#include "PipelineResource.hpp"
-#include "fwd.hpp"
+#include "Shader.hpp"
 
+#include <map>
 #include <set>
 
 namespace Illusion::Graphics {
@@ -21,37 +21,32 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class ShaderModule {
+class GlslShader : public Shader {
+
  public:
-  static std::vector<uint32_t> compileGlsl(std::string const& glsl, vk::ShaderStageFlagBits stage);
-
   // Syntactic sugar to create a std::shared_ptr for this class
-  template <typename... Args>
-  static ShaderModulePtr create(Args&&... args) {
-    return std::make_shared<ShaderModule>(args...);
-  };
+  static GlslShaderPtr create(DevicePtr const& device, std::vector<std::string> const& fileNames,
+      std::set<std::string> const& dynamicBuffers = {}) {
+    return std::make_shared<GlslShader>(device, fileNames, dynamicBuffers);
+  }
 
-  ShaderModule(DevicePtr const& device, std::string const& glsl, vk::ShaderStageFlagBits stage,
+  GlslShader(DevicePtr const& device, std::vector<std::string> const& fileNames,
       std::set<std::string> const& dynamicBuffers = {});
 
-  ShaderModule(DevicePtr const& device, std::vector<uint32_t>&& spirv,
-      vk::ShaderStageFlagBits stage, std::set<std::string> const& dynamicBuffers);
+  virtual ~GlslShader();
 
-  virtual ~ShaderModule();
+  virtual std::vector<ShaderModulePtr> const&            getModules() override;
+  virtual PipelineReflectionPtr const&                   getReflection() override;
+  virtual std::vector<DescriptorSetReflectionPtr> const& getDescriptorSetReflections() override;
 
-  vk::ShaderStageFlagBits              getStage() const;
-  vk::ShaderModulePtr                  getModule() const;
-  std::vector<PipelineResource> const& getResources() const;
+ protected:
+  void loadFromFiles();
+  void reload();
 
- private:
-  void createReflection(std::set<std::string> const& dynamicBuffers);
-
-  std::vector<uint32_t>         mSpirv;
-  vk::ShaderStageFlagBits       mStage;
-  vk::ShaderModulePtr           mModule;
-  std::vector<PipelineResource> mResources;
+  std::set<std::string>                mDynamicBuffers;
+  std::vector<std::string>             mFileNames;
+  std::vector<Core::File<std::string>> mAllSourceFiles;
 };
-
 } // namespace Illusion::Graphics
 
-#endif // ILLUSION_GRAPHICS_SHADERMODULE_HPP
+#endif // ILLUSION_GRAPHICS_GLSL_SHADER_HPP

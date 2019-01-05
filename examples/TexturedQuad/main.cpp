@@ -11,9 +11,9 @@
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/Engine.hpp>
+#include <Illusion/Graphics/GlslShader.hpp>
 #include <Illusion/Graphics/PipelineReflection.hpp>
 #include <Illusion/Graphics/RenderPass.hpp>
-#include <Illusion/Graphics/ShaderProgram.hpp>
 #include <Illusion/Graphics/TextureUtils.hpp>
 #include <Illusion/Graphics/Window.hpp>
 
@@ -28,7 +28,7 @@ int main() {
   auto window = Illusion::Graphics::Window::create(engine, device);
 
   auto texture = Illusion::Graphics::TextureUtils::createFromFile(device, "data/textures/box.dds");
-  auto shader  = Illusion::Graphics::ShaderProgram::createFromFiles(
+  auto shader  = Illusion::Graphics::GlslShader::create(
       device, {"data/shaders/Quad.vert", "data/shaders/TexturedQuad.frag"});
 
   auto renderPass = Illusion::Graphics::RenderPass::create(device);
@@ -41,7 +41,7 @@ int main() {
   cmd->graphicsState().addScissor({glm::ivec2(0), window->pExtent.get()});
   cmd->bindingState().setTexture(texture, 0, 0);
   cmd->begin();
-  cmd->setShaderProgram(shader);
+  cmd->setShader(shader);
   cmd->beginRenderPass(renderPass);
   cmd->draw(4);
   cmd->endRenderPass();

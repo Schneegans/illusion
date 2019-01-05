@@ -13,7 +13,6 @@
 #include "PipelineReflection.hpp"
 #include "RenderPass.hpp"
 #include "ShaderModule.hpp"
-#include "ShaderProgram.hpp"
 
 #include <iostream>
 

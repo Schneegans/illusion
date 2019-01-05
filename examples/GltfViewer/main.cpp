@@ -18,10 +18,10 @@
 #include <Illusion/Graphics/CoherentUniformBuffer.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/Engine.hpp>
+#include <Illusion/Graphics/GlslShader.hpp>
 #include <Illusion/Graphics/GltfModel.hpp>
 #include <Illusion/Graphics/PhysicalDevice.hpp>
 #include <Illusion/Graphics/RenderPass.hpp>
-#include <Illusion/Graphics/ShaderProgram.hpp>
 #include <Illusion/Graphics/TextureUtils.hpp>
 #include <Illusion/Graphics/Window.hpp>
 
@@ -195,11 +195,11 @@ int main(int argc, char* argv[]) {
   auto prefilteredReflection =
       Illusion::Graphics::TextureUtils::createPrefilteredReflectionCubemap(device, 128, skybox);
 
-  auto pbrShader = Illusion::Graphics::ShaderProgram::createFromFiles(device,
+  auto pbrShader = Illusion::Graphics::GlslShader::create(device,
       {"data/shaders/SimpleGltfShader.vert", "data/shaders/SimpleGltfShader.frag"},
       {"SkinUniforms"});
 
-  auto skyShader = Illusion::Graphics::ShaderProgram::createFromFiles(
+  auto skyShader = Illusion::Graphics::GlslShader::create(
       device, {"data/shaders/Quad.vert", "data/shaders/Skybox.frag"});
 
   auto uboAlignment =
@@ -289,7 +289,7 @@ int main(int argc, char* argv[]) {
     res.mCmd->bindingState().setUniformBuffer(
         res.mUniformBuffer->getBuffer(), sizeof(CameraUniforms), 0, 0, 0);
 
-    res.mCmd->setShaderProgram(skyShader);
+    res.mCmd->setShader(skyShader);
     res.mCmd->bindingState().setTexture(skybox, 1, 0);
     res.mCmd->graphicsState().setDepthTestEnable(false);
     res.mCmd->graphicsState().setDepthWriteEnable(false);
@@ -301,7 +301,7 @@ int main(int argc, char* argv[]) {
 
     res.mCmd->bindingState().reset(1);
 
-    res.mCmd->setShaderProgram(pbrShader);
+    res.mCmd->setShader(pbrShader);
     res.mCmd->bindingState().setTexture(brdflut, 1, 0);
     res.mCmd->bindingState().setTexture(prefilteredIrradiance, 1, 1);
     res.mCmd->bindingState().setTexture(prefilteredReflection, 1, 2);

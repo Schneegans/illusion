@@ -14,8 +14,8 @@
 #include "Device.hpp"
 #include "PipelineReflection.hpp"
 #include "RenderPass.hpp"
+#include "Shader.hpp"
 #include "ShaderModule.hpp"
-#include "ShaderProgram.hpp"
 
 #include <iostream>
 
@@ -137,11 +137,11 @@ BindingState const& CommandBuffer::bindingState() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::setShaderProgram(ShaderProgramPtr const& val) {
-  mCurrentShaderProgram = val;
+void CommandBuffer::setShader(ShaderPtr const& val) {
+  mCurrentShader = val;
 }
-ShaderProgramPtr const& CommandBuffer::getShaderProgram() const {
-  return mCurrentShaderProgram;
+ShaderPtr const& CommandBuffer::getShader() const {
+  return mCurrentShader;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -186,7 +186,7 @@ void CommandBuffer::bindVertexBuffers(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::pushConstants(const void* data, uint32_t size, uint32_t offset) const {
-  auto const& reflection = mCurrentShaderProgram->getReflection();
+  auto const& reflection = mCurrentShader->getReflection();
   auto constants = reflection->getResources(PipelineResource::ResourceType::ePushConstantBuffer);
 
   if (constants.size() != 1) {
@@ -365,7 +365,7 @@ void CommandBuffer::flush() {
   //       re-bind current descriptor set
 
   // get descriptor set layouts of the current program
-  auto const& setReflections = mCurrentShaderProgram->getDescriptorSetReflections();
+  auto const& setReflections = mCurrentShader->getDescriptorSetReflections();
 
   for (uint32_t setNum = 0; setNum < setReflections.size(); ++setNum) {
 
@@ -394,7 +394,7 @@ void CommandBuffer::flush() {
 
       // acquire an unused descriptor set
       auto descriptorSet = mDescriptorSetCache.acquireHandle(
-          mCurrentShaderProgram->getDescriptorSetReflections().at(setNum));
+          mCurrentShader->getDescriptorSetReflections().at(setNum));
 
       // get all bindings of the current descriptor set
       auto const& bindings     = mBindingState.getBindings(setNum);
@@ -484,8 +484,8 @@ void CommandBuffer::flush() {
       }
 
       // now the descriptor set is up-to-date and we can bind it
-      mVkCmd->bindDescriptorSets(bindPoint, *mCurrentShaderProgram->getReflection()->getLayout(),
-          setNum, *descriptorSet, dynamicOffsets);
+      mVkCmd->bindDescriptorSets(bindPoint, *mCurrentShader->getReflection()->getLayout(), setNum,
+          *descriptorSet, dynamicOffsets);
 
       // store the hash of the descriptor set layout so that we can check for
       // compatibility if a new program is bound
@@ -505,8 +505,8 @@ void CommandBuffer::flush() {
         }
       }
 
-      mVkCmd->bindDescriptorSets(bindPoint, *mCurrentShaderProgram->getReflection()->getLayout(),
-          setNum, *currentSetIt->second.mSet, dynamicOffsets);
+      mVkCmd->bindDescriptorSets(bindPoint, *mCurrentShader->getReflection()->getLayout(), setNum,
+          *currentSetIt->second.mSet, dynamicOffsets);
     }
   }
 
@@ -520,12 +520,12 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
 
   if (mType == QueueType::eCompute) {
 
-    if (!mCurrentShaderProgram) {
-      throw std::runtime_error("Failed to create compute pipeline: No ShaderProgram given!");
+    if (!mCurrentShader) {
+      throw std::runtime_error("Failed to create compute pipeline: No Shader given!");
     }
 
     Core::BitHash hash;
-    hash.push<64>(mCurrentShaderProgram.get());
+    hash.push<64>(mCurrentShader.get());
 
     auto cached = mPipelineCache.find(hash);
     if (cached != mPipelineCache.end()) {
@@ -534,16 +534,16 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
 
     vk::ComputePipelineCreateInfo info;
 
-    if (mCurrentShaderProgram->getModules().size() != 1) {
+    if (mCurrentShader->getModules().size() != 1) {
       throw std::runtime_error(
           "Failed to create compute pipeline: There must be exactly one ShaderModule!");
     }
 
-    info.stage.stage               = mCurrentShaderProgram->getModules()[0]->getStage();
-    info.stage.module              = *mCurrentShaderProgram->getModules()[0]->getModule();
+    info.stage.stage               = mCurrentShader->getModules()[0]->getStage();
+    info.stage.module              = *mCurrentShader->getModules()[0]->getModule();
     info.stage.pName               = "main";
     info.stage.pSpecializationInfo = nullptr;
-    info.layout                    = *mCurrentShaderProgram->getReflection()->getLayout();
+    info.layout                    = *mCurrentShader->getReflection()->getLayout();
 
     auto pipeline = mDevice->createComputePipeline(info);
 
@@ -555,7 +555,10 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
   // -----------------------------------------------------------------------------------------------
 
   Core::BitHash hash = mGraphicsState.getHash();
-  hash.push<64>(mCurrentShaderProgram.get());
+
+  for (auto const& m : mCurrentShader->getModules()) {
+    hash.push<64>(m.get());
+  }
   hash.push<64>(mCurrentRenderPass.get());
   hash.push<32>(mCurrentSubPass);
 
@@ -566,8 +569,8 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
 
   // -----------------------------------------------------------------------------------------------
   std::vector<vk::PipelineShaderStageCreateInfo> stageInfos;
-  if (mCurrentShaderProgram) {
-    for (auto const& i : mCurrentShaderProgram->getModules()) {
+  if (mCurrentShader) {
+    for (auto const& i : mCurrentShader->getModules()) {
       vk::PipelineShaderStageCreateInfo stageInfo;
       stageInfo.stage               = i->getStage();
       stageInfo.module              = *i->getModule();
@@ -711,8 +714,8 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
   info.renderPass = *mCurrentRenderPass->getHandle();
   info.subpass    = mCurrentSubPass;
 
-  if (mCurrentShaderProgram) {
-    info.layout = *mCurrentShaderProgram->getReflection()->getLayout();
+  if (mCurrentShader) {
+    info.layout = *mCurrentShader->getReflection()->getLayout();
   }
 
   auto pipeline = mDevice->createGraphicsPipeline(info);

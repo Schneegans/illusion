@@ -18,6 +18,9 @@
 #include <string>
 #include <vector>
 
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // This class is used to read and write text files. The template parameter specifies the type the //
 // content of the file is returned as. Common use cases include:                                  //
@@ -35,28 +38,23 @@ class File {
  public:
   // This constructs a invalid File.
   File()
-      : mFileName("")
+      : mPath("")
       , mContent()
       , mIsLoaded(false) {
   }
 
   // This constructs a File for a given name.
-  explicit File(std::string const& fileName)
-      : mFileName(fileName)
+  File(std::string const& fileName)
+      : mPath(fileName)
+      , mLastWriteTime(getLastWriteTime())
       , mContent()
       , mIsLoaded(false) {
   }
 
   // Returns if the given file is valid.
   bool isValid() const {
-    std::ifstream file(mFileName.c_str());
-
-    if (file.fail()) {
-      return false;
-    }
-
-    file.close();
-    return true;
+    std::ifstream file(mPath.c_str());
+    return !file.fail();
   }
 
   // Returns the given file's content.
@@ -65,9 +63,9 @@ class File {
       return mContent;
     }
 
-    std::ifstream ifs(mFileName, std::ifstream::in | std::ios::binary);
+    std::ifstream ifs(mPath, std::ifstream::in | std::ios::binary);
     if (!ifs) {
-      ILLUSION_WARNING << "Cannot open file \"" << mFileName << "\"!" << std::endl;
+      ILLUSION_WARNING << "Cannot open file \"" << mPath << "\"!" << std::endl;
       return mContent;
     }
 
@@ -92,14 +90,14 @@ class File {
   // Saves the file
   bool save() const {
     if (!mIsLoaded) {
-      ILLUSION_WARNING << "Unable to save file \"" << mFileName << "\"! No content has been set."
+      ILLUSION_WARNING << "Unable to save file \"" << mPath << "\"! No content has been set."
                        << std::endl;
       return false;
     }
 
-    std::ofstream ofs(mFileName, std::ifstream::out | std::ios::binary);
+    std::ofstream ofs(mPath, std::ifstream::out | std::ios::binary);
     if (!ofs) {
-      ILLUSION_WARNING << "Cannot open file \"" << mFileName << "\"!" << std::endl;
+      ILLUSION_WARNING << "Cannot open file \"" << mPath << "\"!" << std::endl;
       return false;
     }
 
@@ -111,20 +109,36 @@ class File {
 
   // Deletes the file from the file system
   void remove() {
-    std::remove(mFileName.c_str());
+    std::remove(mPath.c_str());
     mContent.clear();
     mIsLoaded = false;
   }
 
   // Returns the given file's name.
   std::string const& getFileName() const {
-    return mFileName;
+    return mPath;
+  }
+
+  // Returns the last write time as reported from std::filesystem
+  fs::file_time_type getLastWriteTime() const {
+    return fs::last_write_time(mPath);
+  }
+
+  // Polls for changes to this file
+  bool changedOnDisc() const {
+    auto time = getLastWriteTime();
+
+    bool didChange = time != mLastWriteTime;
+    mLastWriteTime = time;
+
+    return didChange;
   }
 
  private:
-  std::string  mFileName;
-  mutable T    mContent;
-  mutable bool mIsLoaded;
+  fs::path                   mPath;
+  mutable fs::file_time_type mLastWriteTime;
+  mutable T                  mContent;
+  mutable bool               mIsLoaded;
 };
 
 } // namespace Illusion::Core

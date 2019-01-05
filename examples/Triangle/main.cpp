@@ -11,8 +11,8 @@
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/Engine.hpp>
+#include <Illusion/Graphics/GlslShader.hpp>
 #include <Illusion/Graphics/RenderPass.hpp>
-#include <Illusion/Graphics/ShaderProgram.hpp>
 #include <Illusion/Graphics/Window.hpp>
 
 #include <thread>
@@ -24,7 +24,7 @@ int main() {
   auto engine = Illusion::Graphics::Engine::create("Triangle Demo");
   auto device = Illusion::Graphics::Device::create(engine->getPhysicalDevice());
   auto window = Illusion::Graphics::Window::create(engine, device);
-  auto shader = Illusion::Graphics::ShaderProgram::createFromFiles(
+  auto shader = Illusion::Graphics::GlslShader::create(
       device, {"data/shaders/Triangle.vert", "data/shaders/Triangle.frag"});
 
   auto renderPass = Illusion::Graphics::RenderPass::create(device);
@@ -35,7 +35,7 @@ int main() {
   cmd->graphicsState().addBlendAttachment({});
   cmd->graphicsState().addViewport({glm::vec2(0), glm::vec2(window->pExtent.get()), 0.f, 1.f});
   cmd->begin();
-  cmd->setShaderProgram(shader);
+  cmd->setShader(shader);
   cmd->beginRenderPass(renderPass);
   cmd->draw(3);
   cmd->endRenderPass();

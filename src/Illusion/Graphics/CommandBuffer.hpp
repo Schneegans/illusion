@@ -81,10 +81,10 @@ class CommandBuffer {
   BindingState&       bindingState();
   BindingState const& bindingState() const;
 
-  // Read and write access to the currently bound ShaderProgram. Changes will not directly affect
+  // Read and write access to the currently bound Shader. Changes will not directly affect
   // the internal vk::CommandBuffer; they are flushed whenever a draw or dispatch command is issued.
-  void                    setShaderProgram(ShaderProgramPtr const& val);
-  ShaderProgramPtr const& getShaderProgram() const;
+  void             setShader(ShaderPtr const& val);
+  ShaderPtr const& getShader() const;
 
   // Binds the given BackedBuffer as index buffer. This is directly recorded to the internal
   // vk::CommandBuffer.
@@ -159,9 +159,9 @@ class CommandBuffer {
   GraphicsState mGraphicsState;
   BindingState  mBindingState;
 
-  ShaderProgramPtr mCurrentShaderProgram;
-  RenderPassPtr    mCurrentRenderPass;
-  uint32_t         mCurrentSubPass = 0;
+  ShaderPtr     mCurrentShader;
+  RenderPassPtr mCurrentRenderPass;
+  uint32_t      mCurrentSubPass = 0;
 
   std::map<Core::BitHash, vk::PipelinePtr> mPipelineCache;
 
