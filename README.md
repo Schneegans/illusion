@@ -6,10 +6,17 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
 
 ### Build Status of Develop Branch
 
-[![ubuntu clang](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=ubuntu%20clang&env=LABEL=XenialClang)](https://travis-ci.org/Simmesimme/illusion)
-[![ubuntu gcc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=ubuntu%20gcc&env=LABEL=XenialGCC)](https://travis-ci.org/Simmesimme/illusion)
-[![windows msvc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=windows%20msvc&env=LABEL=WindowsMSVC)](https://travis-ci.org/Simmesimme/illusion)
-[![osx](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=osx&env=LABEL=OSX)](https://travis-ci.org/Simmesimme/illusion)
+![linux](https://img.icons8.com/material/20/000000/linux.png)
+[![ubuntu clang](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=clang&env=LABEL=XenialClang)](https://travis-ci.org/Simmesimme/illusion)
+
+![linux](https://img.icons8.com/material/20/000000/linux.png)
+[![ubuntu gcc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=gcc&env=LABEL=XenialGCC)](https://travis-ci.org/Simmesimme/illusion)
+
+![windows](https://img.icons8.com/ios/20/000000/windows8-filled.png)
+[![msvc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=msvc&env=LABEL=WindowsMSVC)](https://travis-ci.org/Simmesimme/illusion)
+
+![osx](https://img.icons8.com/ios-glyphs/20/000000/mac-client.png)
+[![osx](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=clang&env=LABEL=OSX)](https://travis-ci.org/Simmesimme/illusion)
 
 ## Features
 
@@ -99,7 +106,8 @@ Here are some resources I am using while developing this software.
 * [V-EZ](https://github.com/GPUOpen-LibrariesAndSDKs/V-EZ): Especially the shader reflection of Illusion is based on code of V-EZ.
 * [Granite](https://github.com/Themaister/Granite): I learned a lot from this great Vulkan engine. 
 * [glTF sample models](https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0): These are very usefulf!
-* [HDRI Haven](https://hdrihaven.com/): Thank you Greg Zaal for your awesome work!
+* [HDRI Haven](https://hdrihaven.com): Thank you Greg Zaal for your awesome work!
+* [icons8.com](https://icons8.com): Some great icons!
 
 ### MIT License
 
