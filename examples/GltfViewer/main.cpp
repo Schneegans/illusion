@@ -18,10 +18,10 @@
 #include <Illusion/Graphics/CoherentUniformBuffer.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/Engine.hpp>
-#include <Illusion/Graphics/GlslShader.hpp>
 #include <Illusion/Graphics/GltfModel.hpp>
 #include <Illusion/Graphics/PhysicalDevice.hpp>
 #include <Illusion/Graphics/RenderPass.hpp>
+#include <Illusion/Graphics/Shader.hpp>
 #include <Illusion/Graphics/TextureUtils.hpp>
 #include <Illusion/Graphics/Window.hpp>
 
@@ -195,11 +195,11 @@ int main(int argc, char* argv[]) {
   auto prefilteredReflection =
       Illusion::Graphics::TextureUtils::createPrefilteredReflectionCubemap(device, 128, skybox);
 
-  auto pbrShader = Illusion::Graphics::GlslShader::create(device,
+  auto pbrShader = Illusion::Graphics::Shader::createFromGlslFiles(device,
       {"data/shaders/SimpleGltfShader.vert", "data/shaders/SimpleGltfShader.frag"},
       {"SkinUniforms"});
 
-  auto skyShader = Illusion::Graphics::GlslShader::create(
+  auto skyShader = Illusion::Graphics::Shader::createFromGlslFiles(
       device, {"data/shaders/Quad.vert", "data/shaders/Skybox.frag"});
 
   auto uboAlignment =

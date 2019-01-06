@@ -557,7 +557,7 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
   Core::BitHash hash = mGraphicsState.getHash();
 
   for (auto const& m : mCurrentShader->getModules()) {
-    hash.push<64>(m.get());
+    hash.push<64>(m->getModule().get());
   }
   hash.push<64>(mCurrentRenderPass.get());
   hash.push<32>(mCurrentSubPass);

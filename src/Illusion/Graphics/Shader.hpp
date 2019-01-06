@@ -13,6 +13,7 @@
 
 #include "../Core/File.hpp"
 #include "DescriptorPool.hpp"
+#include "ShaderModule.hpp"
 
 #include <map>
 #include <set>
@@ -25,26 +26,37 @@ namespace Illusion::Graphics {
 class Shader {
 
  public:
+  static ShaderPtr createFromGlslFiles(DevicePtr const& device,
+      std::vector<std::string> const& fileNames, bool reloadOnChanges = true,
+      std::set<std::string> dynamicBuffers = {});
+
   // Syntactic sugar to create a std::shared_ptr for this class
-  static ShaderPtr create(DevicePtr const& device, std::vector<ShaderModulePtr> const& modules) {
-    return std::make_shared<Shader>(device, modules);
+  static ShaderPtr create(DevicePtr const& device) {
+    return std::make_shared<Shader>(device);
   }
 
   Shader() = default;
-  Shader(DevicePtr const& device, std::vector<ShaderModulePtr> const& modules);
+  Shader(DevicePtr const& device);
 
   virtual ~Shader();
 
-  virtual std::vector<ShaderModulePtr> const&            getModules();
-  virtual PipelineReflectionPtr const&                   getReflection();
-  virtual std::vector<DescriptorSetReflectionPtr> const& getDescriptorSetReflections();
+  void addModule(vk::ShaderStageFlagBits stage, ShaderModule::Source const& source,
+      std::set<std::string> const& dynamicBuffers = {});
 
- protected:
-  void createReflection();
+  std::vector<ShaderModulePtr> const&            getModules();
+  PipelineReflectionPtr const&                   getReflection();
+  std::vector<DescriptorSetReflectionPtr> const& getDescriptorSetReflections();
+
+ private:
+  void reload();
 
   DevicePtr                    mDevice;
   std::vector<ShaderModulePtr> mModules;
   PipelineReflectionPtr        mReflection;
+
+  bool                                                               mDirty = false;
+  std::unordered_map<vk::ShaderStageFlagBits, ShaderModule::Source>  mSources;
+  std::unordered_map<vk::ShaderStageFlagBits, std::set<std::string>> mDynamicBuffers;
 };
 } // namespace Illusion::Graphics
 

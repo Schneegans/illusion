@@ -11,10 +11,12 @@
 #ifndef ILLUSION_GRAPHICS_SHADERMODULE_HPP
 #define ILLUSION_GRAPHICS_SHADERMODULE_HPP
 
+#include "../Core/File.hpp"
 #include "PipelineResource.hpp"
 #include "fwd.hpp"
 
 #include <set>
+#include <variant>
 
 namespace Illusion::Graphics {
 
@@ -23,33 +25,59 @@ namespace Illusion::Graphics {
 
 class ShaderModule {
  public:
-  static std::vector<uint32_t> compileGlsl(std::string const& glsl, vk::ShaderStageFlagBits stage);
-
-  // Syntactic sugar to create a std::shared_ptr for this class
-  template <typename... Args>
-  static ShaderModulePtr create(Args&&... args) {
-    return std::make_shared<ShaderModule>(args...);
+  struct GlslFile {
+    GlslFile() = default;
+    Core::File<std::string> mFile;
+    bool                    mReloadOnChanges;
   };
 
-  ShaderModule(DevicePtr const& device, std::string const& glsl, vk::ShaderStageFlagBits stage,
+  struct GlslCode {
+    GlslCode() = default;
+    std::string mCode;
+  };
+
+  struct SpirvFile {
+    SpirvFile() = default;
+    Core::File<std::vector<uint32_t>> mFile;
+    bool                              mReloadOnChanges;
+  };
+
+  struct SpirvCode {
+    SpirvCode() = default;
+    std::vector<uint32_t> mCode;
+    ;
+  };
+
+  typedef std::variant<GlslFile, GlslCode, SpirvFile, SpirvCode> Source;
+
+  // Syntactic sugar to create a std::shared_ptr for this class
+  static ShaderModulePtr create(DevicePtr const& device, Source const& source,
+      vk::ShaderStageFlagBits stage, std::set<std::string> const& dynamicBuffers = {}) {
+    return std::make_shared<ShaderModule>(device, source, stage);
+  };
+
+  ShaderModule(DevicePtr const& device, Source const& source, vk::ShaderStageFlagBits stage,
       std::set<std::string> const& dynamicBuffers = {});
 
-  ShaderModule(DevicePtr const& device, std::vector<uint32_t>&& spirv,
-      vk::ShaderStageFlagBits stage, std::set<std::string> const& dynamicBuffers);
-
   virtual ~ShaderModule();
+
+  bool requiresReload() const;
+  void reload();
 
   vk::ShaderStageFlagBits              getStage() const;
   vk::ShaderModulePtr                  getModule() const;
   std::vector<PipelineResource> const& getResources() const;
 
  private:
-  void createReflection(std::set<std::string> const& dynamicBuffers);
+  void createReflection(std::vector<uint32_t> const& spirv);
 
-  std::vector<uint32_t>         mSpirv;
+  DevicePtr                     mDevice;
   vk::ShaderStageFlagBits       mStage;
   vk::ShaderModulePtr           mModule;
   std::vector<PipelineResource> mResources;
+
+  Source                mSource;
+  std::set<std::string> mDynamicBuffers;
 };
 
 } // namespace Illusion::Graphics

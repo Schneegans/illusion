@@ -44,8 +44,6 @@ class File {
   // This constructs a File for a given name.
   File(std::string const& fileName)
       : mPath(fileName)
-      , mLastWriteTime(getLastWriteTime())
-      , mContent()
       , mIsLoaded(false) {
   }
 
@@ -57,7 +55,7 @@ class File {
 
   // Returns the given file's content.
   T const& getContent() const {
-    if (mIsLoaded) {
+    if (mIsLoaded && !changedOnDisc()) {
       return mContent;
     }
 
@@ -75,6 +73,8 @@ class File {
 
     ifs.read((char*)mContent.data(), filesize);
     ifs.close();
+
+    mLastWriteTime = getLastWriteTime();
 
     return mContent;
   }
@@ -125,11 +125,7 @@ class File {
   // Polls for changes to this file
   bool changedOnDisc() const {
     auto time = getLastWriteTime();
-
-    bool didChange = time != mLastWriteTime;
-    mLastWriteTime = time;
-
-    return didChange;
+    return time != mLastWriteTime;
   }
 
  private:

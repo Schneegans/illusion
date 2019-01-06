@@ -225,8 +225,8 @@ TexturePtr createCubemapFrom360PanoramaFile(DevicePtr const& device, std::string
       vk::SamplerCreateInfo(vk::SamplerCreateFlags(), vk::Filter::eLinear, vk::Filter::eLinear,
           vk::SamplerMipmapMode::eLinear, vk::SamplerAddressMode::eRepeat,
           vk::SamplerAddressMode::eClampToEdge));
-  auto shader   = Shader::create(
-      device, {ShaderModule::create(device, glsl, vk::ShaderStageFlagBits::eCompute)});
+  auto shader   = Shader::create(device);
+  shader->addModule(vk::ShaderStageFlagBits::eCompute, ShaderModule::GlslCode{glsl});
 
   vk::ImageCreateInfo imageInfo;
   imageInfo.flags         = vk::ImageCreateFlagBits::eCubeCompatible;
@@ -353,8 +353,8 @@ TexturePtr createPrefilteredIrradianceCubemap(
     }
   )";
 
-  auto shader = Shader::create(
-      device, {ShaderModule::create(device, glsl, vk::ShaderStageFlagBits::eCompute)});
+  auto shader = Shader::create(device);
+  shader->addModule(vk::ShaderStageFlagBits::eCompute, ShaderModule::GlslCode{glsl});
 
   vk::ImageCreateInfo imageInfo;
   imageInfo.flags         = vk::ImageCreateFlagBits::eCubeCompatible;
@@ -531,8 +531,8 @@ TexturePtr createPrefilteredReflectionCubemap(
     }
   )";
 
-  auto shader = Shader::create(
-      device, {ShaderModule::create(device, glsl, vk::ShaderStageFlagBits::eCompute)});
+  auto shader = Shader::create(device);
+  shader->addModule(vk::ShaderStageFlagBits::eCompute, ShaderModule::GlslCode{glsl});
 
   uint32_t mipLevels = getMaxMipmapLevels(size, size);
 
@@ -698,8 +698,8 @@ TexturePtr createBRDFLuT(DevicePtr const& device, uint32_t size) {
     }
   )";
 
-  auto shader = Shader::create(
-      device, {ShaderModule::create(device, glsl, vk::ShaderStageFlagBits::eCompute)});
+  auto shader = Shader::create(device);
+  shader->addModule(vk::ShaderStageFlagBits::eCompute, ShaderModule::GlslCode{glsl});
 
   vk::ImageCreateInfo imageInfo;
   imageInfo.imageType     = vk::ImageType::e2D;
