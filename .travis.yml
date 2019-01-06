@@ -34,9 +34,9 @@ matrix:
       install:
         - choco install python3
     - name: OS X
-     env: LABEL=OSX
-     os: osx
-     osx_image: xcode10.1
+      env: LABEL=OSX
+      os: osx
+      osx_image: xcode10.1
 script:
   - mkdir build && cd build
   - if [ "$TRAVIS_OS_NAME" == "linux" ];   then cmake ..; fi
