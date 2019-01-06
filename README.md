@@ -14,7 +14,9 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
 ## Features
 
 - [ ] Vulkan convenience layer
-  - [x] Automatic shader program reflection using [glslang](https://github.com/KhronosGroup/glslang) and [spirv-cross](https://github.com/KhronosGroup/SPIRV-Cross)
+  - [x] Shader loading from Spir-V and GLSL using [glslang](https://github.com/KhronosGroup/glslang)
+  - [x] Automatic reloading of shaders when source file changed on disc
+  - [x] Automatic shader program reflection using [spirv-cross](https://github.com/KhronosGroup/SPIRV-Cross)
   - [x] Automatic creation of pipeline layouts
   - [x] Automatic allocation and updates of descriptor sets
   - [x] Automatic Vulkan object lifetime management using reference counting
@@ -23,7 +25,6 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
   - [x] Explicit graphics state per command buffer
   - [x] Explicit binding state per command buffer
   - [x] Per-frame resource count is independent from swapchain image count
-  - [x] Automatic reloading of shaders when sources changed on disc
   - [x] Conversion of equirectangular panoramas to cubemaps
   - [x] Creation of prefiltered irradiance and reflectance maps for physically based shading
   - [ ] Automatic image layout transitions
