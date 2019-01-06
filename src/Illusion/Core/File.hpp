@@ -118,8 +118,8 @@ class File {
   }
 
   // Returns the last write time as reported from std::filesystem
-  std::filesystem::file_time_type getLastWriteTime() const {
-    return std::filesystem::last_write_time(mPath);
+  time_t getLastWriteTime() const {
+    return FileSystem::getLastWriteTime(mPath);
   }
 
   // Polls for changes to this file
@@ -129,10 +129,10 @@ class File {
   }
 
  private:
-  std::filesystem::path                   mPath;
-  mutable std::filesystem::file_time_type mLastWriteTime;
-  mutable T                               mContent;
-  mutable bool                            mIsLoaded;
+  std::string    mPath;
+  mutable time_t mLastWriteTime;
+  mutable T      mContent;
+  mutable bool   mIsLoaded;
 };
 
 } // namespace Illusion::Core

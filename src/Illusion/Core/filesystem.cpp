@@ -8,16 +8,25 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_FILE_SYSTEM_HPP
-#define ILLUSION_GRAPHICS_FILE_SYSTEM_HPP
+#include "filesystem.hpp"
 
-#include <string>
-#include <sys/stat.h>
+#include <sys/types.h>
+#ifndef WIN32
+#include <unistd.h>
+#endif
 
 namespace Illusion::Core::FileSystem {
 
-time_t getLastWriteTime(std::string const& filename);
+time_t getLastWriteTime(std::string const& filename) {
+  struct stat result;
+#ifdef WIN32
+  if (_stat(filename.c_str(), &result) == 0) {
+#else
+  if (stat(filename.c_str(), &result) == 0) {
+#endif
+    return result.st_mtime;
+  }
+  return 0;
+}
 
 } // namespace Illusion::Core::FileSystem
-
-#endif // ILLUSION_GRAPHICS_FILE_SYSTEM_HPP

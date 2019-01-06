@@ -19,12 +19,6 @@ target_link_libraries(illusion-core
     PUBLIC glm
 )
 
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
-  target_link_libraries(illusion-core 
-    PUBLIC stdc++fs
-  )
-endif()
-
 target_include_directories(illusion-core
     PUBLIC ${CMAKE_SOURCE_DIR}/src
 )
