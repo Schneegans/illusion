@@ -43,8 +43,11 @@ matrix:
       os: osx
       osx_image: xcode10.1
       before_script:
-        - CC=gcc-7.4.0
-        - CXX=g++-7.4.0
+        - find /usr/local/Cellar/gcc@7
+        - CC=gcc-7.3.0
+        - CXX=g++-7.3.0
+        - whereis gcc
+        - whereis gcc-7.3.0
     - name: OS X Clang
       env: LABEL=OSXClang
       os: osx
