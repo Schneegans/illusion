@@ -7,10 +7,10 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
 ### Build Status of Develop Branch
 
 ![linux](https://img.icons8.com/material/20/000000/linux.png)
-[![ubuntu clang](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=clang&env=LABEL=XenialClang)](https://travis-ci.org/Simmesimme/illusion)
+[![ubuntu clang](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=clang&env=LABEL=LinuxClang)](https://travis-ci.org/Simmesimme/illusion)
 
 ![linux](https://img.icons8.com/material/20/000000/linux.png)
-[![ubuntu gcc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=gcc&env=LABEL=XenialGCC)](https://travis-ci.org/Simmesimme/illusion)
+[![ubuntu gcc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=gcc&env=LABEL=LinuxGCC)](https://travis-ci.org/Simmesimme/illusion)
 
 ![windows](https://img.icons8.com/ios/20/000000/windows8-filled.png)
 [![msvc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=msvc&env=LABEL=WindowsMSVC)](https://travis-ci.org/Simmesimme/illusion)
