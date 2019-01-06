@@ -51,9 +51,9 @@ class ShaderModule {
   typedef std::variant<GlslFile, GlslCode, SpirvFile, SpirvCode> Source;
 
   // Syntactic sugar to create a std::shared_ptr for this class
-  static ShaderModulePtr create(DevicePtr const& device, Source const& source,
-      vk::ShaderStageFlagBits stage, std::set<std::string> const& dynamicBuffers = {}) {
-    return std::make_shared<ShaderModule>(device, source, stage);
+  template <typename... Args>
+  static ShaderModulePtr create(Args&&... args) {
+    return std::make_shared<ShaderModule>(args...);
   };
 
   ShaderModule(DevicePtr const& device, Source const& source, vk::ShaderStageFlagBits stage,
@@ -64,8 +64,8 @@ class ShaderModule {
   bool requiresReload() const;
   void reload();
 
+  vk::ShaderModulePtr                  getHandle() const;
   vk::ShaderStageFlagBits              getStage() const;
-  vk::ShaderModulePtr                  getModule() const;
   std::vector<PipelineResource> const& getResources() const;
 
  private:
@@ -73,7 +73,7 @@ class ShaderModule {
 
   DevicePtr                     mDevice;
   vk::ShaderStageFlagBits       mStage;
-  vk::ShaderModulePtr           mModule;
+  vk::ShaderModulePtr           mHandle;
   std::vector<PipelineResource> mResources;
 
   Source                mSource;

@@ -540,7 +540,7 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
     }
 
     info.stage.stage               = mCurrentShader->getModules()[0]->getStage();
-    info.stage.module              = *mCurrentShader->getModules()[0]->getModule();
+    info.stage.module              = *mCurrentShader->getModules()[0]->getHandle();
     info.stage.pName               = "main";
     info.stage.pSpecializationInfo = nullptr;
     info.layout                    = *mCurrentShader->getReflection()->getLayout();
@@ -557,7 +557,7 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
   Core::BitHash hash = mGraphicsState.getHash();
 
   for (auto const& m : mCurrentShader->getModules()) {
-    hash.push<64>(m->getModule().get());
+    hash.push<64>(m->getHandle().get());
   }
   hash.push<64>(mCurrentRenderPass.get());
   hash.push<32>(mCurrentSubPass);
@@ -573,7 +573,7 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
     for (auto const& i : mCurrentShader->getModules()) {
       vk::PipelineShaderStageCreateInfo stageInfo;
       stageInfo.stage               = i->getStage();
-      stageInfo.module              = *i->getModule();
+      stageInfo.module              = *i->getHandle();
       stageInfo.pName               = "main";
       stageInfo.pSpecializationInfo = nullptr;
       stageInfos.push_back(stageInfo);
