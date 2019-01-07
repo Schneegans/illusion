@@ -48,7 +48,7 @@ vk::DeviceSize CoherentUniformBuffer::addData(uint8_t const* data, vk::DeviceSiz
   mCurrentWriteOffset += count;
 
   if (mAlignment > 0) {
-    mCurrentWriteOffset += mCurrentWriteOffset % mAlignment;
+    mCurrentWriteOffset += mAlignment - mCurrentWriteOffset % mAlignment;
   }
 
   return offset;
