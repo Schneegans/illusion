@@ -55,7 +55,22 @@ Illusion uses CMake for project file generation. Below are some exemplary instru
 
 ### Dependencies
 
-Most dependencies are included as [git submodules](externals). Additionally you will need a C++ compiler and CMake.
+Most dependencies are included as [git submodules](externals). Additionally you will need a C++ compiler, python3 and CMake. The following submodules are included in this repository:
+
+Link | Description
+-----|------------
+[glfw](../../glfw/glfw) | Used for window creation.
+[gli](../../g-truc/gli) | Used for loading of dds textures.
+[glm](../../g-truc/glm) | Used as math library.
+[stb](../../nothings/stb) | Used for loading of LDR and HDR textures.
+[glslang](../../KhronosGroup/glslang) | Used to compile GLSL to Spir-V
+[spirv-cross](../../KhronosGroup/spirv-cross) | Used for shader program reflection.
+[tinygltf](../../syoyo/tinygltf) | Used for loading of gLTF models.
+[vulkan-headers](../../KhronosGroup/Vulkan-Headers) | This is usually part of the Vulkan SDK. In Illusion the Vulkan SDK is basicall included in the submodules. This simplifies continuous integration.
+[vulkan-loader](../../KhronosGroup/Vulkan-Loader) | Same as above.
+[vulkan-validation-layers](../../KhronosGroup/Vulkan-ValidationLayers) | Same as above.
+[spirv-tools](../../KhronosGroup/SPIRV-Tools) | Dependency of vulkan-validation-layers.
+[spirv-headers](../../KhronosGroup/SPIRV-Headers) | Dependency of vulkan-validation-layers.
 
 ### Linux
 
