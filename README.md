@@ -32,6 +32,7 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
   - [x] Conversion of equirectangular panoramas to cubemaps
   - [x] Creation of prefiltered irradiance and reflectance maps for physically based shading
   - [ ] HLSL Shader support
+  - [ ] Shader includes
   - [ ] Automatic image layout transitions
   - [ ] Parallel command buffer recording
   - [ ] A frame or render-graph to automatically create renderpasses and subpasses with dependencies
@@ -91,6 +92,7 @@ git submodule update --init
 mkdir build
 cd build
 cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_INSTALL_PREFIX=install ..
+cmake --build . --target install
 ```
 
 And then open the illusion.sln and build the ALL_BUILD and INSTALL targets.
