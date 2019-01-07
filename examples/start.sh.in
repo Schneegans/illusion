@@ -1,0 +1,22 @@
+#!/bin/bash
+
+#--------------------------------------------------------------------------------------------------#
+#                                                                                                  #
+#    _)  |  |            _)                 This software may be modified and distributed          #
+#     |  |  |  |  | (_-<  |   _ \    \      under the terms of the MIT license.                    #
+#    _| _| _| \_,_| ___/ _| \___/ _| _|     See the LICENSE file for details.                      #
+#                                                                                                  #
+#   Authors: Simon Schneegans (code@simonschneegans.de)                                            #
+#                                                                                                  #
+#--------------------------------------------------------------------------------------------------#
+
+# set paths for Vulkan
+export LD_LIBRARY_PATH=../@CMAKE_INSTALL_LIBDIR@:$LD_LIBRARY_PATH
+export VK_LAYER_PATH=../@CMAKE_INSTALL_DATAROOTDIR@/vulkan/explicit_layer.d
+
+# get the location of this script
+SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
+cd $SCRIPT_DIR
+
+# gdb --args ./@EXAMPLE@ $@
+./@EXAMPLE@ $@

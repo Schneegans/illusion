@@ -22,6 +22,17 @@ set(ENABLED_EXAMPLES
 )
 
 foreach(EXAMPLE ${ENABLED_EXAMPLES})
+  if (UNIX)
+    # configure start script
+    configure_file("start.sh.in" "${EXAMPLE}.sh")
+
+    # install
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${EXAMPLE}.sh"
+      DESTINATION "bin"
+      PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ
+    )
+  endif()
+  
   file(GLOB_RECURSE EXAMPLE_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
     "${EXAMPLE}/*.cpp"
   )
