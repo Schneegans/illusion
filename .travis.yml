@@ -6,7 +6,6 @@ addons:
       - clang-6.0
       - xorg-dev
       - libc++-dev
-      - libwayland-dev
     sources:
       - ubuntu-toolchain-r-test
       - llvm-toolchain-xenial-6.0

@@ -12,6 +12,7 @@ message("Configuring vulkan-validation-layers")
 
 set(Vulkan-Headers_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/externals/vulkan-headers)
 set(CMAKE_INSTALL_INCLUDEDIR ${CMAKE_CURRENT_BINARY_DIR}/externals/vulkan-headers/install)
+option(BUILD_WSI_WAYLAND_SUPPORT "Build Wayland WSI support" OFF)
 add_subdirectory(externals/vulkan-validation-layers)
 
 message("")

@@ -12,6 +12,7 @@ message("Configuring vulkan-loader")
 
 set(VulkanHeaders_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/externals/vulkan-headers/include)
 set(VulkanRegistry_DIR ${CMAKE_CURRENT_SOURCE_DIR}/externals/vulkan-headers/registry)
+option(BUILD_WSI_WAYLAND_SUPPORT "Build Wayland WSI support" OFF)
 add_subdirectory(externals/vulkan-loader)
 
 message("")
