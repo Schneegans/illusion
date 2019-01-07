@@ -8,13 +8,10 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
 
 ![linux](https://img.icons8.com/material/20/000000/linux.png)
 [![ubuntu clang](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=clang&env=LABEL=LinuxClang)](https://travis-ci.org/Simmesimme/illusion)
-
 ![linux](https://img.icons8.com/material/20/000000/linux.png)
 [![ubuntu gcc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=gcc&env=LABEL=LinuxGCC)](https://travis-ci.org/Simmesimme/illusion)
-
 ![windows](https://img.icons8.com/ios/20/000000/windows8-filled.png)
 [![msvc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=msvc&env=LABEL=WindowsMSVC)](https://travis-ci.org/Simmesimme/illusion)
-
 ![osx](https://img.icons8.com/ios-glyphs/20/000000/mac-client.png)
 [![osx](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=clang&env=LABEL=OSX)](https://travis-ci.org/Simmesimme/illusion)
 
@@ -34,6 +31,7 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
   - [x] Per-frame resource count is independent from swapchain image count
   - [x] Conversion of equirectangular panoramas to cubemaps
   - [x] Creation of prefiltered irradiance and reflectance maps for physically based shading
+  - [ ] HLSL Shader support
   - [ ] Automatic image layout transitions
   - [ ] Parallel command buffer recording
   - [ ] A frame or render-graph to automatically create renderpasses and subpasses with dependencies
@@ -55,22 +53,22 @@ Illusion uses CMake for project file generation. Below are some exemplary instru
 
 ### Dependencies
 
-Most dependencies are included as [git submodules](externals). Additionally you will need a C++ compiler, python3 and CMake. The following submodules are included in this repository:
+Nearly all dependencies are included as [git submodules](externals). Additionally you will need a C++ compiler, python3 and CMake. The following submodules are included in this repository and automatically build together with Illusion:
 
-Link | Description
------|------------
-[glfw](../../glfw/glfw) | Used for window creation.
-[gli](../../g-truc/gli) | Used for loading of dds textures.
-[glm](../../g-truc/glm) | Used as math library.
-[stb](../../nothings/stb) | Used for loading of LDR and HDR textures.
-[glslang](../../KhronosGroup/glslang) | Used to compile GLSL to Spir-V
-[spirv-cross](../../KhronosGroup/spirv-cross) | Used for shader program reflection.
-[tinygltf](../../syoyo/tinygltf) | Used for loading of gLTF models.
-[vulkan-headers](../../KhronosGroup/Vulkan-Headers) | This is usually part of the Vulkan SDK. In Illusion the Vulkan SDK is basicall included in the submodules. This simplifies continuous integration.
-[vulkan-loader](../../KhronosGroup/Vulkan-Loader) | Same as above.
+Submodule | Description
+----------|------------
+[glfw](https://github.com/glfw/glfw) | Used for window creation.
+[gli](https://github.com/g-truc/gli) | Used for loading of dds textures.
+[glm](https://github.com/g-truc/glm) | Used as math library.
+[stb](https://github.com/nothings/stb) | Used for loading of LDR and HDR textures.
+[glslang](https://github.com/KhronosGroup/glslang) | Used to compile GLSL to Spir-V
+[spirv-cross](https://github.com/KhronosGroup/spirv-cross) | Used for shader program reflection.
+[tinygltf](https://github.com/syoyo/tinygltf) | Used for loading of gLTF models.
+[vulkan-headers](https://github.com/KhronosGroup/Vulkan-Headers) | This is usually part of the Vulkan SDK. In Illusion the Vulkan SDK is basically included in the submodules. This simplifies continuous integration.
+[vulkan-loader](https://github.com/KhronosGroup/Vulkan-Loader) | Same as above.
 [vulkan-validation-layers](../../KhronosGroup/Vulkan-ValidationLayers) | Same as above.
-[spirv-tools](../../KhronosGroup/SPIRV-Tools) | Dependency of vulkan-validation-layers.
-[spirv-headers](../../KhronosGroup/SPIRV-Headers) | Dependency of vulkan-validation-layers.
+[spirv-tools](https://github.com/KhronosGroup/SPIRV-Tools) | Dependency of vulkan-validation-layers.
+[spirv-headers](https://github.com/KhronosGroup/SPIRV-Headers) | Dependency of vulkan-validation-layers.
 
 ### Linux
 
