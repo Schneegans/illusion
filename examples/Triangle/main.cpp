@@ -24,7 +24,7 @@ int main() {
   auto engine = Illusion::Graphics::Engine::create("Triangle Demo");
   auto device = Illusion::Graphics::Device::create(engine->getPhysicalDevice());
   auto window = Illusion::Graphics::Window::create(engine, device);
-  auto shader = Illusion::Graphics::Shader::createFromGlslFiles(
+  auto shader = Illusion::Graphics::Shader::createFromFiles(
       device, {"data/shaders/Triangle.vert", "data/shaders/Triangle.frag"});
 
   auto renderPass = Illusion::Graphics::RenderPass::create(device);

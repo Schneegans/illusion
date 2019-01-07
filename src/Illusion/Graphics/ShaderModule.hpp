@@ -36,6 +36,17 @@ class ShaderModule {
     std::string mCode;
   };
 
+  struct HlslFile {
+    HlslFile() = default;
+    Core::File<std::string> mFile;
+    bool                    mReloadOnChanges;
+  };
+
+  struct HlslCode {
+    HlslCode() = default;
+    std::string mCode;
+  };
+
   struct SpirvFile {
     SpirvFile() = default;
     Core::File<std::vector<uint32_t>> mFile;
@@ -48,7 +59,7 @@ class ShaderModule {
     ;
   };
 
-  typedef std::variant<GlslFile, GlslCode, SpirvFile, SpirvCode> Source;
+  typedef std::variant<GlslFile, GlslCode, HlslFile, HlslCode, SpirvFile, SpirvCode> Source;
 
   // Syntactic sugar to create a std::shared_ptr for this class
   template <typename... Args>

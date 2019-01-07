@@ -88,9 +88,8 @@ const std::unordered_map<vk::ShaderStageFlagBits, EShLanguage> shaderStageMappin
     {vk::ShaderStageFlagBits::eFragment, EShLangFragment},
     {vk::ShaderStageFlagBits::eCompute, EShLangCompute}};
 
-} // namespace
-
-std::vector<uint32_t> fromGlsl(std::string const& glsl, vk::ShaderStageFlagBits vkStage) {
+std::vector<uint32_t> compile(
+    std::string const& code, vk::ShaderStageFlagBits vkStage, int options) {
 
   // Get default built in resource limits.
   auto resourceLimits = glslang::DefaultTBuiltInResource;
@@ -98,7 +97,6 @@ std::vector<uint32_t> fromGlsl(std::string const& glsl, vk::ShaderStageFlagBits 
   glslang::InitializeProcess();
 
   // Set message options.
-  int         options  = EOptionSpv | EOptionVulkanRules | EOptionLinkProgram;
   EShMessages messages = EShMsgDefault;
   SetMessageOptions(options, messages);
 
@@ -106,7 +104,7 @@ std::vector<uint32_t> fromGlsl(std::string const& glsl, vk::ShaderStageFlagBits 
   std::string           infoLog;
 
   auto        stage           = shaderStageMapping.at(vkStage);
-  const char* shaderText      = glsl.c_str();
+  const char* shaderText      = code.c_str();
   const char* fileNameList[1] = {""};
 
   glslang::TShader shader(stage);
@@ -121,8 +119,7 @@ std::vector<uint32_t> fromGlsl(std::string const& glsl, vk::ShaderStageFlagBits 
   shader.setFlattenUniformArrays(false);
   shader.setNoStorageFormat(false);
   if (!shader.parse(&resourceLimits, 100, false, messages)) {
-    infoLog = std::string(shader.getInfoLog()) + "\n" + std::string(shader.getInfoDebugLog());
-    throw std::runtime_error(infoLog);
+    throw std::runtime_error(shader.getInfoLog());
   }
 
   // Add shader to new program object.
@@ -150,6 +147,17 @@ std::vector<uint32_t> fromGlsl(std::string const& glsl, vk::ShaderStageFlagBits 
   glslang::FinalizeProcess();
 
   return spirv;
+}
+
+} // namespace
+
+std::vector<uint32_t> fromGlsl(std::string const& glsl, vk::ShaderStageFlagBits stage) {
+  return compile(glsl, stage, EOptionSpv | EOptionVulkanRules | EOptionLinkProgram);
+}
+
+std::vector<uint32_t> fromHlsl(std::string const& hlsl, vk::ShaderStageFlagBits stage) {
+  return compile(
+      hlsl, stage, EOptionSpv | EOptionVulkanRules | EOptionLinkProgram | EOptionReadHlsl);
 }
 
 } // namespace Illusion::Graphics::Spirv

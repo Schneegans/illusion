@@ -8,19 +8,14 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_SPIRV_HPP
-#define ILLUSION_GRAPHICS_SPIRV_HPP
+// uniforms
+[[vk::binding(0)]] Texture2D texData;
+[[vk::binding(0)]] SamplerState texSampler;
 
-#include "fwd.hpp"
+// methods
+void main(
+  in float2 vTexcoords : TEXCOORD0,
+  out float4 outColor : SV_Target0) {
 
-namespace Illusion::Graphics::Spirv {
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-std::vector<uint32_t> fromGlsl(std::string const& glsl, vk::ShaderStageFlagBits stage);
-std::vector<uint32_t> fromHlsl(std::string const& hlsl, vk::ShaderStageFlagBits stage);
-
-} // namespace Illusion::Graphics::Spirv
-
-#endif // ILLUSION_GRAPHICS_SPIRV_HPP
+  outColor = texData.Sample(texSampler, vTexcoords);
+}

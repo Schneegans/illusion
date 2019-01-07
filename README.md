@@ -18,7 +18,7 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
 ## Features
 
 - [ ] Vulkan convenience layer
-  - [x] Shader loading from Spir-V and GLSL using [glslang](https://github.com/KhronosGroup/glslang)
+  - [x] Shader loading from Spir-V, GLSL and HLSL using [glslang](https://github.com/KhronosGroup/glslang) - if you feel adventurous you can even mix GLSL and HLSL modules in one shader program :grimacing:
   - [x] Automatic reloading of shaders when source file changed on disc
   - [x] Automatic shader program reflection using [spirv-cross](https://github.com/KhronosGroup/SPIRV-Cross)
   - [x] Automatic creation of pipeline layouts
@@ -31,7 +31,6 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
   - [x] Per-frame resource count is independent from swapchain image count
   - [x] Conversion of equirectangular panoramas to cubemaps
   - [x] Creation of prefiltered irradiance and reflectance maps for physically based shading
-  - [ ] HLSL Shader support
   - [ ] Shader includes
   - [ ] Automatic image layout transitions
   - [ ] Parallel command buffer recording
@@ -104,7 +103,7 @@ When compiled with the commands above, the examples will be located in `illusion
 Link | Description | Screenshot
 -----|-------------|-----------
 [Triangle](examples/Triangle) | A simple triangle without vertex or index buffers that uses a pre-recorded command buffer and no per-frame resources. | ![screenshot](examples/Triangle/screenshot.jpg)
-[TexturedQuad](examples/TexturedQuad) | Similar to the triangle, in addition a texture is loaded and bound as fragment shader input. | ![screenshot](examples/TexturedQuad/screenshot.jpg)
+[TexturedQuad](examples/TexturedQuad) | Similar to the triangle, in addition a texture is loaded and bound as fragment shader input. This example can either use GLSL or HLSL shaders. Use `TexturedQuad --help` to seethe options. | ![screenshot](examples/TexturedQuad/screenshot.jpg)
 [TexturedCube](examples/TexturedCube) | A more complex example using vertex buffers and an index buffer. Camera information is uploaded as uniform buffer, the cube's transformation is set via push constants. The command buffer is re-recorded every frame. The uniform buffer and the command buffer are per-frame resources. | ![screenshot](examples/TexturedCube/screenshot.jpg)
 [GltfViewer](examples/GltfViewer) | A viewer for glTF files. There are several command line options; have a look a `GltfViewer --help`. Most [glTFSample Models](https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0) are supported, including those with skinned animations. | ![screenshot](examples/GltfViewer/screenshot.jpg)
 

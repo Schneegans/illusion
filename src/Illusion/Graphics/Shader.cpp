@@ -22,32 +22,46 @@
 namespace Illusion::Graphics {
 
 namespace {
-const std::unordered_map<std::string, vk::ShaderStageFlagBits> extensionMapping = {
-    {"frag", vk::ShaderStageFlagBits::eFragment}, {"vert", vk::ShaderStageFlagBits::eVertex},
-    {"geom", vk::ShaderStageFlagBits::eGeometry}, {"comp", vk::ShaderStageFlagBits::eCompute},
-    {"tesc", vk::ShaderStageFlagBits::eTessellationControl},
-    {"tese", vk::ShaderStageFlagBits::eTessellationEvaluation}};
-}
+const std::unordered_map<std::string, vk::ShaderStageFlagBits> glslExtensionMapping = {
+    {".frag", vk::ShaderStageFlagBits::eFragment}, {".vert", vk::ShaderStageFlagBits::eVertex},
+    {".geom", vk::ShaderStageFlagBits::eGeometry}, {".comp", vk::ShaderStageFlagBits::eCompute},
+    {".tesc", vk::ShaderStageFlagBits::eTessellationControl},
+    {".tese", vk::ShaderStageFlagBits::eTessellationEvaluation}};
+
+const std::unordered_map<std::string, vk::ShaderStageFlagBits> hlslExtensionMapping = {
+    {".ps", vk::ShaderStageFlagBits::eFragment}, {".vs", vk::ShaderStageFlagBits::eVertex},
+    {".gs", vk::ShaderStageFlagBits::eGeometry}, {".cs", vk::ShaderStageFlagBits::eCompute},
+    {".hs", vk::ShaderStageFlagBits::eTessellationControl},
+    {".ds", vk::ShaderStageFlagBits::eTessellationEvaluation}};
+} // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ShaderPtr Shader::createFromGlslFiles(DevicePtr const& device,
+ShaderPtr Shader::createFromFiles(DevicePtr const& device,
     std::vector<std::string> const& fileNames, std::set<std::string> dynamicBuffers,
     bool reloadOnChanges) {
 
   auto shader = Shader::create(device);
 
   for (auto const& fileName : fileNames) {
-    auto extension = fileName.substr(fileName.size() - 4);
+    auto extension = fileName.substr(fileName.find_last_of('.'));
 
-    auto stage = extensionMapping.find(extension);
-    if (stage == extensionMapping.end()) {
-      throw std::runtime_error(
-          "Failed to add shader stage: File " + fileName + " has an unknown extension!");
+    auto stage = glslExtensionMapping.find(extension);
+    if (stage != glslExtensionMapping.end()) {
+      shader->addModule(
+          stage->second, ShaderModule::GlslFile{fileName, reloadOnChanges}, dynamicBuffers);
+      continue;
     }
 
-    shader->addModule(
-        stage->second, ShaderModule::GlslFile{fileName, reloadOnChanges}, dynamicBuffers);
+    stage = hlslExtensionMapping.find(extension);
+    if (stage != hlslExtensionMapping.end()) {
+      shader->addModule(
+          stage->second, ShaderModule::HlslFile{fileName, reloadOnChanges}, dynamicBuffers);
+      continue;
+    }
+
+    throw std::runtime_error(
+        "Failed to add shader stage: File " + fileName + " has an unknown extension!");
   }
 
   return shader;

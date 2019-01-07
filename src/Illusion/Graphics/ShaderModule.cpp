@@ -125,6 +125,10 @@ bool ShaderModule::requiresReload() const {
     return std::get<GlslFile>(mSource).mFile.changedOnDisc();
   }
 
+  if (std::holds_alternative<HlslFile>(mSource) && std::get<HlslFile>(mSource).mReloadOnChanges) {
+    return std::get<HlslFile>(mSource).mFile.changedOnDisc();
+  }
+
   if (std::holds_alternative<SpirvFile>(mSource) && std::get<SpirvFile>(mSource).mReloadOnChanges) {
     return std::get<SpirvFile>(mSource).mFile.changedOnDisc();
   }
@@ -142,6 +146,10 @@ void ShaderModule::reload() {
     spirv = Spirv::fromGlsl(std::get<GlslFile>(mSource).mFile.getContent(), mStage);
   } else if (std::holds_alternative<GlslCode>(mSource)) {
     spirv = Spirv::fromGlsl(std::get<GlslCode>(mSource).mCode, mStage);
+  } else if (std::holds_alternative<HlslFile>(mSource)) {
+    spirv = Spirv::fromHlsl(std::get<HlslFile>(mSource).mFile.getContent(), mStage);
+  } else if (std::holds_alternative<HlslCode>(mSource)) {
+    spirv = Spirv::fromHlsl(std::get<HlslCode>(mSource).mCode, mStage);
   } else if (std::holds_alternative<SpirvFile>(mSource)) {
     spirv = std::get<SpirvFile>(mSource).mFile.getContent();
   } else if (std::holds_alternative<SpirvCode>(mSource)) {
@@ -316,7 +324,23 @@ void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) {
     pipelineResource.mBinding = compiler.get_decoration(resource.id, spv::DecorationBinding);
     pipelineResource.mArraySize = (spirType.array.size() == 0) ? 1 : spirType.array[0];
     pipelineResource.mName      = resource.name;
-    mResources.push_back(pipelineResource);
+
+    // Check if there is already a ResourceType::eSampler for this binding point and set. In this
+    // case, we can actually merge both into a ResourceType::eCombinedImageSampler.
+    bool mergedToCombinedImageSampler = false;
+    for (auto& r : mResources) {
+      if (r.mSet == pipelineResource.mSet && r.mBinding == pipelineResource.mBinding &&
+          r.mResourceType == PipelineResource::ResourceType::eSampler) {
+        r.mResourceType              = PipelineResource::ResourceType::eCombinedImageSampler;
+        r.mName                      = pipelineResource.mName;
+        mergedToCombinedImageSampler = true;
+        break;
+      }
+    }
+
+    if (!mergedToCombinedImageSampler) {
+      mResources.push_back(pipelineResource);
+    }
   }
 
   // Extract storage images.

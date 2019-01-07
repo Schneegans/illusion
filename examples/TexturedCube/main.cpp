@@ -92,7 +92,7 @@ int main() {
   auto window = Illusion::Graphics::Window::create(engine, device);
 
   auto texture = Illusion::Graphics::TextureUtils::createFromFile(device, "data/textures/box.dds");
-  auto shader  = Illusion::Graphics::Shader::createFromGlslFiles(
+  auto shader  = Illusion::Graphics::Shader::createFromFiles(
       device, {"data/shaders/TexturedCube.vert", "data/shaders/TexturedCube.frag"});
 
   auto positionBuffer = device->createVertexBuffer(POSITIONS);

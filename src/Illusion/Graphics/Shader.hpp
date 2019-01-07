@@ -27,14 +27,14 @@ class Shader {
 
  public:
   // Convenience method to create a shader and add a ShaderModule::GlslFile module for each given
-  // file name. The shader stage is automatically determined by the file name ending.
-  // *.frag: Fragment
-  // *.vert: Vertex
-  // *.geom: Geometry
-  // *.comp: Compute
-  // *.tesc: TessellationControl
-  // *.tese: TessellationEvaluation
-  static ShaderPtr createFromGlslFiles(DevicePtr const& device,
+  // file name. The shader stage is automatically determined by the file name ending (glsl / hlsl).
+  // .vert / .vs: Vertex Shader
+  // .frag / .ps: Fragment Shader
+  // .geom / .gs: Geometry Shader
+  // .tesc / .hs: Tessellation Control Shader / Hull Shader
+  // .tese / .ds: Tessellation Evaluation Shader / Domain Shader
+  // .comp / .cs: Compute Shader
+  static ShaderPtr createFromFiles(DevicePtr const& device,
       std::vector<std::string> const& fileNames, std::set<std::string> dynamicBuffers = {},
       bool reloadOnChanges = true);
 

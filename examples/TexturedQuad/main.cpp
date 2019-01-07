@@ -8,6 +8,7 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#include <Illusion/Core/CommandLineOptions.hpp>
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/Engine.hpp>
@@ -19,17 +20,31 @@
 
 #include <thread>
 
-int main() {
+int main(int argc, char* argv[]) {
 
-  Illusion::Core::Logger::enableTrace = true;
+  bool mUseHLSL   = false;
+  bool mPrintHelp = false;
+
+  Illusion::Core::CommandLineOptions args("Renders a full screen texture.");
+  args.addOption({"--hlsl"}, &mUseHLSL, "Use HLSL shaders instead of GLSL shaders");
+  args.addOption({"--trace"}, &Illusion::Core::Logger::enableTrace, "Print Vulkan object infos");
+  args.addOption({"-h", "--help"}, &mPrintHelp, "Print this help");
+  args.parse(argc, argv);
+
+  if (mPrintHelp) {
+    args.printHelp();
+    return 0;
+  }
 
   auto engine = Illusion::Graphics::Engine::create("Textured Quad Demo");
   auto device = Illusion::Graphics::Device::create(engine->getPhysicalDevice());
   auto window = Illusion::Graphics::Window::create(engine, device);
 
   auto texture = Illusion::Graphics::TextureUtils::createFromFile(device, "data/textures/box.dds");
-  auto shader  = Illusion::Graphics::Shader::createFromGlslFiles(
-      device, {"data/shaders/Quad.vert", "data/shaders/TexturedQuad.frag"});
+  auto shader  = Illusion::Graphics::Shader::createFromFiles(device,
+      mUseHLSL
+          ? std::vector<std::string>{"data/shaders/Quad.vs", "data/shaders/TexturedQuad.ps"}
+          : std::vector<std::string>{"data/shaders/Quad.vert", "data/shaders/TexturedQuad.frag"});
 
   auto renderPass = Illusion::Graphics::RenderPass::create(device);
   renderPass->addAttachment(vk::Format::eR8G8B8A8Unorm);

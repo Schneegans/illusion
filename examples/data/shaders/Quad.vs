@@ -8,19 +8,27 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_SPIRV_HPP
-#define ILLUSION_GRAPHICS_SPIRV_HPP
+// inputs
+const float2 inPositions[4] = {
+  float2( 1, -1),
+  float2(-1, -1),
+  float2( 1,  1),
+  float2(-1,  1)
+};
 
-#include "fwd.hpp"
+const float2 inTexcoords[4] = {
+  float2(1, 0),
+  float2(0, 0),
+  float2(1, 1),
+  float2(0, 1)
+};
 
-namespace Illusion::Graphics::Spirv {
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-std::vector<uint32_t> fromGlsl(std::string const& glsl, vk::ShaderStageFlagBits stage);
-std::vector<uint32_t> fromHlsl(std::string const& hlsl, vk::ShaderStageFlagBits stage);
-
-} // namespace Illusion::Graphics::Spirv
-
-#endif // ILLUSION_GRAPHICS_SPIRV_HPP
+// methods
+void main(
+  uint gl_VertexIndex : SV_VertexID,
+  out float2 vTexcoords : TEXCOORD0,
+  out float4 gl_Position : SV_POSITION) {
+  
+  vTexcoords = inTexcoords[gl_VertexIndex];
+  gl_Position = float4(inPositions[gl_VertexIndex], 0.0, 1.0);
+}

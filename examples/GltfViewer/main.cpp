@@ -195,11 +195,11 @@ int main(int argc, char* argv[]) {
   auto prefilteredReflection =
       Illusion::Graphics::TextureUtils::createPrefilteredReflectionCubemap(device, 128, skybox);
 
-  auto pbrShader = Illusion::Graphics::Shader::createFromGlslFiles(device,
+  auto pbrShader = Illusion::Graphics::Shader::createFromFiles(device,
       {"data/shaders/SimpleGltfShader.vert", "data/shaders/SimpleGltfShader.frag"},
       {"SkinUniforms"});
 
-  auto skyShader = Illusion::Graphics::Shader::createFromGlslFiles(
+  auto skyShader = Illusion::Graphics::Shader::createFromFiles(
       device, {"data/shaders/Quad.vert", "data/shaders/Skybox.frag"});
 
   auto uboAlignment =
