@@ -8,29 +8,11 @@
 #                                                                                                  #
 #--------------------------------------------------------------------------------------------------#
 
-# compile ------------------------------------------------------------------------------------------
-file(GLOB FILES_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-  "*.cpp"
-)
+message("Configuring spirv-tools")
 
-add_library(illusion-input STATIC ${FILES_SRC})
+set(SPIRV-Headers_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/externals/spirv-headers)
+set(SKIP_SPIRV_TOOLS_INSTALL ON)
+set(SPIRV_SKIP_EXECUTABLES ON)
+add_subdirectory(externals/spirv-tools)
 
-target_link_libraries(illusion-input 
-    PUBLIC illusion-core
-    PUBLIC glfw
-)
-
-target_include_directories(illusion-input
-    PUBLIC ${CMAKE_SOURCE_DIR}/src
-)
-
-# install ------------------------------------------------------------------------------------------
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} DESTINATION "include/Illusion"
-  FILES_MATCHING PATTERN "*.hpp"
-  PATTERN "internal" EXCLUDE)
-
-install(TARGETS illusion-input
-  RUNTIME DESTINATION "bin"
-  LIBRARY DESTINATION "lib"
-  ARCHIVE DESTINATION "lib"
-)
+message("")

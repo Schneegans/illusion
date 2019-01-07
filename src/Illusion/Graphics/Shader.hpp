@@ -35,8 +35,8 @@ class Shader {
   // *.tesc: TessellationControl
   // *.tese: TessellationEvaluation
   static ShaderPtr createFromGlslFiles(DevicePtr const& device,
-      std::vector<std::string> const& fileNames, bool reloadOnChanges = true,
-      std::set<std::string> dynamicBuffers = {});
+      std::vector<std::string> const& fileNames, std::set<std::string> dynamicBuffers = {},
+      bool reloadOnChanges = true);
 
   // Syntactic sugar to create a std::shared_ptr for this class
   template <typename... Args>

@@ -8,29 +8,10 @@
 #                                                                                                  #
 #--------------------------------------------------------------------------------------------------#
 
-# compile ------------------------------------------------------------------------------------------
-file(GLOB FILES_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-  "*.cpp"
-)
+message("Configuring vulkan-validation-layers")
 
-add_library(illusion-input STATIC ${FILES_SRC})
+set(Vulkan-Headers_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/externals/vulkan-headers)
+set(CMAKE_INSTALL_INCLUDEDIR ${CMAKE_CURRENT_BINARY_DIR}/externals/vulkan-headers/install)
+add_subdirectory(externals/vulkan-validation-layers)
 
-target_link_libraries(illusion-input 
-    PUBLIC illusion-core
-    PUBLIC glfw
-)
-
-target_include_directories(illusion-input
-    PUBLIC ${CMAKE_SOURCE_DIR}/src
-)
-
-# install ------------------------------------------------------------------------------------------
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} DESTINATION "include/Illusion"
-  FILES_MATCHING PATTERN "*.hpp"
-  PATTERN "internal" EXCLUDE)
-
-install(TARGETS illusion-input
-  RUNTIME DESTINATION "bin"
-  LIBRARY DESTINATION "lib"
-  ARCHIVE DESTINATION "lib"
-)
+message("")

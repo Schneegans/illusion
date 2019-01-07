@@ -19,15 +19,22 @@ set(CMAKE_CXX_STANDARD 17)
 add_compile_options($<$<CXX_COMPILER_ID:MSVC>:/MP>)
 
 # build dependencies -------------------------------------------------------------------------------
-include(externals/vulkan-headers.cmake)
+
+message("")
+message("Configuring submodules")
+message("")
+
+include(externals/glslang.cmake)
 include(externals/vulkan-loader.cmake)
+include(externals/spirv-tools.cmake)
+include(externals/spirv-cross.cmake)
+include(externals/vulkan-headers.cmake)
+include(externals/vulkan-validation-layers.cmake)
 include(externals/glfw.cmake)
 include(externals/glm.cmake)
 include(externals/gli.cmake)
 include(externals/stb.cmake)
 include(externals/tinygltf.cmake)
-include(externals/glslang.cmake)
-include(externals/spirv-cross.cmake)
 
 # build the libraries ------------------------------------------------------------------------------
 add_subdirectory(src/Illusion)

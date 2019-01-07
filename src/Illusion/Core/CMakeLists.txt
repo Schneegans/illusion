@@ -24,7 +24,7 @@ target_include_directories(illusion-core
 )
 
 # install ------------------------------------------------------------------------------------------
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} DESTINATION "include"
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} DESTINATION "include/Illusion"
   FILES_MATCHING PATTERN "*.hpp"
   PATTERN "internal" EXCLUDE)
 

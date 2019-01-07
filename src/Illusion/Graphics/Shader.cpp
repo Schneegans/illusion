@@ -32,8 +32,8 @@ const std::unordered_map<std::string, vk::ShaderStageFlagBits> extensionMapping 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ShaderPtr Shader::createFromGlslFiles(DevicePtr const& device,
-    std::vector<std::string> const& fileNames, bool reloadOnChanges,
-    std::set<std::string> dynamicBuffers) {
+    std::vector<std::string> const& fileNames, std::set<std::string> dynamicBuffers,
+    bool reloadOnChanges) {
 
   auto shader = Shader::create(device);
 

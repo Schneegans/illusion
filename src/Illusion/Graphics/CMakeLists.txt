@@ -22,7 +22,7 @@ target_link_libraries(illusion-graphics
     PUBLIC stb
     PUBLIC tinygltf
     PUBLIC glslang
-    PUBLIC glslang-default-resource-limits
+    PUBLIC glslang-default-resource-limits-lib
     PUBLIC spirv-cross
     PUBLIC SPIRV
     PUBLIC vulkan
@@ -34,7 +34,7 @@ target_include_directories(illusion-graphics
 )
 
 # install ------------------------------------------------------------------------------------------
-install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} DESTINATION "include"
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} DESTINATION "include/Illusion"
   FILES_MATCHING PATTERN "*.hpp"
   PATTERN "internal" EXCLUDE)
 

@@ -3,25 +3,34 @@
 	url = ../../glfw/glfw
 [submodule "externals/gli"]
 	path = externals/gli
-	url = ../../g-truc/gli.git
+	url = ../../g-truc/gli
 [submodule "externals/glm"]
 	path = externals/glm
 	url = ../../g-truc/glm
 [submodule "externals/stb"]
 	path = externals/stb
-	url = ../../nothings/stb.git
+	url = ../../nothings/stb
 [submodule "externals/glslang"]
 	path = externals/glslang
-	url = ../../KhronosGroup/glslang.git
+	url = ../../KhronosGroup/glslang
 [submodule "externals/spirv-cross"]
 	path = externals/spirv-cross
-	url = ../../KhronosGroup/spirv-cross.git
+	url = ../../KhronosGroup/spirv-cross
 [submodule "externals/tinygltf"]
 	path = externals/tinygltf
-	url = ../../syoyo/tinygltf.git
+	url = ../../syoyo/tinygltf
 [submodule "externals/vulkan-headers"]
 	path = externals/vulkan-headers
-	url = ../../KhronosGroup/Vulkan-Headers.git
+	url = ../../KhronosGroup/Vulkan-Headers
 [submodule "externals/vulkan-loader"]
 	path = externals/vulkan-loader
-	url = ../../KhronosGroup/Vulkan-Loader.git
+	url = ../../KhronosGroup/Vulkan-Loader
+[submodule "externals/vulkan-validation-layers"]
+	path = externals/vulkan-validation-layers
+	url = ../../KhronosGroup/Vulkan-ValidationLayers
+[submodule "externals/spirv-tools"]
+	path = externals/spirv-tools
+	url = ../../KhronosGroup/SPIRV-Tools
+[submodule "externals/spirv-headers"]
+	path = externals/spirv-headers
+	url = ../../KhronosGroup/SPIRV-Headers
