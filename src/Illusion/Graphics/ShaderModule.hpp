@@ -27,8 +27,8 @@ class ShaderModule {
  public:
   struct GlslFile {
     GlslFile() = default;
-    Core::File<std::string> mFile;
-    bool                    mReloadOnChanges;
+    Core::File mFile;
+    bool       mReloadOnChanges;
   };
 
   struct GlslCode {
@@ -38,8 +38,8 @@ class ShaderModule {
 
   struct HlslFile {
     HlslFile() = default;
-    Core::File<std::string> mFile;
-    bool                    mReloadOnChanges;
+    Core::File mFile;
+    bool       mReloadOnChanges;
   };
 
   struct HlslCode {
@@ -49,8 +49,8 @@ class ShaderModule {
 
   struct SpirvFile {
     SpirvFile() = default;
-    Core::File<std::vector<uint32_t>> mFile;
-    bool                              mReloadOnChanges;
+    Core::File mFile;
+    bool       mReloadOnChanges;
   };
 
   struct SpirvCode {

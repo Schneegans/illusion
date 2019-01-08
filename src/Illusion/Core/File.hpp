@@ -12,127 +12,95 @@
 #define ILLUSION_CORE_FILE_HPP
 
 #include "Logger.hpp"
-#include "filesystem.hpp"
 
 #include <fstream>
-#include <sstream>
 #include <string>
-#include <vector>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // This class is used to read and write text files. The template parameter specifies the type the //
 // content of the file is returned as. Common use cases include:                                  //
 //                                                                                                //
-// File<std::string>     mFile; // reads and writes the content as a std::string                  //
-// File<vector<uint8_t>> mFile; // reads and writes the content as a byte array                   //
+// File file;                                                                                     //
+// auto content = file.getContent<std::string>(); // reads the content as a std::string           //
+// auto content = file.getContent<std::vector<uint8_t>>(); // reads the content as a byte array   //
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 namespace Illusion::Core {
 
-template <typename T>
 class File {
 
  public:
   // This constructs a invalid File.
-  File()
-      : mPath("")
-      , mContent()
-      , mIsLoaded(false) {
-  }
+  File() = default;
 
   // This constructs a File for a given name.
-  File(std::string const& fileName)
-      : mPath(fileName)
-      , mIsLoaded(false) {
-  }
+  File(std::string const& fileName);
 
   // Returns if the given file is valid.
-  bool isValid() const {
-    std::ifstream file(mPath.c_str());
-    return !file.fail();
-  }
+  bool isValid() const;
 
-  // Returns the given file's content.
-  T const& getContent() const {
-    if (mIsLoaded && !changedOnDisc()) {
-      return mContent;
-    }
+  // Returns the given file's content. The template parameter should be either std::string or some
+  // other container like a std::vector.
+  template <typename T>
+  T getContent() const {
 
     std::ifstream ifs(mPath, std::ifstream::in | std::ios::binary);
     if (!ifs) {
       ILLUSION_WARNING << "Cannot open file \"" << mPath << "\"!" << std::endl;
-      return mContent;
+      return T();
     }
 
     ifs.seekg(0, std::ios::end);
     size_t filesize = ifs.tellg();
     ifs.seekg(0, std::ios::beg);
 
-    mContent.resize(filesize / sizeof(typename T::value_type));
+    T data;
+    data.resize(filesize / sizeof(typename T::value_type));
 
-    ifs.read((char*)mContent.data(), filesize);
+    ifs.read((char*)data.data(), filesize);
     ifs.close();
 
     mLastWriteTime = getLastWriteTime();
 
-    return mContent;
+    return data;
   }
 
-  // Sets the given file's content.
-  void setContent(T const& content) {
-    mContent  = content;
-    mIsLoaded = true;
-  }
-
-  // Saves the file
-  bool save() const {
-    if (!mIsLoaded) {
-      ILLUSION_WARNING << "Unable to save file \"" << mPath << "\"! No content has been set."
-                       << std::endl;
-      return false;
-    }
-
+  // Saves the file. The template parameter should be either std::string or some other container
+  // like a std::vector.
+  template <typename T>
+  bool save(T const& data) const {
     std::ofstream ofs(mPath, std::ifstream::out | std::ios::binary);
     if (!ofs) {
       ILLUSION_WARNING << "Cannot open file \"" << mPath << "\"!" << std::endl;
       return false;
     }
 
-    ofs.write((char*)mContent.data(), mContent.size() * sizeof(typename T::value_type));
+    ofs.write((char*)data.data(), data.size() * sizeof(typename T::value_type));
     ofs.close();
 
     return true;
   }
 
   // Deletes the file from the file system
-  void remove() {
-    std::remove(mPath.c_str());
-    mContent.clear();
-    mIsLoaded = false;
-  }
+  void remove();
 
-  // Returns the given file's name.
-  std::string const& getFileName() const {
-    return mPath;
-  }
+  // Returns the file's name.
+  std::string const& getFileName() const;
+
+  // Sets the file name. This is mostly for defaul-constructed files. This method does not rename
+  // the file on disc, it rather makes this instance point to another file.
+  void setFileName(std::string const& path);
 
   // Returns the last write time as reported from std::filesystem
-  time_t getLastWriteTime() const {
-    return FileSystem::getLastWriteTime(mPath);
-  }
+  time_t getLastWriteTime() const;
 
   // Polls for changes to this file
-  bool changedOnDisc() const {
-    auto time = getLastWriteTime();
-    return time != mLastWriteTime;
-  }
+  bool changedOnDisc() const;
 
  private:
   std::string    mPath;
   mutable time_t mLastWriteTime;
-  mutable T      mContent;
-  mutable bool   mIsLoaded;
 };
 
 } // namespace Illusion::Core

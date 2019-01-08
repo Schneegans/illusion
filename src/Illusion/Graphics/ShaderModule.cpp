@@ -143,15 +143,15 @@ void ShaderModule::reload() {
   std::vector<uint32_t> spirv;
 
   if (std::holds_alternative<GlslFile>(mSource)) {
-    spirv = Spirv::fromGlsl(std::get<GlslFile>(mSource).mFile.getContent(), mStage);
+    spirv = Spirv::fromGlsl(std::get<GlslFile>(mSource).mFile.getContent<std::string>(), mStage);
   } else if (std::holds_alternative<GlslCode>(mSource)) {
     spirv = Spirv::fromGlsl(std::get<GlslCode>(mSource).mCode, mStage);
   } else if (std::holds_alternative<HlslFile>(mSource)) {
-    spirv = Spirv::fromHlsl(std::get<HlslFile>(mSource).mFile.getContent(), mStage);
+    spirv = Spirv::fromHlsl(std::get<HlslFile>(mSource).mFile.getContent<std::string>(), mStage);
   } else if (std::holds_alternative<HlslCode>(mSource)) {
     spirv = Spirv::fromHlsl(std::get<HlslCode>(mSource).mCode, mStage);
   } else if (std::holds_alternative<SpirvFile>(mSource)) {
-    spirv = std::get<SpirvFile>(mSource).mFile.getContent();
+    spirv = std::get<SpirvFile>(mSource).mFile.getContent<std::vector<uint32_t>>();
   } else if (std::holds_alternative<SpirvCode>(mSource)) {
     spirv = std::get<SpirvCode>(mSource).mCode;
   }
