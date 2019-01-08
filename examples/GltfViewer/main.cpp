@@ -148,12 +148,12 @@ int main(int argc, char* argv[]) {
 
   // clang-format off
   Illusion::Core::CommandLineOptions args("Simple viewer for GLTF files.");
+  args.addOption({"-h",  "--help"},        &options.mPrintHelp,  "Print this help");
   args.addOption({"-m",  "--model"},       &options.mModelFile,  "GLTF model (.gltf or .glb)");
   args.addOption({"-e",  "--environment"}, &options.mSkyboxFile, "Skybox image (in equirectangular projection)");
   args.addOption({"-a",  "--animation"},   &options.mAnimation,  "Index of the animation to play. Default: 0, Use -1 to disable animations.");
   args.addOption({"-ns", "--no-skins"},    &options.mNoSkins,    "Disable loading of skins");
   args.addOption({"-nt", "--no-textures"}, &options.mNoTextures, "Disable loading of textures");
-  args.addOption({"-h",  "--help"},        &options.mPrintHelp,  "Print this help");
   // clang-format on
 
   args.parse(argc, argv);

@@ -12,7 +12,6 @@
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/Engine.hpp>
-#include <Illusion/Graphics/PipelineReflection.hpp>
 #include <Illusion/Graphics/RenderPass.hpp>
 #include <Illusion/Graphics/Shader.hpp>
 #include <Illusion/Graphics/TextureUtils.hpp>
@@ -22,16 +21,16 @@
 
 int main(int argc, char* argv[]) {
 
-  bool mUseHLSL   = false;
-  bool mPrintHelp = false;
+  bool useHLSL   = false;
+  bool printHelp = false;
 
   Illusion::Core::CommandLineOptions args("Renders a full screen texture.");
-  args.addOption({"--hlsl"}, &mUseHLSL, "Use HLSL shaders instead of GLSL shaders");
+  args.addOption({"-h", "--help"}, &printHelp, "Print this help");
+  args.addOption({"--hlsl"}, &useHLSL, "Use HLSL shaders instead of GLSL shaders");
   args.addOption({"--trace"}, &Illusion::Core::Logger::enableTrace, "Print Vulkan object infos");
-  args.addOption({"-h", "--help"}, &mPrintHelp, "Print this help");
   args.parse(argc, argv);
 
-  if (mPrintHelp) {
+  if (printHelp) {
     args.printHelp();
     return 0;
   }
@@ -42,7 +41,7 @@ int main(int argc, char* argv[]) {
 
   auto texture = Illusion::Graphics::TextureUtils::createFromFile(device, "data/textures/box.dds");
   auto shader  = Illusion::Graphics::Shader::createFromFiles(device,
-      mUseHLSL
+      useHLSL
           ? std::vector<std::string>{"data/shaders/Quad.vs", "data/shaders/TexturedQuad.ps"}
           : std::vector<std::string>{"data/shaders/Quad.vert", "data/shaders/TexturedQuad.frag"});
 
@@ -53,7 +52,6 @@ int main(int argc, char* argv[]) {
   auto cmd = Illusion::Graphics::CommandBuffer::create(device);
   cmd->graphicsState().addBlendAttachment({});
   cmd->graphicsState().addViewport({glm::vec2(0), glm::vec2(window->pExtent.get()), 0.f, 1.f});
-  cmd->graphicsState().addScissor({glm::ivec2(0), window->pExtent.get()});
   cmd->bindingState().setTexture(texture, 0, 0);
   cmd->begin();
   cmd->setShader(shader);
