@@ -16,6 +16,7 @@ install(DIRECTORY "data"
 # make each example --------------------------------------------------------------------------------
 set(ENABLED_EXAMPLES
   "GltfViewer"
+  "ShaderSandbox"
   "TexturedCube"
   "TexturedQuad"
   "Triangle"
