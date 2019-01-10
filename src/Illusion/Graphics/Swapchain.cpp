@@ -135,7 +135,7 @@ void Swapchain::present(BackedImagePtr const& image,
       cmd->resolveImage(*image->mImage, vk::ImageLayout::eTransferSrcOptimal,
           mImages[mCurrentImageIndex], vk::ImageLayout::eTransferDstOptimal, region);
     }
-    // Else do an image blit.
+    // else do an image blit
     else {
       cmd->transitionImageLayout(*image->mImage, vk::ImageLayout::eColorAttachmentOptimal,
           vk::ImageLayout::eTransferSrcOptimal, vk::PipelineStageFlagBits::eColorAttachmentOutput,

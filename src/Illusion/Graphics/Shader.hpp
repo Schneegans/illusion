@@ -26,8 +26,8 @@ namespace Illusion::Graphics {
 class Shader {
 
  public:
-  // Convenience method to create a shader and add a ShaderModule::GlslFile module for each given
-  // file name. The shader stage is automatically determined by the file name ending (glsl / hlsl).
+  // Convenience method to create a shader and add a GlslFile ShaderSource for each given file name.
+  // The shader stage is automatically determined by the file name ending (glsl / hlsl).
   // .vert / .vs: Vertex Shader
   // .frag / .ps: Fragment Shader
   // .geom / .gs: Geometry Shader
@@ -52,6 +52,9 @@ class Shader {
   // Adds a shader module to this Shader. No Vulkan resources are allocated by this call, only an
   // internal dirty flag is set. The creation of the ShaderModule and the shader reflection happens
   // lazily when one of the methods below gets called.
+  // The source can be one of the sources defined in ShaderSource.hpp.
+  // If there are any uniform and storage buffers defined in your shader source which should be
+  // dynamic in the reflection, you should provide their names in the dynamicBuffers parameter.
   // If this method is called multiple times for the same stage, the previous data will be
   // overridden.
   void addModule(vk::ShaderStageFlagBits stage, ShaderSourcePtr const& source,
@@ -59,8 +62,13 @@ class Shader {
 
   // Returns a vector of ShaderModules. These are allocated lazily by this call and can be queried
   // for the actual Vulkan handle.
-  std::vector<ShaderModulePtr> const&            getModules();
-  PipelineReflectionPtr const&                   getReflection();
+  std::vector<ShaderModulePtr> const& getModules();
+
+  // The PipelineReflection can be used to query information on all resources of the contained
+  // modules. It is primarily used to generate a corresponding vk::PipelineLayout.
+  PipelineReflectionPtr const& getReflection();
+
+  // This is just a convenience getter for the same method on the PipelineReflection
   std::vector<DescriptorSetReflectionPtr> const& getDescriptorSetReflections();
 
  private:

@@ -22,7 +22,7 @@
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// The PipelineReflection stores information on all PipelineResources used by a piepeline. It can //
+// The PipelineReflection stores information on all PipelineResources used by a pipeline. It can  //
 // be used to create a corresponding vk::PipelineLayout.                                          //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

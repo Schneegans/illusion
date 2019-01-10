@@ -18,6 +18,9 @@
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// This class is primarily as member of the Window class. It manages presentation of images on    //
+// the window's surface. The image given to the present() method will be blitted to the current   //
+// swapchain image.                                                                               //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Swapchain {
@@ -28,13 +31,23 @@ class Swapchain {
     return std::make_shared<Swapchain>(args...);
   };
 
+  // This is called by the Window.
   Swapchain(DevicePtr const& device, vk::SurfaceKHRPtr const& surface);
   virtual ~Swapchain();
 
-  void              setEnableVsync(bool enable);
-  void              markDirty();
+  // For now, vk::PresentModeKHR::eFifo is used for v-sync, for no v-sync either
+  // vk::PresentModeKHR::eImmediate (if supported) or preferably vk::PresentModeKHR::eMailbox (if
+  // supported) are used.
+  void setEnableVsync(bool enable);
+
+  // This will trigger a re-creation of the SwapChain. This is called by the Window on size changes.
+  void markDirty();
+
+  // Get the current size of the swapchain images.
   glm::uvec2 const& getExtent() const;
 
+  // Blits the given image to one of the swapchain images. The operation will wait for the given
+  // semaphore and will signal the given fence once it finishes.
   void present(BackedImagePtr const& image, vk::SemaphorePtr const& renderFinishedSemaphore,
       vk::FencePtr const& signalFence);
 

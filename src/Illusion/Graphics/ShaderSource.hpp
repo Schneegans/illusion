@@ -20,8 +20,13 @@
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// A ShaderSource is given to the Shader for each stage. Internally, the Shader class uses the    //
+// ShaderSource to construct ShaderModules for each stage.                                        //
+// A ShaderSource can be either inline code or a shader file on disc. It can contain GLSL, HLSL   //
+// or Spir-V code                                                                                 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Abstract base class for all shader sources.
 class ShaderSource {
  public:
   virtual bool                  requiresReload() const                  = 0;
@@ -31,9 +36,10 @@ class ShaderSource {
 
 // -------------------------------------------------------------------------------------------------
 
+// This (abstract) derived class for file based sources handles the reloading of changed files.
 class ShaderFile : public ShaderSource {
  public:
-  ShaderFile(std::string const& fileName, bool reloadOnChanges = true);
+  ShaderFile(std::string const& fileName, bool reloadOnChanges);
   bool requiresReload() const override;
   void resetReloadingRequired() override;
 
@@ -45,6 +51,8 @@ class ShaderFile : public ShaderSource {
 
 // -------------------------------------------------------------------------------------------------
 
+// This (abstract) derived class is for sources of inline code. The method requiresReload() will
+// always returns false.
 class ShaderCode : public ShaderSource {
  public:
   ShaderCode(std::string const& code, std::string const& name);

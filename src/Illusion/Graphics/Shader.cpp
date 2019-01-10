@@ -46,18 +46,21 @@ ShaderPtr Shader::createFromFiles(DevicePtr const& device,
   for (auto const& fileName : fileNames) {
     auto extension = fileName.substr(fileName.find_last_of('.'));
 
+    // first check whether the file has a glsl extension
     auto stage = glslExtensionMapping.find(extension);
     if (stage != glslExtensionMapping.end()) {
       shader->addModule(stage->second, GlslFile::create(fileName, reloadOnChanges), dynamicBuffers);
       continue;
     }
 
+    // then check whether the file has a hlsl extension
     stage = hlslExtensionMapping.find(extension);
     if (stage != hlslExtensionMapping.end()) {
       shader->addModule(stage->second, HlslFile::create(fileName, reloadOnChanges), dynamicBuffers);
       continue;
     }
 
+    // throw an error if did not find a supported extension
     throw std::runtime_error(
         "Failed to add shader stage: File " + fileName + " has an unknown extension!");
   }
@@ -109,27 +112,37 @@ std::vector<DescriptorSetReflectionPtr> const& Shader::getDescriptorSetReflectio
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Shader::reload() {
+
+  // first check whether one of our modules needs to be reload (this is for example the case when
+  // the source file changed on disc)
   for (auto const& m : mModules) {
     if (m->requiresReload()) {
       try {
         m->reload();
       } catch (std::runtime_error const& e) {
-        ILLUSION_ERROR << e.what() << std::endl;
+        ILLUSION_ERROR << "Shader reloading failed. " << e.what() << std::endl;
         m->resetReloadingRequired();
       }
     }
   }
 
+  // A new module was added. Just recreate everything. This could be optimized to just recreate the
+  // newly added modules, however there will be only very few cases were this method is called
+  // before all modules are added anyways.
   if (mDirty) {
     std::vector<ShaderModulePtr> modules;
-    auto                         reflection = std::make_shared<PipelineReflection>(mDevice);
+
+    auto reflection = std::make_shared<PipelineReflection>(mDevice);
 
     try {
+
+      // create modules
       for (auto const& s : mSources) {
         modules.emplace_back(
             ShaderModule::create(mDevice, s.second, s.first, mDynamicBuffers[s.first]));
       }
 
+      // create reflection
       for (auto const& module : modules) {
         for (auto const& resource : module->getResources()) {
           reflection->addResource(resource);
@@ -137,6 +150,8 @@ void Shader::reload() {
       }
     } catch (std::runtime_error const& e) {
       ILLUSION_ERROR << "Failed to compile shader: " << e.what() << std::endl;
+
+      // setting mDirty to false to prevent multiple error prints
       mDirty = false;
       return;
     }

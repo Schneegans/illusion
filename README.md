@@ -38,6 +38,7 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
 - [x] Texture loading  
   - [x] LDR and HDR texture loading using [stb](https://github.com/nothings/stb) (hdr, jpg, png, tga, bmp, ...)
   - [x] DDS texture loading using [gli](https://github.com/g-truc/gli)
+  - [x] Automatic mipmap generation
   - [x] Conversion of equirectangular panoramas to cubemaps
   - [x] Creation of prefiltered irradiance and reflectance maps for physically based shading
 - [ ] glTF loading using [tinygltf](https://github.com/syoyo/tinygltf)
