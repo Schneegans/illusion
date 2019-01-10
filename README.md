@@ -30,13 +30,15 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
   - [x] Explicit binding state per command buffer
   - [x] A ring-buffer for per-frame resources
   - [x] Per-frame resource count is independent from swapchain image count
-  - [x] Conversion of equirectangular panoramas to cubemaps
-  - [x] Creation of prefiltered irradiance and reflectance maps for physically based shading
   - [ ] Automatic image layout transitions
   - [ ] Parallel command buffer recording
   - [ ] A frame or render-graph to automatically create renderpasses and subpasses with dependencies
   - [ ] ...
-- [x] LDR and HDR texture loading ([stb](https://github.com/nothings/stb) and [gli](https://github.com/g-truc/gli) - dds, hdr, jpg, png, tga, bmp, ...)
+- [x] Texture loading  
+  - [x] LDR and HDR texture loading (hdr, jpg, png, tga, bmp, ... - with [stb](https://github.com/nothings/stb)
+  - [x] DDS texture loading ([gli](https://github.com/g-truc/gli))
+  - [x] Conversion of equirectangular panoramas to cubemaps
+  - [x] Creation of prefiltered irradiance and reflectance maps for physically based shading
 - [ ] glTF loading ([tinygltf](https://github.com/syoyo/tinygltf))
   - [x] Metallic-roughness materials
   - [x] Specular-glossiness materials
