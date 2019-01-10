@@ -103,7 +103,7 @@ class CustomCompiler : public spirv_cross::CompilerGLSL {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ShaderModule::ShaderModule(DevicePtr const& device, Source const& source,
+ShaderModule::ShaderModule(DevicePtr const& device, ShaderSourcePtr const& source,
     vk::ShaderStageFlagBits stage, std::set<std::string> const& dynamicBuffers)
     : mDevice(device)
     , mStage(stage)
@@ -121,42 +121,21 @@ ShaderModule::~ShaderModule() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool ShaderModule::requiresReload() const {
-  if (std::holds_alternative<GlslFile>(mSource) && std::get<GlslFile>(mSource).mReloadOnChanges) {
-    return std::get<GlslFile>(mSource).mFile.changedOnDisc();
-  }
+  return mSource->requiresReload();
+}
 
-  if (std::holds_alternative<HlslFile>(mSource) && std::get<HlslFile>(mSource).mReloadOnChanges) {
-    return std::get<HlslFile>(mSource).mFile.changedOnDisc();
-  }
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  if (std::holds_alternative<SpirvFile>(mSource) && std::get<SpirvFile>(mSource).mReloadOnChanges) {
-    return std::get<SpirvFile>(mSource).mFile.changedOnDisc();
-  }
-
-  return false;
+void ShaderModule::resetReloadingRequired() {
+  return mSource->resetReloadingRequired();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ShaderModule::reload() {
+  auto spirv = mSource->getSpirv(mStage);
 
-  std::vector<uint32_t> spirv;
-
-  if (std::holds_alternative<GlslFile>(mSource)) {
-    spirv = Spirv::fromGlsl(std::get<GlslFile>(mSource).mFile.getContent<std::string>(), mStage);
-  } else if (std::holds_alternative<GlslCode>(mSource)) {
-    spirv = Spirv::fromGlsl(std::get<GlslCode>(mSource).mCode, mStage);
-  } else if (std::holds_alternative<HlslFile>(mSource)) {
-    spirv = Spirv::fromHlsl(std::get<HlslFile>(mSource).mFile.getContent<std::string>(), mStage);
-  } else if (std::holds_alternative<HlslCode>(mSource)) {
-    spirv = Spirv::fromHlsl(std::get<HlslCode>(mSource).mCode, mStage);
-  } else if (std::holds_alternative<SpirvFile>(mSource)) {
-    spirv = std::get<SpirvFile>(mSource).mFile.getContent<std::vector<uint32_t>>();
-  } else if (std::holds_alternative<SpirvCode>(mSource)) {
-    spirv = std::get<SpirvCode>(mSource).mCode;
-  }
-
-  std::visit([this, &spirv](auto&& s) { createReflection(spirv); }, mSource);
+  createReflection(spirv);
 
   vk::ShaderModuleCreateInfo info;
   info.codeSize = spirv.size() * 4;

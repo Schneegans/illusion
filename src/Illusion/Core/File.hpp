@@ -97,6 +97,7 @@ class File {
 
   // Polls for changes to this file
   bool changedOnDisc() const;
+  void resetChangedOnDisc();
 
  private:
   std::string    mPath;

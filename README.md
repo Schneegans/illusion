@@ -19,6 +19,7 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
 
 - [ ] Vulkan convenience layer
   - [x] Shader loading from Spir-V, GLSL and HLSL using [glslang](https://github.com/KhronosGroup/glslang) - if you feel adventurous you can even mix GLSL and HLSL modules in one shader program :grimacing:
+  - [x] Shader includes using `#extension GL_GOOGLE_include_directive`
   - [x] Automatic reloading of shaders when source file changed on disc
   - [x] Automatic shader program reflection using [spirv-cross](https://github.com/KhronosGroup/SPIRV-Cross)
   - [x] Automatic creation of pipeline layouts
@@ -31,7 +32,6 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
   - [x] Per-frame resource count is independent from swapchain image count
   - [x] Conversion of equirectangular panoramas to cubemaps
   - [x] Creation of prefiltered irradiance and reflectance maps for physically based shading
-  - [ ] Shader includes
   - [ ] Automatic image layout transitions
   - [ ] Parallel command buffer recording
   - [ ] A frame or render-graph to automatically create renderpasses and subpasses with dependencies

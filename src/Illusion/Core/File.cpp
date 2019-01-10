@@ -19,6 +19,8 @@ namespace Illusion::Core {
 
 File::File(std::string const& fileName)
     : mPath(fileName) {
+
+  resetChangedOnDisc();
 }
 
 bool File::isValid() const {
@@ -45,6 +47,10 @@ time_t File::getLastWriteTime() const {
 bool File::changedOnDisc() const {
   auto time = getLastWriteTime();
   return time != mLastWriteTime;
+}
+
+void File::resetChangedOnDisc() {
+  mLastWriteTime = getLastWriteTime();
 }
 
 } // namespace Illusion::Core

@@ -48,15 +48,13 @@ ShaderPtr Shader::createFromFiles(DevicePtr const& device,
 
     auto stage = glslExtensionMapping.find(extension);
     if (stage != glslExtensionMapping.end()) {
-      shader->addModule(
-          stage->second, ShaderModule::GlslFile{fileName, reloadOnChanges}, dynamicBuffers);
+      shader->addModule(stage->second, GlslFile::create(fileName, reloadOnChanges), dynamicBuffers);
       continue;
     }
 
     stage = hlslExtensionMapping.find(extension);
     if (stage != hlslExtensionMapping.end()) {
-      shader->addModule(
-          stage->second, ShaderModule::HlslFile{fileName, reloadOnChanges}, dynamicBuffers);
+      shader->addModule(stage->second, HlslFile::create(fileName, reloadOnChanges), dynamicBuffers);
       continue;
     }
 
@@ -80,7 +78,7 @@ Shader::~Shader() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Shader::addModule(vk::ShaderStageFlagBits stage, ShaderModule::Source const& source,
+void Shader::addModule(vk::ShaderStageFlagBits stage, ShaderSourcePtr const& source,
     std::set<std::string> const& dynamicBuffers) {
   mDirty                 = true;
   mSources[stage]        = source;
@@ -116,7 +114,8 @@ void Shader::reload() {
       try {
         m->reload();
       } catch (std::runtime_error const& e) {
-        ILLUSION_ERROR << "Failed to compile shader: " << e.what() << std::endl;
+        ILLUSION_ERROR << e.what() << std::endl;
+        m->resetReloadingRequired();
       }
     }
   }

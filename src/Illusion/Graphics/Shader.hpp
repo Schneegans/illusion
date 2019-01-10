@@ -54,7 +54,7 @@ class Shader {
   // lazily when one of the methods below gets called.
   // If this method is called multiple times for the same stage, the previous data will be
   // overridden.
-  void addModule(vk::ShaderStageFlagBits stage, ShaderModule::Source const& source,
+  void addModule(vk::ShaderStageFlagBits stage, ShaderSourcePtr const& source,
       std::set<std::string> const& dynamicBuffers = {});
 
   // Returns a vector of ShaderModules. These are allocated lazily by this call and can be queried
@@ -71,7 +71,7 @@ class Shader {
   PipelineReflectionPtr        mReflection;
 
   bool                                                               mDirty = false;
-  std::unordered_map<vk::ShaderStageFlagBits, ShaderModule::Source>  mSources;
+  std::unordered_map<vk::ShaderStageFlagBits, ShaderSourcePtr>       mSources;
   std::unordered_map<vk::ShaderStageFlagBits, std::set<std::string>> mDynamicBuffers;
 };
 
