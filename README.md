@@ -18,6 +18,7 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
 ## Features
 
 - [ ] Vulkan convenience layer
+  - [x] Window creation using [glfw](https://github.com/glfw/glfw)
   - [x] Shader loading from Spir-V, GLSL and HLSL using [glslang](https://github.com/KhronosGroup/glslang) - if you feel adventurous you can even mix GLSL and HLSL modules in one shader program :grimacing:
   - [x] Shader includes using `#extension GL_GOOGLE_include_directive`
   - [x] Automatic reloading of shaders when source file changed on disc
@@ -35,11 +36,11 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
   - [ ] A frame or render-graph to automatically create renderpasses and subpasses with dependencies
   - [ ] ...
 - [x] Texture loading  
-  - [x] LDR and HDR texture loading (hdr, jpg, png, tga, bmp, ... - with [stb](https://github.com/nothings/stb)
-  - [x] DDS texture loading ([gli](https://github.com/g-truc/gli))
+  - [x] LDR and HDR texture loading using [stb](https://github.com/nothings/stb) (hdr, jpg, png, tga, bmp, ...)
+  - [x] DDS texture loading using [gli](https://github.com/g-truc/gli)
   - [x] Conversion of equirectangular panoramas to cubemaps
   - [x] Creation of prefiltered irradiance and reflectance maps for physically based shading
-- [ ] glTF loading ([tinygltf](https://github.com/syoyo/tinygltf))
+- [ ] glTF loading using [tinygltf](https://github.com/syoyo/tinygltf)
   - [x] Metallic-roughness materials
   - [x] Specular-glossiness materials
   - [x] Animations
@@ -47,7 +48,7 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
   - [ ] Morph targets
   - [ ] Sparse accessors
   - [ ] Multiple texture coordinates
-- [x] Mouse and joystick input ([glfw](https://github.com/glfw/glfw))
+- [x] Mouse and joystick input using [glfw](https://github.com/glfw/glfw)
 
 ## Building Illusion
 
