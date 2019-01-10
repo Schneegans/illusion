@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
   Illusion::Core::CommandLineOptions args("Renders a full screen texture.");
   args.addOption({"-h", "--help"}, &printHelp, "Print this help");
   args.addOption({"--hlsl"}, &useHLSL, "Use HLSL shaders instead of GLSL shaders");
-  args.addOption({"--trace"}, &Illusion::Core::Logger::enableTrace, "Print Vulkan object infos");
+  args.addOption({"-t", "--trace"}, &Illusion::Core::Logger::enableTrace, "Print trace output");
   args.parse(argc, argv);
 
   if (printHelp) {
