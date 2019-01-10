@@ -31,7 +31,7 @@ struct StorageImageBinding {
   bool operator!=(StorageImageBinding const& other) const;
 };
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
+// -------------------------------------------------------------------------------------------------
 
 struct CombinedImageSamplerBinding {
   TexturePtr mTexture;
@@ -40,7 +40,7 @@ struct CombinedImageSamplerBinding {
   bool operator!=(CombinedImageSamplerBinding const& other) const;
 };
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
+// -------------------------------------------------------------------------------------------------
 
 struct UniformBufferBinding {
   BackedBufferPtr mBuffer;
@@ -51,7 +51,7 @@ struct UniformBufferBinding {
   bool operator!=(UniformBufferBinding const& other) const;
 };
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
+// -------------------------------------------------------------------------------------------------
 
 struct DynamicUniformBufferBinding {
   BackedBufferPtr mBuffer;
@@ -61,7 +61,7 @@ struct DynamicUniformBufferBinding {
   bool operator!=(DynamicUniformBufferBinding const& other) const;
 };
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
+// -------------------------------------------------------------------------------------------------
 
 struct StorageBufferBinding {
   BackedBufferPtr mBuffer;
@@ -72,7 +72,7 @@ struct StorageBufferBinding {
   bool operator!=(StorageBufferBinding const& other) const;
 };
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
+// -------------------------------------------------------------------------------------------------
 
 struct DynamicStorageBufferBinding {
   BackedBufferPtr mBuffer;
@@ -82,7 +82,7 @@ struct DynamicStorageBufferBinding {
   bool operator!=(DynamicStorageBufferBinding const& other) const;
 };
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
+// -------------------------------------------------------------------------------------------------
 
 typedef std::variant<StorageImageBinding, CombinedImageSamplerBinding, UniformBufferBinding,
     DynamicUniformBufferBinding, StorageBufferBinding, DynamicStorageBufferBinding>
