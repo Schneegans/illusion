@@ -9,6 +9,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <Illusion/Core/CommandLineOptions.hpp>
+#include <Illusion/Core/Logger.hpp>
 #include <Illusion/Core/Timer.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/Engine.hpp>
@@ -30,6 +31,7 @@ int main(int argc, char* argv[]) {
 
   Illusion::Core::CommandLineOptions args("Renders a full screen texture.");
   args.addOption({"-h", "--help"}, &printHelp, "Print this help");
+  args.addOption({"-t", "--trace"}, &Illusion::Core::Logger::enableTrace, "Print trace output");
   args.addOption({"-s", "--shader"}, &shaderFile,
       "The fragment shader file to use. This defaults to data/shaders/Sandbox.frag");
   args.parse(argc, argv);
