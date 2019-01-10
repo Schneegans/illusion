@@ -14,6 +14,7 @@
 #include "DescriptorSetReflection.hpp"
 #include "Device.hpp"
 #include "Utils.hpp"
+#include "VulkanPtr.hpp"
 
 #include <iostream>
 #include <unordered_map>
@@ -113,7 +114,7 @@ vk::DescriptorSetPtr DescriptorPool::allocateDescriptorSet() {
   ILLUSION_TRACE << "Allocating DescriptorSet." << std::endl;
 
   auto device{mDevice->getHandle()};
-  return Utils::makeVulkanPtr(
+  return VulkanPtr::create(
       device->allocateDescriptorSets(info)[0], [device, pool](vk::DescriptorSet* obj) {
         ILLUSION_TRACE << "Freeing DescriptorSet." << std::endl;
         --pool->mAllocationCount;

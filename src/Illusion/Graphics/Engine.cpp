@@ -12,7 +12,7 @@
 
 #include "../Core/Logger.hpp"
 #include "PhysicalDevice.hpp"
-#include "Utils.hpp"
+#include "VulkanPtr.hpp"
 
 #include <GLFW/glfw3.h>
 #include <iostream>
@@ -152,7 +152,7 @@ vk::SurfaceKHRPtr Engine::createSurface(GLFWwindow* window) const {
 
   // copying instance to keep reference counting up until the surface is destroyed
   auto instance{mInstance};
-  return Utils::makeVulkanPtr(vk::SurfaceKHR(tmp), [instance](vk::SurfaceKHR* obj) {
+  return VulkanPtr::create(vk::SurfaceKHR(tmp), [instance](vk::SurfaceKHR* obj) {
     ILLUSION_TRACE << "Deleting vk::SurfaceKHR." << std::endl;
     instance->destroySurfaceKHR(*obj);
     delete obj;
@@ -204,7 +204,7 @@ vk::InstancePtr Engine::createInstance(std::string const& engine, std::string co
   }
 
   ILLUSION_TRACE << "Creating vk::Instance." << std::endl;
-  return Utils::makeVulkanPtr(vk::createInstance(info), [](vk::Instance* obj) {
+  return VulkanPtr::create(vk::createInstance(info), [](vk::Instance* obj) {
     ILLUSION_TRACE << "Deleting vk::Instance." << std::endl;
     obj->destroy();
     delete obj;
@@ -234,7 +234,7 @@ vk::DebugReportCallbackEXTPtr Engine::createDebugCallback() const {
 
   ILLUSION_TRACE << "Creating vk::DebugReportCallbackEXT." << std::endl;
   auto instance{mInstance};
-  return Utils::makeVulkanPtr(
+  return VulkanPtr::create(
       vk::DebugReportCallbackEXT(tmp), [instance](vk::DebugReportCallbackEXT* obj) {
         auto destroyCallback = (PFN_vkDestroyDebugReportCallbackEXT)instance->getProcAddr(
             "vkDestroyDebugReportCallbackEXT");

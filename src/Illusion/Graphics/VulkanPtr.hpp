@@ -8,20 +8,26 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_UTILS_HPP
-#define ILLUSION_GRAPHICS_UTILS_HPP
+#ifndef ILLUSION_GRAPHICS_VULKAN_PTR_HPP
+#define ILLUSION_GRAPHICS_VULKAN_PTR_HPP
 
-#include "fwd.hpp"
+#include <functional>
+#include <memory>
 
-namespace Illusion::Graphics::Utils {
+namespace Illusion::Graphics::VulkanPtr {
 
-// some helpers regarding vk::Format
-bool    isColorFormat(vk::Format format);
-bool    isDepthFormat(vk::Format format);
-bool    isDepthOnlyFormat(vk::Format format);
-bool    isDepthStencilFormat(vk::Format format);
-uint8_t getByteCount(vk::Format format);
+// shared_ptr based memory management for vulkan objects
+template <typename T>
+struct Identity {
+  typedef T type;
+};
 
-} // namespace Illusion::Graphics::Utils
+template <typename T>
+std::shared_ptr<T> create(
+    T const& vkObject, typename Identity<std::function<void(T* obj)>>::type deleter) {
+  return std::shared_ptr<T>(new T{vkObject}, deleter);
+}
 
-#endif // ILLUSION_GRAPHICS_UTILS_HPP
+} // namespace Illusion::Graphics::VulkanPtr
+
+#endif // ILLUSION_GRAPHICS_VULKAN_PTR_HPP

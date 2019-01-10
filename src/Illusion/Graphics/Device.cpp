@@ -16,6 +16,7 @@
 #include "PhysicalDevice.hpp"
 #include "PipelineResource.hpp"
 #include "Utils.hpp"
+#include "VulkanPtr.hpp"
 
 #include <iostream>
 #include <set>
@@ -370,7 +371,7 @@ vk::CommandBufferPtr Device::allocateCommandBuffer(
   auto device{mDevice};
   auto pool{mCommandPools[Core::enumCast(type)]};
 
-  return Utils::makeVulkanPtr(
+  return VulkanPtr::create(
       mDevice->allocateCommandBuffers(info)[0], [device, pool](vk::CommandBuffer* obj) {
         ILLUSION_TRACE << "Freeing CommandBuffer." << std::endl;
         device->freeCommandBuffers(*pool, *obj);
@@ -383,7 +384,7 @@ vk::CommandBufferPtr Device::allocateCommandBuffer(
 vk::BufferPtr Device::createBuffer(vk::BufferCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::Buffer." << std::endl;
   auto device{mDevice};
-  return Utils::makeVulkanPtr(device->createBuffer(info), [device](vk::Buffer* obj) {
+  return VulkanPtr::create(device->createBuffer(info), [device](vk::Buffer* obj) {
     ILLUSION_TRACE << "Deleting vk::Buffer." << std::endl;
     device->destroyBuffer(*obj);
     delete obj;
@@ -395,7 +396,7 @@ vk::BufferPtr Device::createBuffer(vk::BufferCreateInfo const& info) const {
 vk::CommandPoolPtr Device::createCommandPool(vk::CommandPoolCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::CommandPool." << std::endl;
   auto device{mDevice};
-  return Utils::makeVulkanPtr(device->createCommandPool(info), [device](vk::CommandPool* obj) {
+  return VulkanPtr::create(device->createCommandPool(info), [device](vk::CommandPool* obj) {
     ILLUSION_TRACE << "Deleting vk::CommandPool." << std::endl;
     device->destroyCommandPool(*obj);
     delete obj;
@@ -407,12 +408,11 @@ vk::CommandPoolPtr Device::createCommandPool(vk::CommandPoolCreateInfo const& in
 vk::DescriptorPoolPtr Device::createDescriptorPool(vk::DescriptorPoolCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::DescriptorPool." << std::endl;
   auto device{mDevice};
-  return Utils::makeVulkanPtr(
-      device->createDescriptorPool(info), [device](vk::DescriptorPool* obj) {
-        ILLUSION_TRACE << "Deleting vk::DescriptorPool." << std::endl;
-        device->destroyDescriptorPool(*obj);
-        delete obj;
-      });
+  return VulkanPtr::create(device->createDescriptorPool(info), [device](vk::DescriptorPool* obj) {
+    ILLUSION_TRACE << "Deleting vk::DescriptorPool." << std::endl;
+    device->destroyDescriptorPool(*obj);
+    delete obj;
+  });
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -421,7 +421,7 @@ vk::DescriptorSetLayoutPtr Device::createDescriptorSetLayout(
     vk::DescriptorSetLayoutCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::DescriptorSetLayout." << std::endl;
   auto device{mDevice};
-  return Utils::makeVulkanPtr(
+  return VulkanPtr::create(
       device->createDescriptorSetLayout(info), [device](vk::DescriptorSetLayout* obj) {
         ILLUSION_TRACE << "Deleting vk::DescriptorSetLayout." << std::endl;
         device->destroyDescriptorSetLayout(*obj);
@@ -434,7 +434,7 @@ vk::DescriptorSetLayoutPtr Device::createDescriptorSetLayout(
 vk::DeviceMemoryPtr Device::createMemory(vk::MemoryAllocateInfo const& info) const {
   ILLUSION_TRACE << "Allocating vk::DeviceMemory." << std::endl;
   auto device{mDevice};
-  return Utils::makeVulkanPtr(device->allocateMemory(info), [device](vk::DeviceMemory* obj) {
+  return VulkanPtr::create(device->allocateMemory(info), [device](vk::DeviceMemory* obj) {
     ILLUSION_TRACE << "Freeing vk::DeviceMemory." << std::endl;
     device->freeMemory(*obj);
     delete obj;
@@ -446,7 +446,7 @@ vk::DeviceMemoryPtr Device::createMemory(vk::MemoryAllocateInfo const& info) con
 vk::FencePtr Device::createFence(vk::FenceCreateFlags const& flags) const {
   ILLUSION_TRACE << "Creating vk::Fence." << std::endl;
   auto device{mDevice};
-  return Utils::makeVulkanPtr(device->createFence({flags}), [device](vk::Fence* obj) {
+  return VulkanPtr::create(device->createFence({flags}), [device](vk::Fence* obj) {
     ILLUSION_TRACE << "Deleting vk::Fence." << std::endl;
     device->destroyFence(*obj);
     delete obj;
@@ -458,7 +458,7 @@ vk::FencePtr Device::createFence(vk::FenceCreateFlags const& flags) const {
 vk::FramebufferPtr Device::createFramebuffer(vk::FramebufferCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::Framebuffer." << std::endl;
   auto device{mDevice};
-  return Utils::makeVulkanPtr(device->createFramebuffer(info), [device](vk::Framebuffer* obj) {
+  return VulkanPtr::create(device->createFramebuffer(info), [device](vk::Framebuffer* obj) {
     ILLUSION_TRACE << "Deleting vk::Framebuffer." << std::endl;
     device->destroyFramebuffer(*obj);
     delete obj;
@@ -470,7 +470,7 @@ vk::FramebufferPtr Device::createFramebuffer(vk::FramebufferCreateInfo const& in
 vk::ImagePtr Device::createImage(vk::ImageCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::Image." << std::endl;
   auto device{mDevice};
-  return Utils::makeVulkanPtr(device->createImage(info), [device](vk::Image* obj) {
+  return VulkanPtr::create(device->createImage(info), [device](vk::Image* obj) {
     ILLUSION_TRACE << "Deleting vk::Image." << std::endl;
     device->destroyImage(*obj);
     delete obj;
@@ -482,7 +482,7 @@ vk::ImagePtr Device::createImage(vk::ImageCreateInfo const& info) const {
 vk::ImageViewPtr Device::createImageView(vk::ImageViewCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::ImageView." << std::endl;
   auto device{mDevice};
-  return Utils::makeVulkanPtr(device->createImageView(info), [device](vk::ImageView* obj) {
+  return VulkanPtr::create(device->createImageView(info), [device](vk::ImageView* obj) {
     ILLUSION_TRACE << "Deleting vk::ImageView." << std::endl;
     device->destroyImageView(*obj);
     delete obj;
@@ -494,7 +494,7 @@ vk::ImageViewPtr Device::createImageView(vk::ImageViewCreateInfo const& info) co
 vk::PipelinePtr Device::createComputePipeline(vk::ComputePipelineCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::Pipeline (compute)." << std::endl;
   auto device{mDevice};
-  return Utils::makeVulkanPtr(
+  return VulkanPtr::create(
       device->createComputePipeline(nullptr, info), [device](vk::Pipeline* obj) {
         ILLUSION_TRACE << "Deleting vk::Pipeline (compute)." << std::endl;
         device->destroyPipeline(*obj);
@@ -507,7 +507,7 @@ vk::PipelinePtr Device::createComputePipeline(vk::ComputePipelineCreateInfo cons
 vk::PipelinePtr Device::createGraphicsPipeline(vk::GraphicsPipelineCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::Pipeline (graphics)." << std::endl;
   auto device{mDevice};
-  return Utils::makeVulkanPtr(
+  return VulkanPtr::create(
       device->createGraphicsPipeline(nullptr, info), [device](vk::Pipeline* obj) {
         ILLUSION_TRACE << "Deleting vk::Pipeline (graphics)." << std::endl;
         device->destroyPipeline(*obj);
@@ -520,12 +520,11 @@ vk::PipelinePtr Device::createGraphicsPipeline(vk::GraphicsPipelineCreateInfo co
 vk::PipelineLayoutPtr Device::createPipelineLayout(vk::PipelineLayoutCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::PipelineLayout." << std::endl;
   auto device{mDevice};
-  return Utils::makeVulkanPtr(
-      device->createPipelineLayout(info), [device](vk::PipelineLayout* obj) {
-        ILLUSION_TRACE << "Deleting vk::PipelineLayout." << std::endl;
-        device->destroyPipelineLayout(*obj);
-        delete obj;
-      });
+  return VulkanPtr::create(device->createPipelineLayout(info), [device](vk::PipelineLayout* obj) {
+    ILLUSION_TRACE << "Deleting vk::PipelineLayout." << std::endl;
+    device->destroyPipelineLayout(*obj);
+    delete obj;
+  });
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -533,7 +532,7 @@ vk::PipelineLayoutPtr Device::createPipelineLayout(vk::PipelineLayoutCreateInfo 
 vk::RenderPassPtr Device::createRenderPass(vk::RenderPassCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::RenderPass." << std::endl;
   auto device{mDevice};
-  return Utils::makeVulkanPtr(device->createRenderPass(info), [device](vk::RenderPass* obj) {
+  return VulkanPtr::create(device->createRenderPass(info), [device](vk::RenderPass* obj) {
     ILLUSION_TRACE << "Deleting vk::RenderPass." << std::endl;
     device->destroyRenderPass(*obj);
     delete obj;
@@ -545,7 +544,7 @@ vk::RenderPassPtr Device::createRenderPass(vk::RenderPassCreateInfo const& info)
 vk::SamplerPtr Device::createSampler(vk::SamplerCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::Sampler." << std::endl;
   auto device{mDevice};
-  return Utils::makeVulkanPtr(device->createSampler(info), [device](vk::Sampler* obj) {
+  return VulkanPtr::create(device->createSampler(info), [device](vk::Sampler* obj) {
     ILLUSION_TRACE << "Deleting vk::Sampler." << std::endl;
     device->destroySampler(*obj);
     delete obj;
@@ -557,7 +556,7 @@ vk::SamplerPtr Device::createSampler(vk::SamplerCreateInfo const& info) const {
 vk::SemaphorePtr Device::createSemaphore(vk::SemaphoreCreateFlags const& flags) const {
   ILLUSION_TRACE << "Creating vk::Semaphore." << std::endl;
   auto device{mDevice};
-  return Utils::makeVulkanPtr(device->createSemaphore({flags}), [device](vk::Semaphore* obj) {
+  return VulkanPtr::create(device->createSemaphore({flags}), [device](vk::Semaphore* obj) {
     ILLUSION_TRACE << "Deleting vk::Semaphore." << std::endl;
     device->destroySemaphore(*obj);
     delete obj;
@@ -569,7 +568,7 @@ vk::SemaphorePtr Device::createSemaphore(vk::SemaphoreCreateFlags const& flags) 
 vk::ShaderModulePtr Device::createShaderModule(vk::ShaderModuleCreateInfo const& info) const {
   ILLUSION_TRACE << "Creating vk::ShaderModule." << std::endl;
   auto device{mDevice};
-  return Utils::makeVulkanPtr(device->createShaderModule(info), [device](vk::ShaderModule* obj) {
+  return VulkanPtr::create(device->createShaderModule(info), [device](vk::ShaderModule* obj) {
     ILLUSION_TRACE << "Deleting vk::ShaderModule." << std::endl;
     device->destroyShaderModule(*obj);
     delete obj;
@@ -581,7 +580,7 @@ vk::ShaderModulePtr Device::createShaderModule(vk::ShaderModuleCreateInfo const&
 vk::SwapchainKHRPtr Device::createSwapChainKhr(vk::SwapchainCreateInfoKHR const& info) const {
   ILLUSION_TRACE << "Creating vk::SwapchainKHR." << std::endl;
   auto device{mDevice};
-  return Utils::makeVulkanPtr(device->createSwapchainKHR(info), [device](vk::SwapchainKHR* obj) {
+  return VulkanPtr::create(device->createSwapchainKHR(info), [device](vk::SwapchainKHR* obj) {
     ILLUSION_TRACE << "Deleting vk::SwapchainKHR." << std::endl;
     device->destroySwapchainKHR(*obj);
     delete obj;
@@ -640,7 +639,7 @@ vk::DevicePtr Device::createDevice() const {
   createInfo.ppEnabledExtensionNames = DEVICE_EXTENSIONS.data();
 
   ILLUSION_TRACE << "Creating vk::Device." << std::endl;
-  return Utils::makeVulkanPtr(mPhysicalDevice->createDevice(createInfo), [](vk::Device* obj) {
+  return VulkanPtr::create(mPhysicalDevice->createDevice(createInfo), [](vk::Device* obj) {
     ILLUSION_TRACE << "Deleting vk::Device." << std::endl;
     obj->destroy();
   });
