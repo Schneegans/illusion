@@ -8,7 +8,7 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "TextureUtils.hpp"
+#include "Texture.hpp"
 
 #include "../Core/Logger.hpp"
 #include "CommandBuffer.hpp"
@@ -21,7 +21,7 @@
 #include <iostream>
 #include <stb_image.h>
 
-namespace Illusion::Graphics::TextureUtils {
+namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -38,13 +38,13 @@ bool formatSupportsLinearSampling(DevicePtr const& device, vk::Format format) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-uint32_t getMaxMipmapLevels(uint32_t width, uint32_t height) {
+uint32_t Texture::getMaxMipmapLevels(uint32_t width, uint32_t height) {
   return static_cast<uint32_t>(std::floor(std::log2(std::max(width, height)))) + 1;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
+TexturePtr Texture::createFromFile(DevicePtr const& device, std::string const& fileName,
     vk::SamplerCreateInfo samplerInfo, bool generateMipmaps,
     vk::ComponentMapping const& componentMapping) {
 
@@ -175,8 +175,9 @@ TexturePtr createFromFile(DevicePtr const& device, std::string const& fileName,
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-TexturePtr createCubemapFrom360PanoramaFile(DevicePtr const& device, std::string const& fileName,
-    uint32_t size, vk::SamplerCreateInfo samplerInfo, bool generateMipmaps) {
+TexturePtr Texture::createCubemapFrom360PanoramaFile(DevicePtr const& device,
+    std::string const& fileName, uint32_t size, vk::SamplerCreateInfo samplerInfo,
+    bool generateMipmaps) {
 
   std::string glsl = R"(
     #version 450
@@ -280,7 +281,7 @@ TexturePtr createCubemapFrom360PanoramaFile(DevicePtr const& device, std::string
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-TexturePtr createPrefilteredIrradianceCubemap(
+TexturePtr Texture::createPrefilteredIrradianceCubemap(
     DevicePtr const& device, uint32_t size, TexturePtr const& inputCubemap) {
   std::string glsl = R"(
     #version 450
@@ -398,7 +399,7 @@ TexturePtr createPrefilteredIrradianceCubemap(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-TexturePtr createPrefilteredReflectionCubemap(
+TexturePtr Texture::createPrefilteredReflectionCubemap(
     DevicePtr const& device, uint32_t size, TexturePtr const& inputCubemap) {
   std::string glsl = R"(
     #version 450
@@ -597,7 +598,7 @@ TexturePtr createPrefilteredReflectionCubemap(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-TexturePtr createBRDFLuT(DevicePtr const& device, uint32_t size) {
+TexturePtr Texture::createBRDFLuT(DevicePtr const& device, uint32_t size) {
 
   std::string glsl = R"(
     #version 450
@@ -742,7 +743,7 @@ TexturePtr createBRDFLuT(DevicePtr const& device, uint32_t size) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void updateMipmaps(DevicePtr const& device, TexturePtr const& texture) {
+void Texture::updateMipmaps(DevicePtr const& device, TexturePtr const& texture) {
 
   if (!formatSupportsLinearSampling(device, texture->mImageInfo.format)) {
     throw std::runtime_error(
@@ -802,4 +803,4 @@ void updateMipmaps(DevicePtr const& device, TexturePtr const& texture) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-} // namespace Illusion::Graphics::TextureUtils
+} // namespace Illusion::Graphics

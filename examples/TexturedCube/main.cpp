@@ -15,7 +15,7 @@
 #include <Illusion/Graphics/Instance.hpp>
 #include <Illusion/Graphics/RenderPass.hpp>
 #include <Illusion/Graphics/Shader.hpp>
-#include <Illusion/Graphics/TextureUtils.hpp>
+#include <Illusion/Graphics/Texture.hpp>
 #include <Illusion/Graphics/Window.hpp>
 
 #include <glm/gtc/matrix_transform.hpp>
@@ -90,7 +90,7 @@ int main() {
   auto device   = Illusion::Graphics::Device::create(instance->getPhysicalDevice());
   auto window   = Illusion::Graphics::Window::create(instance, device);
 
-  auto texture = Illusion::Graphics::TextureUtils::createFromFile(device, "data/textures/box.dds");
+  auto texture = Illusion::Graphics::Texture::createFromFile(device, "data/textures/box.dds");
   auto shader  = Illusion::Graphics::Shader::createFromFiles(
       device, {"data/shaders/TexturedCube.vert", "data/shaders/TexturedCube.frag"});
 

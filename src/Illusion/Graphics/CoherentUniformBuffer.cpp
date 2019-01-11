@@ -10,6 +10,7 @@
 
 #include "CoherentUniformBuffer.hpp"
 
+#include "BackedBuffer.hpp"
 #include "Device.hpp"
 
 namespace Illusion::Graphics {

@@ -22,7 +22,7 @@
 #include <Illusion/Graphics/PhysicalDevice.hpp>
 #include <Illusion/Graphics/RenderPass.hpp>
 #include <Illusion/Graphics/Shader.hpp>
-#include <Illusion/Graphics/TextureUtils.hpp>
+#include <Illusion/Graphics/Texture.hpp>
 #include <Illusion/Graphics/Window.hpp>
 
 #include <glm/gtx/io.hpp>
@@ -187,13 +187,13 @@ int main(int argc, char* argv[]) {
   glm::mat4 modelMatrix = glm::scale(glm::vec3(1.f / modelSize));
   modelMatrix           = glm::translate(modelMatrix, -modelCenter);
 
-  auto brdflut = Illusion::Graphics::TextureUtils::createBRDFLuT(device, 128);
-  auto skybox  = Illusion::Graphics::TextureUtils::createCubemapFrom360PanoramaFile(
+  auto brdflut = Illusion::Graphics::Texture::createBRDFLuT(device, 128);
+  auto skybox  = Illusion::Graphics::Texture::createCubemapFrom360PanoramaFile(
       device, options.mSkyboxFile, 1024);
   auto prefilteredIrradiance =
-      Illusion::Graphics::TextureUtils::createPrefilteredIrradianceCubemap(device, 64, skybox);
+      Illusion::Graphics::Texture::createPrefilteredIrradianceCubemap(device, 64, skybox);
   auto prefilteredReflection =
-      Illusion::Graphics::TextureUtils::createPrefilteredReflectionCubemap(device, 128, skybox);
+      Illusion::Graphics::Texture::createPrefilteredReflectionCubemap(device, 128, skybox);
 
   auto pbrShader = Illusion::Graphics::Shader::createFromFiles(device,
       {"data/shaders/SimpleGltfShader.vert", "data/shaders/SimpleGltfShader.frag"},

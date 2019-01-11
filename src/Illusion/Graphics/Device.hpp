@@ -22,37 +22,6 @@ struct GLFWwindow;
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-
-struct BackedImage {
-  vk::ImagePtr        mImage;
-  vk::ImageCreateInfo mImageInfo;
-
-  vk::ImageViewPtr        mView;
-  vk::ImageViewCreateInfo mViewInfo;
-
-  vk::DeviceMemoryPtr    mMemory;
-  vk::MemoryAllocateInfo mMemoryInfo;
-
-  vk::ImageLayout mCurrentLayout = vk::ImageLayout::eUndefined;
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-struct Texture : public BackedImage {
-  vk::SamplerPtr        mSampler;
-  vk::SamplerCreateInfo mSamplerInfo;
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-struct BackedBuffer {
-  vk::BufferPtr        mBuffer;
-  vk::BufferCreateInfo mBufferInfo;
-
-  vk::DeviceMemoryPtr    mMemory;
-  vk::MemoryAllocateInfo mMemoryInfo;
-};
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Device {
@@ -125,13 +94,9 @@ class Device {
   // clang-format on
 
   // vulkan getters --------------------------------------------------------------------------------
-  vk::DevicePtr const& getHandle() const {
-    return mDevice;
-  }
-  PhysicalDevicePtr const& getPhysicalDevice() const {
-    return mPhysicalDevice;
-  }
-  vk::Queue const& getQueue(QueueType type) const;
+  vk::DevicePtr const&     getHandle() const;
+  PhysicalDevicePtr const& getPhysicalDevice() const;
+  vk::Queue const&         getQueue(QueueType type) const;
 
   // device interface forwarding -------------------------------------------------------------------
   void waitForFences(

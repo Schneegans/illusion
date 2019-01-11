@@ -12,9 +12,12 @@
 
 #include "../Core/EnumCast.hpp"
 #include "../Core/Logger.hpp"
+#include "BackedBuffer.hpp"
+#include "BackedImage.hpp"
 #include "CommandBuffer.hpp"
 #include "PhysicalDevice.hpp"
 #include "PipelineResource.hpp"
+#include "Texture.hpp"
 #include "Utils.hpp"
 #include "VulkanPtr.hpp"
 
@@ -585,6 +588,18 @@ vk::SwapchainKHRPtr Device::createSwapChainKhr(vk::SwapchainCreateInfoKHR const&
     device->destroySwapchainKHR(*obj);
     delete obj;
   });
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+vk::DevicePtr const& Device::getHandle() const {
+  return mDevice;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+PhysicalDevicePtr const& Device::getPhysicalDevice() const {
+  return mPhysicalDevice;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

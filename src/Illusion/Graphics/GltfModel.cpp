@@ -13,7 +13,7 @@
 #include "../Core/Logger.hpp"
 #include "CommandBuffer.hpp"
 #include "Device.hpp"
-#include "TextureUtils.hpp"
+#include "Texture.hpp"
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtc/matrix_transform.hpp>
@@ -177,7 +177,7 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
         samplerInfo.mipLodBias              = 0.f;
         samplerInfo.minLod                  = 0.f;
         samplerInfo.maxLod =
-            static_cast<float>(TextureUtils::getMaxMipmapLevels(image.width, image.height));
+            static_cast<float>(Texture::getMaxMipmapLevels(image.width, image.height));
 
         // TODO: if no image data has been loaded, try loading it on our own
         if (image.image.empty()) {
@@ -234,7 +234,7 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
               vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eShaderReadOnlyOptimal,
               componentMapping, image.image.size(), (void*)image.image.data());
 
-          TextureUtils::updateMipmaps(mDevice, texture);
+          Texture::updateMipmaps(mDevice, texture);
 
           mTextures.push_back(texture);
         }

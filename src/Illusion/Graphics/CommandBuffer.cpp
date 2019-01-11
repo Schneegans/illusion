@@ -11,11 +11,13 @@
 #include "CommandBuffer.hpp"
 
 #include "../Core/Logger.hpp"
+#include "BackedBuffer.hpp"
 #include "Device.hpp"
 #include "PipelineReflection.hpp"
 #include "RenderPass.hpp"
 #include "Shader.hpp"
 #include "ShaderModule.hpp"
+#include "Texture.hpp"
 
 #include <iostream>
 

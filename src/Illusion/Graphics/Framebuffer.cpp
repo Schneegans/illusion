@@ -11,6 +11,7 @@
 #include "Framebuffer.hpp"
 
 #include "../Core/Logger.hpp"
+#include "BackedImage.hpp"
 #include "Device.hpp"
 #include "Utils.hpp"
 

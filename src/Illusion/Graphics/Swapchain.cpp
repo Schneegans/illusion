@@ -11,6 +11,7 @@
 #include "Swapchain.hpp"
 
 #include "../Core/Logger.hpp"
+#include "BackedImage.hpp"
 #include "CommandBuffer.hpp"
 #include "PhysicalDevice.hpp"
 #include "Window.hpp"
