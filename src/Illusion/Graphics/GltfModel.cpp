@@ -23,7 +23,7 @@
 #include <functional>
 #include <unordered_set>
 
-namespace Illusion::Graphics {
+namespace Illusion::Graphics::Gltf {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Some parts of this code are inspired by Sasha Willem's GLTF loading example:                   //
@@ -106,9 +106,9 @@ vk::PrimitiveTopology convertPrimitiveTopology(int value) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFlags options,
-    TextureChannelMapping const& textureChannels)
-    : mDevice(device) {
+Model::Model(DevicePtr const& device, std::string const& file, OptionFlags options)
+    : mDevice(device)
+    , mRootNode(std::make_shared<Node>()) {
 
   // load the file ---------------------------------------------------------------------------------
   tinygltf::Model model;
@@ -202,37 +202,10 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
           imageInfo.sharingMode   = vk::SharingMode::eExclusive;
           imageInfo.initialLayout = vk::ImageLayout::eUndefined;
 
-          // Check if this texture is used as occlusion or metallicRoughness texture, if so we need
-          // to adapt the vk::ComponentMapping accordingly. Occlusion should always map to the the
-          // red channel, roughness to green and metallic to blue.
-          vk::ComponentMapping componentMapping;
-          static const std::unordered_map<TextureChannelMapping::Channel, vk::ComponentSwizzle>
-              convert = {{TextureChannelMapping::Channel::eRed, vk::ComponentSwizzle::eR},
-                  {TextureChannelMapping::Channel::eGreen, vk::ComponentSwizzle::eG},
-                  {TextureChannelMapping::Channel::eBlue, vk::ComponentSwizzle::eB}};
-
-          for (auto const& material : model.materials) {
-            for (auto const& p : material.values) {
-              if (p.first == "metallicRoughnessTexture" &&
-                  static_cast<size_t>(p.second.TextureIndex()) == i) {
-                componentMapping.g = convert.at(textureChannels.mRoughness);
-                componentMapping.b = convert.at(textureChannels.mMetallic);
-                break;
-              }
-            }
-            for (auto const& p : material.additionalValues) {
-              if (p.first == "occlusionTexture" &&
-                  static_cast<size_t>(p.second.TextureIndex()) == i) {
-                componentMapping.r = convert.at(textureChannels.mOcclusion);
-                break;
-              }
-            }
-          }
-
           // create the texture
           auto texture = mDevice->createTexture(imageInfo, samplerInfo, vk::ImageViewType::e2D,
               vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eShaderReadOnlyOptimal,
-              componentMapping, image.image.size(), (void*)image.image.data());
+              vk::ComponentMapping(), image.image.size(), (void*)image.image.data());
 
           Texture::updateMipmaps(mDevice, texture);
 
@@ -709,7 +682,7 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
   }
 
   for (auto i : model.scenes[std::max(0, model.defaultScene)].nodes) {
-    mRootNode.mChildren.push_back(mNodes[i]);
+    mRootNode->mChildren.push_back(mNodes[i]);
   }
 
   // create animations -----------------------------------------------------------------------------
@@ -821,7 +794,7 @@ GltfModel::GltfModel(DevicePtr const& device, std::string const& file, OptionFla
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void GltfModel::setAnimationTime(uint32_t animationIndex, float time) {
+void Model::setAnimationTime(uint32_t animationIndex, float time) {
   if (animationIndex >= mAnimations.size()) {
     throw std::runtime_error("Failed to update GLTF animation: No animation number \"" +
                              std::to_string(animationIndex) + "\" available!");
@@ -909,55 +882,61 @@ void GltfModel::setAnimationTime(uint32_t animationIndex, float time) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-GltfModel::Node const& GltfModel::getRoot() const {
+NodePtr const& Model::getRoot() const {
   return mRootNode;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BackedBufferPtr const& GltfModel::getIndexBuffer() const {
+BackedBufferPtr const& Model::getIndexBuffer() const {
   return mIndexBuffer;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BackedBufferPtr const& GltfModel::getVertexBuffer() const {
+BackedBufferPtr const& Model::getVertexBuffer() const {
   return mVertexBuffer;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<TexturePtr> const& GltfModel::getTextures() const {
+std::vector<TexturePtr> const& Model::getTextures() const {
   return mTextures;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<GltfModel::MaterialPtr> const& GltfModel::getMaterials() const {
+std::vector<MaterialPtr> const& Model::getMaterials() const {
   return mMaterials;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<GltfModel::MeshPtr> const& GltfModel::getMeshes() const {
+std::vector<MeshPtr> const& Model::getMeshes() const {
   return mMeshes;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<GltfModel::NodePtr> const& GltfModel::getNodes() const {
+std::vector<NodePtr> const& Model::getNodes() const {
   return mNodes;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<GltfModel::AnimationPtr> const& GltfModel::getAnimations() const {
+std::vector<AnimationPtr> const& Model::getAnimations() const {
   return mAnimations;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void GltfModel::printInfo() const {
+void Model::update() {
+  mRootNode->update(glm::mat4(1.f));
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Model::printInfo() const {
 
   // clang-format off
   ILLUSION_MESSAGE << "Textures:" << std::endl;
@@ -1014,7 +993,7 @@ void GltfModel::printInfo() const {
     }
   };
   
-  for (auto const& c : mRootNode.mChildren) {
+  for (auto const& c : mRootNode->mChildren) {
     printNode(*c, 0);
   }
 
@@ -1038,13 +1017,13 @@ void GltfModel::printInfo() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<vk::VertexInputBindingDescription> GltfModel::getVertexInputBindings() {
+std::vector<vk::VertexInputBindingDescription> Model::getVertexInputBindings() {
   return {{0, sizeof(Vertex), vk::VertexInputRate::eVertex}};
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<vk::VertexInputAttributeDescription> GltfModel::getVertexInputAttributes() {
+std::vector<vk::VertexInputAttributeDescription> Model::getVertexInputAttributes() {
   return {{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(struct Vertex, mPosition)},
       {1, 0, vk::Format::eR32G32B32Sfloat, offsetof(struct Vertex, mNormal)},
       {2, 0, vk::Format::eR32G32Sfloat, offsetof(struct Vertex, mTexcoords)},
@@ -1053,5 +1032,104 @@ std::vector<vk::VertexInputAttributeDescription> GltfModel::getVertexInputAttrib
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-} // namespace Illusion::Graphics
+BoundingBox BoundingBox::getTransformed(glm::mat4 const& transform) {
+  BoundingBox bbox;
+  bbox.add((transform * glm::vec4(mMax.x, mMax.y, mMax.z, 1.f)).xyz());
+  bbox.add((transform * glm::vec4(mMax.x, mMax.y, mMin.z, 1.f)).xyz());
+  bbox.add((transform * glm::vec4(mMax.x, mMin.y, mMax.z, 1.f)).xyz());
+  bbox.add((transform * glm::vec4(mMax.x, mMin.y, mMin.z, 1.f)).xyz());
+  bbox.add((transform * glm::vec4(mMin.x, mMax.y, mMax.z, 1.f)).xyz());
+  bbox.add((transform * glm::vec4(mMin.x, mMax.y, mMin.z, 1.f)).xyz());
+  bbox.add((transform * glm::vec4(mMin.x, mMin.y, mMax.z, 1.f)).xyz());
+  bbox.add((transform * glm::vec4(mMin.x, mMin.y, mMin.z, 1.f)).xyz());
+  return bbox;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool BoundingBox::isEmpty() const {
+  return mMax == glm::vec3(std::numeric_limits<float>::lowest()) &&
+         mMin == glm::vec3(std::numeric_limits<float>::max());
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void BoundingBox::add(glm::vec3 const& point) {
+  mMin = glm::min(mMin, point);
+  mMax = glm::max(mMax, point);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void BoundingBox::add(BoundingBox const& box) {
+  if (!box.isEmpty()) {
+    add(box.mMin);
+    add(box.mMax);
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Node::update(glm::mat4 parentTransform) {
+  mGlobalTransform = parentTransform * getLocalTransform();
+
+  for (auto const& c : mChildren) {
+    c->update(mGlobalTransform);
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+glm::mat4 Node::getLocalTransform() const {
+  glm::mat4 transform(mTransform);
+  transform = glm::translate(transform, mTranslation);
+  transform = glm::rotate(transform, glm::angle(mRotation), glm::axis(mRotation));
+  transform = glm::scale(transform, mScale);
+  return transform;
+};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+BoundingBox Node::getBoundingBox() const {
+  BoundingBox bbox;
+  addMeshesToBoundingBox(bbox, glm::mat4(1.f));
+  return bbox;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Node::addMeshesToBoundingBox(BoundingBox& bbox, glm::mat4 const& parentTransform) const {
+  glm::mat4 transform = parentTransform * getLocalTransform();
+  if (mMesh) {
+    bbox.add(mMesh->mBoundingBox.getTransformed(transform));
+  }
+  for (auto const& c : mChildren) {
+    c->addMeshesToBoundingBox(bbox, transform);
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::vector<glm::mat4> Skin::getJointMatrices(glm::mat4 const& meshTransform) const {
+  std::vector<glm::mat4> jointMatrices(mJoints.size());
+
+  glm::mat4 inverseMeshTransform = glm::inverse(meshTransform);
+
+  for (size_t i(0); i < mJoints.size(); i++) {
+    jointMatrices[i] =
+        inverseMeshTransform * mJoints[i]->mGlobalTransform * mInverseBindMatrices[i];
+  }
+
+  return jointMatrices;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+} // namespace Illusion::Graphics::Gltf

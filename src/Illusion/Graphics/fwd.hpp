@@ -28,7 +28,6 @@ class DescriptorSetReflection;
 class Device;
 class Framebuffer;
 class GlslShader;
-class GltfModel;
 class Instance;
 class PhysicalDevice;
 class PipelineReflection;
@@ -41,6 +40,7 @@ class Window;
 
 typedef std::shared_ptr<BackedBuffer> BackedBufferPtr;
 typedef std::shared_ptr<BackedImage>  BackedImagePtr;
+typedef std::shared_ptr<Texture>      TexturePtr;
 
 typedef std::shared_ptr<CoherentUniformBuffer>   CoherentUniformBufferPtr;
 typedef std::shared_ptr<CommandBuffer>           CommandBufferPtr;
@@ -49,7 +49,6 @@ typedef std::shared_ptr<DescriptorSetReflection> DescriptorSetReflectionPtr;
 typedef std::shared_ptr<Device>                  DevicePtr;
 typedef std::shared_ptr<Framebuffer>             FramebufferPtr;
 typedef std::shared_ptr<GlslShader>              GlslShaderPtr;
-typedef std::shared_ptr<GltfModel>               GltfModelPtr;
 typedef std::shared_ptr<Instance>                InstancePtr;
 typedef std::shared_ptr<PhysicalDevice>          PhysicalDevicePtr;
 typedef std::shared_ptr<PipelineReflection>      PipelineReflectionPtr;
@@ -58,8 +57,23 @@ typedef std::shared_ptr<Shader>                  ShaderPtr;
 typedef std::shared_ptr<ShaderModule>            ShaderModulePtr;
 typedef std::shared_ptr<ShaderSource>            ShaderSourcePtr;
 typedef std::shared_ptr<Swapchain>               SwapchainPtr;
-typedef std::shared_ptr<Texture>                 TexturePtr;
 typedef std::shared_ptr<Window>                  WindowPtr;
+
+namespace Gltf {
+class Model;
+struct Animation;
+struct Material;
+struct Mesh;
+struct Node;
+struct Skin;
+
+typedef std::shared_ptr<Animation> AnimationPtr;
+typedef std::shared_ptr<Material>  MaterialPtr;
+typedef std::shared_ptr<Mesh>      MeshPtr;
+typedef std::shared_ptr<Model>     ModelPtr;
+typedef std::shared_ptr<Node>      NodePtr;
+typedef std::shared_ptr<Skin>      SkinPtr;
+} // namespace Gltf
 
 } // namespace Illusion::Graphics
 

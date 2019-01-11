@@ -73,7 +73,7 @@ struct FrameResources {
   vk::SemaphorePtr                             mRenderFinishedSemaphore;
 };
 
-void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::GltfModel::Node>> const& nodes,
+void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::Gltf::Node>> const& nodes,
     glm::mat4 const& viewMatrix, glm::mat4 const& modelMatrix, bool doAlphaBlending,
     vk::DeviceSize emptySkinDynamicOffset, FrameResources const& res) {
 
@@ -167,21 +167,21 @@ int main(int argc, char* argv[]) {
   auto device   = Illusion::Graphics::Device::create(instance->getPhysicalDevice());
   auto window   = Illusion::Graphics::Window::create(instance, device);
 
-  Illusion::Graphics::GltfModel::OptionFlags modelOptions;
+  Illusion::Graphics::Gltf::OptionFlags modelOptions;
   if (options.mAnimation >= 0) {
-    modelOptions |= Illusion::Graphics::GltfModel::OptionFlagBits::eAnimations;
+    modelOptions |= Illusion::Graphics::Gltf::OptionFlagBits::eAnimations;
   }
   if (!options.mNoSkins) {
-    modelOptions |= Illusion::Graphics::GltfModel::OptionFlagBits::eSkins;
+    modelOptions |= Illusion::Graphics::Gltf::OptionFlagBits::eSkins;
   }
   if (!options.mNoTextures) {
-    modelOptions |= Illusion::Graphics::GltfModel::OptionFlagBits::eTextures;
+    modelOptions |= Illusion::Graphics::Gltf::OptionFlagBits::eTextures;
   }
 
-  auto model = Illusion::Graphics::GltfModel::create(device, options.mModelFile, modelOptions);
+  auto model = Illusion::Graphics::Gltf::Model::create(device, options.mModelFile, modelOptions);
   model->printInfo();
 
-  auto      modelBBox   = model->getRoot().getBoundingBox();
+  auto      modelBBox   = model->getRoot()->getBoundingBox();
   float     modelSize   = glm::length(modelBBox.mMin - modelBBox.mMax);
   glm::vec3 modelCenter = (modelBBox.mMin + modelBBox.mMax) * 0.5f;
   glm::mat4 modelMatrix = glm::scale(glm::vec3(1.f / modelSize));
@@ -308,9 +308,9 @@ int main(int argc, char* argv[]) {
     res.mCmd->graphicsState().setDepthTestEnable(true);
     res.mCmd->graphicsState().setDepthWriteEnable(true);
     res.mCmd->graphicsState().setVertexInputAttributes(
-        Illusion::Graphics::GltfModel::getVertexInputAttributes());
+        Illusion::Graphics::Gltf::Model::getVertexInputAttributes());
     res.mCmd->graphicsState().setVertexInputBindings(
-        Illusion::Graphics::GltfModel::getVertexInputBindings());
+        Illusion::Graphics::Gltf::Model::getVertexInputBindings());
 
     res.mCmd->bindVertexBuffers(0, {model->getVertexBuffer()});
     res.mCmd->bindIndexBuffer(model->getIndexBuffer(), 0, vk::IndexType::eUint32);
@@ -318,9 +318,9 @@ int main(int argc, char* argv[]) {
     SkinUniforms ubo;
     uint32_t     emptySkinDynamicOffset = res.mUniformBuffer->addData(ubo);
 
-    drawNodes(model->getRoot().mChildren, camera.mViewMatrix, modelMatrix, false,
+    drawNodes(model->getRoot()->mChildren, camera.mViewMatrix, modelMatrix, false,
         emptySkinDynamicOffset, res);
-    drawNodes(model->getRoot().mChildren, camera.mViewMatrix, modelMatrix, true,
+    drawNodes(model->getRoot()->mChildren, camera.mViewMatrix, modelMatrix, true,
         emptySkinDynamicOffset, res);
 
     res.mCmd->endRenderPass();

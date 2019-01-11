@@ -23,8 +23,8 @@ namespace Illusion::Graphics {
 // DescriptorSetReflection it is able to create an arbitrary amount of DescriptorSets.            //
 // Internally, vk::DescriptorPools will be allocated on demand, whenever the maximum number of    //
 // vk::DescriptorSet allocations is reached.                                                      //
-// Reference counting on the returned handle is used to decide when a Descriptor set can be freed //
-// and returned to the allocating vk::DescriporPool.                                              //
+// Reference counting on the returned handle is used to decide when a DescriptorSet can be freed  //
+// and returned to the allocating vk::DescriptorPool.                                             //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class DescriptorPool {
@@ -35,6 +35,7 @@ class DescriptorPool {
     return std::make_shared<DescriptorPool>(args...);
   };
 
+  // The allocated DescriptorSets are created according to the given reflection.
   DescriptorPool(DevicePtr const& device, DescriptorSetReflectionPtr const& reflection);
   virtual ~DescriptorPool();
 

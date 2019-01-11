@@ -22,6 +22,8 @@ struct GLFWwindow;
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// The Device is your main entry for creating Vulkan objects. Usually you will have exactly one   //
+// Device for your application.                                                                   //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Device {
@@ -39,15 +41,18 @@ class Device {
   virtual ~Device();
 
   // high-level create methods ---------------------------------------------------------------------
+  // These methods will usually create multiple Vulkan resources and upload data to the GPU by
+  // issuing CommandBuffers. They may even allocate temporary objects such as staging buffers.
 
-  // These methods will usually create multiple Vulkan resources and upload data.
-
+  // Creates a BackedImage and optionally uploads data to the GPU. This uses a BackedBuffer as
+  // staging buffer.
   BackedImagePtr createBackedImage(vk::ImageCreateInfo info, vk::ImageViewType viewType,
       vk::ImageAspectFlags imageAspectMask, vk::MemoryPropertyFlags properties,
       vk::ImageLayout layout, vk::ComponentMapping const& componentMapping = vk::ComponentMapping(),
       vk::DeviceSize dataSize = 0, const void* data = nullptr) const;
 
-  // Crea
+  // Creates a BackedBuffer and optionally uploads data to the GPU. If the memory is eHostVisible
+  // and eHostCoherent, the data will be uploaded by mapping. Else a staging buffer will be used.
   BackedBufferPtr createBackedBuffer(vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties,
       vk::DeviceSize dataSize, const void* data = nullptr) const;
 
@@ -92,7 +97,6 @@ class Device {
       vk::SamplerAddressMode addressMode = vk::SamplerAddressMode::eClampToEdge);
 
   // low-level create methods ----------------------------------------------------------------------
-
   // You should use these low-level methods to create Vulkan resources. They are wrapped in a
   // std::shared_ptr which tracks the object they were created by (usually the internal vk::Device,
   // but for example a vk::CommandBufferPtr will also capture the vk::CommandPoolPtr it was
