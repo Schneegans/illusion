@@ -19,12 +19,6 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
 
 - [ ] Vulkan convenience layer
   - [x] Window creation using [glfw](https://github.com/glfw/glfw)
-  - [x] Shader loading from Spir-V, GLSL and HLSL using [glslang](https://github.com/KhronosGroup/glslang) - if you feel adventurous you can even mix GLSL and HLSL modules in one shader program :grimacing:
-  - [x] Shader includes using `#extension GL_GOOGLE_include_directive`
-  - [x] Automatic reloading of shaders when source file changed on disc
-  - [x] Automatic shader program reflection using [spirv-cross](https://github.com/KhronosGroup/SPIRV-Cross)
-  - [x] Automatic creation of pipeline layouts
-  - [x] Automatic allocation and updates of descriptor sets
   - [x] Automatic Vulkan object lifetime management using reference counting
   - [x] Automatic resource re-creation on swapchain changes
   - [x] Explicit graphics state per command buffer
@@ -35,7 +29,14 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
   - [ ] Parallel command buffer recording
   - [ ] A frame or render-graph to automatically create renderpasses and subpasses with dependencies
   - [ ] ...
-- [x] Texture loading  
+- [x] Shader support
+  - [x] Loading from Spir-V, GLSL and HLSL using [glslang](https://github.com/KhronosGroup/glslang) - if you feel adventurous you can even mix GLSL and HLSL modules in one shader program :grimacing:
+  - [x] Shader includes using `#extension GL_GOOGLE_include_directive`
+  - [x] Automatic reloading of shaders when source file changed on disc
+  - [x] Automatic shader program reflection using [spirv-cross](https://github.com/KhronosGroup/SPIRV-Cross)
+  - [x] Automatic creation of pipeline layouts
+  - [x] Automatic allocation and updates of descriptor sets
+- [x] Texture support  
   - [x] LDR and HDR texture loading using [stb](https://github.com/nothings/stb) (hdr, jpg, png, tga, bmp, ...)
   - [x] DDS texture loading using [gli](https://github.com/g-truc/gli)
   - [x] Automatic mipmap generation
