@@ -12,7 +12,7 @@
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Core/Timer.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
-#include <Illusion/Graphics/Engine.hpp>
+#include <Illusion/Graphics/Instance.hpp>
 #include <Illusion/Graphics/RenderPass.hpp>
 #include <Illusion/Graphics/Shader.hpp>
 #include <Illusion/Graphics/Window.hpp>
@@ -41,9 +41,9 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
-  auto engine = Illusion::Graphics::Engine::create("Shader Sandbox");
-  auto device = Illusion::Graphics::Device::create(engine->getPhysicalDevice());
-  auto window = Illusion::Graphics::Window::create(engine, device);
+  auto instance = Illusion::Graphics::Instance::create("Shader Sandbox");
+  auto device   = Illusion::Graphics::Device::create(instance->getPhysicalDevice());
+  auto window   = Illusion::Graphics::Window::create(instance, device);
 
   auto shader =
       Illusion::Graphics::Shader::createFromFiles(device, {"data/shaders/Quad.vert", shaderFile});

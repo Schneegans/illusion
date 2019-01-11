@@ -9,7 +9,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <Illusion/Graphics/CommandBuffer.hpp>
-#include <Illusion/Graphics/Engine.hpp>
+#include <Illusion/Graphics/Instance.hpp>
 #include <Illusion/Graphics/RenderPass.hpp>
 #include <Illusion/Graphics/Shader.hpp>
 #include <Illusion/Graphics/Window.hpp>
@@ -20,10 +20,10 @@ int main() {
 
   Illusion::Core::Logger::enableTrace = true;
 
-  auto engine = Illusion::Graphics::Engine::create("Triangle Demo");
-  auto device = Illusion::Graphics::Device::create(engine->getPhysicalDevice());
-  auto window = Illusion::Graphics::Window::create(engine, device);
-  auto shader = Illusion::Graphics::Shader::createFromFiles(
+  auto instance = Illusion::Graphics::Instance::create("Triangle Demo");
+  auto device   = Illusion::Graphics::Device::create(instance->getPhysicalDevice());
+  auto window   = Illusion::Graphics::Window::create(instance, device);
+  auto shader   = Illusion::Graphics::Shader::createFromFiles(
       device, {"data/shaders/Triangle.vert", "data/shaders/Triangle.frag"});
 
   auto renderPass = Illusion::Graphics::RenderPass::create(device);

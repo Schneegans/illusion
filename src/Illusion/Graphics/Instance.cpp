@@ -8,7 +8,7 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "Engine.hpp"
+#include "Instance.hpp"
 
 #include "../Core/Logger.hpp"
 #include "PhysicalDevice.hpp"
@@ -93,14 +93,15 @@ std::vector<const char*> getRequiredInstanceExtensions(bool debugMode) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 } // namespace
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Engine::Engine(std::string const& app, bool debugMode)
+Instance::Instance(std::string const& app, bool debugMode)
     : mDebugMode(debugMode)
     , mInstance(createInstance("Illusion", app))
     , mDebugCallback(createDebugCallback()) {
 
-  ILLUSION_TRACE << "Creating Engine." << std::endl;
+  ILLUSION_TRACE << "Creating Instance." << std::endl;
 
   for (auto const& vkPhysicalDevice : mInstance->enumeratePhysicalDevices()) {
     mPhysicalDevices.push_back(
@@ -110,14 +111,13 @@ Engine::Engine(std::string const& app, bool debugMode)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Engine::~Engine() {
-  // FIXME: Material::clearPipelineCache();
-  ILLUSION_TRACE << "Deleting Engine." << std::endl;
+Instance::~Instance() {
+  ILLUSION_TRACE << "Deleting Instance." << std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-PhysicalDevicePtr Engine::getPhysicalDevice(std::vector<std::string> const& extensions) const {
+PhysicalDevicePtr Instance::getPhysicalDevice(std::vector<std::string> const& extensions) const {
 
   // loop through physical devices and choose a suitable one
   for (auto const& physicalDevice : mPhysicalDevices) {
@@ -142,7 +142,7 @@ PhysicalDevicePtr Engine::getPhysicalDevice(std::vector<std::string> const& exte
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::SurfaceKHRPtr Engine::createSurface(GLFWwindow* window) const {
+vk::SurfaceKHRPtr Instance::createSurface(GLFWwindow* window) const {
   VkSurfaceKHR tmp;
   if (glfwCreateWindowSurface(*mInstance, window, nullptr, &tmp) != VK_SUCCESS) {
     throw std::runtime_error("Failed to create window surface!");
@@ -161,7 +161,7 @@ vk::SurfaceKHRPtr Engine::createSurface(GLFWwindow* window) const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::InstancePtr Engine::createInstance(std::string const& engine, std::string const& app) const {
+vk::InstancePtr Instance::createInstance(std::string const& engine, std::string const& app) const {
 
   if (!glfwInitialized) {
     if (!glfwInit()) {
@@ -173,7 +173,7 @@ vk::InstancePtr Engine::createInstance(std::string const& engine, std::string co
     });
 
     glfwInitialized = true;
-  } // namespace Illusion::Graphics
+  }
 
   if (mDebugMode && !checkValidationLayerSupport()) {
     throw std::runtime_error("Requested validation layers are not available!");
@@ -209,11 +209,11 @@ vk::InstancePtr Engine::createInstance(std::string const& engine, std::string co
     obj->destroy();
     delete obj;
   });
-} // namespace Illusion::Graphics
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::DebugReportCallbackEXTPtr Engine::createDebugCallback() const {
+vk::DebugReportCallbackEXTPtr Instance::createDebugCallback() const {
   if (!mDebugMode) {
     return nullptr;
   }

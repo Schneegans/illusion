@@ -12,7 +12,7 @@
 #include <Illusion/Core/RingBuffer.hpp>
 #include <Illusion/Graphics/CoherentUniformBuffer.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
-#include <Illusion/Graphics/Engine.hpp>
+#include <Illusion/Graphics/Instance.hpp>
 #include <Illusion/Graphics/RenderPass.hpp>
 #include <Illusion/Graphics/Shader.hpp>
 #include <Illusion/Graphics/TextureUtils.hpp>
@@ -86,9 +86,9 @@ int main() {
 
   Illusion::Core::Logger::enableTrace = true;
 
-  auto engine = Illusion::Graphics::Engine::create("Textured Cube Demo");
-  auto device = Illusion::Graphics::Device::create(engine->getPhysicalDevice());
-  auto window = Illusion::Graphics::Window::create(engine, device);
+  auto instance = Illusion::Graphics::Instance::create("Textured Cube Demo");
+  auto device   = Illusion::Graphics::Device::create(instance->getPhysicalDevice());
+  auto window   = Illusion::Graphics::Window::create(instance, device);
 
   auto texture = Illusion::Graphics::TextureUtils::createFromFile(device, "data/textures/box.dds");
   auto shader  = Illusion::Graphics::Shader::createFromFiles(

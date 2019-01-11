@@ -17,8 +17,8 @@
 #include <Illusion/Core/Timer.hpp>
 #include <Illusion/Graphics/CoherentUniformBuffer.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
-#include <Illusion/Graphics/Engine.hpp>
 #include <Illusion/Graphics/GltfModel.hpp>
+#include <Illusion/Graphics/Instance.hpp>
 #include <Illusion/Graphics/PhysicalDevice.hpp>
 #include <Illusion/Graphics/RenderPass.hpp>
 #include <Illusion/Graphics/Shader.hpp>
@@ -163,9 +163,9 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
-  auto engine = Illusion::Graphics::Engine::create("Simple GLTF Loader");
-  auto device = Illusion::Graphics::Device::create(engine->getPhysicalDevice());
-  auto window = Illusion::Graphics::Window::create(engine, device);
+  auto instance = Illusion::Graphics::Instance::create("Simple GLTF Loader");
+  auto device   = Illusion::Graphics::Device::create(instance->getPhysicalDevice());
+  auto window   = Illusion::Graphics::Window::create(instance, device);
 
   Illusion::Graphics::GltfModel::OptionFlags modelOptions;
   if (options.mAnimation >= 0) {
@@ -203,7 +203,7 @@ int main(int argc, char* argv[]) {
       device, {"data/shaders/Quad.vert", "data/shaders/Skybox.frag"});
 
   auto uboAlignment =
-      engine->getPhysicalDevice()->getProperties().limits.minUniformBufferOffsetAlignment;
+      instance->getPhysicalDevice()->getProperties().limits.minUniformBufferOffsetAlignment;
 
   Illusion::Core::RingBuffer<FrameResources, 2> frameResources{
       FrameResources(device, uboAlignment), FrameResources(device, uboAlignment)};

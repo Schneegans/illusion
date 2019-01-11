@@ -11,7 +11,7 @@
 #include <Illusion/Core/CommandLineOptions.hpp>
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
-#include <Illusion/Graphics/Engine.hpp>
+#include <Illusion/Graphics/Instance.hpp>
 #include <Illusion/Graphics/RenderPass.hpp>
 #include <Illusion/Graphics/Shader.hpp>
 #include <Illusion/Graphics/TextureUtils.hpp>
@@ -35,9 +35,9 @@ int main(int argc, char* argv[]) {
     return 0;
   }
 
-  auto engine = Illusion::Graphics::Engine::create("Textured Quad Demo");
-  auto device = Illusion::Graphics::Device::create(engine->getPhysicalDevice());
-  auto window = Illusion::Graphics::Window::create(engine, device);
+  auto instance = Illusion::Graphics::Instance::create("Textured Quad Demo");
+  auto device   = Illusion::Graphics::Device::create(instance->getPhysicalDevice());
+  auto window   = Illusion::Graphics::Window::create(instance, device);
 
   auto texture = Illusion::Graphics::TextureUtils::createFromFile(device, "data/textures/box.dds");
   auto shader  = Illusion::Graphics::Shader::createFromFiles(device,

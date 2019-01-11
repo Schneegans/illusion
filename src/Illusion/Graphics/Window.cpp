@@ -11,7 +11,7 @@
 #include "Window.hpp"
 
 #include "../Core/Logger.hpp"
-#include "Engine.hpp"
+#include "Instance.hpp"
 #include "Swapchain.hpp"
 
 #include <GLFW/glfw3.h>
@@ -22,8 +22,8 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Window::Window(EnginePtr const& engine, DevicePtr const& device)
-    : mEngine(engine)
+Window::Window(InstancePtr const& instance, DevicePtr const& device)
+    : mInstance(instance)
     , mDevice(device) {
 
   ILLUSION_TRACE << "Creating Window." << std::endl;
@@ -136,7 +136,7 @@ void Window::open() {
       mWindow = glfwCreateWindow(pExtent().x, pExtent().y, pTitle().c_str(), nullptr, nullptr);
     }
 
-    mSurface   = mEngine->createSurface(mWindow);
+    mSurface   = mInstance->createSurface(mWindow);
     mSwapchain = std::make_shared<Swapchain>(mDevice, mSurface);
 
     pLockAspect.touch();

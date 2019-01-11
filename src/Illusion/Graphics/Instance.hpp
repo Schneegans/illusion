@@ -8,8 +8,8 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_ENGINE_HPP
-#define ILLUSION_GRAPHICS_ENGINE_HPP
+#ifndef ILLUSION_GRAPHICS_INSTANCE_HPP
+#define ILLUSION_GRAPHICS_INSTANCE_HPP
 
 #include "fwd.hpp"
 
@@ -20,17 +20,17 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class Engine {
+class Instance {
 
  public:
   // Syntactic sugar to create a std::shared_ptr for this class
   template <typename... Args>
-  static EnginePtr create(Args&&... args) {
-    return std::make_shared<Engine>(args...);
+  static InstancePtr create(Args&&... args) {
+    return std::make_shared<Instance>(args...);
   };
 
-  explicit Engine(std::string const& appName, bool debugMode = true);
-  virtual ~Engine();
+  explicit Instance(std::string const& appName, bool debugMode = true);
+  virtual ~Instance();
 
   PhysicalDevicePtr getPhysicalDevice(
       std::vector<std::string> const& extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME}) const;
@@ -41,7 +41,7 @@ class Engine {
   vk::InstancePtr createInstance(std::string const& engine, std::string const& app) const;
   vk::DebugReportCallbackEXTPtr createDebugCallback() const;
 
-  bool mDebugMode{false};
+  bool mDebugMode = false;
 
   vk::InstancePtr                mInstance;
   vk::DebugReportCallbackEXTPtr  mDebugCallback;
@@ -50,4 +50,4 @@ class Engine {
 
 } // namespace Illusion::Graphics
 
-#endif // ILLUSION_GRAPHICS_ENGINE_HPP
+#endif // ILLUSION_GRAPHICS_INSTANCE_HPP

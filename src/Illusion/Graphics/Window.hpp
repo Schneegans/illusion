@@ -52,7 +52,7 @@ class Window {
     return std::make_shared<Window>(args...);
   };
 
-  Window(EnginePtr const& engine, DevicePtr const& device);
+  Window(InstancePtr const& instance, DevicePtr const& device);
   virtual ~Window();
 
   void open();
@@ -71,7 +71,7 @@ class Window {
  private:
   void updateJoysticks();
 
-  EnginePtr   mEngine;
+  InstancePtr mInstance;
   DevicePtr   mDevice;
   GLFWwindow* mWindow = nullptr;
   GLFWcursor* mCursor = nullptr;
