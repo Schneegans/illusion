@@ -18,6 +18,10 @@ struct GLFWwindow;
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// The Instance is the first object you have to create when you want to do Vulkan rendering. Its  //
+// constructor requires nothing more than a name to identify your application.                    //
+// It can then be used to get a PhysicalDevice which is required to create a Device. Once you     //
+// have a Device, you can create all othe Vulkan resources.                                       //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Instance {
@@ -29,12 +33,15 @@ class Instance {
     return std::make_shared<Instance>(args...);
   };
 
+  // When debugMode is set to true, validation layers will be loaded.
   explicit Instance(std::string const& appName, bool debugMode = true);
   virtual ~Instance();
 
+  // Tries to find a physical device which supports the given extensions.
   PhysicalDevicePtr getPhysicalDevice(
       std::vector<std::string> const& extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME}) const;
 
+  // This is used by the Window class.
   vk::SurfaceKHRPtr createSurface(GLFWwindow* window) const;
 
  private:

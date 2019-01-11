@@ -45,8 +45,9 @@ class PipelineReflection {
   // before, the mStages of the new resource will be appended to those of the previous resource.
   void addResource(PipelineResource const& resource);
 
-  // Returns a reference to a vector containing the individual
-  // DescriptorSetReflections of this PipelineReflection.
+  // Returns a reference to a vector containing the individual DescriptorSetReflections of this
+  // PipelineReflection. The DescriptorSetReflection can be used to create a corresponding
+  // vk::DescriptorSetLayout.
   std::vector<DescriptorSetReflectionPtr> const& getDescriptorSetReflections() const;
 
   // Returns all resources which have been added to this PipelineReflection. The returned map is

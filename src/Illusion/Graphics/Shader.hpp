@@ -21,6 +21,9 @@
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// The Shader class stores multiple ShaderModules. Depending on the added ShaderModules, it can   //
+// be either a graphics or a compute shader. After all ShaderModules have been added, you can use //
+// getReflection() to generate a matching vk::PipelineLayout.                                     //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Shader {
@@ -68,7 +71,8 @@ class Shader {
   // modules. It is primarily used to generate a corresponding vk::PipelineLayout.
   PipelineReflectionPtr const& getReflection();
 
-  // This is just a convenience getter for the same method on the PipelineReflection
+  // This is just a convenience getter for the same method on the PipelineReflection. The
+  // DescriptorSetReflection can be used to create a corresponding vk::DescriptorSetLayout.
   std::vector<DescriptorSetReflectionPtr> const& getDescriptorSetReflections();
 
  private:

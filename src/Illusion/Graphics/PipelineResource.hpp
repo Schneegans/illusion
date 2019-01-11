@@ -18,8 +18,15 @@
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// parts of this code is based on Vulkan-EZ
-// (MIT, Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.)
+// When ShaderModules are loaded, reflection information is stored. This consists of              //
+// PipelineResources. So for each Sampler, UniformBuffer, PushConstant, etc. there will be one    //
+// PipelineResource you can use to get information from.                                          //
+// When the ShaderModules are added to a Shader, the PipelineReflection will be filled with       //
+// PipelineResources. You can get an instance of this class from your Shader - this is your main  //
+// point to get reflection information from.                                                      //
+//                                                                                                //
+//  Parts of this code is based on Vulkan-EZ.                                                     //
+// (MIT, Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.)                    //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct PipelineResource {
