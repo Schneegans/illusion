@@ -33,31 +33,46 @@ class Device {
     return std::make_shared<Device>(args...);
   };
 
+  // The device needs the physical device it should be created for. You can get one from your
+  // Instance.
   explicit Device(PhysicalDevicePtr const& physicalDevice);
   virtual ~Device();
 
   // high-level create methods ---------------------------------------------------------------------
+
+  // These methods will usually create multiple Vulkan resources and upload data.
+
   BackedImagePtr createBackedImage(vk::ImageCreateInfo info, vk::ImageViewType viewType,
       vk::ImageAspectFlags imageAspectMask, vk::MemoryPropertyFlags properties,
       vk::ImageLayout layout, vk::ComponentMapping const& componentMapping = vk::ComponentMapping(),
       vk::DeviceSize dataSize = 0, const void* data = nullptr) const;
 
+  // Crea
   BackedBufferPtr createBackedBuffer(vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties,
       vk::DeviceSize dataSize, const void* data = nullptr) const;
 
+  // Creates a device-local BackedBuffer with vk::BufferUsageFlagBits::eVertexBuffer and uploads the
+  // given data. You may use the convenience template-version below to directly upload objects such
+  // as structs.
   BackedBufferPtr createVertexBuffer(vk::DeviceSize dataSize, const void* data) const;
-  BackedBufferPtr createIndexBuffer(vk::DeviceSize dataSize, const void* data) const;
 
   template <typename T>
   BackedBufferPtr createVertexBuffer(T const& data) const {
     return createVertexBuffer(sizeof(typename T::value_type) * data.size(), data.data());
   }
 
+  // Creates a device-local BackedBuffer with vk::BufferUsageFlagBits::eIndexBuffer and uploads the
+  // given data. You may use the convenience template-version below to directly upload objects such
+  // as structs.
+  BackedBufferPtr createIndexBuffer(vk::DeviceSize dataSize, const void* data) const;
+
   template <typename T>
   BackedBufferPtr createIndexBuffer(T const& data) const {
     return createIndexBuffer(sizeof(typename T::value_type) * data.size(), data.data());
   }
 
+  // Creates a device-local BackedBuffer with vk::BufferUsageFlagBits::eUniformBuffer and
+  // vk::BufferUsageFlagBits::eTransferDst.
   BackedBufferPtr createUniformBuffer(vk::DeviceSize size) const;
 
   TexturePtr createTexture(vk::ImageCreateInfo imageInfo, vk::SamplerCreateInfo samplerInfo,
@@ -65,13 +80,25 @@ class Device {
       vk::ComponentMapping const& componentMapping = vk::ComponentMapping(),
       vk::DeviceSize dataSize = 0, const void* data = nullptr) const;
 
+  // If you need a texture with a single pixel of a specific color, you can use this method. When
+  // called multiple times with the same color, it will only create a texture once.
   TexturePtr getSinglePixelTexture(std::array<uint8_t, 4> const& color);
 
+  // static method for easy allocation of a vk::SamplerCreateInfo. It uses useful defaults and
+  // assigns the same filter to magFilter and minFilter as well as the same address mode to U, V and
+  // W.
   static vk::SamplerCreateInfo createSamplerInfo(vk::Filter filter = vk::Filter::eLinear,
       vk::SamplerMipmapMode  mipmapMode                            = vk::SamplerMipmapMode::eLinear,
       vk::SamplerAddressMode addressMode = vk::SamplerAddressMode::eClampToEdge);
 
   // low-level create methods ----------------------------------------------------------------------
+
+  // You should use these low-level methods to create Vulkan resources. They are wrapped in a
+  // std::shared_ptr which tracks the object they were created by (usually the internal vk::Device,
+  // but for example a vk::CommandBufferPtr will also capture the vk::CommandPoolPtr it was
+  // allocated from). This ensures that an object will not be deleted before all dependent objects
+  // are deleted.
+
   // clang-format off
   vk::CommandBufferPtr       allocateCommandBuffer(QueueType = QueueType::eGeneric, vk::CommandBufferLevel = vk::CommandBufferLevel::ePrimary) const;
   vk::BufferPtr              createBuffer(vk::BufferCreateInfo const&) const;
@@ -110,6 +137,7 @@ class Device {
   PhysicalDevicePtr mPhysicalDevice;
   vk::DevicePtr     mDevice;
 
+  // One for each QueueType
   std::array<vk::Queue, 3>          mQueues;
   std::array<vk::CommandPoolPtr, 3> mCommandPools;
 
