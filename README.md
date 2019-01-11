@@ -2,18 +2,16 @@
   <img src ="doc/logo.svg" />
 </p>
 
-In order to learn the concepts behind Vulkan, I am creating Illusion. For now, Illusion is a convenience layer on top of Vulkan, similar in spirit to [V-EZ](https://github.com/GPUOpen-LibrariesAndSDKs/V-EZ). However, I plan to add more features as I progress in learning. It uses C++17 and can be build on Linux (gcc or clang), Windows (msvc) and OS X (xcode).
 
-### Build Status of Develop Branch
+In order to learn the concepts behind Vulkan, I am creating Illusion. For now, Illusion is a convenience layer on top of Vulkan, similar in spirit to [V-EZ](https://github.com/GPUOpen-LibrariesAndSDKs/V-EZ). However, I plan to add more features as I progress in learning. Since everybody loves badges, here are some decribing Illusion:
 
-![linux](https://img.icons8.com/material/20/000000/linux.png)
-[![ubuntu clang](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=clang&env=LABEL=LinuxClang)](https://travis-ci.org/Simmesimme/illusion)
-![linux](https://img.icons8.com/material/20/000000/linux.png)
-[![ubuntu gcc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=gcc&env=LABEL=LinuxGCC)](https://travis-ci.org/Simmesimme/illusion)
-![windows](https://img.icons8.com/ios/20/000000/windows8-filled.png)
-[![msvc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=msvc&env=LABEL=WindowsMSVC)](https://travis-ci.org/Simmesimme/illusion)
-![osx](https://img.icons8.com/ios-glyphs/20/000000/mac-client.png)
-[![osx](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=clang&env=LABEL=OSX)](https://travis-ci.org/Simmesimme/illusion)
+[![Build Status](https://travis-ci.org/Simmesimme/illusion.svg?branch=develop)](https://travis-ci.org/Simmesimme/illusion/branches)
+![license](https://img.shields.io/badge/license-MIT-blue.svg)
+![code](https://img.shields.io/badge/code-C++17-orange.svg)
+![loc](https://img.shields.io/badge/loc-10.7k-green.svg)
+![code](https://img.shields.io/badge/comments-1.3k-green.svg)
+
+Illusion uses C++17 and can be build on Linux (gcc or clang), Windows (msvc) and OS X (xcode). Nearly all dependencies are included as [git submodules](externals), please refer to the section [building-illusion](Building Illusion) in order to get started.
 
 ## Features
 
@@ -53,6 +51,11 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
 - [x] Mouse and joystick input using [glfw](https://github.com/glfw/glfw)
 
 ## Building Illusion
+
+Branch | Travis Build Status
+-------|--------------------
+master | ![linux](https://img.icons8.com/material/20/000000/linux.png) [![ubuntu clang](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=master&label=clang&env=LABEL=LinuxClang)](https://travis-ci.org/Simmesimme/illusion/branches) ![linux](https://img.icons8.com/material/20/000000/linux.png) [![ubuntu gcc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=master&label=gcc&env=LABEL=LinuxGCC)](https://travis-ci.org/Simmesimme/illusion/branches) ![windows](https://img.icons8.com/ios/20/000000/windows8-filled.png) [![msvc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=master&label=msvc&env=LABEL=WindowsMSVC)](https://travis-ci.org/Simmesimme/illusion/branches) ![osx](https://img.icons8.com/ios-glyphs/20/000000/mac-client.png) [![osx](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=master&label=clang&env=LABEL=OSX)](https://travis-ci.org/Simmesimme/illusion/branches)
+develop | ![linux](https://img.icons8.com/material/20/000000/linux.png) [![ubuntu clang](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=clang&env=LABEL=LinuxClang)](https://travis-ci.org/Simmesimme/illusion/branches) ![linux](https://img.icons8.com/material/20/000000/linux.png) [![ubuntu gcc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=gcc&env=LABEL=LinuxGCC)](https://travis-ci.org/Simmesimme/illusion/branches) ![windows](https://img.icons8.com/ios/20/000000/windows8-filled.png) [![msvc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=msvc&env=LABEL=WindowsMSVC)](https://travis-ci.org/Simmesimme/illusion/branches) ![osx](https://img.icons8.com/ios-glyphs/20/000000/mac-client.png) [![osx](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=clang&env=LABEL=OSX)](https://travis-ci.org/Simmesimme/illusion/branches)
 
 Illusion uses CMake for project file generation. Below are some exemplary instructions for Linux and Windows (here Visual Studio 2017) which you should adapt to your system.
 
