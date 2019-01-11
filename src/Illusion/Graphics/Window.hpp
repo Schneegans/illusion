@@ -83,12 +83,12 @@ class Window {
 
   // Call this once a frame. This method will actually lead to the emission of the Signals of the
   // Window if a corresponding event occurred.
+  void update();
 
   // You should call this method regularly as well. It will return true when the user clicked the
   // close button in the title bar or pressed Alt+F4 or something similar. Normally you should call
   // close() (or the destructor) in this case.
   bool shouldClose() const;
-  void processInput();
 
   // Closes the Window. It can be reopened later if you wish.
   void close();

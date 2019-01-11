@@ -108,7 +108,7 @@ int main() {
 
   while (!window->shouldClose()) {
 
-    window->processInput();
+    window->update();
 
     auto& res = frameResources.next();
 

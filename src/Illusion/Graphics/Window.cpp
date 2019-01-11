@@ -153,9 +153,9 @@ void Window::open() {
 
     glfwSetFramebufferSizeCallback(mWindow, [](GLFWwindow* w, int width, int height) {
       auto window(static_cast<Window*>(glfwGetWindowUserPointer(w)));
+      window->pExtent = glm::uvec2(width, height);
       // issuing this here reduces flickering during resize but may result in more swapchain
       // recreations than abolutely neccessary
-      window->pExtent = glm::uvec2(width, height);
       window->mSwapchain->markDirty();
     });
 
@@ -206,7 +206,7 @@ bool Window::shouldClose() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Window::processInput() {
+void Window::update() {
   if (mWindow) {
     glfwPollEvents();
     updateJoysticks();

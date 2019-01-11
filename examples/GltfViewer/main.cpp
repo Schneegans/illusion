@@ -242,7 +242,7 @@ int main(int argc, char* argv[]) {
 
   while (!window->shouldClose()) {
 
-    window->processInput();
+    window->update();
 
     if (options.mAnimation >= 0 &&
         static_cast<size_t>(options.mAnimation) < model->getAnimations().size()) {

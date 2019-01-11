@@ -46,7 +46,7 @@ int main() {
   window->open();
 
   while (!window->shouldClose()) {
-    window->processInput();
+    window->update();
 
     device->waitForFences(*renderFinishedFence);
     device->resetFences(*renderFinishedFence);

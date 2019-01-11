@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
 
   window->open();
   while (!window->shouldClose()) {
-    window->processInput();
+    window->update();
 
     device->waitForFences(*renderFinishedFence);
     device->resetFences(*renderFinishedFence);
