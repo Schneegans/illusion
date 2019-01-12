@@ -20,18 +20,20 @@ layout(location = 4) in vec4 inWeight;
 // uniforms
 layout(set = 0, binding = 0) uniform CameraUniforms {
   vec4 mPosition;
-  mat4 mViewMatrix; 
+  mat4 mViewMatrix;
   mat4 mProjectionMatrix;
-} camera;
+}
+camera;
 
 layout(set = 2, binding = 0) uniform SkinUniforms {
-  mat4 mJointMatrices[256]; 
-} skin;
+  mat4 mJointMatrices[256];
+}
+skin;
 
 // push constants
-const int HAS_NORMALS   = 1 << 0; 
-const int HAS_TEXCOORDS = 1 << 1; 
-const int HAS_SKINS     = 1 << 2; 
+const int HAS_NORMALS   = 1 << 0;
+const int HAS_TEXCOORDS = 1 << 1;
+const int HAS_SKINS     = 1 << 2;
 
 layout(push_constant, std430) uniform PushConstants {
   mat4  mModelMatrix;
@@ -42,8 +44,9 @@ layout(push_constant, std430) uniform PushConstants {
   float mNormalScale;
   float mOcclusionStrength;
   float mAlphaCutoff;
-  int   mVertexAttributes; 
-} pushConstants;
+  int   mVertexAttributes;
+}
+pushConstants;
 
 // outputs
 layout(location = 0) out vec3 vPosition;
@@ -57,14 +60,13 @@ void main() {
   mat4 modelMatrix = pushConstants.mModelMatrix;
 
   if ((pushConstants.mVertexAttributes & HAS_SKINS) > 0) {
-    mat4 skinMat = 
-      inWeight.x * skin.mJointMatrices[int(inJoint.x)] +
-      inWeight.y * skin.mJointMatrices[int(inJoint.y)] +
-      inWeight.z * skin.mJointMatrices[int(inJoint.z)] +
-      inWeight.w * skin.mJointMatrices[int(inJoint.w)];
+    mat4 skinMat = inWeight.x * skin.mJointMatrices[int(inJoint.x)] +
+                   inWeight.y * skin.mJointMatrices[int(inJoint.y)] +
+                   inWeight.z * skin.mJointMatrices[int(inJoint.z)] +
+                   inWeight.w * skin.mJointMatrices[int(inJoint.w)];
 
     modelMatrix = modelMatrix * skinMat;
-  } 
+  }
 
   vPosition = (modelMatrix * vec4(inPosition, 1.0)).xyz;
 

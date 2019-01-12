@@ -10,42 +10,38 @@
 
 #version 450
 
+#include "ToneMapping.glsl"
+
 // inputs
 layout(location = 0) in vec2 vTexcoords;
 
 // uniforms
 layout(set = 0, binding = 0) uniform CameraUniforms {
   vec4 mPosition;
-  mat4 mViewMatrix; 
+  mat4 mViewMatrix;
   mat4 mProjectionMatrix;
-} camera;
+}
+camera;
 
-layout(set = 1, binding = 0) uniform samplerCube texSampler;
+layout(set = 1, binding = 0) uniform samplerCube texEnvironmentMap;
 
 // outputs
 layout(location = 0) out vec4 outColor;
 
-// From http://filmicgames.com/archives/75
-vec3 Uncharted2Tonemap(vec3 x) {
-  float A = 0.15;
-  float B = 0.50;
-  float C = 0.10;
-  float D = 0.20;
-  float E = 0.02;
-  float F = 0.30;
-  return ((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F))-E/F;
-}
-
 void main() {
 
-  vec4 farPos = inverse(camera.mProjectionMatrix * camera.mViewMatrix) * vec4(vTexcoords*2-1, -1, 1);
+  // Un-project the current fragment's position to world space
+  vec4 farPos =
+      inverse(camera.mProjectionMatrix * camera.mViewMatrix) * vec4(vTexcoords * 2 - 1, -1, 1);
   farPos /= farPos.w;
 
-  outColor = texture(texSampler, normalize((farPos - camera.mPosition).xyz));
+  // Use the direction from the camera to the un-projected fragment position as lookup direction
+  // into the input cubemap
+  outColor = texture(texEnvironmentMap, normalize((farPos - camera.mPosition).xyz));
 
   // Tone mapping
-  outColor.rgb = Uncharted2Tonemap(outColor.rgb * 2);
-  outColor.rgb = outColor.rgb * (1.0 / Uncharted2Tonemap(vec3(11.2)));
+  outColor.rgb = Uncharted2Tonemap(outColor.rgb, 2);
 
-  outColor.rgb = pow(outColor.rgb, vec3(1.0 / 2.2));
+  // Gamma correction
+  outColor = linearToSRGB(outColor);
 }

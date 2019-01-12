@@ -10,26 +10,15 @@
 
 #version 450
 
-// inputs
-vec2 inPositions[4] = vec2[](
-    vec2( 1, -1),
-    vec2(-1, -1),
-    vec2( 1,  1),
-    vec2(-1,  1)
-);
+// This vertex shader does not take any vertex attributes as input. It solely uses gl_VertexIndex to
+// index into the following two arrays in order to get position and texture coordinate data.
+vec2 inPositions[4] = vec2[](vec2(1, -1), vec2(-1, -1), vec2(1, 1), vec2(-1, 1));
+vec2 inTexcoords[4] = vec2[](vec2(1, 0), vec2(0, 0), vec2(1, 1), vec2(0, 1));
 
-vec2 inTexcoords[4] = vec2[](
-    vec2(1, 0),
-    vec2(0, 0),
-    vec2(1, 1),
-    vec2(0, 1)
-);
-
-// outputs
+// The texture coordinates are passed to the fragment shader.
 layout(location = 0) out vec2 vTexcoords;
 
-// methods
 void main() {
-    vTexcoords = inTexcoords[gl_VertexIndex];
-    gl_Position = vec4(inPositions[gl_VertexIndex], 0.0, 1.0);
+  vTexcoords  = inTexcoords[gl_VertexIndex];
+  gl_Position = vec4(inPositions[gl_VertexIndex], 0.0, 1.0);
 }

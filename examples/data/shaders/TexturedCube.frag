@@ -22,8 +22,8 @@ layout(location = 0) out vec4 outColor;
 
 // methods
 void main() {
-    vec3 lightDir = vec3(0, 0, 1);
-    vec3 normal = normalize(vNormal);
-    float light = max(0, dot(normal, lightDir));
-    outColor = texture(texSampler, vTexcoords) * vec4(light, light, light, 1);
+  vec3  lightDir = vec3(0, 0, 1);
+  vec3  normal   = normalize(vNormal);
+  float light    = max(0, dot(normal, lightDir));
+  outColor       = texture(texSampler, vTexcoords) * vec4(light, light, light, 1);
 }
