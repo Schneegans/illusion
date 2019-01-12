@@ -112,7 +112,7 @@ cmake --build . --target install
 Then you can execute an example with:
 
 ```bash
-cd install\\bin
+cd install\bin
 Triangle.exe
 ```
 ## Included Examples
@@ -142,6 +142,7 @@ Here are some resources I am using while developing this software.
 * [glTF sample models](https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0): These are very usefulf!
 * [HDRI Haven](https://hdrihaven.com): Thank you Greg Zaal for your awesome work!
 * [icons8.com](https://icons8.com): Some great icons!
+* [shields.io](https://shields.io): Some great badges!
 
 ### MIT License
 
