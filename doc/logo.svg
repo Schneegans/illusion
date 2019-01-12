@@ -9,9 +9,9 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   width="300"
-   height="175"
-   viewBox="0 0 79.375002 46.302067"
+   width="400"
+   height="230"
+   viewBox="0 0 105.83334 60.854145"
    version="1.1"
    id="svg1349"
    inkscape:version="0.92.3 (2405546, 2018-03-11)"
@@ -26,8 +26,8 @@
      inkscape:pageopacity="0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.4"
-     inkscape:cx="262.32438"
-     inkscape:cy="118.28273"
+     inkscape:cx="110.89581"
+     inkscape:cy="116.85416"
      inkscape:document-units="mm"
      inkscape:current-layer="layer1"
      showgrid="false"
@@ -57,10 +57,10 @@
      inkscape:label="Layer 1"
      inkscape:groupmode="layer"
      id="layer1"
-     transform="translate(39.688077,-238.47889)">
+     transform="translate(39.688077,-223.92681)">
     <g
        aria-label="ILLUSION"
-       transform="matrix(0.56289316,0,0,0.56289316,-101.09389,-17.163456)"
+       transform="matrix(0.75380251,0,0,0.75380251,-122.3688,-118.76043)"
        style="font-style:normal;font-weight:normal;line-height:0.01%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;opacity:1;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        id="flowRoot3577">
       <path
@@ -106,7 +106,7 @@
     </g>
     <g
        aria-label="ENGINE"
-       transform="matrix(0.42737259,0,0,0.42737259,-155.50905,63.640896)"
+       transform="matrix(0.57231914,0,0,0.57231914,-195.23926,-10.550686)"
        style="font-style:normal;font-weight:normal;line-height:0.01%;font-family:sans-serif;letter-spacing:9.00766373px;word-spacing:0px;opacity:1;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
        id="flowRoot3585">
       <path
@@ -141,7 +141,7 @@
          inkscape:connector-curvature="0" />
     </g>
     <g
-       transform="matrix(0.56289316,0,0,0.56289316,-241.44275,-108.50741)"
+       transform="matrix(0.75380251,0,0,0.75380251,-310.31801,-241.08436)"
        id="g6257">
       <g
          style="opacity:1;stroke-width:0.2749894;stroke-miterlimit:4;stroke-dasharray:none"
