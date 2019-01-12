@@ -5,6 +5,7 @@ I do not expect many contributions for now, but I will use this document to gath
 It a great idea starting the commit message with an applicable emoji. This not only looks great but also makes you rethink what to add to a commit.
 * :tada: `:tada:` when when adding a cool new feature
 * :hammer: `:hammer:` when refactoring large parts of the code
+* :sparkles: `:sparkles:` when applying clang-format
 * :art: `:art:` improving / adding assets like textures or 3D-models
 * :racehorse: `:racehorse:` when improving performance
 * :memo: `:memo:` when writing docs
