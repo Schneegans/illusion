@@ -143,17 +143,20 @@ int main(int argc, char* argv[]) {
     int         mAnimation   = 0;
     bool        mNoSkins     = false;
     bool        mNoTextures  = false;
+    bool        mPrintInfo   = false;
     bool        mPrintHelp   = false;
   } options;
 
   // clang-format off
   Illusion::Core::CommandLineOptions args("Simple viewer for GLTF files.");
   args.addOption({"-h",  "--help"},        &options.mPrintHelp,  "Print this help");
+  args.addOption({"-i",  "--info"},        &options.mPrintInfo,  "Print information on the loaded model");
   args.addOption({"-m",  "--model"},       &options.mModelFile,  "GLTF model (.gltf or .glb)");
   args.addOption({"-e",  "--environment"}, &options.mSkyboxFile, "Skybox image (in equirectangular projection)");
   args.addOption({"-a",  "--animation"},   &options.mAnimation,  "Index of the animation to play. Default: 0, Use -1 to disable animations.");
   args.addOption({"-ns", "--no-skins"},    &options.mNoSkins,    "Disable loading of skins");
   args.addOption({"-nt", "--no-textures"}, &options.mNoTextures, "Disable loading of textures");
+  args.addOption({"-t",  "--trace"},        &Illusion::Core::Logger::enableTrace, "Print trace output");
   // clang-format on
 
   args.parse(argc, argv);
@@ -167,19 +170,22 @@ int main(int argc, char* argv[]) {
   auto device   = Illusion::Graphics::Device::create(instance->getPhysicalDevice());
   auto window   = Illusion::Graphics::Window::create(instance, device);
 
-  Illusion::Graphics::Gltf::OptionFlags modelOptions;
+  Illusion::Graphics::Gltf::LoadOptions loadOptions;
   if (options.mAnimation >= 0) {
-    modelOptions |= Illusion::Graphics::Gltf::OptionFlagBits::eAnimations;
+    loadOptions |= Illusion::Graphics::Gltf::LoadOptionBits::eAnimations;
   }
   if (!options.mNoSkins) {
-    modelOptions |= Illusion::Graphics::Gltf::OptionFlagBits::eSkins;
+    loadOptions |= Illusion::Graphics::Gltf::LoadOptionBits::eSkins;
   }
   if (!options.mNoTextures) {
-    modelOptions |= Illusion::Graphics::Gltf::OptionFlagBits::eTextures;
+    loadOptions |= Illusion::Graphics::Gltf::LoadOptionBits::eTextures;
   }
 
-  auto model = Illusion::Graphics::Gltf::Model::create(device, options.mModelFile, modelOptions);
-  model->printInfo();
+  auto model = Illusion::Graphics::Gltf::Model::create(device, options.mModelFile, loadOptions);
+
+  if (options.mPrintInfo) {
+    model->printInfo();
+  }
 
   auto      modelBBox   = model->getRoot()->getBoundingBox();
   float     modelSize   = glm::length(modelBBox.mMin - modelBBox.mMax);
@@ -251,8 +257,6 @@ int main(int argc, char* argv[]) {
       modelAnimationTime += anim->mStart;
       model->setAnimationTime(options.mAnimation, modelAnimationTime);
     }
-
-    model->update();
 
     auto& res = frameResources.next();
 

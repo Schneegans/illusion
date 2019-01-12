@@ -9,7 +9,7 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
 ![license](https://img.shields.io/badge/license-MIT-blue.svg)
 ![code](https://img.shields.io/badge/code-C++17-orange.svg)
 ![loc](https://img.shields.io/badge/loc-10.7k-green.svg)
-![code](https://img.shields.io/badge/comments-1.4k-green.svg)
+![code](https://img.shields.io/badge/comments-1.5k-green.svg)
 
 Illusion uses C++17 and can be build on Linux (gcc or clang), Windows (msvc) and OS X (xcode). Nearly all dependencies are included as [git submodules](externals), please refer to the section [building-illusion](Building Illusion) in order to get started.
 
@@ -48,6 +48,7 @@ Illusion uses C++17 and can be build on Linux (gcc or clang), Windows (msvc) and
   - [ ] Morph targets
   - [ ] Sparse accessors
   - [ ] Multiple texture coordinates
+  - [ ] Multiple scenes
 - [x] Mouse and joystick input using [glfw](https://github.com/glfw/glfw)
 
 ## Building Illusion
@@ -90,6 +91,12 @@ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=install ..
 make -j install
 ```
 
+Then you can execute an example with:
+
+```bash
+install/bin/Triangle.sh
+```
+
 ### Windows
 
 ```bash
@@ -102,8 +109,12 @@ cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_INSTALL_PREFIX=install ..
 cmake --build . --target install
 ```
 
-And then open the illusion.sln and build the ALL_BUILD and INSTALL targets.
+Then you can execute an example with:
 
+```bash
+cd install\\bin
+Triangle.exe
+```
 ## Included Examples
 
 When compiled with the commands above, the examples will be located in `illusion/build/install/bin`. You can run them either by double-clicking or from the command line.

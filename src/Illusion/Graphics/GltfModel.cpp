@@ -20,6 +20,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/io.hpp>
 
+#include <tiny_gltf.h>
+
 #include <functional>
 #include <unordered_set>
 
@@ -106,7 +108,7 @@ vk::PrimitiveTopology convertPrimitiveTopology(int value) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Model::Model(DevicePtr const& device, std::string const& file, OptionFlags options)
+Model::Model(DevicePtr const& device, std::string const& file, LoadOptions options)
     : mDevice(device)
     , mRootNode(std::make_shared<Node>()) {
 
@@ -139,7 +141,7 @@ Model::Model(DevicePtr const& device, std::string const& file, OptionFlags optio
 
   // create textures -------------------------------------------------------------------------------
   {
-    if (options & OptionFlagBits::eTextures) {
+    if (options & LoadOptionBits::eTextures) {
       for (size_t i(0); i < model.textures.size(); ++i) {
 
         tinygltf::Sampler sampler;
@@ -477,7 +479,7 @@ Model::Model(DevicePtr const& device, std::string const& file, OptionFlags optio
         auto weights = p.attributes.find("WEIGHTS_0");
 
         if (joints != p.attributes.end() && weights != p.attributes.end() &&
-            (options & OptionFlagBits::eSkins)) {
+            (options & LoadOptionBits::eSkins)) {
           primitve.mVertexAttributes |= Primitive::VertexAttributeBits::eSkins;
 
           {
@@ -623,7 +625,7 @@ Model::Model(DevicePtr const& device, std::string const& file, OptionFlags optio
   }
 
   // create skins ----------------------------------------------------------------------------------
-  if (options & OptionFlagBits::eSkins) {
+  if (options & LoadOptionBits::eSkins) {
     for (auto const& s : model.skins) {
       auto skin   = std::make_shared<Skin>();
       skin->mName = s.name;
@@ -672,7 +674,7 @@ Model::Model(DevicePtr const& device, std::string const& file, OptionFlags optio
       mNodes[i]->mMesh = mMeshes[model.nodes[i].mesh];
     }
 
-    if (model.nodes[i].skin >= 0 && (options & OptionFlagBits::eSkins)) {
+    if (model.nodes[i].skin >= 0 && (options & LoadOptionBits::eSkins)) {
       mNodes[i]->mSkin = mSkins[model.nodes[i].skin];
     }
 
@@ -686,7 +688,7 @@ Model::Model(DevicePtr const& device, std::string const& file, OptionFlags optio
   }
 
   // create animations -----------------------------------------------------------------------------
-  if (options & OptionFlagBits::eAnimations) {
+  if (options & LoadOptionBits::eAnimations) {
     for (auto const& a : model.animations) {
       auto animation   = std::make_shared<Animation>();
       animation->mName = a.name;
@@ -790,6 +792,9 @@ Model::Model(DevicePtr const& device, std::string const& file, OptionFlags optio
       mAnimations.emplace_back(animation);
     }
   }
+
+  // update all global transformations -------------------------------------------------------------
+  mRootNode->update(glm::mat4(1.f));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -878,6 +883,8 @@ void Model::setAnimationTime(uint32_t animationIndex, float time) {
       }
     }
   }
+
+  mRootNode->update(glm::mat4(1.f));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -926,12 +933,6 @@ std::vector<NodePtr> const& Model::getNodes() const {
 
 std::vector<AnimationPtr> const& Model::getAnimations() const {
   return mAnimations;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void Model::update() {
-  mRootNode->update(glm::mat4(1.f));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
