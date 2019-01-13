@@ -78,6 +78,9 @@ class GraphicsState {
   vk::LogicOp                         getBlendLogicOp() const;
   void                                setBlendConstants(std::array<float, 4> const& val);
   std::array<float, 4> const&         getBlendConstants() const;
+
+  // If no blend attachments are defined, the pipeline will use on default-constructed
+  // BlendAttachment for each color attachment of the current renderpass. 
   void                                addBlendAttachment(BlendAttachment const& val);
   void                                setBlendAttachments(std::vector<BlendAttachment> const& val);
   std::vector<BlendAttachment> const& getBlendAttachments() const;
@@ -186,6 +189,8 @@ class GraphicsState {
   void                                setViewports(std::vector<Viewport> const& val);
   std::vector<Viewport> const&        getViewports() const;
 
+  // If no Scissors are defined, there will be automatically as many default Scissors as there are
+  // Viewports. Thy will match the Viewports in size and position.
   void                                addScissor(Scissor const& val);
   void                                setScissors(std::vector<Scissor> const& val);
   std::vector<Scissor> const&         getScissors() const;
