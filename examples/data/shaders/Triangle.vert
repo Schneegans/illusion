@@ -10,15 +10,15 @@
 
 #version 450
 
-// inputs
-vec2 positions[3] = vec2[](vec2(0.5, -0.5), vec2(-0.5, -0.5), vec2(0.0, 0.5));
-vec3 colors[3]    = vec3[](vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 1));
+// This vertex shader does not take any vertex attributes as input. It solely uses gl_VertexIndex to
+// index into the following two arrays in order to get position and color data.
+vec2 inPositions[3] = vec2[](vec2(0.5, -0.5), vec2(-0.5, -0.5), vec2(0.0, 0.5));
+vec3 inColors[3]    = vec3[](vec3(1, 0, 0), vec3(0, 1, 0), vec3(0, 0, 1));
 
 // outputs
 layout(location = 0) out vec3 color;
 
-// methods
 void main() {
-  color       = colors[gl_VertexIndex];
-  gl_Position = vec4(positions[gl_VertexIndex], 0.0, 1.0);
+  color       = inColors[gl_VertexIndex];
+  gl_Position = vec4(inPositions[gl_VertexIndex], 0.0, 1.0);
 }

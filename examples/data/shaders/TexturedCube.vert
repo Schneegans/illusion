@@ -10,6 +10,13 @@
 
 #version 450
 
+// A little more sophisticated shader which takes vertex attributes, a uniform buffer and push
+// constants as input. The normal matrix is calculated on-the-fly which is preformance-wise
+// sub-optimal but leaves some space in the push constants for other data. In the GltfShader, for
+// example, all material information is uploaded with push constants.
+// The camera information (in this case only the projection matrix) is bound as uniform buffer to
+// descriptor set 0. Descriptor set 1 is used for material data (see TexturedCube.frag)
+
 // inputs
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;

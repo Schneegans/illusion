@@ -8,11 +8,14 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// uniforms
+// Very simple shader which just samples a texture. It is used in the TexturedQuad example, which
+// can also load GLSL code. See TexturedQuad.frag for the GLSL version of this shader.
+
+// You can use the same binding number for both, texture and sampler to create a combined image
+// sampler for Vulkan
 [[vk::binding(0)]] Texture2D    texData;
 [[vk::binding(0)]] SamplerState texSampler;
 
-// methods
 void main(in  float2 vTexcoords : TEXCOORD0,
           out float4 outColor   : SV_Target0) {
 

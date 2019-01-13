@@ -8,6 +8,8 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// This file is included in both, the Skybox.frag and the GltfShader.frag of the GltfViewer example.
+
 // Filmic tonemapping from http://filmicgames.com/archives/75
 vec3 Uncharted2Tonemap(vec3 x) {
   float A = 0.15;
@@ -25,7 +27,7 @@ vec3 Uncharted2Tonemap(vec3 color, float exposure) {
   return result;
 }
 
-// Gamma correction
+// Very simplistic gamma correction
 vec4 linearToSRGB(vec4 color) {
   return vec4(pow(color.rgb, vec3(1.0 / 2.2)), color.a);
 }

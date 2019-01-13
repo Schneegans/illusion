@@ -12,12 +12,17 @@
 
 #include "ToneMapping.glsl"
 
-// inputs
+// Texture coordinates, world space positions and normals are provided by the vertex shader.
 layout(location = 0) in vec3 vPosition;
 layout(location = 1) in vec3 vNormal;
 layout(location = 2) in vec2 vTexcoords;
 
-// uniforms
+// The GltfShader uses four descriptor sets:
+// 0: Camera information
+// 1: BRDF textures (BRDFLuT + filtered environment textures)
+// 2: Model information, in this case the joint matrices
+// 3: Material information, this is only textures since all other values are set via push constants
+
 layout(set = 0, binding = 0) uniform CameraUniforms {
   vec4 mPosition;
   mat4 mViewMatrix;
@@ -25,17 +30,21 @@ layout(set = 0, binding = 0) uniform CameraUniforms {
 }
 camera;
 
+// BRDF textures
 layout(set = 1, binding = 0) uniform sampler2D uBRDFLuT;
 layout(set = 1, binding = 1) uniform samplerCube uPrefilteredIrradiance;
 layout(set = 1, binding = 2) uniform samplerCube uPrefilteredReflection;
 
+// Material textures. These are always set, even if the Gltf::Model actually does not have a
+// corresponding texture. In this case, a default 1x1 pixel texture will be used.
 layout(set = 3, binding = 0) uniform sampler2D uAlbedoTexture;
 layout(set = 3, binding = 1) uniform sampler2D mMetallicRoughnessTexture;
 layout(set = 3, binding = 2) uniform sampler2D mNormalTexture;
 layout(set = 3, binding = 3) uniform sampler2D uOcclusionTexture;
 layout(set = 3, binding = 4) uniform sampler2D uEmissiveTexture;
 
-// push constants
+// These three bits are potentially set in the mVertexAttributes member of the push constants. Use
+// them in order to know which vertex attributes are actually set.
 const int HAS_NORMALS   = 1 << 0;
 const int HAS_TEXCOORDS = 1 << 1;
 const int HAS_SKINS     = 1 << 2;
@@ -58,8 +67,9 @@ layout(location = 0) out vec4 outColor;
 
 const float M_PI = 3.141592653589793;
 
-// pbr shader based on
+// This PBR shader is based on
 // https://github.com/SaschaWillems/Vulkan-glTF-PBR/blob/master/data/shaders/pbr.frag
+// However several parts have been restructured.
 
 // Normal Distribution function
 float D_GGX(float dotNH, float roughness) {
@@ -86,15 +96,13 @@ vec3 F_SchlickR(float cosTheta, vec3 f0, float roughness) {
   return f0 + (max(vec3(1.0 - roughness), f0) - f0) * pow(1.0 - cosTheta, 5.0);
 }
 
+// Lookup prefiltered reflection
 vec3 prefilteredReflection(vec3 reflectionDir, float roughness) {
-  float lod  = roughness * textureQueryLevels(uPrefilteredReflection);
-  float lodf = floor(lod);
-  float lodc = ceil(lod);
-  vec3  a    = textureLod(uPrefilteredReflection, reflectionDir, lodf).rgb;
-  vec3  b    = textureLod(uPrefilteredReflection, reflectionDir, lodc).rgb;
-  return mix(a, b, lod - lodf);
+  float lod = roughness * textureQueryLevels(uPrefilteredReflection);
+  return textureLod(uPrefilteredReflection, reflectionDir, lod).rgb;
 }
 
+// Combine prefiltered reflection and irradiance
 vec3 imageBasedLighting(vec3 V, vec3 N, vec3 f0, vec3 albedo, float metallic, float roughness) {
 
   // diffuse contribution
@@ -111,6 +119,7 @@ vec3 imageBasedLighting(vec3 V, vec3 N, vec3 f0, vec3 albedo, float metallic, fl
   return (1.0 - fresnel) * (1.0 - metallic) * diffuse + specular;
 }
 
+// Compute lighting contribution by a point light source
 vec3 directLighting(vec3 L, vec3 V, vec3 N, vec3 f0, vec3 albedo, float metallic, float roughness) {
   vec3  H     = normalize(V + L);
   float dotNH = clamp(dot(N, H), 0.0, 1.0);
@@ -171,25 +180,32 @@ float convertMetallic(vec3 diffuse, vec3 specular, float maxSpecular) {
 }
 
 void main() {
+  // Get base color, converted to linear space
   vec4 albedo = sRGBtoLinear(texture(uAlbedoTexture, vTexcoords)) * pushConstants.mAlbedoFactor;
 
+  // Discard if below alpha threshold. mAlphaCutoff will be set to zero if this feature is disabled.
   if (albedo.a < pushConstants.mAlphaCutoff) {
     discard;
   }
 
+  // Compute viewing direction.
   vec3 viewDir = normalize(camera.mPosition.xyz - vPosition);
 
+  // Compute surface normal. This is either provided as vertex attribute or computed via the local
+  // derivation of the world space positions.
   vec3 normal;
-
   if ((pushConstants.mVertexAttributes & HAS_NORMALS) > 0) {
     normal = normalize(vNormal);
   } else {
     normal = normalize(cross(dFdy(vPosition), dFdx(vPosition)));
   }
 
+  // If we have texture coordinates we can use the normal map to disturb this normal
   if ((pushConstants.mVertexAttributes & HAS_TEXCOORDS) > 0) {
     vec3 tangentNormal = texture(mNormalTexture, vTexcoords).rgb * 2.0 - 1.0;
     tangentNormal.xy *= pushConstants.mNormalScale;
+
+    // Flip normal and tangent space for back faces
     if (dot(normal, viewDir) < 0) {
       normal *= -1;
       tangentNormal.y *= -1;
@@ -199,11 +215,14 @@ void main() {
     normal = perturbNormal(normal, tangentNormal, vPosition, vTexcoords);
   }
 
+  // Compute the metallic and roughness values. They are either provided by the material
+  // (metallic-roughness workflow) or have to be computed (specular-glossiness workflow).
   float roughness = 1.0;
   float metallic  = 1.0;
 
   if (pushConstants.mSpecularGlossinessWorkflow) {
 
+    // Convert roughness value from specular glossiness inputs
     roughness = 1.0 - texture(mMetallicRoughnessTexture, vTexcoords).a;
 
     // Convert metallic value from specular glossiness inputs
@@ -211,14 +230,16 @@ void main() {
     float maxSpecular = max(max(specular.r, specular.g), specular.b);
     metallic          = convertMetallic(albedo.rgb, specular, maxSpecular);
 
-    const float epsilon              = 1e-6;
-    vec3        baseColorDiffusePart = albedo.rgb *
-                                ((1.0 - maxSpecular) / (1 - 0.04) / max(1 - metallic, epsilon)) *
-                                pushConstants.mAlbedoFactor.rgb;
-    vec3 baseColorSpecularPart =
-        specular - (vec3(0.04) * (1 - metallic) * (1 / max(metallic, epsilon))) *
-                       pushConstants.mMetallicRoughnessFactor.rgb;
-    albedo = vec4(mix(baseColorDiffusePart, baseColorSpecularPart, metallic * metallic), albedo.a);
+    // Convert diffuse and specular part
+    const float e = 1e-6;
+
+    vec3 baseColorDiffuse = albedo.rgb * ((1.0 - maxSpecular) / (1 - 0.04) / max(1 - metallic, e)) *
+                            pushConstants.mAlbedoFactor.rgb;
+
+    vec3 baseColorSpecular = specular - (vec3(0.04) * (1 - metallic) * (1 / max(metallic, e))) *
+                                            pushConstants.mMetallicRoughnessFactor.rgb;
+
+    albedo = vec4(mix(baseColorDiffuse, baseColorSpecular, metallic * metallic), albedo.a);
 
   } else {
     vec3 metallicRoughness =
@@ -227,31 +248,31 @@ void main() {
     metallic  = clamp(metallicRoughness.b, 0, 1);
   }
 
+  // Now compute the final color
   outColor.rgb = vec3(0.0);
 
-  vec3 f0            = vec3(0.04);
-  vec3 diffuseColor  = albedo.rgb * (vec3(1.0) - f0) * (1.0 - metallic);
-  vec3 specularColor = mix(f0, albedo.rgb, metallic);
+  vec3 f0 = mix(vec3(0.04), albedo.rgb, metallic);
 
+  // Add direct lighting
   // vec3 lightDir = normalize(vec3(0, 1, 1));
-  // outColor.rgb += directLighting(lightDir, viewDir, normal, specularColor, albedo.rgb, metallic,
+  // outColor.rgb += directLighting(lightDir, viewDir, normal, f0, albedo.rgb, metallic,
   // roughness);
 
-  outColor.rgb +=
-      imageBasedLighting(viewDir, normal, specularColor, albedo.rgb, metallic, roughness);
+  // Add image based lighting
+  outColor.rgb += imageBasedLighting(viewDir, normal, f0, albedo.rgb, metallic, roughness);
 
-  float occlusion =
+  // Apply occlusion
+  outColor.rgb *=
       mix(1.0, texture(uOcclusionTexture, vTexcoords).r, pushConstants.mOcclusionStrength);
-  outColor.rgb *= occlusion;
 
-  vec3 emissive =
+  // Add emissive color
+  outColor.rgb +=
       sRGBtoLinear(texture(uEmissiveTexture, vTexcoords)).rgb * pushConstants.mEmissiveFactor;
-  outColor.rgb += emissive;
 
-  // Tone mapping
+  // Apply tone mapping
   outColor.rgb = Uncharted2Tonemap(outColor.rgb, 2);
 
-  // Gamma correction
+  // Apply gamma correction
   outColor   = linearToSRGB(outColor);
   outColor.a = albedo.a;
 }

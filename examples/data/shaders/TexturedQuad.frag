@@ -19,7 +19,8 @@ layout(binding = 0) uniform sampler2D texSampler;
 // outputs
 layout(location = 0) out vec4 outColor;
 
-// methods
+// Very simple shader which just samples a texture. It is used in the TexturedQuad example, which
+// can also load HLSL code. See TexturedQuad.ps for the HLSL version of this shader.
 void main() {
   outColor = texture(texSampler, vTexcoords);
 }

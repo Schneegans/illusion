@@ -9,7 +9,7 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
 ![license](https://img.shields.io/badge/license-MIT-blue.svg)
 ![code](https://img.shields.io/badge/code-C++17-orange.svg)
 ![loc](https://img.shields.io/badge/loc-10.7k-green.svg)
-![code](https://img.shields.io/badge/comments-1.5k-green.svg)
+![code](https://img.shields.io/badge/comments-1.6k-green.svg)
 
 Illusion uses C++17 and can be build on Linux (gcc or clang), Windows (msvc) and OS X (xcode). Nearly all dependencies are included as [git submodules](externals), please refer to the section [building-illusion](Building Illusion) in order to get started.
 
@@ -38,8 +38,9 @@ Illusion uses C++17 and can be build on Linux (gcc or clang), Windows (msvc) and
   - [x] LDR and HDR texture loading using [stb](https://github.com/nothings/stb) (hdr, jpg, png, tga, bmp, ...)
   - [x] DDS texture loading using [gli](https://github.com/g-truc/gli)
   - [x] Automatic mipmap generation
-  - [x] Conversion of equirectangular panoramas to cubemaps
-  - [x] Creation of prefiltered irradiance and reflectance maps for physically based shading
+  - [x] Conversion of equirectangular panoramas to cubemaps using compute shaders
+  - [x] Creation of prefiltered irradiance and reflectance maps for physically based shading using compute shaders
+  - [x] Creation of the BRDFLuT for physically based shading using compute shaders
 - [ ] glTF loading using [tinygltf](https://github.com/syoyo/tinygltf)
   - [x] Metallic-roughness materials
   - [x] Specular-glossiness materials
