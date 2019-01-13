@@ -1,12 +1,10 @@
-#--------------------------------------------------------------------------------------------------#
+# ------------------------------------------------------------------------------------------------ #
 #                                                                                                  #
-#    _)  |  |            _)                 This software may be modified and distributed          #
-#     |  |  |  |  | (_-<  |   _ \    \      under the terms of the MIT license.                    #
-#    _| _| _| \_,_| ___/ _| \___/ _| _|     See the LICENSE file for details.                      #
+#    _)  |  |            _)               This code may be used and modified under the terms       #
+#     |  |  |  |  | (_-<  |   _ \    \    of the MIT license. See the LICENSE file for details.    #
+#    _| _| _| \_,_| ___/ _| \___/ _| _|   Copyright (c) 2018-2019 Simon Schneegans                 #
 #                                                                                                  #
-#   Authors: Simon Schneegans (code@simonschneegans.de)                                            #
-#                                                                                                  #
-#--------------------------------------------------------------------------------------------------#
+# ------------------------------------------------------------------------------------------------ #
 
 cmake_minimum_required(VERSION 3.8)
 project(illusion VERSION 0.0.1 LANGUAGES CXX)
