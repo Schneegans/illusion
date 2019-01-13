@@ -677,10 +677,27 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
   // -----------------------------------------------------------------------------------------------
   vk::PipelineColorBlendStateCreateInfo              colorBlendStateInfo;
   std::vector<vk::PipelineColorBlendAttachmentState> pipelineColorBlendAttachments;
-  for (auto const& i : mGraphicsState.getBlendAttachments()) {
-    pipelineColorBlendAttachments.push_back(
-        {i.mBlendEnable, i.mSrcColorBlendFactor, i.mDstColorBlendFactor, i.mColorBlendOp,
-            i.mSrcAlphaBlendFactor, i.mDstAlphaBlendFactor, i.mAlphaBlendOp, i.mColorWriteMask});
+
+  // use default blend attachments if none are defined
+  if (mGraphicsState.getBlendAttachments().size() == 0) {
+    int attachmentCount = mCurrentRenderPass->getFrameBufferAttachmentFormats().size();
+    if (mCurrentRenderPass->hasDepthAttachment()) {
+      attachmentCount = std::max(0, attachmentCount - 1);
+    }
+
+    for (size_t i(0); i < attachmentCount; ++i) {
+      GraphicsState::BlendAttachment a;
+      pipelineColorBlendAttachments.push_back(
+          {a.mBlendEnable, a.mSrcColorBlendFactor, a.mDstColorBlendFactor, a.mColorBlendOp,
+              a.mSrcAlphaBlendFactor, a.mDstAlphaBlendFactor, a.mAlphaBlendOp, a.mColorWriteMask});
+    }
+
+  } else {
+    for (auto const& i : mGraphicsState.getBlendAttachments()) {
+      pipelineColorBlendAttachments.push_back(
+          {i.mBlendEnable, i.mSrcColorBlendFactor, i.mDstColorBlendFactor, i.mColorBlendOp,
+              i.mSrcAlphaBlendFactor, i.mDstAlphaBlendFactor, i.mAlphaBlendOp, i.mColorWriteMask});
+    }
   }
   colorBlendStateInfo.logicOpEnable   = mGraphicsState.getBlendLogicOpEnable();
   colorBlendStateInfo.logicOp         = mGraphicsState.getBlendLogicOp();

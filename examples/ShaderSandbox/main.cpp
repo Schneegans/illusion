@@ -53,7 +53,6 @@ int main(int argc, char* argv[]) {
   renderPass->setExtent(window->pExtent.get());
 
   auto cmd = Illusion::Graphics::CommandBuffer::create(device);
-  cmd->graphicsState().addBlendAttachment({});
   cmd->graphicsState().addViewport({glm::vec2(0), glm::vec2(window->pExtent.get()), 0.f, 1.f});
 
   auto renderFinishedFence     = device->createFence();

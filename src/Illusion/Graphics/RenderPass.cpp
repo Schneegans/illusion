@@ -105,6 +105,12 @@ bool RenderPass::hasDepthAttachment() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+std::vector<vk::Format> const& RenderPass::getFrameBufferAttachmentFormats() const {
+  return mFrameBufferAttachmentFormats;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 vk::RenderPassPtr RenderPass::createRenderPass() const {
 
   std::vector<vk::AttachmentDescription> attachments;

@@ -65,7 +65,6 @@ struct FrameResources {
     mRenderPass->addAttachment(vk::Format::eR8G8B8A8Unorm);
     mRenderPass->addAttachment(vk::Format::eD32Sfloat);
 
-    mCmd->graphicsState().addBlendAttachment({});
     mCmd->graphicsState().setTopology(vk::PrimitiveTopology::eTriangleList);
     mCmd->graphicsState().setVertexInputBindings(
         {{0, sizeof(glm::vec3), vk::VertexInputRate::eVertex},

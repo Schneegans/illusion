@@ -43,11 +43,15 @@ class RenderPass {
 
   void init();
 
-  void                     addAttachment(vk::Format format);
-  bool                     hasDepthAttachment() const;
-  void                     setSubPasses(std::vector<SubPass> const& subPasses);
-  void                     setExtent(glm::uvec2 const& extent);
-  glm::uvec2 const&        getExtent() const;
+  void                           addAttachment(vk::Format format);
+  bool                           hasDepthAttachment() const;
+  std::vector<vk::Format> const& getFrameBufferAttachmentFormats() const;
+
+  void setSubPasses(std::vector<SubPass> const& subPasses);
+
+  void              setExtent(glm::uvec2 const& extent);
+  glm::uvec2 const& getExtent() const;
+
   FramebufferPtr const&    getFramebuffer() const;
   vk::RenderPassPtr const& getHandle() const;
 
