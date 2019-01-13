@@ -53,7 +53,6 @@ int main(int argc, char* argv[]) {
   renderPass->setExtent(window->pExtent.get());
 
   auto cmd = Illusion::Graphics::CommandBuffer::create(device);
-  cmd->graphicsState().addViewport({glm::vec2(0), glm::vec2(window->pExtent.get()), 0.f, 1.f});
 
   auto renderFinishedFence     = device->createFence();
   auto renderFinishedSemaphore = device->createSemaphore();
@@ -70,7 +69,7 @@ int main(int argc, char* argv[]) {
     renderPass->setExtent(window->pExtent.get());
 
     glm::vec2 windowSize = window->pExtent.get();
-    cmd->graphicsState().setViewports({{glm::vec2(0), windowSize, 0.f, 1.f}});
+    cmd->graphicsState().setViewports({{windowSize}});
 
     cmd->reset();
     cmd->begin();

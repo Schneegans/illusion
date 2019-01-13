@@ -264,8 +264,7 @@ int main(int argc, char* argv[]) {
     res.mCmd->begin();
 
     res.mRenderPass->setExtent(window->pExtent.get());
-    res.mCmd->graphicsState().setViewports(
-        {{glm::vec2(0), glm::vec2(window->pExtent.get()), 0.f, 1.f}});
+    res.mCmd->graphicsState().setViewports({{glm::vec2(window->pExtent.get())}});
 
     CameraUniforms camera;
     camera.mProjectionMatrix = glm::perspectiveZO(glm::radians(50.f),

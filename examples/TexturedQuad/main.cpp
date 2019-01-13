@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
   renderPass->setExtent(window->pExtent.get());
 
   auto cmd = Illusion::Graphics::CommandBuffer::create(device);
-  cmd->graphicsState().addViewport({glm::vec2(0), glm::vec2(window->pExtent.get()), 0.f, 1.f});
+  cmd->graphicsState().addViewport({glm::vec2(window->pExtent.get())});
   cmd->bindingState().setTexture(texture, 0, 0);
   cmd->begin();
   cmd->setShader(shader);

@@ -48,8 +48,8 @@ class GraphicsState {
   };
 
   struct Viewport {
-    glm::vec2 mOffset   = glm::vec2(0);
     glm::vec2 mExtend   = glm::vec2(0);
+    glm::vec2 mOffset   = glm::vec2(0);
     float     mMinDepth = 0;
     float     mMaxDepth = 1;
 
@@ -57,8 +57,8 @@ class GraphicsState {
   };
 
   struct Scissor {
-    glm::ivec2 mOffset = glm::ivec2(0);
     glm::uvec2 mExtend = glm::uvec2(0);
+    glm::ivec2 mOffset = glm::ivec2(0);
 
     bool operator==(Scissor const& other) const;
   };
