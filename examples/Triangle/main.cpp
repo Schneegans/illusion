@@ -16,10 +16,12 @@
 
 #include <thread>
 
-// This is the most simple example for Vulkan rendering. A pre-recordeded command buffer is used
-// every frame to draw a simple Triangle. No vertex information is passed to the rendering pipeline,
-// instead hard-coded position and color values are accessed with gl_VertexIndex in the vertex
-// shader.
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// This is the most simple example for Vulkan rendering. A pre-recordeded command buffer is used  //
+// every frame to draw a simple Triangle. No vertex information is passed to the rendering        //
+// pipeline, instead hard-coded position and color values are accessed with gl_VertexIndex in the //
+// vertex shader.                                                                                 //
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main() {
 
@@ -68,7 +70,7 @@ int main() {
   while (!window->shouldClose()) {
 
     // This will trigger re-creations of the swapchain and make sure that window->shouldClose()
-    // actually returns true when the user closed the window
+    // actually returns true when the user closed the window.
     window->update();
 
     // Wait until the last frame has been fully processed. Afterwards, reset the fence so that we
