@@ -11,5 +11,5 @@ It a great idea starting the commit message with an applicable emoji. This not o
 * :memo: `:memo:` when writing docs
 * :beetle: `:beetle:` when fixing a bug
 * :green_heart: `:green_heart:` when fixing the CI build
-* :arrow_up: `:arrow_up:` when upgrading dependencies
-* :arrow_down: `:arrow_down:` when downgrading dependencies
+* :arrow_up_small: `:arrow_up_small:` when adding / upgrading dependencies
+* :arrow_down_small: `:arrow_down_small:` when removing / downgrading dependencies
