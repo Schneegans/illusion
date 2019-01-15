@@ -16,15 +16,15 @@ add_library(illusion-graphics STATIC ${FILES_SRC})
 target_link_libraries(illusion-graphics 
     PUBLIC illusion-core
     PUBLIC illusion-input
-    PUBLIC gli
-    PUBLIC stb
-    PUBLIC tinygltf
-    PUBLIC glslang
-    PUBLIC glslang-default-resource-limits-lib
-    PUBLIC spirv-cross
-    PUBLIC SPIRV
-    PUBLIC vulkan
     PUBLIC vulkan-headers
+    PRIVATE vulkan
+    PRIVATE SPIRV
+    PRIVATE tinygltf
+    PRIVATE glslang
+    PRIVATE glslang-default-resource-limits-lib
+    PRIVATE spirv-cross
+    PRIVATE gli
+    PRIVATE stb
 )
 
 target_include_directories(illusion-graphics
