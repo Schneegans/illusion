@@ -13,6 +13,7 @@ install(DIRECTORY "data"
 
 # make each example --------------------------------------------------------------------------------
 set(ENABLED_EXAMPLES
+  "DeferredRendering"
   "GltfViewer"
   "ShaderSandbox"
   "TexturedCube"
