@@ -13,43 +13,91 @@
 
 #include <functional>
 #include <glm/glm.hpp>
-#include <unordered_map>
+#include <list>
+#include <unordered_set>
 
 namespace Illusion::Graphics {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 class RenderGraph {
  public:
-  struct Resource {
+  // -----------------------------------------------------------------------------------------------
+  class Pass;
+
+  class Resource {
+   public:
     enum class Type { eImage };
     enum class Sizing { eAbsolute, eRelative };
 
-    vk::Format mFormat = vk::Format::eR8G8B8A8Unorm;
-    Type       mType   = Type::eImage;
-    Sizing     mSizing = Sizing::eRelative;
-    glm::vec2  mExtent = glm::vec2(1.f, 1.f);
+    Resource& setName(std::string const& name);
+    Resource& setFormat(vk::Format format);
+    Resource& setType(Type type);
+    Resource& setSizing(Sizing sizing);
+    Resource& setExtent(glm::uvec2 const& extent);
+
+    friend class RenderGraph;
+
+   private:
+    std::string mName   = "Unnamed Resource";
+    vk::Format  mFormat = vk::Format::eR8G8B8A8Unorm;
+    Type        mType   = Type::eImage;
+    Sizing      mSizing = Sizing::eRelative;
+    glm::vec2   mExtent = glm::vec2(1.f, 1.f);
+
+    // These members are read and written by the RenderGraph
+    bool mDirty = true;
   };
 
-  struct Pass {
+  // -----------------------------------------------------------------------------------------------
 
-    struct Input {};
+  class Pass {
+   public:
+    Pass& setName(std::string const& name);
+    Pass& addInputAttachment(Resource const& resource);
+    Pass& addOutputAttachment(
+        Resource const& resource, std::optional<vk::ClearValue> clearValue = {});
+    Pass& addBlendAttachment(Resource const& resource);
+    Pass& setOutputWindow(WindowPtr const& window);
+    Pass& setRecordCallback(std::function<void()> const& recordCallback);
 
-    struct Output {
-      vk::AttachmentLoadOp mLoadOp = vk::AttachmentLoadOp::eDontCare;
+    friend class RenderGraph;
+
+   private:
+    enum class ResourceType { eInputAttachment, eBlendAttachment, eOutputAttachment };
+
+    struct ResourceInfo {
+      ResourceType                  type;
+      std::optional<vk::ClearValue> mClearValue;
     };
 
-    std::unordered_map<std::string, Input>  mInputs;
-    std::unordered_map<std::string, Output> mOutputs;
-    std::function<void()>                   mRecordCallback;
+    Pass& addResource(Resource const& resource, ResourceInfo const& info);
+
+    std::string                                       mName = "Unnamed Pass";
+    std::unordered_map<Resource const*, ResourceInfo> mResources;
+    WindowPtr                                         mOutputWindow;
+    std::function<void()>                             mRecordCallback;
+
+    // These members are read and written by the RenderGraph
+    bool mDirty = true;
   };
 
-  std::unordered_map<std::string, Resource> mResources;
-  std::unordered_map<std::string, Pass>     mPasses;
+  // -----------------------------------------------------------------------------------------------
 
-  void render();
+  Resource& addResource();
+  Pass&     addPass();
+
+  void record();
 
  private:
+  bool isDirty() const;
+  void clearDirty();
   void validate() const;
-  bool isValidResource(std::string const& name) const;
+
+  std::list<Resource> mResources;
+  std::list<Pass>     mPasses;
+  bool                mDirty = true;
 };
 
 } // namespace Illusion::Graphics
