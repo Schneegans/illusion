@@ -7,7 +7,7 @@
 # ------------------------------------------------------------------------------------------------ #
 
 file(GLOB FILES_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
-  "externals/spirv-cross/*.cpp"
+  "externals/spirv-cross/spirv_*.cpp"
 )
 
 add_library(spirv-cross STATIC ${FILES_SRC})
