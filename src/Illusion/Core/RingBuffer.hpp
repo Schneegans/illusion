@@ -39,6 +39,22 @@ class RingBuffer {
     return mBuffer[mIndex];
   }
 
+  typename std::array<T, ringBufferSize>::iterator begin() {
+    return mBuffer.begin();
+  }
+
+  typename std::array<T, ringBufferSize>::iterator end() {
+    return mBuffer.end();
+  }
+
+  typename std::array<T, ringBufferSize>::const_iterator begin() const {
+    return mBuffer.begin();
+  }
+
+  typename std::array<T, ringBufferSize>::const_iterator end() const {
+    return mBuffer.end();
+  }
+
  protected:
   std::array<T, ringBufferSize> mBuffer;
   uint32_t                      mIndex = 0;
