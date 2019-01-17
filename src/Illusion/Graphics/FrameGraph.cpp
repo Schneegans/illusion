@@ -6,7 +6,7 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "RenderGraph.hpp"
+#include "FrameGraph.hpp"
 
 #include "../Core/Logger.hpp"
 
@@ -18,73 +18,73 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-RenderGraph::Resource& RenderGraph::Resource::setName(std::string const& name) {
+FrameGraph::Resource& FrameGraph::Resource::setName(std::string const& name) {
   mName  = name;
   mDirty = true;
   return *this;
 }
 
-RenderGraph::Resource& RenderGraph::Resource::setFormat(vk::Format format) {
+FrameGraph::Resource& FrameGraph::Resource::setFormat(vk::Format format) {
   mFormat = format;
   mDirty  = true;
   return *this;
 }
 
-RenderGraph::Resource& RenderGraph::Resource::setType(Type type) {
+FrameGraph::Resource& FrameGraph::Resource::setType(Type type) {
   mType  = type;
   mDirty = true;
   return *this;
 }
 
-RenderGraph::Resource& RenderGraph::Resource::setSizing(Sizing sizing) {
+FrameGraph::Resource& FrameGraph::Resource::setSizing(Sizing sizing) {
   mSizing = sizing;
   mDirty  = true;
   return *this;
 }
 
-RenderGraph::Resource& RenderGraph::Resource::setExtent(glm::uvec2 const& extent) {
+FrameGraph::Resource& FrameGraph::Resource::setExtent(glm::uvec2 const& extent) {
   mExtent = extent;
   mDirty  = true;
   return *this;
 }
 
-RenderGraph::Pass& RenderGraph::Pass::setName(std::string const& name) {
+FrameGraph::Pass& FrameGraph::Pass::setName(std::string const& name) {
   mName  = name;
   mDirty = true;
   return *this;
 }
 
-RenderGraph::Pass& RenderGraph::Pass::addInputAttachment(Resource const& resource) {
+FrameGraph::Pass& FrameGraph::Pass::addInputAttachment(Resource const& resource) {
   return addResource(resource, {ResourceType::eInputAttachment});
 }
 
-RenderGraph::Pass& RenderGraph::Pass::addBlendAttachment(Resource const& resource) {
+FrameGraph::Pass& FrameGraph::Pass::addBlendAttachment(Resource const& resource) {
   return addResource(resource, {ResourceType::eBlendAttachment});
 }
 
-RenderGraph::Pass& RenderGraph::Pass::addOutputAttachment(
+FrameGraph::Pass& FrameGraph::Pass::addOutputAttachment(
     Resource const& resource, std::optional<vk::ClearValue> clearValue) {
   return addResource(resource, {ResourceType::eOutputAttachment, clearValue});
 }
 
-RenderGraph::Pass& RenderGraph::Pass::setOutputWindow(WindowPtr const& window) {
+FrameGraph::Pass& FrameGraph::Pass::setOutputWindow(WindowPtr const& window) {
   mOutputWindow = window;
   mDirty        = true;
   return *this;
 }
 
-RenderGraph::Pass& RenderGraph::Pass::setRecordCallback(std::function<void()> const& callback) {
+FrameGraph::Pass& FrameGraph::Pass::setRecordCallback(std::function<void()> const& callback) {
   mRecordCallback = callback;
   mDirty          = true;
   return *this;
 }
 
-RenderGraph::Pass& RenderGraph::Pass::addResource(
+FrameGraph::Pass& FrameGraph::Pass::addResource(
     Resource const& resource, ResourceInfo const& info) {
 
   if (mResources.find(&resource) != mResources.end()) {
     throw std::runtime_error("Failed to add resource \"" + resource.mName +
-                             "\" to render graph pass \"" + mName +
+                             "\" to frame graph pass \"" + mName +
                              "\": Resource has already been added to this pass!");
   }
   mResources[&resource] = info;
@@ -94,7 +94,7 @@ RenderGraph::Pass& RenderGraph::Pass::addResource(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-RenderGraph::Resource& RenderGraph::addResource() {
+FrameGraph::Resource& FrameGraph::addResource() {
   mDirty = true;
   mResources.push_back({});
   return mResources.back();
@@ -102,7 +102,7 @@ RenderGraph::Resource& RenderGraph::addResource() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-RenderGraph::Pass& RenderGraph::addPass() {
+FrameGraph::Pass& FrameGraph::addPass() {
   mDirty = true;
   mPasses.push_back({});
   return mPasses.back();
@@ -110,7 +110,7 @@ RenderGraph::Pass& RenderGraph::addPass() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void RenderGraph::record() {
+void FrameGraph::record() {
 
   if (isDirty()) {
 
@@ -118,7 +118,7 @@ void RenderGraph::record() {
     try {
       validate();
     } catch (std::runtime_error e) {
-      throw std::runtime_error("Render graph validation failed: " + std::string(e.what()));
+      throw std::runtime_error("frame graph validation failed: " + std::string(e.what()));
     }
 
     clearDirty();
@@ -129,7 +129,7 @@ void RenderGraph::record() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool RenderGraph::isDirty() const {
+bool FrameGraph::isDirty() const {
   if (mDirty) {
     return true;
   }
@@ -151,7 +151,7 @@ bool RenderGraph::isDirty() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void RenderGraph::clearDirty() {
+void FrameGraph::clearDirty() {
   mDirty = false;
 
   for (auto& resource : mResources) {
@@ -165,9 +165,9 @@ void RenderGraph::clearDirty() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void RenderGraph::validate() const {
+void FrameGraph::validate() const {
 
-  // Check whether each resource of each pass was actually created by this render graph
+  // Check whether each resource of each pass was actually created by this frame graph
   for (auto const& pass : mPasses) {
     for (auto const& passResource : pass.mResources) {
       bool ours = false;
@@ -180,7 +180,7 @@ void RenderGraph::validate() const {
       if (!ours) {
         throw std::runtime_error("Resource \"" + passResource.first->mName + "\" of pass \"" +
                                  pass.mName +
-                                 "\" does not belong to this render graph. Did you accidentally "
+                                 "\" does not belong to this frame graph. Did you accidentally "
                                  "create a copy of the reference?");
       }
     }

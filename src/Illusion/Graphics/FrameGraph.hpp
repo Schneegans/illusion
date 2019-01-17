@@ -14,6 +14,7 @@
 #include <functional>
 #include <glm/glm.hpp>
 #include <list>
+#include <optional>
 #include <unordered_set>
 
 namespace Illusion::Graphics {
@@ -21,7 +22,7 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class RenderGraph {
+class FrameGraph {
  public:
   // -----------------------------------------------------------------------------------------------
   class Pass;
@@ -37,7 +38,7 @@ class RenderGraph {
     Resource& setSizing(Sizing sizing);
     Resource& setExtent(glm::uvec2 const& extent);
 
-    friend class RenderGraph;
+    friend class FrameGraph;
 
    private:
     std::string mName   = "Unnamed Resource";
@@ -46,7 +47,7 @@ class RenderGraph {
     Sizing      mSizing = Sizing::eRelative;
     glm::vec2   mExtent = glm::vec2(1.f, 1.f);
 
-    // These members are read and written by the RenderGraph
+    // These members are read and written by the FrameGraph
     bool mDirty = true;
   };
 
@@ -62,7 +63,7 @@ class RenderGraph {
     Pass& setOutputWindow(WindowPtr const& window);
     Pass& setRecordCallback(std::function<void()> const& recordCallback);
 
-    friend class RenderGraph;
+    friend class FrameGraph;
 
    private:
     enum class ResourceType { eInputAttachment, eBlendAttachment, eOutputAttachment };
@@ -79,7 +80,7 @@ class RenderGraph {
     WindowPtr                                         mOutputWindow;
     std::function<void()>                             mRecordCallback;
 
-    // These members are read and written by the RenderGraph
+    // These members are read and written by the FrameGraph
     bool mDirty = true;
   };
 
@@ -94,6 +95,8 @@ class RenderGraph {
   bool isDirty() const;
   void clearDirty();
   void validate() const;
+
+  struct FrameResources {};
 
   std::list<Resource> mResources;
   std::list<Pass>     mPasses;

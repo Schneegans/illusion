@@ -8,8 +8,8 @@
 
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Graphics/Device.hpp>
+#include <Illusion/Graphics/FrameGraph.hpp>
 #include <Illusion/Graphics/Instance.hpp>
-#include <Illusion/Graphics/RenderGraph.hpp>
 #include <Illusion/Graphics/Window.hpp>
 
 #include <iostream>
@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
   auto device   = Illusion::Graphics::Device::create(instance->getPhysicalDevice());
   auto window   = Illusion::Graphics::Window::create(instance, device);
 
-  Illusion::Graphics::RenderGraph graph;
+  Illusion::Graphics::FrameGraph graph;
 
   // create resources ------------------------------------------------------------------------------
   auto& albedo = graph.addResource().setName("albedo").setFormat(vk::Format::eR8G8B8Unorm);
