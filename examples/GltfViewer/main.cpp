@@ -133,8 +133,8 @@ void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::Gltf::Node>> cons
 int main(int argc, char* argv[]) {
 
   struct {
-    std::string mModelFile   = "data/models/DamagedHelmet.glb";
-    std::string mSkyboxFile  = "data/textures/sunset_fairway_1k.hdr";
+    std::string mModelFile   = "data/GltfViewer/models/DamagedHelmet.glb";
+    std::string mSkyboxFile  = "data/GltfViewer/textures/sunset_fairway_1k.hdr";
     std::string mTexChannels = "rgb";
     int         mAnimation   = 0;
     bool        mNoSkins     = false;
@@ -197,11 +197,12 @@ int main(int argc, char* argv[]) {
   auto prefilteredReflection =
       Illusion::Graphics::Texture::createPrefilteredReflectionCubemap(device, 128, skybox);
 
-  auto pbrShader = Illusion::Graphics::Shader::createFromFiles(
-      device, {"data/shaders/GltfShader.vert", "data/shaders/GltfShader.frag"}, {"SkinUniforms"});
+  auto pbrShader = Illusion::Graphics::Shader::createFromFiles(device,
+      {"data/GltfViewer/shaders/GltfShader.vert", "data/GltfViewer/shaders/GltfShader.frag"},
+      {"SkinUniforms"});
 
   auto skyShader = Illusion::Graphics::Shader::createFromFiles(
-      device, {"data/shaders/Quad.vert", "data/shaders/Skybox.frag"});
+      device, {"data/GltfViewer/shaders/Skybox.vert", "data/GltfViewer/shaders/Skybox.frag"});
 
   auto uboAlignment =
       instance->getPhysicalDevice()->getProperties().limits.minUniformBufferOffsetAlignment;

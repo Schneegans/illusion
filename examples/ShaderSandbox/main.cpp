@@ -29,7 +29,7 @@
 int main(int argc, char* argv[]) {
 
   // The fragment shader file to use.
-  std::string shaderFile = "data/shaders/Sandbox.frag";
+  std::string shaderFile = "data/ShaderSandbox/Sandbox.frag";
   bool        printHelp  = false;
 
   // The --trace option enables ILLUSION_TRACE output. This mainly shows when Vulkan objects are
@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
   args.addOption({"-h", "--help"}, &printHelp, "Print this help");
   args.addOption({"-t", "--trace"}, &Illusion::Core::Logger::enableTrace, "Print trace output");
   args.addOption({"-s", "--shader"}, &shaderFile,
-      "The fragment shader file to use. This defaults to data/shaders/Sandbox.frag");
+      "The fragment shader file to use. This defaults to data/ShaderSandbox/Sandbox.frag");
   args.parse(argc, argv);
 
   // When printHelp was set to true, we print a help message and exit.
@@ -55,8 +55,8 @@ int main(int argc, char* argv[]) {
   // Then we load our shader. This shader will be automatically reloaded once it (or any file it
   // includes) changes on disc. To prevent this default behavior, you have to add a fourth "false"
   // parameter to this call. See Illusion/Graphics/Shader.hpp for details.
-  auto shader =
-      Illusion::Graphics::Shader::createFromFiles(device, {"data/shaders/Quad.vert", shaderFile});
+  auto shader = Illusion::Graphics::Shader::createFromFiles(
+      device, {"data/ShaderSandbox/Sandbox.vert", shaderFile});
 
   // We create a command buffer but do not perform any recording. This will be done each frame.
   auto cmd = Illusion::Graphics::CommandBuffer::create(device);

@@ -33,7 +33,7 @@ int main() {
 
   // Create a shader program. The shader stages a deduced from the file extensions.
   auto shader = Illusion::Graphics::Shader::createFromFiles(
-      device, {"data/shaders/Triangle.vert", "data/shaders/Triangle.frag"});
+      device, {"data/Triangle/Triangle.vert", "data/Triangle/Triangle.frag"});
 
   // All rendering is done inside an active render pass. This render pass creates an associated
   // frame buffer with the given attachments (a color buffer in this case). We use the window's

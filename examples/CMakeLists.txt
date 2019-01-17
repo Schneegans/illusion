@@ -6,11 +6,6 @@
 #                                                                                                  #
 # ------------------------------------------------------------------------------------------------ #
 
-# install other resources --------------------------------------------------------------------------
-install(DIRECTORY "data"
-    DESTINATION "bin"
-)
-
 # make each example --------------------------------------------------------------------------------
 set(ENABLED_EXAMPLES
   "DeferredRendering"
@@ -46,4 +41,8 @@ foreach(EXAMPLE ${ENABLED_EXAMPLES})
   install(TARGETS ${EXAMPLE}
     RUNTIME DESTINATION "bin"
   )
+
+  install(DIRECTORY "${EXAMPLE}/data/"
+    DESTINATION "bin/data/${EXAMPLE}"
+)
 endforeach()

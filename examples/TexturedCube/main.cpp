@@ -114,11 +114,12 @@ int main() {
   auto window   = Illusion::Graphics::Window::create(instance, device);
 
   // Here we load the texture. This supports many file formats (those supported by gli and stb).
-  auto texture = Illusion::Graphics::Texture::createFromFile(device, "data/textures/box.dds");
+  auto texture =
+      Illusion::Graphics::Texture::createFromFile(device, "data/TexturedCube/textures/box.dds");
 
   // Load the shader. You can have a look at the files for some more comments on how they work.
   auto shader = Illusion::Graphics::Shader::createFromFiles(
-      device, {"data/shaders/TexturedCube.vert", "data/shaders/TexturedCube.frag"});
+      device, {"data/TexturedCube/shaders/Cube.vert", "data/TexturedCube/shaders/Cube.frag"});
 
   // Here we create our three vertex buffers and one index buffer.
   auto positionBuffer = device->createVertexBuffer(POSITIONS);

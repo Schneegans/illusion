@@ -6,19 +6,16 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#version 450
-
-// inputs
-layout(location = 0) in vec2 vTexcoords;
-
-// uniforms
-layout(binding = 0) uniform sampler2D texSampler;
-
-// outputs
-layout(location = 0) out vec4 outColor;
-
 // Very simple shader which just samples a texture. It is used in the TexturedQuad example, which
-// can also load HLSL code. See TexturedQuad.ps for the HLSL version of this shader.
-void main() {
-  outColor = texture(texSampler, vTexcoords);
+// can also load GLSL code. See Quad.frag for the GLSL version of this shader.
+
+// You can use the same binding number for both, texture and sampler to create a combined image
+// sampler for Vulkan
+[[vk::binding(0)]] Texture2D    texData;
+[[vk::binding(0)]] SamplerState texSampler;
+
+void main(in  float2 vTexcoords : TEXCOORD0,
+          out float4 outColor   : SV_Target0) {
+
+  outColor = texData.Sample(texSampler, vTexcoords);
 }
