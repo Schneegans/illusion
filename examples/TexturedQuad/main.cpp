@@ -48,15 +48,16 @@ int main(int argc, char* argv[]) {
   auto window   = Illusion::Graphics::Window::create(instance, device);
 
   // Here we load the texture. This supports many file formats (those supported by gli and stb).
-  auto texture = Illusion::Graphics::Texture::createFromFile(device, "data/textures/box.dds");
+  std::string dataDir = "data/TexturedQuad/";
+  auto texture = Illusion::Graphics::Texture::createFromFile(device, dataDir + "textures/box.dds");
 
   // Then we load our shader. Based on the command line options, we either load GLSL or HLSL
   // shaders. In theory you could actually mix both - HLSL vertex shader and GLSL fragment shader or
   // vice-versa :)
   auto shader = Illusion::Graphics::Shader::createFromFiles(device,
       useHLSL
-          ? std::vector<std::string>{"data/shaders/Quad.vs", "data/shaders/TexturedQuad.ps"}
-          : std::vector<std::string>{"data/shaders/Quad.vert", "data/shaders/TexturedQuad.frag"});
+          ? std::vector<std::string>{dataDir + "shaders/Quad.vs", dataDir + "shaders/Quad.ps"}
+          : std::vector<std::string>{dataDir + "shaders/Quad.vert", dataDir + "shaders/Quad.frag"});
 
   // Then we create our render pass.
   auto renderPass = Illusion::Graphics::RenderPass::create(device);
