@@ -11,7 +11,7 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
 ![loc](https://img.shields.io/badge/loc-10.7k-green.svg)
 ![code](https://img.shields.io/badge/comments-1.8k-green.svg)
 
-Illusion uses C++17 and can be build on Linux (gcc or clang), Windows (msvc) and OS X (xcode). Nearly all dependencies are included as [git submodules](externals), please refer to the section [building-illusion](Building Illusion) in order to get started.
+Illusion uses C++17 and can be build on Linux (gcc or clang), Windows (msvc) and OS X (xcode). Nearly all dependencies are included as [git submodules](externals), please refer to the section [Building Illusion](#building-illusion) in order to get started.
 
 ## Features
 
