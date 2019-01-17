@@ -41,7 +41,9 @@ foreach(EXAMPLE ${ENABLED_EXAMPLES})
     RUNTIME DESTINATION "bin"
   )
 
-  install(DIRECTORY "${EXAMPLE}/data/"
-    DESTINATION "bin/data/${EXAMPLE}"
-)
+  if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${EXAMPLE}/data")
+    install(DIRECTORY "${EXAMPLE}/data/"
+      DESTINATION "bin/data/${EXAMPLE}"
+    )
+  endif()
 endforeach()
