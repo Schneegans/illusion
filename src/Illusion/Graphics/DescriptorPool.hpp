@@ -9,6 +9,7 @@
 #ifndef ILLUSION_GRAPHICS_DESCRIPTOR_POOL_HPP
 #define ILLUSION_GRAPHICS_DESCRIPTOR_POOL_HPP
 
+#include "../Core/StaticCreate.hpp"
 #include "fwd.hpp"
 
 #include <list>
@@ -25,14 +26,8 @@ namespace Illusion::Graphics {
 // and returned to the allocating vk::DescriptorPool.                                             //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class DescriptorPool {
+class DescriptorPool : public Core::StaticCreate<DescriptorPool> {
  public:
-  // Syntactic sugar to create a std::shared_ptr for this class
-  template <typename... Args>
-  static DescriptorPoolPtr create(Args&&... args) {
-    return std::make_shared<DescriptorPool>(args...);
-  };
-
   // The allocated DescriptorSets are created according to the given reflection.
   DescriptorPool(DevicePtr const& device, DescriptorSetReflectionPtr const& reflection);
   virtual ~DescriptorPool();

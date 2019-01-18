@@ -25,14 +25,8 @@ namespace Illusion::Graphics {
 // possible.                                                                                      //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class CommandBuffer {
+class CommandBuffer : public Core::StaticCreate<CommandBuffer> {
  public:
-  // Syntactic sugar to create a std::shared_ptr for this class
-  template <typename... Args>
-  static CommandBufferPtr create(Args&&... args) {
-    return std::make_shared<CommandBuffer>(args...);
-  };
-
   // Allocates a new vk::CommandBuffer from the device.
   CommandBuffer(DevicePtr const& device, QueueType type = QueueType::eGeneric,
       vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);

@@ -10,6 +10,7 @@
 #define ILLUSION_GRAPHICS_GLTF_MODEL_HPP
 
 #include "../Core/Flags.hpp"
+#include "../Core/StaticCreate.hpp"
 #include "fwd.hpp"
 
 #define GLM_FORCE_SWIZZLE
@@ -47,14 +48,8 @@ typedef Core::Flags<LoadOptionBits> LoadOptions;
 // For now, multiple scenes, sparse accessors and morph targets are not supported.                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class Model {
+class Model : public Core::StaticCreate<Model> {
  public:
-  // Syntactic sugar to create a std::shared_ptr for this class
-  template <typename... Args>
-  static ModelPtr create(Args&&... args) {
-    return std::make_shared<Model>(args...);
-  };
-
   // Creates a new Gltf::Model. The fileName should either be a *.gltf or a *.glb file. With the
   // options parameter you can prevent loading of some components such as textures.
   Model(DevicePtr const& device, std::string const& fileName,

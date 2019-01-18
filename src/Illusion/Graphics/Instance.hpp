@@ -9,6 +9,7 @@
 #ifndef ILLUSION_GRAPHICS_INSTANCE_HPP
 #define ILLUSION_GRAPHICS_INSTANCE_HPP
 
+#include "../Core/StaticCreate.hpp"
 #include "fwd.hpp"
 
 struct GLFWwindow;
@@ -22,15 +23,9 @@ namespace Illusion::Graphics {
 // have a Device, you can create all othe Vulkan resources.                                       //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class Instance {
+class Instance : public Core::StaticCreate<Instance> {
 
  public:
-  // Syntactic sugar to create a std::shared_ptr for this class
-  template <typename... Args>
-  static InstancePtr create(Args&&... args) {
-    return std::make_shared<Instance>(args...);
-  };
-
   // When debugMode is set to true, validation layers will be loaded.
   explicit Instance(std::string const& appName, bool debugMode = true);
   virtual ~Instance();

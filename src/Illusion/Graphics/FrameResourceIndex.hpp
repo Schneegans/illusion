@@ -9,6 +9,7 @@
 #ifndef ILLUSION_GRAPHICS_FRAME_RESOURCE_INDEX_HPP
 #define ILLUSION_GRAPHICS_FRAME_RESOURCE_INDEX_HPP
 
+#include "../Core/StaticCreate.hpp"
 #include "fwd.hpp"
 
 namespace Illusion::Graphics {
@@ -22,14 +23,8 @@ namespace Illusion::Graphics {
 // allowed maximum is reached.                                                                    //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class FrameResourceIndex {
+class FrameResourceIndex : public Core::StaticCreate<FrameResourceIndex> {
  public:
-  // Syntactic sugar to create a std::shared_ptr for this class
-  template <typename... Args>
-  static FrameResourceIndexPtr create(Args&&... args) {
-    return std::make_shared<FrameResourceIndex>(args...);
-  };
-
   // The parameter determines how many different indices can be returned by this instance. An
   // indexCount of 2 means that the current index will alternate between 0 and 1.
   FrameResourceIndex(uint32_t indexCount = 2);

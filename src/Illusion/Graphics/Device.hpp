@@ -10,6 +10,7 @@
 #define ILLUSION_GRAPHICS_DEVICE_HPP
 
 #include "../Core/BitHash.hpp"
+#include "../Core/StaticCreate.hpp"
 #include "fwd.hpp"
 
 #include <glm/glm.hpp>
@@ -24,15 +25,9 @@ namespace Illusion::Graphics {
 // Device for your application.                                                                   //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class Device {
+class Device : public Core::StaticCreate<Device> {
 
  public:
-  // Syntactic sugar to create a std::shared_ptr for this class
-  template <typename... Args>
-  static DevicePtr create(Args&&... args) {
-    return std::make_shared<Device>(args...);
-  };
-
   // The device needs the physical device it should be created for. You can get one from your
   // Instance.
   explicit Device(PhysicalDevicePtr const& physicalDevice);

@@ -6,34 +6,29 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_PHYSICAL_DEVICE_HPP
-#define ILLUSION_GRAPHICS_PHYSICAL_DEVICE_HPP
+#ifndef ILLUSION_CORE_STATIC_CREATE_HPP
+#define ILLUSION_CORE_STATIC_CREATE_HPP
 
-#include "../Core/StaticCreate.hpp"
-#include "fwd.hpp"
+#include <memory>
 
-namespace Illusion::Graphics {
+namespace Illusion::Core {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// This template class is used by many classes in Illusion as a base class. It adds some  syn-    //
+// tactic sugar allowing to call MyClass::create(...) instaed of std::make_shared<MyClass>(...)   //
+// which is much more readable.                                                                   //
+// All arguments given to create() will be forwarded to the constructor.                          //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class PhysicalDevice : public vk::PhysicalDevice, public Core::StaticCreate<PhysicalDevice> {
+template <typename T>
+class StaticCreate {
  public:
-  PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice const& device);
-
-  uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) const;
-
-  // queues of this family can do graphics, compute, transfer and presentation
-  uint32_t getQueueFamily(QueueType type) const;
-  uint32_t getQueueIndex(QueueType type) const;
-
-  void printInfo();
-
- private:
-  std::array<uint32_t, 3> mQueueFamilies = {0, 0, 0};
-  std::array<uint32_t, 3> mQueueIndices  = {0, 0, 0};
+  // Add syntactic sugar to create a std::shared_ptr for this class
+  template <typename... Params>
+  static std::shared_ptr<T> create(Params&&... p) {
+    return std::make_shared<T>(std::forward<Params>(p)...);
+  }
 };
+} // namespace Illusion::Core
 
-} // namespace Illusion::Graphics
-
-#endif // ILLUSION_GRAPHICS_PHYSICAL_DEVICE_HPP
+#endif // ILLUSION_CORE_STATIC_CREATE_HPP
