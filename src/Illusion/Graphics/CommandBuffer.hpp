@@ -25,14 +25,8 @@ namespace Illusion::Graphics {
 // possible.                                                                                      //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class CommandBuffer {
+class CommandBuffer : public Core::StaticCreate<CommandBuffer> {
  public:
-  // Syntactic sugar to create a std::shared_ptr for this class
-  template <typename... Args>
-  static CommandBufferPtr create(Args&&... args) {
-    return std::make_shared<CommandBuffer>(args...);
-  };
-
   // Allocates a new vk::CommandBuffer from the device.
   CommandBuffer(DevicePtr const& device, QueueType type = QueueType::eGeneric,
       vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);
@@ -52,10 +46,10 @@ class CommandBuffer {
 
   // Submits the internal vk::CommandBuffer to the Device's queue matching the QueueType given to
   // this CommandBuffer at construction time.
-  void submit(std::vector<vk::Semaphore> const&  waitSemaphores   = {},
-      std::vector<vk::PipelineStageFlags> const& waitStages       = {},
-      std::vector<vk::Semaphore> const&          signalSemaphores = {},
-      vk::Fence const&                           fence            = nullptr) const;
+  void submit(std::vector<vk::SemaphorePtr> const& waitSemaphores   = {},
+      std::vector<vk::PipelineStageFlags> const&   waitStages       = {},
+      std::vector<vk::SemaphorePtr> const&         signalSemaphores = {},
+      vk::FencePtr const&                          fence            = nullptr) const;
 
   // Calls waitIdle() on the Device's queue matching the QueueType given to this CommandBuffer at
   // construction time.

@@ -9,9 +9,9 @@
 #ifndef ILLUSION_GRAPHICS_SHADER_SOURCE_HPP
 #define ILLUSION_GRAPHICS_SHADER_SOURCE_HPP
 
-#include "fwd.hpp"
-
 #include "../Core/File.hpp"
+#include "../Core/StaticCreate.hpp"
+#include "fwd.hpp"
 
 #include <variant>
 
@@ -64,14 +64,8 @@ class ShaderCode : public ShaderSource {
 
 // -------------------------------------------------------------------------------------------------
 
-class GlslFile : public ShaderFile {
+class GlslFile : public ShaderFile, public Core::StaticCreate<GlslFile> {
  public:
-  // Syntactic sugar to create a std::shared_ptr for this class
-  template <typename... Args>
-  static std::shared_ptr<GlslFile> create(Args&&... args) {
-    return std::make_shared<GlslFile>(args...);
-  };
-
   GlslFile(std::string const& fileName, bool reloadOnChanges = true);
 
   std::vector<uint32_t> getSpirv(vk::ShaderStageFlagBits stage) override;
@@ -79,14 +73,8 @@ class GlslFile : public ShaderFile {
 
 // -------------------------------------------------------------------------------------------------
 
-class GlslCode : public ShaderCode {
+class GlslCode : public ShaderCode, public Core::StaticCreate<GlslCode> {
  public:
-  // Syntactic sugar to create a std::shared_ptr for this class
-  template <typename... Args>
-  static std::shared_ptr<GlslCode> create(Args&&... args) {
-    return std::make_shared<GlslCode>(args...);
-  };
-
   GlslCode(std::string const& code, std::string const& name);
 
   std::vector<uint32_t> getSpirv(vk::ShaderStageFlagBits stage) override;
@@ -94,14 +82,8 @@ class GlslCode : public ShaderCode {
 
 // -------------------------------------------------------------------------------------------------
 
-class HlslFile : public ShaderFile {
+class HlslFile : public ShaderFile, public Core::StaticCreate<HlslFile> {
  public:
-  // Syntactic sugar to create a std::shared_ptr for this class
-  template <typename... Args>
-  static std::shared_ptr<HlslFile> create(Args&&... args) {
-    return std::make_shared<HlslFile>(args...);
-  };
-
   HlslFile(std::string const& fileName, bool reloadOnChanges = true);
 
   std::vector<uint32_t> getSpirv(vk::ShaderStageFlagBits stage) override;
@@ -109,14 +91,8 @@ class HlslFile : public ShaderFile {
 
 // -------------------------------------------------------------------------------------------------
 
-class HlslCode : public ShaderCode {
+class HlslCode : public ShaderCode, public Core::StaticCreate<HlslCode> {
  public:
-  // Syntactic sugar to create a std::shared_ptr for this class
-  template <typename... Args>
-  static std::shared_ptr<HlslCode> create(Args&&... args) {
-    return std::make_shared<HlslCode>(args...);
-  };
-
   HlslCode(std::string const& code, std::string const& name);
 
   std::vector<uint32_t> getSpirv(vk::ShaderStageFlagBits stage) override;
@@ -124,14 +100,8 @@ class HlslCode : public ShaderCode {
 
 // -------------------------------------------------------------------------------------------------
 
-class SpirvFile : public ShaderFile {
+class SpirvFile : public ShaderFile, public Core::StaticCreate<SpirvFile> {
  public:
-  // Syntactic sugar to create a std::shared_ptr for this class
-  template <typename... Args>
-  static std::shared_ptr<SpirvFile> create(Args&&... args) {
-    return std::make_shared<SpirvFile>(args...);
-  };
-
   SpirvFile(std::string const& fileName, bool reloadOnChanges = true);
 
   std::vector<uint32_t> getSpirv(vk::ShaderStageFlagBits stage) override;
@@ -139,14 +109,8 @@ class SpirvFile : public ShaderFile {
 
 // -------------------------------------------------------------------------------------------------
 
-class SpirvCode : public ShaderSource {
+class SpirvCode : public ShaderSource, public Core::StaticCreate<SpirvCode> {
  public:
-  // Syntactic sugar to create a std::shared_ptr for this class
-  template <typename... Args>
-  static std::shared_ptr<SpirvCode> create(Args&&... args) {
-    return std::make_shared<SpirvCode>(args...);
-  };
-
   SpirvCode(std::vector<uint32_t> const& code);
 
   bool                  requiresReload() const override;

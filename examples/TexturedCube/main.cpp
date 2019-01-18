@@ -7,10 +7,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <Illusion/Core/Logger.hpp>
-#include <Illusion/Core/RingBuffer.hpp>
 #include <Illusion/Core/Timer.hpp>
 #include <Illusion/Graphics/CoherentUniformBuffer.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
+#include <Illusion/Graphics/FrameResource.hpp>
 #include <Illusion/Graphics/Instance.hpp>
 #include <Illusion/Graphics/RenderPass.hpp>
 #include <Illusion/Graphics/Shader.hpp>
@@ -71,6 +71,7 @@ const std::array<uint32_t, 36> INDICES = {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct FrameResources {
+  FrameResources() = default;
   FrameResources(Illusion::Graphics::DevicePtr const& device)
       : mCmd(Illusion::Graphics::CommandBuffer::create(device))
       , mRenderPass(Illusion::Graphics::RenderPass::create(device))
@@ -127,12 +128,25 @@ int main() {
   auto texcoordBuffer = device->createVertexBuffer(TEXCOORDS);
   auto indexBuffer    = device->createIndexBuffer(INDICES);
 
-  // Now we create a RingBuffer of FrameResources. We use only two entries in this example but you
-  // could change this number to whatever you like. Three or four could improve the performance in
-  // some cases, but this will use more memory and could also lead to some input lag. Usually two or
-  // three will be a could choice.
-  Illusion::Core::RingBuffer<FrameResources, 2> frameResources{
-      FrameResources(device), FrameResources(device)};
+  // Here begins the interesting bits. In Illusion, per-frame resources are implemented with two
+  // classes: The FrameResourceIndex keeps track of an index (a simple uint32_t) in a ring-buffer
+  // like fashion. That means it can be increased with its step() method, but it will be reset to
+  // zero once its allowed maximum is reached. This index will then be used by the second class, the
+  // actual FrameResource. This is a template class which holds whatever you like in an actual
+  // ring-buffer.
+  // We use only a ring buffer size of two here in this example but you could change this number to
+  // whatever you like. Three or four could improve the performance in some cases, but this will use
+  // more memory and could also lead to some input lag. Usually two or three will be a could choice.
+  auto frameIndex = Illusion::Graphics::FrameResourceIndex::create(2);
+
+  // The actual FrameResource template wraps anything you like in a ring-buffer internally. The
+  // index into its ring buffer is defined by the FrameResourceIndex which is passed as first
+  // parameter to its contructor. The second argument is a function (lambda) which is invoked once
+  // for each ring buffer entry, thus serving as a factory. It should return an instance of the
+  // wrapped type. So in this example, the lambda is executed two times, once for each ring buffer
+  // index.
+  Illusion::Graphics::FrameResource<FrameResources> frameResources(
+      frameIndex, [=]() { return FrameResources(device); });
 
   // Use a timer to get the current system time at each frame.
   Illusion::Core::Timer timer;
@@ -147,14 +161,18 @@ int main() {
     // actually returns true when the user closed the window.
     window->update();
 
-    // First, we acquire the next FrameResources instance from our RingBuffer.
-    auto& res = frameResources.next();
+    // First, we increase our frame index. After this call, the frameResources will return their
+    // next ring bffer entry.
+    frameIndex->step();
 
-    // Then we have to wait until the GPU has finished processing the corresponding frame. Usually
-    // this should return instantly because, thanks to the RingBuffer there was at least one frame
-    // in between.
-    device->waitForFences(*res.mFrameFinishedFence);
-    device->resetFences(*res.mFrameFinishedFence);
+    // Then, we acquire the next FrameResources instance from our FrameResources.
+    auto& res = frameResources.current();
+
+    // Then we have to wait until the GPU has finished the last frame done with the current set of
+    // frame resources. Usually this should return instantly because there was at least one frame in
+    // between.
+    device->waitForFence(res.mFrameFinishedFence);
+    device->resetFence(res.mFrameFinishedFence);
 
     // Get the current time for animations.
     float time = timer.getElapsed();
@@ -209,7 +227,7 @@ int main() {
 
     // Now we can just submit the command buffer. Once it has been processed, the
     // renderFinishedSemaphore will be signaled.
-    res.mCmd->submit({}, {}, {*res.mRenderFinishedSemaphore});
+    res.mCmd->submit({}, {}, {res.mRenderFinishedSemaphore});
 
     // Present the color attachment of the render pass on the window. This operation will wait for
     // the renderFinishedSemaphore and signal the frameFinishedFence so that we know when to start

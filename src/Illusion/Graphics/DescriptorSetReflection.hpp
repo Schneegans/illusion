@@ -10,6 +10,7 @@
 #define ILLUSION_GRAPHICS_DESCRIPTOR_SET_REFLECTION_HPP
 
 #include "../Core/BitHash.hpp"
+#include "../Core/StaticCreate.hpp"
 #include "PipelineResource.hpp"
 
 #include <map>
@@ -23,14 +24,8 @@ namespace Illusion::Graphics {
 // can be used to create a corresponding vk::DescriptorSetLayout.                                 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class DescriptorSetReflection {
+class DescriptorSetReflection : public Core::StaticCreate<DescriptorSetReflection> {
  public:
-  // Syntactic sugar to create a std::shared_ptr for this class
-  template <typename... Args>
-  static DescriptorSetReflectionPtr create(Args&&... args) {
-    return std::make_shared<DescriptorSetReflection>(args...);
-  };
-
   // Initially, the DescriptorSetReflection is empty. Resources can be added with addResource()
   DescriptorSetReflection(DevicePtr const& device, uint32_t set);
   virtual ~DescriptorSetReflection();

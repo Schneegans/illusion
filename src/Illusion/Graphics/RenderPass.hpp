@@ -21,19 +21,13 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class RenderPass {
+class RenderPass : public Core::StaticCreate<RenderPass> {
 
  public:
   struct SubPass {
     std::vector<uint32_t> mPreSubPasses;
     std::vector<uint32_t> mInputAttachments;
     std::vector<uint32_t> mOutputAttachments;
-  };
-
-  // Syntactic sugar to create a std::shared_ptr for this class
-  template <typename... Args>
-  static RenderPassPtr create(Args&&... args) {
-    return std::make_shared<RenderPass>(args...);
   };
 
   RenderPass(DevicePtr const& device);

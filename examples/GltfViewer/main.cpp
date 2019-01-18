@@ -11,10 +11,10 @@
 
 #include <Illusion/Core/CommandLineOptions.hpp>
 #include <Illusion/Core/Logger.hpp>
-#include <Illusion/Core/RingBuffer.hpp>
 #include <Illusion/Core/Timer.hpp>
 #include <Illusion/Graphics/CoherentUniformBuffer.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
+#include <Illusion/Graphics/FrameResource.hpp>
 #include <Illusion/Graphics/GltfModel.hpp>
 #include <Illusion/Graphics/Instance.hpp>
 #include <Illusion/Graphics/PhysicalDevice.hpp>
@@ -50,6 +50,8 @@ struct CameraUniforms {
 };
 
 struct FrameResources {
+  FrameResources() = default;
+
   FrameResources(Illusion::Graphics::DevicePtr const& device, vk::DeviceSize uboAlignment)
       : mCmd(Illusion::Graphics::CommandBuffer::create(device))
       , mRenderPass(Illusion::Graphics::RenderPass::create(device))
@@ -207,8 +209,9 @@ int main(int argc, char* argv[]) {
   auto uboAlignment =
       instance->getPhysicalDevice()->getProperties().limits.minUniformBufferOffsetAlignment;
 
-  Illusion::Core::RingBuffer<FrameResources, 2> frameResources{
-      FrameResources(device, uboAlignment), FrameResources(device, uboAlignment)};
+  auto frameIndex = Illusion::Graphics::FrameResourceIndex::create(2);
+  Illusion::Graphics::FrameResource<FrameResources> frameResources(
+      frameIndex, [=]() { return FrameResources(device, uboAlignment); });
 
   glm::vec3 cameraPolar(0.f, 0.f, 1.5f);
 
@@ -246,6 +249,8 @@ int main(int argc, char* argv[]) {
 
     window->update();
 
+    frameIndex->step();
+
     if (options.mAnimation >= 0 &&
         static_cast<size_t>(options.mAnimation) < model->getAnimations().size()) {
       auto const& anim         = model->getAnimations()[options.mAnimation];
@@ -254,10 +259,10 @@ int main(int argc, char* argv[]) {
       model->setAnimationTime(options.mAnimation, modelAnimationTime);
     }
 
-    auto& res = frameResources.next();
+    auto& res = frameResources.current();
 
-    device->waitForFences(*res.mRenderFinishedFence);
-    device->resetFences(*res.mRenderFinishedFence);
+    device->waitForFence(res.mRenderFinishedFence);
+    device->resetFence(res.mRenderFinishedFence);
 
     res.mCmd->reset();
     res.mCmd->begin();
@@ -325,7 +330,7 @@ int main(int argc, char* argv[]) {
     res.mCmd->endRenderPass();
     res.mCmd->end();
 
-    res.mCmd->submit({}, {}, {*res.mRenderFinishedSemaphore});
+    res.mCmd->submit({}, {}, {res.mRenderFinishedSemaphore});
 
     window->present(res.mRenderPass->getFramebuffer()->getImages()[0], res.mRenderFinishedSemaphore,
         res.mRenderFinishedFence);

@@ -24,14 +24,8 @@ namespace Illusion::Graphics {
 // be used to create a corresponding vk::PipelineLayout.                                          //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class PipelineReflection {
+class PipelineReflection : public Core::StaticCreate<PipelineReflection> {
  public:
-  // Syntactic sugar to create a std::shared_ptr for this class
-  template <typename... Args>
-  static PipelineReflectionPtr create(Args&&... args) {
-    return std::make_shared<PipelineReflection>(args...);
-  };
-
   // Initially, the PipelineReflection is empty. Resources can be added with addResource()
   PipelineReflection(DevicePtr const& device);
   virtual ~PipelineReflection();

@@ -25,7 +25,7 @@ namespace Illusion::Graphics {
 // be emitted from the update() method.                                                           //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class Window {
+class Window : public Core::StaticCreate<Window> {
 
  public:
   // properties ------------------------------------------------------------------------------------
@@ -65,12 +65,6 @@ class Window {
   Core::Signal<> sOnClose;
 
   // methods ---------------------------------------------------------------------------------------
-
-  // Syntactic sugar to create a std::shared_ptr for this class
-  template <typename... Args>
-  static WindowPtr create(Args&&... args) {
-    return std::make_shared<Window>(args...);
-  };
 
   // Once you created an Instance and a Device, you can start creating Windows.
   Window(InstancePtr const& instance, DevicePtr const& device);

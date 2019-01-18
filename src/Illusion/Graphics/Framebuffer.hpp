@@ -9,6 +9,7 @@
 #ifndef ILLUSION_GRAPHICS_RENDERTARGET_HPP
 #define ILLUSION_GRAPHICS_RENDERTARGET_HPP
 
+#include "../Core/StaticCreate.hpp"
 #include "fwd.hpp"
 
 #include <glm/glm.hpp>
@@ -18,14 +19,8 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class Framebuffer {
+class Framebuffer : public Core::StaticCreate<Framebuffer> {
  public:
-  // Syntactic sugar to create a std::shared_ptr for this class
-  template <typename... Args>
-  static FramebufferPtr create(Args&&... args) {
-    return std::make_shared<Framebuffer>(args...);
-  };
-
   Framebuffer(DevicePtr const& device, vk::RenderPassPtr const& renderPass,
       glm::uvec2 const& extent, std::vector<vk::Format> const& attachments);
 

@@ -92,12 +92,12 @@ int main(int argc, char* argv[]) {
 
     // Wait until the last frame has been fully processed. Afterwards, reset the fence so that we
     // can use it once more this frame.
-    device->waitForFences(*frameFinishedFence);
-    device->resetFences(*frameFinishedFence);
+    device->waitForFence(frameFinishedFence);
+    device->resetFence(frameFinishedFence);
 
     // Our command buffer has been recorded already, so we can just submit it. Once it has been
     // processed, the renderFinishedSemaphore will be signaled.
-    cmd->submit({}, {}, {*renderFinishedSemaphore});
+    cmd->submit({}, {}, {renderFinishedSemaphore});
 
     // Present the color attachment of the render pass on the window. This operation will wait for
     // the renderFinishedSemaphore and signal the frameFinishedFence so that we know when to start

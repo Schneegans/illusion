@@ -10,6 +10,7 @@
 #define ILLUSION_GRAPHICS_DEVICE_HPP
 
 #include "../Core/BitHash.hpp"
+#include "../Core/StaticCreate.hpp"
 #include "fwd.hpp"
 
 #include <glm/glm.hpp>
@@ -24,15 +25,9 @@ namespace Illusion::Graphics {
 // Device for your application.                                                                   //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class Device {
+class Device : public Core::StaticCreate<Device> {
 
  public:
-  // Syntactic sugar to create a std::shared_ptr for this class
-  template <typename... Args>
-  static DevicePtr create(Args&&... args) {
-    return std::make_shared<Device>(args...);
-  };
-
   // The device needs the physical device it should be created for. You can get one from your
   // Instance.
   explicit Device(PhysicalDevicePtr const& physicalDevice);
@@ -129,8 +124,10 @@ class Device {
 
   // device interface forwarding -------------------------------------------------------------------
   void waitForFences(
-      vk::ArrayProxy<const vk::Fence> const& fences, bool waitAll = true, uint64_t timeout = ~0);
-  void resetFences(vk::ArrayProxy<const vk::Fence> const& fences);
+      std::vector<vk::FencePtr> const& fences, bool waitAll = true, uint64_t timeout = ~0);
+  void waitForFence(vk::FencePtr const& fence, uint64_t timeout = ~0);
+  void resetFences(std::vector<vk::FencePtr> const& fences);
+  void resetFence(vk::FencePtr const& fence);
   void waitIdle();
 
  private:

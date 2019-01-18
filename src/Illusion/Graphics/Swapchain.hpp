@@ -21,14 +21,8 @@ namespace Illusion::Graphics {
 // swapchain image.                                                                               //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class Swapchain {
+class Swapchain : public Core::StaticCreate<Swapchain> {
  public:
-  // Syntactic sugar to create a std::shared_ptr for this class
-  template <typename... Args>
-  static SwapchainPtr create(Args&&... args) {
-    return std::make_shared<Swapchain>(args...);
-  };
-
   // This is called by the Window.
   Swapchain(DevicePtr const& device, vk::SurfaceKHRPtr const& surface);
   virtual ~Swapchain();

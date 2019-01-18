@@ -25,14 +25,8 @@ namespace Illusion::Graphics {
 // PipelineReflection of the Shader class provides some easier-to-use interfaces.                 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class ShaderModule {
+class ShaderModule : public Core::StaticCreate<ShaderModule> {
  public:
-  // Syntactic sugar to create a std::shared_ptr for this class
-  template <typename... Args>
-  static ShaderModulePtr create(Args&&... args) {
-    return std::make_shared<ShaderModule>(args...);
-  };
-
   // Creates a new ShaderModule. The source can be one of the sources defined in ShaderSource.hpp.
   // If there are any uniform and storage buffers defined in your shader source which should be
   // dynamic in the reflection, you should provide their names in the dynamicBuffers parameter.
