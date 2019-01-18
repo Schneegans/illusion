@@ -42,7 +42,7 @@ uint32_t FrameResourceIndex::previous() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-uint32_t FrameResourceIndex::count() const {
+uint32_t FrameResourceIndex::indexCount() const {
   return mIndexCount;
 }
 

@@ -16,69 +16,95 @@
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// In Illusion, per-frame resources are implemented with two classes: The FrameResourceIndex and  //
+// the actual FrameResource. In your application, you will typically have one FrameResourceIndex  //
+// and many FrameResources.                                                                       //
+// The FrameResourceIndex is used by the FrameResource. The FrameResource template wraps anything //
+// you like in a ring-buffer internally. The index into its ring buffer is defined by the         //
+// FrameResourceIndex which is passed as first parameter to its constructor.                      //
+// There are multiple ways how to use this template. Either you create a struct containing all of //
+// your per-frame resources (usually as std::shared_ptr's) and use this as template parameter for //
+// a FrameResource. Or you could wrap all individual per-frame resources (each stored in a        //
+// shared_ptr) in a FrameResource. Both are valid approaches.                                     //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 template <typename T>
 class FrameResource {
-
  public:
+  // The first argument is the FrameResourceIndex which will be used to index in the internal ring
+  // buffer. The second argument is a function (lambda) which is invoked once for each ring buffer
+  // entry at construction time, serving as a factory. It should return an instance of the wrapped
+  // type. The factory is not kept around, so anything which is captured in the lambda will be
+  // released as soon as the constructor returns.
   FrameResource(FrameResourceIndexPtr const& index, std::function<T()> const& factory)
-      : mBuffer(index->count())
+      : mRingBuffer(index->indexCount())
       , mIndex(index) {
 
-    for (auto& i : mBuffer) {
+    for (auto& i : mRingBuffer) {
       i = factory();
     }
   }
 
   virtual ~FrameResource() = default;
 
+  // Returns a reference to the currently active ring buffer element
   T const& current() const {
-    return mBuffer[mIndex->current()];
+    return mRingBuffer[mIndex->current()];
   }
-
   T& current() {
-    return mBuffer[mIndex->current()];
+    return mRingBuffer[mIndex->current()];
   }
 
+  // Returns a reference to the ring buffer element which will be active once mIndex->step() has
+  // been called once more.
   T const& next() const {
-    return mBuffer[mIndex->next()];
+    return mRingBuffer[mIndex->next()];
   }
-
   T& next() {
-    return mBuffer[mIndex->next()];
+    return mRingBuffer[mIndex->next()];
   }
 
+  // Returns a reference to the ring buffer element which was active before mIndex->step() has been
+  // called the las time.
   T const& previous() const {
-    return mBuffer[mIndex->previous()];
+    return mRingBuffer[mIndex->previous()];
   }
-
   T& previous() {
-    return mBuffer[mIndex->previous()];
+    return mRingBuffer[mIndex->previous()];
   }
 
-  uint32_t count() const {
-    return mIndex->count();
+  // Returns the number of ring buffer elements. Can be used in conjunction with the operators below
+  // in order to iterate all ring buffer elements.
+  uint32_t size() const {
+    return mIndex->indexCount();
+  }
+  T const& operator[](size_t i) const {
+    return mRingBuffer[i];
+  }
+  T& operator[](size_t i) {
+    return mRingBuffer[i];
   }
 
+  // These iterators can be used to iterate all ring buffer elements in range-based for-loops for
+  // example.
   typename std::vector<T>::iterator begin() {
-    return mBuffer.begin();
+    return mRingBuffer.begin();
   }
 
   typename std::vector<T>::iterator end() {
-    return mBuffer.end();
+    return mRingBuffer.end();
   }
 
   typename std::vector<T>::const_iterator begin() const {
-    return mBuffer.begin();
+    return mRingBuffer.begin();
   }
 
   typename std::vector<T>::const_iterator end() const {
-    return mBuffer.end();
+    return mRingBuffer.end();
   }
 
- protected:
-  std::vector<T>        mBuffer;
+ private:
+  std::vector<T>        mRingBuffer;
   FrameResourceIndexPtr mIndex;
 };
 
