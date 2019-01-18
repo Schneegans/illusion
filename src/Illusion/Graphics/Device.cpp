@@ -609,12 +609,28 @@ vk::Queue const& Device::getQueue(QueueType type) const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Device::waitForFences(
-    vk::ArrayProxy<const vk::Fence> const& fences, bool waitAll, uint64_t timeout) {
-  mDevice->waitForFences(fences, waitAll, timeout);
+    std::vector<vk::FencePtr> const& fences, bool waitAll, uint64_t timeout) {
+  std::vector<vk::Fence> tmp(fences.size());
+  for (size_t i(0); i < fences.size(); ++i) {
+    tmp[i] = *fences[i];
+  }
+  mDevice->waitForFences(tmp, waitAll, timeout);
 }
 
-void Device::resetFences(vk::ArrayProxy<const vk::Fence> const& fences) {
-  mDevice->resetFences(fences);
+void Device::waitForFence(vk::FencePtr const& fence, uint64_t timeout) {
+  mDevice->waitForFences(*fence, true, timeout);
+}
+
+void Device::resetFences(std::vector<vk::FencePtr> const& fences) {
+  std::vector<vk::Fence> tmp(fences.size());
+  for (size_t i(0); i < fences.size(); ++i) {
+    tmp[i] = *fences[i];
+  }
+  mDevice->resetFences(tmp);
+}
+
+void Device::resetFence(vk::FencePtr const& fence) {
+  mDevice->resetFences(*fence);
 }
 
 void Device::waitIdle() {

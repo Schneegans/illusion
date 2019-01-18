@@ -156,9 +156,9 @@ void Swapchain::present(BackedImagePtr const& image,
 
     cmd->end();
 
-    cmd->submit({*renderFinishedSemaphore, *mImageAvailableSemaphores[mCurrentPresentIndex]},
+    cmd->submit({renderFinishedSemaphore, mImageAvailableSemaphores[mCurrentPresentIndex]},
         {2, vk::PipelineStageFlagBits::eColorAttachmentOutput},
-        {*mCopyFinishedSemaphores[mCurrentPresentIndex]}, *signalFence);
+        {mCopyFinishedSemaphores[mCurrentPresentIndex]}, signalFence);
   }
 
   // present on mOutputWindow ----------------------------------------------------------------------

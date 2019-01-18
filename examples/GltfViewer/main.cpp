@@ -261,8 +261,8 @@ int main(int argc, char* argv[]) {
 
     auto& res = frameResources.current();
 
-    device->waitForFences(*res.mRenderFinishedFence);
-    device->resetFences(*res.mRenderFinishedFence);
+    device->waitForFence(res.mRenderFinishedFence);
+    device->resetFence(res.mRenderFinishedFence);
 
     res.mCmd->reset();
     res.mCmd->begin();
@@ -330,7 +330,7 @@ int main(int argc, char* argv[]) {
     res.mCmd->endRenderPass();
     res.mCmd->end();
 
-    res.mCmd->submit({}, {}, {*res.mRenderFinishedSemaphore});
+    res.mCmd->submit({}, {}, {res.mRenderFinishedSemaphore});
 
     window->present(res.mRenderPass->getFramebuffer()->getImages()[0], res.mRenderFinishedSemaphore,
         res.mRenderFinishedFence);

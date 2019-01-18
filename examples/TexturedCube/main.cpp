@@ -171,8 +171,8 @@ int main() {
     // Then we have to wait until the GPU has finished the last frame done with the current set of
     // frame resources. Usually this should return instantly because there was at least one frame in
     // between.
-    device->waitForFences(*res.mFrameFinishedFence);
-    device->resetFences(*res.mFrameFinishedFence);
+    device->waitForFence(res.mFrameFinishedFence);
+    device->resetFence(res.mFrameFinishedFence);
 
     // Get the current time for animations.
     float time = timer.getElapsed();
@@ -227,7 +227,7 @@ int main() {
 
     // Now we can just submit the command buffer. Once it has been processed, the
     // renderFinishedSemaphore will be signaled.
-    res.mCmd->submit({}, {}, {*res.mRenderFinishedSemaphore});
+    res.mCmd->submit({}, {}, {res.mRenderFinishedSemaphore});
 
     // Present the color attachment of the render pass on the window. This operation will wait for
     // the renderFinishedSemaphore and signal the frameFinishedFence so that we know when to start

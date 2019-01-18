@@ -124,8 +124,10 @@ class Device : public Core::StaticCreate<Device> {
 
   // device interface forwarding -------------------------------------------------------------------
   void waitForFences(
-      vk::ArrayProxy<const vk::Fence> const& fences, bool waitAll = true, uint64_t timeout = ~0);
-  void resetFences(vk::ArrayProxy<const vk::Fence> const& fences);
+      std::vector<vk::FencePtr> const& fences, bool waitAll = true, uint64_t timeout = ~0);
+  void waitForFence(vk::FencePtr const& fence, uint64_t timeout = ~0);
+  void resetFences(std::vector<vk::FencePtr> const& fences);
+  void resetFence(vk::FencePtr const& fence);
   void waitIdle();
 
  private:

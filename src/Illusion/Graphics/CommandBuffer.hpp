@@ -46,10 +46,10 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer> {
 
   // Submits the internal vk::CommandBuffer to the Device's queue matching the QueueType given to
   // this CommandBuffer at construction time.
-  void submit(std::vector<vk::Semaphore> const&  waitSemaphores   = {},
-      std::vector<vk::PipelineStageFlags> const& waitStages       = {},
-      std::vector<vk::Semaphore> const&          signalSemaphores = {},
-      vk::Fence const&                           fence            = nullptr) const;
+  void submit(std::vector<vk::SemaphorePtr> const& waitSemaphores   = {},
+      std::vector<vk::PipelineStageFlags> const&   waitStages       = {},
+      std::vector<vk::SemaphorePtr> const&         signalSemaphores = {},
+      vk::FencePtr const&                          fence            = nullptr) const;
 
   // Calls waitIdle() on the Device's queue matching the QueueType given to this CommandBuffer at
   // construction time.

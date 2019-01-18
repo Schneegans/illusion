@@ -58,22 +58,31 @@ void CommandBuffer::end() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::submit(std::vector<vk::Semaphore> const& waitSemaphores,
-    std::vector<vk::PipelineStageFlags> const&               waitStages,
-    std::vector<vk::Semaphore> const& signalSemaphores, vk::Fence const& fence) const {
-
+void CommandBuffer::submit(std::vector<vk::SemaphorePtr> const& waitSemaphores,
+    std::vector<vk::PipelineStageFlags> const&                  waitStages,
+    std::vector<vk::SemaphorePtr> const& signalSemaphores, vk::FencePtr const& fence) const {
   vk::CommandBuffer bufs[] = {*mVkCmd};
+
+  std::vector<vk::Semaphore> tmpWaitSemaphores(waitSemaphores.size());
+  for (size_t i(0); i < waitSemaphores.size(); ++i) {
+    tmpWaitSemaphores[i] = *waitSemaphores[i];
+  }
+
+  std::vector<vk::Semaphore> tmpSignalSemaphores(signalSemaphores.size());
+  for (size_t i(0); i < signalSemaphores.size(); ++i) {
+    tmpSignalSemaphores[i] = *signalSemaphores[i];
+  }
 
   vk::SubmitInfo info;
   info.pWaitDstStageMask    = waitStages.data();
   info.commandBufferCount   = 1;
   info.pCommandBuffers      = bufs;
-  info.signalSemaphoreCount = static_cast<uint32_t>(signalSemaphores.size());
-  info.pSignalSemaphores    = signalSemaphores.data();
-  info.waitSemaphoreCount   = static_cast<uint32_t>(waitSemaphores.size());
-  info.pWaitSemaphores      = waitSemaphores.data();
+  info.signalSemaphoreCount = static_cast<uint32_t>(tmpSignalSemaphores.size());
+  info.pSignalSemaphores    = tmpSignalSemaphores.data();
+  info.waitSemaphoreCount   = static_cast<uint32_t>(tmpWaitSemaphores.size());
+  info.pWaitSemaphores      = tmpWaitSemaphores.data();
 
-  mDevice->getQueue(mType).submit(info, fence);
+  mDevice->getQueue(mType).submit(info, fence ? *fence : nullptr);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
