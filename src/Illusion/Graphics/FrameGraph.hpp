@@ -9,12 +9,13 @@
 #ifndef ILLUSION_GRAPHICS_RENDER_GRAPH_HPP
 #define ILLUSION_GRAPHICS_RENDER_GRAPH_HPP
 
-#include "fwd.hpp"
+#include "FrameResource.hpp"
 
 #include <functional>
 #include <glm/glm.hpp>
 #include <list>
 #include <optional>
+#include <unordered_map>
 #include <unordered_set>
 
 namespace Illusion::Graphics {
@@ -22,21 +23,19 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class FrameGraph {
+class FrameGraph : public Core::StaticCreate<FrameGraph> {
  public:
   // -----------------------------------------------------------------------------------------------
-  class Pass;
-
-  class Resource {
+  class LogicalResource {
    public:
-    enum class Type { eImage };
+    enum class Type { eImage, eBuffer };
     enum class Sizing { eAbsolute, eRelative };
 
-    Resource& setName(std::string const& name);
-    Resource& setFormat(vk::Format format);
-    Resource& setType(Type type);
-    Resource& setSizing(Sizing sizing);
-    Resource& setExtent(glm::uvec2 const& extent);
+    LogicalResource& setName(std::string const& name);
+    LogicalResource& setFormat(vk::Format format);
+    LogicalResource& setType(Type type);
+    LogicalResource& setSizing(Sizing sizing);
+    LogicalResource& setExtent(glm::uvec2 const& extent);
 
     friend class FrameGraph;
 
@@ -53,54 +52,81 @@ class FrameGraph {
 
   // -----------------------------------------------------------------------------------------------
 
-  class Pass {
+  class LogicalPass {
    public:
-    Pass& setName(std::string const& name);
-    Pass& addInputAttachment(Resource const& resource);
-    Pass& addOutputAttachment(
-        Resource const& resource, std::optional<vk::ClearValue> clearValue = {});
-    Pass& addBlendAttachment(Resource const& resource);
-    Pass& setOutputWindow(WindowPtr const& window);
-    Pass& setRecordCallback(std::function<void()> const& recordCallback);
+    LogicalPass& setName(std::string const& name);
+
+    enum class ResourceUsage { eInputAttachment, eBlendAttachment, eOutputAttachment };
+
+    LogicalPass& addResource(LogicalResource const& resource, ResourceUsage usage,
+        std::optional<vk::ClearValue> clear = {});
+
+    LogicalPass& addInputAttachment(LogicalResource const& resource);
+    LogicalPass& addOutputAttachment(
+        LogicalResource const& resource, std::optional<vk::ClearValue> clear = {});
+    LogicalPass& addBlendAttachment(LogicalResource const& resource);
+
+    LogicalPass& setOutputWindow(WindowPtr const& window);
+    LogicalPass& setProcessCallback(std::function<void(CommandBufferPtr)> const& callback);
 
     friend class FrameGraph;
 
    private:
-    enum class ResourceType { eInputAttachment, eBlendAttachment, eOutputAttachment };
-
-    struct ResourceInfo {
-      ResourceType                  type;
-      std::optional<vk::ClearValue> mClearValue;
+    struct Info {
+      ResourceUsage                 mUsage;
+      std::optional<vk::ClearValue> mClear;
     };
 
-    Pass& addResource(Resource const& resource, ResourceInfo const& info);
-
-    std::string                                       mName = "Unnamed Pass";
-    std::unordered_map<Resource const*, ResourceInfo> mResources;
-    WindowPtr                                         mOutputWindow;
-    std::function<void()>                             mRecordCallback;
+    std::unordered_map<LogicalResource const*, Info> mLogicalResources;
+    std::string                                      mName = "Unnamed Pass";
+    WindowPtr                                        mOutputWindow;
+    std::function<void(CommandBufferPtr)>            mProcessCallback;
 
     // These members are read and written by the FrameGraph
     bool mDirty = true;
   };
 
   // -----------------------------------------------------------------------------------------------
+  struct PhysicalResource {
+    BackedImagePtr mImage;
+  };
 
-  Resource& addResource();
-  Pass&     addPass();
+  // -----------------------------------------------------------------------------------------------
+  struct PhysicalPass {
+    RenderPassPtr mRenderPass;
+  };
 
-  void record();
+  // -----------------------------------------------------------------------------------------------
+
+  FrameGraph(DevicePtr const& device, FrameResourceIndexPtr const& frameIndex);
+
+  LogicalResource& addResource();
+  LogicalPass&     addPass();
+
+  void process();
 
  private:
   bool isDirty() const;
   void clearDirty();
   void validate() const;
 
-  struct FrameResources {};
+  DevicePtr                  mDevice;
+  std::list<LogicalResource> mLogicalResources;
+  std::list<LogicalPass>     mLogicalPasses;
 
-  std::list<Resource> mResources;
-  std::list<Pass>     mPasses;
-  bool                mDirty = true;
+  struct PerFrame {
+    CommandBufferPtr mPrimaryCommandBuffer;
+    vk::SemaphorePtr mRenderFinishedSemaphore;
+    vk::FencePtr     mFrameFinishedFence;
+
+    std::unordered_map<LogicalResource const*, PhysicalResource> mPhysicalResources;
+    std::unordered_map<LogicalPass const*, PhysicalPass>         mPhysicalPasses;
+    bool                                                         mDirty = true;
+  };
+
+  FrameResource<PerFrame> mPerFrame;
+
+  bool mDirty = true;
 };
 
 } // namespace Illusion::Graphics
