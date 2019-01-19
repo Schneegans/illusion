@@ -62,17 +62,17 @@ const std::array<uint32_t, 36> INDICES = {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // This struct contains all resources we will need for one frame. While one frame is processed by //
-// the GPU, we will acquire a instance of FrameResources and work with that one. We will store    //
-// the FrameResources in a ring-buffer and re-use older FrameResources after some frames when the //
-// GPU is likely to be finished processing it anyways.                                            //
-// The FrameResources contain a command buffer, a render pass, a uniform buffer (for the          //
-// projection matrix), a semaphore indicating when rendering has finished and the frame buffer is //
-// ready for presentation and a fence telling us when the FrameResources are ready to be re-used. //
+// the GPU, we will acquire an instance of PerFrame and work with that one. We will store the     //
+// PerFrame in a ring-buffer and re-use older PerFrames after some time when the GPU is likely to //
+// be finished processing it anyways.                                                             //
+// The PerFrame contains a command buffer, a render pass, a uniform buffer (for the projection    //
+// matrix), a semaphore indicating when rendering has finished (the frame buffer is ready for     //
+// presentation) and a fence telling us when the PerFrame are ready to be re-used.                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct FrameResources {
-  FrameResources() = default;
-  FrameResources(Illusion::Graphics::DevicePtr const& device)
+struct PerFrame {
+  PerFrame() = default;
+  PerFrame(Illusion::Graphics::DevicePtr const& device)
       : mCmd(Illusion::Graphics::CommandBuffer::create(device))
       , mRenderPass(Illusion::Graphics::RenderPass::create(device))
       , mUniformBuffer(Illusion::Graphics::CoherentUniformBuffer::create(device, sizeof(glm::mat4)))
@@ -128,7 +128,7 @@ int main() {
   auto texcoordBuffer = device->createVertexBuffer(TEXCOORDS);
   auto indexBuffer    = device->createIndexBuffer(INDICES);
 
-  // Here begins the interesting bits. In Illusion, per-frame resources are implemented with two
+  // Here begin the interesting bits. In Illusion, per-frame resources are implemented with two
   // classes: The FrameResourceIndex keeps track of an index (a simple uint32_t) in a ring-buffer
   // like fashion. That means it can be increased with its step() method, but it will be reset to
   // zero once its allowed maximum is reached. This index will then be used by the second class, the
@@ -145,8 +145,8 @@ int main() {
   // for each ring buffer entry, thus serving as a factory. It should return an instance of the
   // wrapped type. So in this example, the lambda is executed two times, once for each ring buffer
   // index.
-  Illusion::Graphics::FrameResource<FrameResources> frameResources(
-      frameIndex, [=]() { return FrameResources(device); });
+  Illusion::Graphics::FrameResource<PerFrame> perFrame(
+      frameIndex, [=]() { return PerFrame(device); });
 
   // Use a timer to get the current system time at each frame.
   Illusion::Core::Timer timer;
@@ -161,12 +161,12 @@ int main() {
     // actually returns true when the user closed the window.
     window->update();
 
-    // First, we increase our frame index. After this call, the frameResources will return their
+    // First, we increase our frame index. After this call, the PerFrame will return their
     // next ring bffer entry.
     frameIndex->step();
 
-    // Then, we acquire the next FrameResources instance from our FrameResources.
-    auto& res = frameResources.current();
+    // Then, we acquire the next PerFrame instance from our PerFrame.
+    auto& res = perFrame.current();
 
     // Then we have to wait until the GPU has finished the last frame done with the current set of
     // frame resources. Usually this should return instantly because there was at least one frame in
