@@ -49,10 +49,10 @@ struct CameraUniforms {
   glm::mat4 mProjectionMatrix;
 };
 
-struct FrameResources {
-  FrameResources() = default;
+struct PerFrame {
+  PerFrame() = default;
 
-  FrameResources(Illusion::Graphics::DevicePtr const& device, vk::DeviceSize uboAlignment)
+  PerFrame(Illusion::Graphics::DevicePtr const& device, vk::DeviceSize uboAlignment)
       : mCmd(Illusion::Graphics::CommandBuffer::create(device))
       , mRenderPass(Illusion::Graphics::RenderPass::create(device))
       , mUniformBuffer(Illusion::Graphics::CoherentUniformBuffer::create(
@@ -73,7 +73,7 @@ struct FrameResources {
 
 void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::Gltf::Node>> const& nodes,
     glm::mat4 const& viewMatrix, glm::mat4 const& modelMatrix, bool doAlphaBlending,
-    vk::DeviceSize emptySkinDynamicOffset, FrameResources const& res) {
+    vk::DeviceSize emptySkinDynamicOffset, PerFrame const& res) {
 
   res.mCmd->graphicsState().setBlendAttachments({{doAlphaBlending}});
 
@@ -210,8 +210,8 @@ int main(int argc, char* argv[]) {
       instance->getPhysicalDevice()->getProperties().limits.minUniformBufferOffsetAlignment;
 
   auto frameIndex = Illusion::Graphics::FrameResourceIndex::create(2);
-  Illusion::Graphics::FrameResource<FrameResources> frameResources(
-      frameIndex, [=]() { return FrameResources(device, uboAlignment); });
+  Illusion::Graphics::FrameResource<PerFrame> perFrame(
+      frameIndex, [=]() { return PerFrame(device, uboAlignment); });
 
   glm::vec3 cameraPolar(0.f, 0.f, 1.5f);
 
@@ -259,7 +259,7 @@ int main(int argc, char* argv[]) {
       model->setAnimationTime(options.mAnimation, modelAnimationTime);
     }
 
-    auto& res = frameResources.current();
+    auto& res = perFrame.current();
 
     device->waitForFence(res.mRenderFinishedFence);
     device->resetFence(res.mRenderFinishedFence);
