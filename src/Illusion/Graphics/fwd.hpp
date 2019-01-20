@@ -82,7 +82,7 @@ namespace vk {
 typedef std::shared_ptr<vk::Buffer>                 BufferPtr;
 typedef std::shared_ptr<vk::CommandBuffer>          CommandBufferPtr;
 typedef std::shared_ptr<vk::CommandPool>            CommandPoolPtr;
-typedef std::shared_ptr<vk::DebugReportCallbackEXT> DebugReportCallbackEXTPtr;
+typedef std::shared_ptr<vk::DebugUtilsMessengerEXT> DebugUtilsMessengerEXTPtr;
 typedef std::shared_ptr<vk::DescriptorPool>         DescriptorPoolPtr;
 typedef std::shared_ptr<vk::DescriptorSet>          DescriptorSetPtr;
 typedef std::shared_ptr<vk::DescriptorSetLayout>    DescriptorSetLayoutPtr;

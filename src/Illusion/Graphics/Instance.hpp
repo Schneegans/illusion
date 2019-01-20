@@ -39,12 +39,12 @@ class Instance : public Core::StaticCreate<Instance> {
 
  private:
   vk::InstancePtr createInstance(std::string const& engine, std::string const& app) const;
-  vk::DebugReportCallbackEXTPtr createDebugCallback() const;
+  vk::DebugUtilsMessengerEXTPtr createDebugCallback() const;
 
   bool mDebugMode = false;
 
   vk::InstancePtr                mInstance;
-  vk::DebugReportCallbackEXTPtr  mDebugCallback;
+  vk::DebugUtilsMessengerEXTPtr  mDebugCallback;
   std::vector<PhysicalDevicePtr> mPhysicalDevices;
 };
 

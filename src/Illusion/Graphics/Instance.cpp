@@ -31,19 +31,18 @@ bool glfwInitialized{false};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-VkBool32 messageCallback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT /*type*/,
-    uint64_t /*object*/, size_t /*location*/, int32_t code, const char* layer, const char* message,
-    void* /*userData*/) {
+VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT                           messageType,
+    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
 
-  std::stringstream buf;
-  buf << "[" << layer << "] " << message << " (code: " << code << ")" << std::endl;
-
-  if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT) {
-    ILLUSION_ERROR << buf.str();
-  } else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT) {
-    ILLUSION_WARNING << buf.str();
-  } else if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT) {
-    ILLUSION_TRACE << buf.str();
+  if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
+    ILLUSION_TRACE << pCallbackData->pMessage << std::endl;
+  } else if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
+    ILLUSION_MESSAGE << pCallbackData->pMessage << std::endl;
+  } else if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
+    ILLUSION_WARNING << pCallbackData->pMessage << std::endl;
+  } else if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
+    ILLUSION_ERROR << pCallbackData->pMessage << std::endl;
   }
 
   return false;
@@ -82,7 +81,7 @@ std::vector<const char*> getRequiredInstanceExtensions(bool debugMode) {
   }
 
   if (debugMode) {
-    extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+    extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
   }
 
   return extensions;
@@ -211,32 +210,35 @@ vk::InstancePtr Instance::createInstance(std::string const& engine, std::string 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::DebugReportCallbackEXTPtr Instance::createDebugCallback() const {
+vk::DebugUtilsMessengerEXTPtr Instance::createDebugCallback() const {
   if (!mDebugMode) {
     return nullptr;
   }
 
   auto createCallback{
-      (PFN_vkCreateDebugReportCallbackEXT)mInstance->getProcAddr("vkCreateDebugReportCallbackEXT")};
+      (PFN_vkCreateDebugUtilsMessengerEXT)mInstance->getProcAddr("vkCreateDebugUtilsMessengerEXT")};
 
-  vk::DebugReportCallbackCreateInfoEXT info;
-  info.flags = vk::DebugReportFlagBitsEXT::eInformation | vk::DebugReportFlagBitsEXT::eWarning |
-               vk::DebugReportFlagBitsEXT::ePerformanceWarning |
-               vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eDebug;
-  info.pfnCallback = messageCallback;
+  vk::DebugUtilsMessengerCreateInfoEXT info;
+  info.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
+                         vk::DebugUtilsMessageSeverityFlagBitsEXT::eInfo |
+                         vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning |
+                         vk::DebugUtilsMessageSeverityFlagBitsEXT::eError;
+  info.messageType = vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation |
+                     vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance;
+  info.pfnUserCallback = debugCallback;
 
-  VkDebugReportCallbackEXT tmp;
-  if (createCallback(*mInstance, (VkDebugReportCallbackCreateInfoEXT*)&info, nullptr, &tmp)) {
+  VkDebugUtilsMessengerEXT tmp;
+  if (createCallback(*mInstance, (VkDebugUtilsMessengerCreateInfoEXT*)&info, nullptr, &tmp)) {
     throw std::runtime_error("Failed to set up debug callback!");
   }
 
-  ILLUSION_TRACE << "Creating vk::DebugReportCallbackEXT." << std::endl;
+  ILLUSION_TRACE << "Creating vk::DebugUtilsMessengerEXT." << std::endl;
   auto instance{mInstance};
   return VulkanPtr::create(
-      vk::DebugReportCallbackEXT(tmp), [instance](vk::DebugReportCallbackEXT* obj) {
-        auto destroyCallback = (PFN_vkDestroyDebugReportCallbackEXT)instance->getProcAddr(
-            "vkDestroyDebugReportCallbackEXT");
-        ILLUSION_TRACE << "Deleting vk::DebugReportCallbackEXT." << std::endl;
+      vk::DebugUtilsMessengerEXT(tmp), [instance](vk::DebugUtilsMessengerEXT* obj) {
+        auto destroyCallback = (PFN_vkDestroyDebugUtilsMessengerEXT)instance->getProcAddr(
+            "vkDestroyDebugUtilsMessengerEXT");
+        ILLUSION_TRACE << "Deleting vk::DebugUtilsMessengerEXT." << std::endl;
         destroyCallback(*instance, *obj, nullptr);
         delete obj;
       });
