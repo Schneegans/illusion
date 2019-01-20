@@ -26,27 +26,27 @@ namespace Illusion::Graphics {
 class FrameGraph : public Core::StaticCreate<FrameGraph> {
  public:
   // -----------------------------------------------------------------------------------------------
+  enum class ResourceSizing { eAbsolute, eRelative };
+  enum class ResourceUsage { eColorAttachment, eDepthAttachment, eTexture };
+  enum class ResourceAccess { eReadOnly, eWriteOnly, eReadWrite, eBlend };
+
+  // -----------------------------------------------------------------------------------------------
   class LogicalResource {
    public:
-    enum class Type { eImage, eBuffer };
-    enum class Sizing { eAbsolute, eRelative };
-
     LogicalResource& setName(std::string const& name);
     LogicalResource& setFormat(vk::Format format);
-    LogicalResource& setType(Type type);
-    LogicalResource& setSizing(Sizing sizing);
+    LogicalResource& setSizing(ResourceSizing sizing);
     LogicalResource& setExtent(glm::uvec2 const& extent);
 
     friend class FrameGraph;
 
    private:
-    std::string mName   = "Unnamed Resource";
-    vk::Format  mFormat = vk::Format::eR8G8B8A8Unorm;
-    Type        mType   = Type::eImage;
-    Sizing      mSizing = Sizing::eRelative;
-    glm::vec2   mExtent = glm::vec2(1.f, 1.f);
+    std::string    mName   = "Unnamed Resource";
+    vk::Format     mFormat = vk::Format::eR8G8B8A8Unorm;
+    ResourceSizing mSizing = ResourceSizing::eRelative;
+    glm::vec2      mExtent = glm::vec2(1.f, 1.f);
 
-    // These members are read and written by the FrameGraph
+    // this is directly accessed by the FrameGraph
     bool mDirty = true;
   };
 
@@ -56,15 +56,8 @@ class FrameGraph : public Core::StaticCreate<FrameGraph> {
    public:
     LogicalPass& setName(std::string const& name);
 
-    enum class ResourceUsage { eInputAttachment, eBlendAttachment, eOutputAttachment };
-
-    LogicalPass& addResource(LogicalResource const& resource, ResourceUsage usage,
-        std::optional<vk::ClearValue> clear = {});
-
-    LogicalPass& addInputAttachment(LogicalResource const& resource);
-    LogicalPass& addOutputAttachment(
-        LogicalResource const& resource, std::optional<vk::ClearValue> clear = {});
-    LogicalPass& addBlendAttachment(LogicalResource const& resource);
+    LogicalPass& assignResource(LogicalResource const& resource, ResourceUsage usage,
+        ResourceAccess access, std::optional<vk::ClearValue> clear = {});
 
     LogicalPass& setOutputWindow(WindowPtr const& window);
     LogicalPass& setProcessCallback(std::function<void(CommandBufferPtr)> const& callback);
@@ -74,6 +67,7 @@ class FrameGraph : public Core::StaticCreate<FrameGraph> {
    private:
     struct Info {
       ResourceUsage                 mUsage;
+      ResourceAccess                mAccess;
       std::optional<vk::ClearValue> mClear;
     };
 
@@ -82,26 +76,28 @@ class FrameGraph : public Core::StaticCreate<FrameGraph> {
     WindowPtr                                        mOutputWindow;
     std::function<void(CommandBufferPtr)>            mProcessCallback;
 
-    // These members are read and written by the FrameGraph
+    // this is directly accessed by the FrameGraph
     bool mDirty = true;
   };
 
   // -----------------------------------------------------------------------------------------------
   struct PhysicalResource {
-    BackedImagePtr mImage;
+    BackedImagePtr                      mImage;
+    std::vector<LogicalResource const*> mLogicalResources;
   };
 
   // -----------------------------------------------------------------------------------------------
   struct PhysicalPass {
-    RenderPassPtr mRenderPass;
+    RenderPassPtr                   mRenderPass;
+    std::vector<LogicalPass const*> mLogicalPasses;
   };
 
   // -----------------------------------------------------------------------------------------------
 
   FrameGraph(DevicePtr const& device, FrameResourceIndexPtr const& frameIndex);
 
-  LogicalResource& addResource();
-  LogicalPass&     addPass();
+  LogicalResource& createResource();
+  LogicalPass&     createPass();
 
   void process();
 
@@ -119,9 +115,9 @@ class FrameGraph : public Core::StaticCreate<FrameGraph> {
     vk::SemaphorePtr mRenderFinishedSemaphore;
     vk::FencePtr     mFrameFinishedFence;
 
-    std::unordered_map<LogicalResource const*, PhysicalResource> mPhysicalResources;
-    std::unordered_map<LogicalPass const*, PhysicalPass>         mPhysicalPasses;
-    bool                                                         mDirty = true;
+    std::vector<PhysicalResource> mPhysicalResources;
+    std::vector<PhysicalPass>     mPhysicalPasses;
+    bool                          mDirty = true;
   };
 
   FrameResource<PerFrame> mPerFrame;

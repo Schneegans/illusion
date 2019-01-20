@@ -20,6 +20,8 @@
 
 int main(int argc, char* argv[]) {
 
+  Illusion::Core::Logger::enableTrace = true;
+
   auto instance = Illusion::Graphics::Instance::create("Deferred Rendering Demo");
   auto device   = Illusion::Graphics::Device::create(instance->getPhysicalDevice());
   auto window   = Illusion::Graphics::Window::create(instance, device);
@@ -28,44 +30,48 @@ int main(int argc, char* argv[]) {
   auto graph = Illusion::Graphics::FrameGraph::create(device, index);
 
   // create resources ------------------------------------------------------------------------------
-  auto& albedo = graph->addResource().setName("albedo").setFormat(vk::Format::eR8G8B8Unorm);
-  auto& normal = graph->addResource().setName("normal").setFormat(vk::Format::eR8G8B8Unorm);
-  auto& depth  = graph->addResource().setName("depth").setFormat(vk::Format::eD32Sfloat);
-  auto& opaque = graph->addResource().setName("opaque").setFormat(vk::Format::eR32G32B32Sfloat);
-  auto& trans  = graph->addResource().setName("trans").setFormat(vk::Format::eR32G32B32A32Sfloat);
+  auto& albedo = graph->createResource().setName("albedo").setFormat(vk::Format::eR8G8B8Unorm);
+  auto& normal = graph->createResource().setName("normal").setFormat(vk::Format::eR8G8B8Unorm);
+  auto& depth  = graph->createResource().setName("depth").setFormat(vk::Format::eD32Sfloat);
+  auto& hdr    = graph->createResource().setName("hdr").setFormat(vk::Format::eR32G32B32Sfloat);
 
   // create passes ---------------------------------------------------------------------------------
-  graph->addPass()
+  using Usage  = Illusion::Graphics::FrameGraph::ResourceUsage;
+  using Access = Illusion::Graphics::FrameGraph::ResourceAccess;
+
+  auto clearColor = vk::ClearColorValue(std::array<float, 4>{{0.f, 0.f, 0.f, 0.f}});
+  auto clearDepth = vk::ClearDepthStencilValue(1.f, 0u);
+
+  graph->createPass()
       .setName("gbuffer")
-      .addOutputAttachment(albedo, vk::ClearColorValue(std::array<float, 4>{{0.f, 0.f, 0.f, 0.f}}))
-      .addOutputAttachment(normal, vk::ClearColorValue(std::array<float, 4>{{0.f, 0.f, 0.f, 0.f}}))
-      .addOutputAttachment(depth, vk::ClearDepthStencilValue(1.f, 0u))
+      .assignResource(albedo, Usage::eColorAttachment, Access::eWriteOnly, clearColor)
+      .assignResource(normal, Usage::eColorAttachment, Access::eWriteOnly, clearColor)
+      .assignResource(depth, Usage::eDepthAttachment, Access::eWriteOnly, clearDepth)
       .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
         ILLUSION_MESSAGE << "Record gbuffer pass!" << std::endl;
       });
 
-  graph->addPass()
+  graph->createPass()
       .setName("lighting")
-      .addInputAttachment(albedo)
-      .addInputAttachment(normal)
-      .addInputAttachment(depth)
-      .addOutputAttachment(opaque)
+      .assignResource(albedo, Usage::eColorAttachment, Access::eReadOnly)
+      .assignResource(normal, Usage::eColorAttachment, Access::eReadOnly)
+      .assignResource(depth, Usage::eColorAttachment, Access::eReadOnly)
+      .assignResource(hdr, Usage::eColorAttachment, Access::eWriteOnly)
       .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
         ILLUSION_MESSAGE << "Record lighting pass!" << std::endl;
       });
 
-  graph->addPass()
+  graph->createPass()
       .setName("transparencies")
-      .addBlendAttachment(depth)
-      .addOutputAttachment(trans, vk::ClearColorValue(std::array<float, 4>{{0.f, 0.f, 0.f, 0.f}}))
+      .assignResource(depth, Usage::eDepthAttachment, Access::eReadOnly)
+      .assignResource(hdr, Usage::eColorAttachment, Access::eBlend)
       .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
         ILLUSION_MESSAGE << "Record transparencies pass!" << std::endl;
       });
 
-  graph->addPass()
+  graph->createPass()
       .setName("tonemapping")
-      .addInputAttachment(opaque)
-      .addInputAttachment(trans)
+      .assignResource(hdr, Usage::eColorAttachment, Access::eReadOnly)
       .setOutputWindow(window)
       .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
         ILLUSION_MESSAGE << "Record tonemapping pass!" << std::endl;
