@@ -9,6 +9,7 @@
 #ifndef ILLUSION_GRAPHICS_INSTANCE_HPP
 #define ILLUSION_GRAPHICS_INSTANCE_HPP
 
+#include "../Core/NamedObject.hpp"
 #include "../Core/StaticCreate.hpp"
 #include "fwd.hpp"
 
@@ -23,11 +24,11 @@ namespace Illusion::Graphics {
 // have a Device, you can create all othe Vulkan resources.                                       //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class Instance : public Core::StaticCreate<Instance> {
+class Instance : public Core::StaticCreate<Instance>, public Core::NamedObject {
 
  public:
   // When debugMode is set to true, validation layers will be loaded.
-  explicit Instance(std::string const& appName, bool debugMode = true);
+  explicit Instance(std::string const& name, bool debugMode = true);
   virtual ~Instance();
 
   // Tries to find a physical device which supports the given extensions.
@@ -35,16 +36,19 @@ class Instance : public Core::StaticCreate<Instance> {
       std::vector<std::string> const& extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME}) const;
 
   // This is used by the Window class.
-  vk::SurfaceKHRPtr createSurface(GLFWwindow* window) const;
+  vk::SurfaceKHRPtr createSurface(std::string const& name, GLFWwindow* window) const;
+
+  // Access to the underlying vk::instance
+  vk::InstancePtr getHandle() const;
 
  private:
   vk::InstancePtr createInstance(std::string const& engine, std::string const& app) const;
-  vk::DebugReportCallbackEXTPtr createDebugCallback() const;
+  vk::DebugUtilsMessengerEXTPtr createDebugCallback() const;
 
   bool mDebugMode = false;
 
   vk::InstancePtr                mInstance;
-  vk::DebugReportCallbackEXTPtr  mDebugCallback;
+  vk::DebugUtilsMessengerEXTPtr  mDebugCallback;
   std::vector<PhysicalDevicePtr> mPhysicalDevices;
 };
 

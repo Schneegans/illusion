@@ -6,32 +6,28 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_BACKED_IMAGE_HPP
-#define ILLUSION_GRAPHICS_BACKED_IMAGE_HPP
+#include "NamedObject.hpp"
 
-#include "fwd.hpp"
-
-namespace Illusion::Graphics {
+namespace Illusion::Core {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// A BackedImage stores a vk::Image, a vk::ImageView for this image and the vk::DeviceMemory      //
-// backing the image. Additionally all create-info objects are stored in order to access the      //
-// properties of the  image, the view and the memory. Use the Device class to easily create a     //
-// BackedImage.                                                                                   //
+
+NamedObject::NamedObject(std::string const& name)
+    : mName(name) {
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct BackedImage {
-  vk::DeviceMemoryPtr mMemory;
-  vk::ImagePtr        mImage;
-  vk::ImageViewPtr    mView;
+std::string const& NamedObject::getName() const {
+  return mName;
+}
 
-  vk::MemoryAllocateInfo  mMemoryInfo;
-  vk::ImageCreateInfo     mImageInfo;
-  vk::ImageViewCreateInfo mViewInfo;
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  vk::ImageLayout mCurrentLayout = vk::ImageLayout::eUndefined;
-};
+void NamedObject::setName(std::string const& name) {
+  mName = name;
+}
 
-} // namespace Illusion::Graphics
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#endif // ILLUSION_GRAPHICS_BACKED_IMAGE_HPP
+} // namespace Illusion::Core

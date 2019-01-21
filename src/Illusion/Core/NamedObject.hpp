@@ -6,32 +6,34 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_BACKED_IMAGE_HPP
-#define ILLUSION_GRAPHICS_BACKED_IMAGE_HPP
+#ifndef ILLUSION_CORE_NAMED_OBJECT_HPP
+#define ILLUSION_CORE_NAMED_OBJECT_HPP
 
-#include "fwd.hpp"
+#include <string>
 
-namespace Illusion::Graphics {
+namespace Illusion::Core {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// A BackedImage stores a vk::Image, a vk::ImageView for this image and the vk::DeviceMemory      //
-// backing the image. Additionally all create-info objects are stored in order to access the      //
-// properties of the  image, the view and the memory. Use the Device class to easily create a     //
-// BackedImage.                                                                                   //
+// The NamedObject is a tiny base class for all types which carry a human-readable name. This may //
+// be very useful for debugging purposes. Usually the name is supposed to be immutable, but in    //
+// order to support default-constructed derived classes, there is a default constructor. When     //
+// this is used, derived classes should call setName() as soon as possible.                       //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct BackedImage {
-  vk::DeviceMemoryPtr mMemory;
-  vk::ImagePtr        mImage;
-  vk::ImageViewPtr    mView;
+class NamedObject {
+ public:
+  NamedObject(std::string const& name = "Unamed Object");
 
-  vk::MemoryAllocateInfo  mMemoryInfo;
-  vk::ImageCreateInfo     mImageInfo;
-  vk::ImageViewCreateInfo mViewInfo;
+  // Returns the name of the NamedObject.
+  std::string const& getName() const;
 
-  vk::ImageLayout mCurrentLayout = vk::ImageLayout::eUndefined;
+ protected:
+  void setName(std::string const& name);
+
+ private:
+  std::string mName;
 };
 
-} // namespace Illusion::Graphics
+} // namespace Illusion::Core
 
-#endif // ILLUSION_GRAPHICS_BACKED_IMAGE_HPP
+#endif // ILLUSION_CORE_NAMED_OBJECT_HPP

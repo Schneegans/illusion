@@ -21,10 +21,10 @@ namespace Illusion::Graphics {
 // swapchain image.                                                                               //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class Swapchain : public Core::StaticCreate<Swapchain> {
+class Swapchain : public Core::StaticCreate<Swapchain>, public Core::NamedObject {
  public:
   // This is called by the Window.
-  Swapchain(DevicePtr const& device, vk::SurfaceKHRPtr const& surface);
+  Swapchain(std::string const& name, DevicePtr const& device, vk::SurfaceKHRPtr const& surface);
   virtual ~Swapchain();
 
   // For now, vk::PresentModeKHR::eFifo is used for v-sync, for no v-sync either

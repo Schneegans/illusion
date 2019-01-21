@@ -9,6 +9,7 @@
 #ifndef ILLUSION_GRAPHICS_RENDERTARGET_HPP
 #define ILLUSION_GRAPHICS_RENDERTARGET_HPP
 
+#include "../Core/NamedObject.hpp"
 #include "../Core/StaticCreate.hpp"
 #include "fwd.hpp"
 
@@ -19,9 +20,9 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class Framebuffer : public Core::StaticCreate<Framebuffer> {
+class Framebuffer : public Core::StaticCreate<Framebuffer>, public Core::NamedObject {
  public:
-  Framebuffer(DevicePtr const& device, vk::RenderPassPtr const& renderPass,
+  Framebuffer(std::string const& name, DevicePtr const& device, vk::RenderPassPtr const& renderPass,
       glm::uvec2 const& extent, std::vector<vk::Format> const& attachments);
 
   virtual ~Framebuffer();

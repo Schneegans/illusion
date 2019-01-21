@@ -20,17 +20,19 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Swapchain::Swapchain(DevicePtr const& device, vk::SurfaceKHRPtr const& surface)
-    : mDevice(device)
+Swapchain::Swapchain(
+    std::string const& name, DevicePtr const& device, vk::SurfaceKHRPtr const& surface)
+    : Core::NamedObject(name)
+    , mDevice(device)
     , mSurface(surface) {
 
-  ILLUSION_TRACE << "Creating Swapchain." << std::endl;
+  Core::Logger::traceCreation("Swapchain", getName());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Swapchain::~Swapchain() {
-  ILLUSION_TRACE << "Deleting Swapchain." << std::endl;
+  Core::Logger::traceDeletion("Swapchain", getName());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -75,7 +77,7 @@ void Swapchain::present(BackedImagePtr const& image,
 
     mImages = mDevice->getHandle()->getSwapchainImagesKHR(*mSwapchain);
 
-    auto cmd = std::make_shared<CommandBuffer>(mDevice);
+    auto cmd = std::make_shared<CommandBuffer>("Transition swapchain image layouts", mDevice);
     cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
     for (auto const& image : mImages) {
       cmd->transitionImageLayout(image, vk::ImageLayout::eUndefined,
@@ -105,7 +107,7 @@ void Swapchain::present(BackedImagePtr const& image,
   }
 
   if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR) {
-    ILLUSION_ERROR << "Suboptimal swap chain!" << std::endl;
+    Core::Logger::error() << "Suboptimal swap chain!" << std::endl;
   }
 
   // copy image ------------------------------------------------------------------------------------
@@ -178,10 +180,10 @@ void Swapchain::present(BackedImagePtr const& image,
 
       if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) {
         // when does this happen?
-        ILLUSION_ERROR << "out of date 1!" << std::endl;
+        Core::Logger::error() << "out of date 1!" << std::endl;
       } else if (result != vk::Result::eSuccess) {
         // when does this happen?
-        ILLUSION_ERROR << "out of date 2!" << std::endl;
+        Core::Logger::error() << "out of date 2!" << std::endl;
       }
     } catch (...) { mDirty = true; }
   }
@@ -198,7 +200,7 @@ void Swapchain::chooseExtent() {
   } else {
 
     // when does this happen?
-    ILLUSION_WARNING << "TODO" << std::endl;
+    Core::Logger::warning() << "TODO" << std::endl;
     mExtent = {500, 500};
 
     mExtent.x = std::max(
@@ -238,7 +240,7 @@ void Swapchain::createSwapchain() {
   auto presentModes = mDevice->getPhysicalDevice()->getSurfacePresentModesKHR(*mSurface);
 
   // Fifo is actually required to be supported and is a decent choice for V-Sync
-  vk::PresentModeKHR presentMode{vk::PresentModeKHR::eFifo};
+  vk::PresentModeKHR presentMode = vk::PresentModeKHR::eFifo;
 
   if (!mEnableVsync) {
     // Immediate is an option for no V-Sync but will result in tearing
@@ -285,27 +287,30 @@ void Swapchain::createSwapchain() {
   // presentation support
   if (!mDevice->getPhysicalDevice()->getSurfaceSupportKHR(
           mDevice->getPhysicalDevice()->getQueueFamily(QueueType::eGeneric), *mSurface)) {
-    ILLUSION_ERROR << "The selected queue family does not "
-                   << "support presentation!" << std::endl;
+    Core::Logger::error() << "The selected queue family does not "
+                          << "support presentation!" << std::endl;
   }
 
-  mSwapchain = mDevice->createSwapChainKhr(info);
+  mSwapchain = mDevice->createSwapChainKhr(getName(), info);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Swapchain::createSemaphores() {
-  for (auto const& i : mImages) {
-    mImageAvailableSemaphores.push_back(mDevice->createSemaphore());
-    mCopyFinishedSemaphores.push_back(mDevice->createSemaphore());
+  for (size_t i(0); i < mImages.size(); ++i) {
+    mImageAvailableSemaphores.push_back(
+        mDevice->createSemaphore("ImageAvailable " + std::to_string(i) + " of " + getName()));
+    mCopyFinishedSemaphores.push_back(
+        mDevice->createSemaphore("ImageCopyFinished " + std::to_string(i) + " of " + getName()));
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Swapchain::createCommandBuffers() {
-  for (auto const& i : mImages) {
-    mPresentCommandBuffers.push_back(std::make_shared<CommandBuffer>(mDevice));
+  for (size_t i(0); i < mImages.size(); ++i) {
+    mPresentCommandBuffers.push_back(std::make_shared<CommandBuffer>(
+        "Presentation " + std::to_string(i) + " of " + getName(), mDevice));
   }
 }
 

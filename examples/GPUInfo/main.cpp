@@ -6,32 +6,18 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_CORE_SCOPED_TIMER_HPP
-#define ILLUSION_CORE_SCOPED_TIMER_HPP
-
-#include "NamedObject.hpp"
-#include <string>
-
-namespace Illusion::Core {
+#include <Illusion/Graphics/Instance.hpp>
+#include <Illusion/Graphics/PhysicalDevice.hpp>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Can be used to measure time taken by some part of code.                                        //
+// This minimal example creates a Vulkan instance and prints a very verbose list of your Vulkan   //
+// implementation's hardware and software capabilities.                                           //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class ScopedTimer : public NamedObject {
- public:
-  explicit ScopedTimer(std::string const& name);
+int main() {
 
-  // The desctructor will print the time elapsed since the constructor was called. The print is done
-  // using ILLUSION_DEBUG from the Logger class.
-  virtual ~ScopedTimer();
+  auto instance = Illusion::Graphics::Instance::create("GPUInfo");
+  instance->getPhysicalDevice()->printInfo();
 
- private:
-  double getNow();
-
-  double mStartTime;
-};
-
-} // namespace Illusion::Core
-
-#endif // ILLUSION_CORE_SCOPED_TIMER_HPP
+  return 0;
+}

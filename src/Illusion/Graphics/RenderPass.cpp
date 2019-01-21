@@ -20,16 +20,17 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-RenderPass::RenderPass(DevicePtr const& device)
-    : mDevice(device) {
+RenderPass::RenderPass(std::string const& name, DevicePtr const& device)
+    : Core::NamedObject(name)
+    , mDevice(device) {
 
-  ILLUSION_TRACE << "Creating RenderPass." << std::endl;
+  Core::Logger::traceCreation("RenderPass", getName());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 RenderPass::~RenderPass() {
-  ILLUSION_TRACE << "Deleting RenderPass." << std::endl;
+  Core::Logger::traceDeletion("RenderPass", getName());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -41,9 +42,9 @@ void RenderPass::init() {
     mFramebuffer.reset();
     mRenderPass.reset();
 
-    mRenderPass = createRenderPass();
-    mFramebuffer =
-        std::make_shared<Framebuffer>(mDevice, mRenderPass, mExtent, mFrameBufferAttachmentFormats);
+    mRenderPass  = createRenderPass();
+    mFramebuffer = std::make_shared<Framebuffer>("Framebuffer of " + getName(), mDevice,
+        mRenderPass, mExtent, mFrameBufferAttachmentFormats);
 
     mAttachmentsDirty = false;
   }
@@ -174,7 +175,7 @@ vk::RenderPassPtr RenderPass::createRenderPass() const {
     info.subpassCount    = 1;
     info.pSubpasses      = &subPass;
 
-    return mDevice->createRenderPass(info);
+    return mDevice->createRenderPass(getName(), info);
   }
 
   std::vector<vk::SubpassDescription>               subPasses(mSubPasses.size());
@@ -225,7 +226,7 @@ vk::RenderPassPtr RenderPass::createRenderPass() const {
   info.dependencyCount = static_cast<uint32_t>(dependencies.size());
   info.pDependencies   = dependencies.data();
 
-  return mDevice->createRenderPass(info);
+  return mDevice->createRenderPass(getName(), info);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

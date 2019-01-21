@@ -10,6 +10,7 @@
 #define ILLUSION_GRAPHICS_GLTF_MODEL_HPP
 
 #include "../Core/Flags.hpp"
+#include "../Core/NamedObject.hpp"
 #include "../Core/StaticCreate.hpp"
 #include "fwd.hpp"
 
@@ -48,11 +49,12 @@ typedef Core::Flags<LoadOptionBits> LoadOptions;
 // For now, multiple scenes, sparse accessors and morph targets are not supported.                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class Model : public Core::StaticCreate<Model> {
+class Model : public Core::StaticCreate<Model>, public Core::NamedObject {
  public:
   // Creates a new Gltf::Model. The fileName should either be a *.gltf or a *.glb file. With the
-  // options parameter you can prevent loading of some components such as textures.
-  Model(DevicePtr const& device, std::string const& fileName,
+  // options parameter you can prevent loading of some components such as textures. It is a good
+  // idea to give the object a descriptive name.
+  Model(std::string const& name, DevicePtr const& device, std::string const& fileName,
       LoadOptions options = LoadOptionBits::eAll);
 
   // Updates all transformations of all Nodes according to the given animation and time. The time is

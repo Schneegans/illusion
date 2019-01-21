@@ -37,8 +37,10 @@ const std::unordered_map<PipelineResource::ResourceType, vk::DescriptorType> res
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-DescriptorSetReflection::DescriptorSetReflection(DevicePtr const& device, uint32_t set)
-    : mDevice(device)
+DescriptorSetReflection::DescriptorSetReflection(
+    std::string const& name, DevicePtr const& device, uint32_t set)
+    : Core::NamedObject(name)
+    , mDevice(device)
     , mSet(set) {
 }
 
@@ -123,7 +125,8 @@ vk::DescriptorSetLayoutPtr DescriptorSetReflection::getLayout() const {
     descriptorSetLayoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
     descriptorSetLayoutInfo.pBindings    = bindings.data();
 
-    mLayout = mDevice->createDescriptorSetLayout(descriptorSetLayoutInfo);
+    mLayout = mDevice->createDescriptorSetLayout(
+        "DescriptorSetLayout for " + getName(), descriptorSetLayoutInfo);
   }
 
   return mLayout;
@@ -160,23 +163,25 @@ void DescriptorSetReflection::printInfo() const {
   std::function<void(PipelineResource::Member const&, int)> printMemberInfo =
       [&printMemberInfo, &baseTypes](PipelineResource::Member const& m, int indent) {
 
-        ILLUSION_MESSAGE << std::string(indent * 2, ' ') << "- \"" << m.mName
-                         << "\", type: " << baseTypes.find(m.mBaseType)->second
-                         << ", dims: " << m.mColumns << "x" << m.mVecSize << "[" << m.mArraySize
-                         << "], size: " << m.mSize << ", offset: " << m.mOffset << std::endl;
+        Core::Logger::message() << std::string(indent * 2, ' ') << "- \"" << m.mName
+                                << "\", type: " << baseTypes.find(m.mBaseType)->second
+                                << ", dims: " << m.mColumns << "x" << m.mVecSize << "["
+                                << m.mArraySize << "], size: " << m.mSize
+                                << ", offset: " << m.mOffset << std::endl;
 
         for (auto const& member : m.mMembers) {
           printMemberInfo(member, indent + 1);
         }
       };
 
-  ILLUSION_MESSAGE << "Set: " << mSet << std::endl;
+  Core::Logger::message() << "Set: " << mSet << std::endl;
   for (auto const& pair : mResources) {
     auto const& r = pair.second;
-    ILLUSION_MESSAGE << "  - \"" << r.mName << "\" (" << resourceTypes.find(r.mResourceType)->second
-                     << ", " << vk::to_string(r.mStages) << ", access: " << vk::to_string(r.mAccess)
-                     << ", set: " << r.mSet << ", binding: " << r.mBinding
-                     << ", location: " << r.mLocation << ")" << std::endl;
+    Core::Logger::message() << "  - \"" << r.mName << "\" ("
+                            << resourceTypes.find(r.mResourceType)->second << ", "
+                            << vk::to_string(r.mStages) << ", access: " << vk::to_string(r.mAccess)
+                            << ", set: " << r.mSet << ", binding: " << r.mBinding
+                            << ", location: " << r.mLocation << ")" << std::endl;
     for (auto const& member : r.mMembers) {
       printMemberInfo(member, 2);
     }

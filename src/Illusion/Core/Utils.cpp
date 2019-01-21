@@ -6,34 +6,46 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "ScopedTimer.hpp"
+#include "Utils.hpp"
 
-#include "Logger.hpp"
-#include <chrono>
-#include <iostream>
+#include <sstream>
 
-namespace Illusion::Core {
+namespace Illusion::Core::Utils {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ScopedTimer::ScopedTimer(std::string const& name)
-    : NamedObject(name)
-    , mStartTime(getNow()) {
+std::vector<std::string> splitString(std::string const& s, char delim) {
+  std::vector<std::string> elems;
+
+  std::stringstream ss(s);
+  std::string       item;
+
+  while (std::getline(ss, item, delim)) {
+    elems.push_back(item);
+  }
+
+  return elems;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ScopedTimer::~ScopedTimer() {
-  Logger::message() << getName() << ": " << getNow() - mStartTime << " ms " << std::endl;
+bool stringContains(std::string const& s, char c) {
+  return s.find(c) != std::string::npos;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-double ScopedTimer::getNow() {
-  auto time = std::chrono::system_clock::now().time_since_epoch();
-  return std::chrono::duration_cast<std::chrono::microseconds>(time).count() * 0.001;
+uint32_t replaceString(std::string& s, std::string const& oldString, std::string const& newString) {
+  size_t   searchPos  = 0;
+  uint32_t occurences = 0;
+  while ((searchPos = s.find(oldString, searchPos)) != std::string::npos) {
+    s.replace(searchPos, oldString.length(), newString);
+    searchPos += newString.length();
+    ++occurences;
+  }
+  return occurences;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-} // namespace Illusion::Core
+} // namespace Illusion::Core::Utils

@@ -18,8 +18,9 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-PipelineReflection::PipelineReflection(DevicePtr const& device)
-    : mDevice(device) {
+PipelineReflection::PipelineReflection(std::string const& name, DevicePtr const& device)
+    : Core::NamedObject(name)
+    , mDevice(device) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -53,7 +54,7 @@ void PipelineReflection::addResource(PipelineResource const& resource) {
       map = &mInputs;
     } else if (resource.mResourceType == PipelineResource::ResourceType::eOutput) {
       map = &mOutputs;
-    } else if (resource.mResourceType == PipelineResource::ResourceType::ePushConstantBuffer) {
+    } else /*if (resource.mResourceType == PipelineResource::ResourceType::ePushConstantBuffer)*/ {
       map = &mPushConstantBuffers;
     }
 
@@ -68,8 +69,10 @@ void PipelineReflection::addResource(PipelineResource const& resource) {
   }
 
   while (mDescriptorSetReflections.size() <= resource.mSet) {
-    mDescriptorSetReflections.emplace_back(
-        std::make_shared<DescriptorSetReflection>(mDevice, mDescriptorSetReflections.size()));
+    mDescriptorSetReflections.emplace_back(std::make_shared<DescriptorSetReflection>(
+        "DescriptorSetReflection " + std::to_string(mDescriptorSetReflections.size()) + " of " +
+            getName(),
+        mDevice, mDescriptorSetReflections.size()));
   }
 
   mDescriptorSetReflections[resource.mSet]->addResource(resource);
@@ -146,7 +149,7 @@ vk::PipelineLayoutPtr const& PipelineReflection::getLayout() const {
     pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(pushConstantRanges.size());
     pipelineLayoutInfo.pPushConstantRanges    = pushConstantRanges.data();
 
-    mLayout = mDevice->createPipelineLayout(pipelineLayoutInfo);
+    mLayout = mDevice->createPipelineLayout("PipelineLayout for " + getName(), pipelineLayoutInfo);
   }
 
   return mLayout;
@@ -155,25 +158,25 @@ vk::PipelineLayoutPtr const& PipelineReflection::getLayout() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PipelineReflection::printInfo() const {
-  ILLUSION_MESSAGE << "Inputs" << std::endl;
+  Core::Logger::message() << "Inputs" << std::endl;
   for (auto const& r : mInputs) {
-    ILLUSION_MESSAGE << "  - \"" << r.second.mName << "\" (" << vk::to_string(r.second.mStages)
-                     << ", binding: " << r.second.mBinding << ", location: " << r.second.mLocation
-                     << ")" << std::endl;
+    Core::Logger::message() << "  - \"" << r.second.mName << "\" ("
+                            << vk::to_string(r.second.mStages) << ", binding: " << r.second.mBinding
+                            << ", location: " << r.second.mLocation << ")" << std::endl;
   }
 
-  ILLUSION_MESSAGE << "Outputs" << std::endl;
+  Core::Logger::message() << "Outputs" << std::endl;
   for (auto const& r : mOutputs) {
-    ILLUSION_MESSAGE << "  - \"" << r.second.mName << "\" (" << vk::to_string(r.second.mStages)
-                     << ", binding: " << r.second.mBinding << ", location: " << r.second.mLocation
-                     << ")" << std::endl;
+    Core::Logger::message() << "  - \"" << r.second.mName << "\" ("
+                            << vk::to_string(r.second.mStages) << ", binding: " << r.second.mBinding
+                            << ", location: " << r.second.mLocation << ")" << std::endl;
   }
 
-  ILLUSION_MESSAGE << "PushConstants" << std::endl;
+  Core::Logger::message() << "PushConstants" << std::endl;
   for (auto const& r : mPushConstantBuffers) {
-    ILLUSION_MESSAGE << "  - \"" << r.second.mName << "\" (" << vk::to_string(r.second.mStages)
-                     << ", size: " << r.second.mSize << ", offset: " << r.second.mOffset << ")"
-                     << std::endl;
+    Core::Logger::message() << "  - \"" << r.second.mName << "\" ("
+                            << vk::to_string(r.second.mStages) << ", size: " << r.second.mSize
+                            << ", offset: " << r.second.mOffset << ")" << std::endl;
   }
 
   for (auto const& s : mDescriptorSetReflections) {

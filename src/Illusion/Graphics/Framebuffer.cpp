@@ -19,20 +19,22 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Framebuffer::Framebuffer(DevicePtr const& device, vk::RenderPassPtr const& renderPass,
-    glm::uvec2 const& extent, std::vector<vk::Format> const& attachments)
-    : mDevice(device)
+Framebuffer::Framebuffer(std::string const& name, DevicePtr const& device,
+    vk::RenderPassPtr const& renderPass, glm::uvec2 const& extent,
+    std::vector<vk::Format> const& attachments)
+    : Core::NamedObject(name)
+    , mDevice(device)
     , mRenderPass(renderPass)
     , mExtent(extent) {
 
-  ILLUSION_TRACE << "Creating Framebuffer." << std::endl;
+  Core::Logger::traceCreation("Framebuffer", getName());
 
-  for (auto attachment : attachments) {
+  for (size_t i(0); i < attachments.size(); ++i) {
     vk::ImageAspectFlags aspect;
 
-    if (Utils::isDepthOnlyFormat(attachment)) {
+    if (Utils::isDepthOnlyFormat(attachments[i])) {
       aspect |= vk::ImageAspectFlagBits::eDepth;
-    } else if (Utils::isDepthStencilFormat(attachment)) {
+    } else if (Utils::isDepthStencilFormat(attachments[i])) {
       aspect |= vk::ImageAspectFlagBits::eDepth;
       aspect |= vk::ImageAspectFlagBits::eStencil;
     } else {
@@ -45,14 +47,14 @@ Framebuffer::Framebuffer(DevicePtr const& device, vk::RenderPassPtr const& rende
         vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc;
     vk::ImageLayout layout = vk::ImageLayout::eColorAttachmentOptimal;
 
-    if (Utils::isDepthFormat(attachment)) {
+    if (Utils::isDepthFormat(attachments[i])) {
       usage  = vk::ImageUsageFlagBits::eDepthStencilAttachment;
       layout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
     }
 
     vk::ImageCreateInfo imageInfo;
     imageInfo.imageType     = vk::ImageType::e2D;
-    imageInfo.format        = attachment;
+    imageInfo.format        = attachments[i];
     imageInfo.extent.width  = extent.x;
     imageInfo.extent.height = extent.y;
     imageInfo.extent.depth  = 1;
@@ -64,8 +66,9 @@ Framebuffer::Framebuffer(DevicePtr const& device, vk::RenderPassPtr const& rende
     imageInfo.sharingMode   = vk::SharingMode::eExclusive;
     imageInfo.initialLayout = vk::ImageLayout::eUndefined;
 
-    auto image = mDevice->createBackedImage(imageInfo, vk::ImageViewType::e2D, aspect,
-        vk::MemoryPropertyFlagBits::eDeviceLocal, layout);
+    auto image = mDevice->createBackedImage("Attachment " + std::to_string(i) + " of " + getName(),
+        imageInfo, vk::ImageViewType::e2D, aspect, vk::MemoryPropertyFlagBits::eDeviceLocal,
+        layout);
 
     mImageStore.push_back(image);
   }
@@ -84,13 +87,13 @@ Framebuffer::Framebuffer(DevicePtr const& device, vk::RenderPassPtr const& rende
   info.height          = mExtent.y;
   info.layers          = 1;
 
-  mFramebuffer = mDevice->createFramebuffer(info);
+  mFramebuffer = mDevice->createFramebuffer(getName(), info);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Framebuffer::~Framebuffer() {
-  ILLUSION_TRACE << "Deleting Framebuffer." << std::endl;
+  Core::Logger::traceDeletion("Framebuffer", getName());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

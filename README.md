@@ -8,8 +8,8 @@ In order to learn the concepts behind Vulkan, I am creating Illusion. For now, I
 [![Build Status](https://travis-ci.org/Simmesimme/illusion.svg?branch=develop)](https://travis-ci.org/Simmesimme/illusion/branches)
 ![license](https://img.shields.io/badge/license-MIT-blue.svg)
 ![code](https://img.shields.io/badge/code-C++17-orange.svg)
-![loc](https://img.shields.io/badge/loc-10.7k-green.svg)
-![code](https://img.shields.io/badge/comments-1.8k-green.svg)
+![loc](https://img.shields.io/badge/loc-10.9k-green.svg)
+![code](https://img.shields.io/badge/comments-1.9k-green.svg)
 
 Illusion uses C++17 and can be build on Linux (gcc or clang), Windows (msvc) and OS X (xcode). Nearly all dependencies are included as [git submodules](externals), please refer to the section [Building Illusion](#building-illusion) in order to get started.
 
@@ -19,6 +19,7 @@ Illusion uses C++17 and can be build on Linux (gcc or clang), Windows (msvc) and
   - [x] Window creation using [glfw](https://github.com/glfw/glfw)
   - [x] Automatic Vulkan object lifetime management using reference counting
   - [x] Automatic resource re-creation on swapchain changes
+  - [x] Very readable validation error messages since Illusion forces you to assign descriptive names to each and every Vulkan object
   - [x] Explicit graphics state per command buffer
   - [x] Explicit binding state per command buffer
   - [x] A ring-buffer for per-frame resources
@@ -124,6 +125,7 @@ The list below is roughly sorted by complexity. So if you want to learn features
 
 Link | Description | Screenshot
 -----|-------------|-----------
+[GPUInfo](examples/GPUInfo) | This minimal example creates a Vulkan instance and prints a very verbose list of your Vulkan implementation's hardware and software capabilities. | ![screenshot](examples/GPUInfo/screenshot.jpg)
 [Triangle](examples/Triangle) | A simple triangle without vertex or index buffers that uses a pre-recorded command buffer and no per-frame resources. | ![screenshot](examples/Triangle/screenshot.jpg)
 [TexturedQuad](examples/TexturedQuad) | Similar to the triangle, in addition a texture is loaded and bound as fragment shader input. This example can either use GLSL or HLSL shaders. Use `TexturedQuad --help` to see the options. | ![screenshot](examples/TexturedQuad/screenshot.jpg)
 [ShaderSandbox](examples/ShaderSandbox) | An example similar to [ShaderToy](https://www.shadertoy.com). You can specify a fragment shader on the command line and it will be automatically reloaded when it changes on disc. Use `ShaderSandbox --help` to see the options. | ![screenshot](examples/ShaderSandbox/screenshot.jpg)

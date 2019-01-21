@@ -10,6 +10,7 @@
 set(ENABLED_EXAMPLES
   "DeferredRendering"
   "GltfViewer"
+  "GPUInfo"
   "ShaderSandbox"
   "TexturedCube"
   "TexturedQuad"

@@ -15,18 +15,25 @@
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// The PhysicalDevice is a representation of a real hardware device of your system. You can use   //
+// it to query information on the capabilites of your GPU. You will need a PhysicalDevice so that //
+// you can create the actual Device which you will need to create Vulkan resources.               //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class PhysicalDevice : public vk::PhysicalDevice, public Core::StaticCreate<PhysicalDevice> {
  public:
+  // The PysicalDeviceis created by the Instance. So you do not have to create this on your own.
   PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice const& device);
 
+  // Tries to find a memory type matching both parameters.
   uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) const;
 
-  // queues of this family can do graphics, compute, transfer and presentation
+  // The PhysicalDevice will try to pick different Queues for each QueueType. If that is not
+  // possible, it might happen that two or all three QueueTypes actually refer to the same queue.
   uint32_t getQueueFamily(QueueType type) const;
   uint32_t getQueueIndex(QueueType type) const;
 
+  // Prints a complete list of your hardware capabilities to std::cout.
   void printInfo();
 
  private:

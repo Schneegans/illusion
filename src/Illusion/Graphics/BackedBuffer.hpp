@@ -20,11 +20,11 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct BackedBuffer {
-  vk::BufferPtr       mBuffer;
   vk::DeviceMemoryPtr mMemory;
+  vk::BufferPtr       mBuffer;
 
-  vk::BufferCreateInfo   mBufferInfo;
   vk::MemoryAllocateInfo mMemoryInfo;
+  vk::BufferCreateInfo   mBufferInfo;
 };
 
 } // namespace Illusion::Graphics

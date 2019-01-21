@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
   std::string shaderFile = "data/ShaderSandbox/Sandbox.frag";
   bool        printHelp  = false;
 
-  // The --trace option enables ILLUSION_TRACE output. This mainly shows when Vulkan objects are
+  // The --trace option enables Logger::trace() output. This mainly shows when Vulkan objects are
   // created and destroyed.
   Illusion::Core::CommandLineOptions args("Renders a full screen texture.");
   args.addOption({"-h", "--help"}, &printHelp, "Print this help");
@@ -49,29 +49,29 @@ int main(int argc, char* argv[]) {
 
   // Then we start setting up our Vulkan resources.
   auto instance = Illusion::Graphics::Instance::create("Shader Sandbox");
-  auto device   = Illusion::Graphics::Device::create(instance->getPhysicalDevice());
-  auto window   = Illusion::Graphics::Window::create(instance, device);
+  auto device   = Illusion::Graphics::Device::create("Device", instance->getPhysicalDevice());
+  auto window   = Illusion::Graphics::Window::create("Window", instance, device);
 
   // Then we load our shader. This shader will be automatically reloaded once it (or any file it
   // includes) changes on disc. To prevent this default behavior, you have to add a fourth "false"
   // parameter to this call. See Illusion/Graphics/Shader.hpp for details.
   auto shader = Illusion::Graphics::Shader::createFromFiles(
-      device, {"data/ShaderSandbox/Sandbox.vert", shaderFile});
+      "QuadShader", device, {"data/ShaderSandbox/Sandbox.vert", shaderFile});
 
   // We create a command buffer but do not perform any recording. This will be done each frame.
-  auto cmd = Illusion::Graphics::CommandBuffer::create(device);
+  auto cmd = Illusion::Graphics::CommandBuffer::create("CommandBuffer", device);
 
   // Then we create our render pass with one color attachment.
-  auto renderPass = Illusion::Graphics::RenderPass::create(device);
+  auto renderPass = Illusion::Graphics::RenderPass::create("RenderPass", device);
   renderPass->addAttachment(vk::Format::eR8G8B8A8Unorm);
 
   // This semaphore will be signaled when rendering has finished and the frame buffer is ready to be
   // presented on our window.
-  auto renderFinishedSemaphore = device->createSemaphore();
+  auto renderFinishedSemaphore = device->createSemaphore("RenderFinished");
 
   // This fence will be signaled when the frame buffer has been blitted to the swapchain image and
   // we are ready to start the next frame.
-  auto frameFinishedFence = device->createFence();
+  auto frameFinishedFence = device->createFence("FrameFinished");
 
   // Use a timer to get the current system time at each frame.
   Illusion::Core::Timer timer;
