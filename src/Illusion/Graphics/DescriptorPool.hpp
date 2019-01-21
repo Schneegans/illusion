@@ -9,6 +9,7 @@
 #ifndef ILLUSION_GRAPHICS_DESCRIPTOR_POOL_HPP
 #define ILLUSION_GRAPHICS_DESCRIPTOR_POOL_HPP
 
+#include "../Core/NamedObject.hpp"
 #include "../Core/StaticCreate.hpp"
 #include "fwd.hpp"
 
@@ -26,10 +27,11 @@ namespace Illusion::Graphics {
 // and returned to the allocating vk::DescriptorPool.                                             //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class DescriptorPool : public Core::StaticCreate<DescriptorPool> {
+class DescriptorPool : public Core::StaticCreate<DescriptorPool>, public Core::NamedObject {
  public:
   // The allocated DescriptorSets are created according to the given reflection.
-  DescriptorPool(DevicePtr const& device, DescriptorSetReflectionPtr const& reflection);
+  DescriptorPool(std::string const& name, DevicePtr const& device,
+      DescriptorSetReflectionPtr const& reflection);
   virtual ~DescriptorPool();
 
   // Allocates a fresh vk::DescriptorSet, may create a vk::DescriptorPool if no free pool is

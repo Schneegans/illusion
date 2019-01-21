@@ -6,32 +6,33 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_CORE_SCOPED_TIMER_HPP
-#define ILLUSION_CORE_SCOPED_TIMER_HPP
+#ifndef ILLUSION_CORE_NAMED_OBJECT_HPP
+#define ILLUSION_CORE_NAMED_OBJECT_HPP
 
-#include "NamedObject.hpp"
 #include <string>
 
 namespace Illusion::Core {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Can be used to measure time taken by some part of code.                                        //
+// The NamedObject is a tiny base class for all types which carry a human-readable name. This may //
+// be very useful for debugging purposes. Usually the name is supposed to be immutable, but in    //
+// order to support default-constructed derived classes, there is a default constructor. When     //
+// this is used, derived classes should call setName() as soon as possible.                       //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class ScopedTimer : public NamedObject {
+class NamedObject {
  public:
-  explicit ScopedTimer(std::string const& name);
+  NamedObject(std::string const& name = "Unamed Object");
 
-  // The desctructor will print the time elapsed since the constructor was called. The print is done
-  // using ILLUSION_DEBUG from the Logger class.
-  virtual ~ScopedTimer();
+  std::string const& getName() const;
+
+ protected:
+  void setName(std::string const& name);
 
  private:
-  double getNow();
-
-  double mStartTime;
+  std::string mName;
 };
 
 } // namespace Illusion::Core
 
-#endif // ILLUSION_CORE_SCOPED_TIMER_HPP
+#endif // ILLUSION_CORE_NAMED_OBJECT_HPP

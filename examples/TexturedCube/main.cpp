@@ -72,12 +72,16 @@ const std::array<uint32_t, 36> INDICES = {
 
 struct PerFrame {
   PerFrame() = default;
-  PerFrame(Illusion::Graphics::DevicePtr const& device)
-      : mCmd(Illusion::Graphics::CommandBuffer::create(device))
-      , mRenderPass(Illusion::Graphics::RenderPass::create(device))
-      , mUniformBuffer(Illusion::Graphics::CoherentUniformBuffer::create(device, sizeof(glm::mat4)))
-      , mFrameFinishedFence(device->createFence())
-      , mRenderFinishedSemaphore(device->createSemaphore()) {
+  PerFrame(uint32_t index, Illusion::Graphics::DevicePtr const& device)
+      : mCmd(Illusion::Graphics::CommandBuffer::create(
+            "CommandBuffer " + std::to_string(index), device))
+      , mRenderPass(
+            Illusion::Graphics::RenderPass::create("RenderPass " + std::to_string(index), device))
+      , mUniformBuffer(Illusion::Graphics::CoherentUniformBuffer::create(
+            "CoherentUniformBuffer " + std::to_string(index), device, sizeof(glm::mat4)))
+      , mFrameFinishedFence(device->createFence("RenderFinished " + std::to_string(index)))
+      , mRenderFinishedSemaphore(
+            device->createSemaphore("FrameFinished " + std::to_string(index))) {
 
     // In addition to a color buffer we will need a depth buffer for depth testing.
     mRenderPass->addAttachment(vk::Format::eR8G8B8A8Unorm);
@@ -109,24 +113,27 @@ struct PerFrame {
 
 int main() {
 
+  // Enable trace output. This is useful to see Vulkan object lifetime.
+  Illusion::Core::Logger::enableTrace = true;
+
   // Then we start setting up our Vulkan resources.
-  auto instance = Illusion::Graphics::Instance::create("Textured Cube Demo");
-  auto device   = Illusion::Graphics::Device::create(instance->getPhysicalDevice());
-  auto window   = Illusion::Graphics::Window::create(instance, device);
+  auto instance = Illusion::Graphics::Instance::create("TexturedCubeDemo");
+  auto device   = Illusion::Graphics::Device::create("Device", instance->getPhysicalDevice());
+  auto window   = Illusion::Graphics::Window::create("Window", instance, device);
 
   // Here we load the texture. This supports many file formats (those supported by gli and stb).
-  auto texture =
-      Illusion::Graphics::Texture::createFromFile(device, "data/TexturedCube/textures/box.dds");
+  auto texture = Illusion::Graphics::Texture::createFromFile(
+      "BoxTexture", device, "data/TexturedCube/textures/box.dds");
 
   // Load the shader. You can have a look at the files for some more comments on how they work.
-  auto shader = Illusion::Graphics::Shader::createFromFiles(
-      device, {"data/TexturedCube/shaders/Cube.vert", "data/TexturedCube/shaders/Cube.frag"});
+  auto shader = Illusion::Graphics::Shader::createFromFiles("CubeShader", device,
+      {"data/TexturedCube/shaders/Cube.vert", "data/TexturedCube/shaders/Cube.frag"});
 
   // Here we create our three vertex buffers and one index buffer.
-  auto positionBuffer = device->createVertexBuffer(POSITIONS);
-  auto normalBuffer   = device->createVertexBuffer(NORMALS);
-  auto texcoordBuffer = device->createVertexBuffer(TEXCOORDS);
-  auto indexBuffer    = device->createIndexBuffer(INDICES);
+  auto positionBuffer = device->createVertexBuffer("CubePositions", POSITIONS);
+  auto normalBuffer   = device->createVertexBuffer("CubeNormals", NORMALS);
+  auto texcoordBuffer = device->createVertexBuffer("CubeTexcoords", TEXCOORDS);
+  auto indexBuffer    = device->createIndexBuffer("CubeIndices", INDICES);
 
   // Here begin the interesting bits. In Illusion, per-frame resources are implemented with two
   // classes: The FrameResourceIndex keeps track of an index (a simple uint32_t) in a ring-buffer
@@ -146,7 +153,7 @@ int main() {
   // wrapped type. So in this example, the lambda is executed two times, once for each ring buffer
   // index.
   Illusion::Graphics::FrameResource<PerFrame> perFrame(
-      frameIndex, [=]() { return PerFrame(device); });
+      frameIndex, [=](uint32_t index) { return PerFrame(index, device); });
 
   // Use a timer to get the current system time at each frame.
   Illusion::Core::Timer timer;

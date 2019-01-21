@@ -7,6 +7,7 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <Illusion/Core/CommandLineOptions.hpp>
+#include <Illusion/Core/Logger.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/Instance.hpp>
 #include <Illusion/Graphics/RenderPass.hpp>
@@ -23,6 +24,9 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char* argv[]) {
+
+  // Enable trace output. This is useful to see Vulkan object lifetime.
+  Illusion::Core::Logger::enableTrace = true;
 
   // First we parse the command line options. Illusion provides a very basic command line parsing
   // class for this purpose. Here we define two booleans, both set to false per default, which the
@@ -43,30 +47,31 @@ int main(int argc, char* argv[]) {
   }
 
   // Then we start setting up our Vulkan resources.
-  auto instance = Illusion::Graphics::Instance::create("Textured Quad Demo");
-  auto device   = Illusion::Graphics::Device::create(instance->getPhysicalDevice());
-  auto window   = Illusion::Graphics::Window::create(instance, device);
+  auto instance = Illusion::Graphics::Instance::create("TexturedQuadDemo");
+  auto device   = Illusion::Graphics::Device::create("Device", instance->getPhysicalDevice());
+  auto window   = Illusion::Graphics::Window::create("Window", instance, device);
 
   // Here we load the texture. This supports many file formats (those supported by gli and stb).
   std::string dataDir = "data/TexturedQuad/";
-  auto texture = Illusion::Graphics::Texture::createFromFile(device, dataDir + "textures/box.dds");
+  auto        texture = Illusion::Graphics::Texture::createFromFile(
+      "BoxTexture", device, dataDir + "textures/box.dds");
 
   // Then we load our shader. Based on the command line options, we either load GLSL or HLSL
   // shaders. In theory you could actually mix both - HLSL vertex shader and GLSL fragment shader or
   // vice-versa :)
-  auto shader = Illusion::Graphics::Shader::createFromFiles(device,
+  auto shader = Illusion::Graphics::Shader::createFromFiles("QuadShader", device,
       useHLSL
           ? std::vector<std::string>{dataDir + "shaders/Quad.vs", dataDir + "shaders/Quad.ps"}
           : std::vector<std::string>{dataDir + "shaders/Quad.vert", dataDir + "shaders/Quad.frag"});
 
   // Then we create our render pass.
-  auto renderPass = Illusion::Graphics::RenderPass::create(device);
+  auto renderPass = Illusion::Graphics::RenderPass::create("RenderPass", device);
   renderPass->addAttachment(vk::Format::eR8G8B8A8Unorm);
   renderPass->setExtent(window->pExtent.get());
 
   // And record our command buffer. The only difference to the Triangle example is that the texture
   // is bound to descriptor set 0 at binding location 0.
-  auto cmd = Illusion::Graphics::CommandBuffer::create(device);
+  auto cmd = Illusion::Graphics::CommandBuffer::create("CommandBuffer", device);
   cmd->graphicsState().addViewport({glm::vec2(window->pExtent.get())});
   cmd->bindingState().setTexture(texture, 0, 0);
   cmd->begin();
@@ -77,8 +82,8 @@ int main(int argc, char* argv[]) {
   cmd->end();
 
   // Again we create a fence and a semaphore to synchronize rendering, presentation and our frames.
-  auto renderFinishedSemaphore = device->createSemaphore();
-  auto frameFinishedFence      = device->createFence();
+  auto renderFinishedSemaphore = device->createSemaphore("RenderFinished");
+  auto frameFinishedFence      = device->createFence("FrameFinished");
 
   // Then we open our window.
   window->open();

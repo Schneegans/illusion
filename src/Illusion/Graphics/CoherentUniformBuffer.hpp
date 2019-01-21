@@ -9,6 +9,7 @@
 #ifndef ILLUSION_GRAPHICS_COHERENT_UNIFORM_BUFFER_HPP
 #define ILLUSION_GRAPHICS_COHERENT_UNIFORM_BUFFER_HPP
 
+#include "../Core/NamedObject.hpp"
 #include "../Core/StaticCreate.hpp"
 #include "fwd.hpp"
 
@@ -17,9 +18,11 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class CoherentUniformBuffer : public Core::StaticCreate<CoherentUniformBuffer> {
+class CoherentUniformBuffer : public Core::StaticCreate<CoherentUniformBuffer>,
+                              public Core::NamedObject {
  public:
-  CoherentUniformBuffer(DevicePtr const& device, vk::DeviceSize size, vk::DeviceSize alignment = 0);
+  CoherentUniformBuffer(std::string const& name, DevicePtr const& device, vk::DeviceSize size,
+      vk::DeviceSize alignment = 0);
   virtual ~CoherentUniformBuffer();
 
   void reset();

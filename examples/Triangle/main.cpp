@@ -27,24 +27,24 @@ int main() {
   Illusion::Core::Logger::enableTrace = true;
 
   // These three things every application will need: an instance, a device and a window.
-  auto instance = Illusion::Graphics::Instance::create("Triangle Demo");
-  auto device   = Illusion::Graphics::Device::create(instance->getPhysicalDevice());
-  auto window   = Illusion::Graphics::Window::create(instance, device);
+  auto instance = Illusion::Graphics::Instance::create("TriangleDemo");
+  auto device   = Illusion::Graphics::Device::create("Device", instance->getPhysicalDevice());
+  auto window   = Illusion::Graphics::Window::create("Window", instance, device);
 
   // Create a shader program. The shader stages a deduced from the file extensions.
   auto shader = Illusion::Graphics::Shader::createFromFiles(
-      device, {"data/Triangle/Triangle.vert", "data/Triangle/Triangle.frag"});
+      "TriangleShader", device, {"data/Triangle/Triangle.vert", "data/Triangle/Triangle.frag"});
 
   // All rendering is done inside an active render pass. This render pass creates an associated
   // frame buffer with the given attachments (a color buffer in this case). We use the window's
   // resolution for the render pass.
-  auto renderPass = Illusion::Graphics::RenderPass::create(device);
+  auto renderPass = Illusion::Graphics::RenderPass::create("RenderPass", device);
   renderPass->addAttachment(vk::Format::eR8G8B8A8Unorm);
   renderPass->setExtent(window->pExtent.get());
 
   // Now create and record the command buffer. In this example we use a pre-recorded command buffer
   // during rendering. Usually you will re-record the command buffer every frame.
-  auto cmd = Illusion::Graphics::CommandBuffer::create(device);
+  auto cmd = Illusion::Graphics::CommandBuffer::create("CommandBuffer", device);
   cmd->graphicsState().addViewport({glm::vec2(window->pExtent.get())}); // Set the viewport
   cmd->setShader(shader);                                               // Set the shader
   cmd->begin();                                                         // Begin recording
@@ -55,11 +55,11 @@ int main() {
 
   // This semaphore will be signaled when rendering has finished and the frame buffer is ready to be
   // presented on our window.
-  auto renderFinishedSemaphore = device->createSemaphore();
+  auto renderFinishedSemaphore = device->createSemaphore("RenderFinished");
 
   // This fence will be signaled when the frame buffer has been blitted to the swapchain image and
   // we are ready to start the next frame.
-  auto frameFinishedFence = device->createFence();
+  auto frameFinishedFence = device->createFence("FrameFinished");
 
   // Now we open our window.
   window->open();

@@ -24,10 +24,10 @@ namespace Illusion::Graphics {
 // be used to create a corresponding vk::PipelineLayout.                                          //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class PipelineReflection : public Core::StaticCreate<PipelineReflection> {
+class PipelineReflection : public Core::StaticCreate<PipelineReflection>, public Core::NamedObject {
  public:
   // Initially, the PipelineReflection is empty. Resources can be added with addResource()
-  PipelineReflection(DevicePtr const& device);
+  PipelineReflection(std::string const& name, DevicePtr const& device);
   virtual ~PipelineReflection();
 
   // Adds a new resource to this PipelineReflection. If the mResourceType is eInput, eOutput or

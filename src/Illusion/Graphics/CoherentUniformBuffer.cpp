@@ -16,9 +16,10 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 CoherentUniformBuffer::CoherentUniformBuffer(
-    DevicePtr const& device, vk::DeviceSize size, vk::DeviceSize alignment)
-    : mDevice(device)
-    , mBuffer(device->createBackedBuffer(vk::BufferUsageFlagBits::eUniformBuffer,
+    std::string const& name, DevicePtr const& device, vk::DeviceSize size, vk::DeviceSize alignment)
+    : Core::NamedObject(name)
+    , mDevice(device)
+    , mBuffer(device->createBackedBuffer(name, vk::BufferUsageFlagBits::eUniformBuffer,
           vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible,
           size))
     , mAlignment(alignment) {

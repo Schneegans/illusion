@@ -37,8 +37,10 @@ const std::unordered_map<PipelineResource::ResourceType, vk::DescriptorType> res
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-DescriptorSetReflection::DescriptorSetReflection(DevicePtr const& device, uint32_t set)
-    : mDevice(device)
+DescriptorSetReflection::DescriptorSetReflection(
+    std::string const& name, DevicePtr const& device, uint32_t set)
+    : Core::NamedObject(name)
+    , mDevice(device)
     , mSet(set) {
 }
 
@@ -123,7 +125,8 @@ vk::DescriptorSetLayoutPtr DescriptorSetReflection::getLayout() const {
     descriptorSetLayoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
     descriptorSetLayoutInfo.pBindings    = bindings.data();
 
-    mLayout = mDevice->createDescriptorSetLayout(descriptorSetLayoutInfo);
+    mLayout = mDevice->createDescriptorSetLayout(
+        "DescriptorSetLayout for " + getName(), descriptorSetLayoutInfo);
   }
 
   return mLayout;

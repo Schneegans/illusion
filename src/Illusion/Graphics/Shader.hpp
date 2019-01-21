@@ -24,7 +24,7 @@ namespace Illusion::Graphics {
 // getReflection() to generate a matching vk::PipelineLayout.                                     //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class Shader : public Core::StaticCreate<Shader> {
+class Shader : public Core::StaticCreate<Shader>, public Core::NamedObject {
 
  public:
   // Convenience method to create a shader and add a GlslFile ShaderSource for each given file name.
@@ -35,13 +35,13 @@ class Shader : public Core::StaticCreate<Shader> {
   // .tesc / .hs: Tessellation Control Shader / Hull Shader
   // .tese / .ds: Tessellation Evaluation Shader / Domain Shader
   // .comp / .cs: Compute Shader
-  static ShaderPtr createFromFiles(DevicePtr const& device,
+  static ShaderPtr createFromFiles(std::string const& name, DevicePtr const& device,
       std::vector<std::string> const& fileNames, std::set<std::string> dynamicBuffers = {},
       bool reloadOnChanges = true);
 
   // Creates an "empty" shader program with no modules attached to. Use the method addModule() to
   // add modules for each required shader stage.
-  Shader(DevicePtr const& device);
+  Shader(std::string const& name, DevicePtr const& device);
   virtual ~Shader();
 
   // Adds a shader module to this Shader. No Vulkan resources are allocated by this call, only an

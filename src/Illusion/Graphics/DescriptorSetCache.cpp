@@ -15,8 +15,9 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-DescriptorSetCache::DescriptorSetCache(DevicePtr const& device)
-    : mDevice(device) {
+DescriptorSetCache::DescriptorSetCache(std::string const& name, DevicePtr const& device)
+    : Core::NamedObject(name)
+    , mDevice(device) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -50,7 +51,8 @@ vk::DescriptorSetPtr DescriptorSetCache::acquireHandle(
 
   // Last case: there is no pool at all! Create a new one!
   CacheEntry entry;
-  entry.mPool = std::make_shared<DescriptorPool>(mDevice, reflection);
+  entry.mPool =
+      std::make_shared<DescriptorPool>("DescriptorPool of " + getName(), mDevice, reflection);
 
   auto descriptorSet = entry.mPool->allocateDescriptorSet();
   entry.mUsedHandels.insert(descriptorSet);

@@ -32,11 +32,15 @@ const std::vector<const char*> DEVICE_EXTENSIONS{VK_KHR_SWAPCHAIN_EXTENSION_NAME
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Device::Device(PhysicalDevicePtr const& physicalDevice)
-    : mPhysicalDevice(physicalDevice)
+Device::Device(std::string const& name, PhysicalDevicePtr const& physicalDevice)
+    : Core::NamedObject(name)
+    , mPhysicalDevice(physicalDevice)
     , mDevice(createDevice()) {
 
-  ILLUSION_TRACE << "Creating Device." << std::endl;
+  ILLUSION_TRACE << "Creating Device [" + getName() + "]" << std::endl;
+
+  mSetObjectNameFunc =
+      PFN_vkSetDebugUtilsObjectNameEXT(mDevice->getProcAddr("vkSetDebugUtilsObjectNameEXT"));
 
   for (size_t i(0); i < 3; ++i) {
     QueueType type = static_cast<QueueType>(i);
@@ -45,22 +49,25 @@ Device::Device(PhysicalDevicePtr const& physicalDevice)
     vk::CommandPoolCreateInfo info;
     info.queueFamilyIndex = mPhysicalDevice->getQueueFamily(type);
     info.flags            = vk::CommandPoolCreateFlagBits::eResetCommandBuffer;
-    mCommandPools[i]      = createCommandPool(info);
+    mCommandPools[i] =
+        createCommandPool("CommandPool for QueueFamilyIndex " +
+                              std::to_string(info.queueFamilyIndex) + " of " + getName(),
+            info);
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Device::~Device() {
-  ILLUSION_TRACE << "Deleting Device." << std::endl;
+  ILLUSION_TRACE << "Deleting Device [" + getName() + "]" << std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BackedImagePtr Device::createBackedImage(vk::ImageCreateInfo imageInfo, vk::ImageViewType viewType,
-    vk::ImageAspectFlags imageAspectMask, vk::MemoryPropertyFlags properties,
-    vk::ImageLayout layout, vk::ComponentMapping const& componentMapping, vk::DeviceSize dataSize,
-    const void* data) const {
+BackedImagePtr Device::createBackedImage(std::string const& name, vk::ImageCreateInfo imageInfo,
+    vk::ImageViewType viewType, vk::ImageAspectFlags imageAspectMask,
+    vk::MemoryPropertyFlags properties, vk::ImageLayout layout,
+    vk::ComponentMapping const& componentMapping, vk::DeviceSize dataSize, const void* data) const {
 
   auto result = std::make_shared<BackedImage>();
 
@@ -70,7 +77,7 @@ BackedImagePtr Device::createBackedImage(vk::ImageCreateInfo imageInfo, vk::Imag
   }
 
   result->mImageInfo     = imageInfo;
-  result->mImage         = createImage(imageInfo);
+  result->mImage         = createImage(name, imageInfo);
   result->mCurrentLayout = imageInfo.initialLayout;
 
   // create memory
@@ -79,7 +86,7 @@ BackedImagePtr Device::createBackedImage(vk::ImageCreateInfo imageInfo, vk::Imag
   result->mMemoryInfo.allocationSize = requirements.size;
   result->mMemoryInfo.memoryTypeIndex =
       mPhysicalDevice->findMemoryType(requirements.memoryTypeBits, properties);
-  result->mMemory = createMemory(result->mMemoryInfo);
+  result->mMemory = createMemory("Memory for " + name, result->mMemoryInfo);
   mDevice->bindImageMemory(*result->mImage, *result->mMemory, 0);
 
   // create image view
@@ -93,15 +100,16 @@ BackedImagePtr Device::createBackedImage(vk::ImageCreateInfo imageInfo, vk::Imag
   result->mViewInfo.subresourceRange.layerCount     = imageInfo.arrayLayers;
   result->mViewInfo.components                      = componentMapping;
 
-  result->mView = createImageView(result->mViewInfo);
+  result->mView = createImageView("ImageView for " + name, result->mViewInfo);
 
   if (data) {
-    auto cmd = allocateCommandBuffer();
+    auto cmd = allocateCommandBuffer("Upload to BackedImage");
     cmd->begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
 
-    auto stagingBuffer = createBackedBuffer(vk::BufferUsageFlagBits::eTransferSrc,
-        vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-        dataSize, data);
+    auto stagingBuffer =
+        createBackedBuffer("StagingBuffer for " + name, vk::BufferUsageFlagBits::eTransferSrc,
+            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+            dataSize, data);
 
     vk::ImageMemoryBarrier barrier;
     barrier.srcQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
@@ -168,7 +176,7 @@ BackedImagePtr Device::createBackedImage(vk::ImageCreateInfo imageInfo, vk::Imag
 
   } else {
 
-    auto cmd = allocateCommandBuffer();
+    auto cmd = allocateCommandBuffer("Transition image layout");
     cmd->begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
 
     vk::ImageMemoryBarrier barrier;
@@ -202,7 +210,7 @@ BackedImagePtr Device::createBackedImage(vk::ImageCreateInfo imageInfo, vk::Imag
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BackedBufferPtr Device::createBackedBuffer(vk::BufferUsageFlags usage,
+BackedBufferPtr Device::createBackedBuffer(std::string const& name, vk::BufferUsageFlags usage,
     vk::MemoryPropertyFlags properties, vk::DeviceSize dataSize, const void* data) const {
 
   auto result = std::make_shared<BackedBuffer>();
@@ -217,7 +225,7 @@ BackedBufferPtr Device::createBackedBuffer(vk::BufferUsageFlags usage,
     result->mBufferInfo.usage |= vk::BufferUsageFlagBits::eTransferDst;
   }
 
-  result->mBuffer = createBuffer(result->mBufferInfo);
+  result->mBuffer = createBuffer(name, result->mBufferInfo);
 
   auto requirements = mDevice->getBufferMemoryRequirements(*result->mBuffer);
 
@@ -225,7 +233,7 @@ BackedBufferPtr Device::createBackedBuffer(vk::BufferUsageFlags usage,
   result->mMemoryInfo.memoryTypeIndex =
       mPhysicalDevice->findMemoryType(requirements.memoryTypeBits, properties);
 
-  result->mMemory = createMemory(result->mMemoryInfo);
+  result->mMemory = createMemory("Memory for " + name, result->mMemoryInfo);
 
   mDevice->bindBufferMemory(*result->mBuffer, *result->mMemory, 0);
 
@@ -242,11 +250,12 @@ BackedBufferPtr Device::createBackedBuffer(vk::BufferUsageFlags usage,
     } else {
 
       // more difficult case, we need a staging buffer!
-      auto stagingBuffer = createBackedBuffer(vk::BufferUsageFlagBits::eTransferSrc,
-          vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-          dataSize, data);
+      auto stagingBuffer =
+          createBackedBuffer("StagingBuffer for " + name, vk::BufferUsageFlagBits::eTransferSrc,
+              vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+              dataSize, data);
 
-      auto cmd = allocateCommandBuffer();
+      auto cmd = allocateCommandBuffer("Upload to BackedBuffer");
       cmd->begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
       vk::BufferCopy region;
       region.size = dataSize;
@@ -268,36 +277,39 @@ BackedBufferPtr Device::createBackedBuffer(vk::BufferUsageFlags usage,
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BackedBufferPtr Device::createVertexBuffer(vk::DeviceSize dataSize, const void* data) const {
-  return createBackedBuffer(vk::BufferUsageFlagBits::eVertexBuffer,
+BackedBufferPtr Device::createVertexBuffer(
+    std::string const& name, vk::DeviceSize dataSize, const void* data) const {
+  return createBackedBuffer(name, vk::BufferUsageFlagBits::eVertexBuffer,
       vk::MemoryPropertyFlagBits::eDeviceLocal, dataSize, data);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BackedBufferPtr Device::createIndexBuffer(vk::DeviceSize dataSize, const void* data) const {
-  return createBackedBuffer(vk::BufferUsageFlagBits::eIndexBuffer,
+BackedBufferPtr Device::createIndexBuffer(
+    std::string const& name, vk::DeviceSize dataSize, const void* data) const {
+  return createBackedBuffer(name, vk::BufferUsageFlagBits::eIndexBuffer,
       vk::MemoryPropertyFlagBits::eDeviceLocal, dataSize, data);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BackedBufferPtr Device::createUniformBuffer(vk::DeviceSize size) const {
-  return createBackedBuffer(
+BackedBufferPtr Device::createUniformBuffer(std::string const& name, vk::DeviceSize size) const {
+  return createBackedBuffer(name,
       vk::BufferUsageFlagBits::eUniformBuffer | vk::BufferUsageFlagBits::eTransferDst,
       vk::MemoryPropertyFlagBits::eDeviceLocal, size);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-TexturePtr Device::createTexture(vk::ImageCreateInfo imageInfo, vk::SamplerCreateInfo samplerInfo,
-    vk::ImageViewType viewType, vk::ImageAspectFlags imageAspectMask, vk::ImageLayout layout,
+TexturePtr Device::createTexture(std::string const& name, vk::ImageCreateInfo imageInfo,
+    vk::SamplerCreateInfo samplerInfo, vk::ImageViewType viewType,
+    vk::ImageAspectFlags imageAspectMask, vk::ImageLayout layout,
     vk::ComponentMapping const& componentMapping, vk::DeviceSize dataSize, const void* data) const {
 
   auto result = std::make_shared<Texture>();
 
   // create backed image for texture
-  auto image = createBackedImage(imageInfo, viewType, imageAspectMask,
+  auto image = createBackedImage(name, imageInfo, viewType, imageAspectMask,
       vk::MemoryPropertyFlagBits::eDeviceLocal, layout, componentMapping, dataSize, data);
 
   result->mImage         = image->mImage;
@@ -310,7 +322,7 @@ TexturePtr Device::createTexture(vk::ImageCreateInfo imageInfo, vk::SamplerCreat
 
   // create sampler
   result->mSamplerInfo = samplerInfo;
-  result->mSampler     = createSampler(result->mSamplerInfo);
+  result->mSampler     = createSampler("Sampler for " + name, result->mSamplerInfo);
 
   return result;
 }
@@ -349,9 +361,11 @@ TexturePtr Device::getSinglePixelTexture(std::array<uint8_t, 4> const& color) {
 
   vk::SamplerCreateInfo samplerInfo = createSamplerInfo();
 
-  auto texture =
-      createTexture(imageInfo, samplerInfo, vk::ImageViewType::e2D, vk::ImageAspectFlagBits::eColor,
-          vk::ImageLayout::eShaderReadOnlyOptimal, vk::ComponentMapping(), 4, &color[0]);
+  auto texture = createTexture("Single-pixel texture rgba(" + std::to_string(color[0]) + ", " +
+                                   std::to_string(color[1]) + ", " + std::to_string(color[2]) +
+                                   ", " + std::to_string(color[3]) + ")",
+      imageInfo, samplerInfo, vk::ImageViewType::e2D, vk::ImageAspectFlagBits::eColor,
+      vk::ImageLayout::eShaderReadOnlyOptimal, vk::ComponentMapping(), 4, &color[0]);
 
   mSinglePixelTextures[color] = texture;
 
@@ -361,32 +375,38 @@ TexturePtr Device::getSinglePixelTexture(std::array<uint8_t, 4> const& color) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 vk::CommandBufferPtr Device::allocateCommandBuffer(
-    QueueType type, vk::CommandBufferLevel level) const {
+    std::string const& name, QueueType type, vk::CommandBufferLevel level) const {
   vk::CommandBufferAllocateInfo info;
   info.level              = level;
   info.commandPool        = *mCommandPools[Core::enumCast(type)];
   info.commandBufferCount = 1;
 
-  ILLUSION_TRACE << "Allocating CommandBuffer." << std::endl;
+  ILLUSION_TRACE << "Allocating vk::CommandBuffer [" << name << "]" << std::endl;
+
+  auto vkObject = mDevice->allocateCommandBuffers(info)[0];
+  assignName(uint64_t(VkCommandBuffer(vkObject)), vk::ObjectType::eCommandBuffer, name);
 
   auto device{mDevice};
   auto pool{mCommandPools[Core::enumCast(type)]};
-
-  return VulkanPtr::create(
-      mDevice->allocateCommandBuffers(info)[0], [device, pool](vk::CommandBuffer* obj) {
-        ILLUSION_TRACE << "Freeing CommandBuffer." << std::endl;
-        device->freeCommandBuffers(*pool, *obj);
-        delete obj;
-      });
+  return VulkanPtr::create(vkObject, [device, pool, name](vk::CommandBuffer* obj) {
+    ILLUSION_TRACE << "Freeing vk::CommandBuffer [" << name << "]" << std::endl;
+    device->freeCommandBuffers(*pool, *obj);
+    delete obj;
+  });
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::BufferPtr Device::createBuffer(vk::BufferCreateInfo const& info) const {
-  ILLUSION_TRACE << "Creating vk::Buffer." << std::endl;
+vk::BufferPtr Device::createBuffer(
+    std::string const& name, vk::BufferCreateInfo const& info) const {
+  ILLUSION_TRACE << "Creating vk::Buffer [" << name << "]" << std::endl;
+
+  auto vkObject = mDevice->createBuffer(info);
+  assignName(uint64_t(VkBuffer(vkObject)), vk::ObjectType::eBuffer, name);
+
   auto device{mDevice};
-  return VulkanPtr::create(device->createBuffer(info), [device](vk::Buffer* obj) {
-    ILLUSION_TRACE << "Deleting vk::Buffer." << std::endl;
+  return VulkanPtr::create(vkObject, [device, name](vk::Buffer* obj) {
+    ILLUSION_TRACE << "Deleting vk::Buffer [" << name << "]" << std::endl;
     device->destroyBuffer(*obj);
     delete obj;
   });
@@ -394,11 +414,16 @@ vk::BufferPtr Device::createBuffer(vk::BufferCreateInfo const& info) const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::CommandPoolPtr Device::createCommandPool(vk::CommandPoolCreateInfo const& info) const {
-  ILLUSION_TRACE << "Creating vk::CommandPool." << std::endl;
+vk::CommandPoolPtr Device::createCommandPool(
+    std::string const& name, vk::CommandPoolCreateInfo const& info) const {
+  ILLUSION_TRACE << "Creating vk::CommandPool [" << name << "]" << std::endl;
+
+  auto vkObject = mDevice->createCommandPool(info);
+  assignName(uint64_t(VkCommandPool(vkObject)), vk::ObjectType::eCommandPool, name);
+
   auto device{mDevice};
-  return VulkanPtr::create(device->createCommandPool(info), [device](vk::CommandPool* obj) {
-    ILLUSION_TRACE << "Deleting vk::CommandPool." << std::endl;
+  return VulkanPtr::create(vkObject, [device, name](vk::CommandPool* obj) {
+    ILLUSION_TRACE << "Deleting vk::CommandPool [" << name << "]" << std::endl;
     device->destroyCommandPool(*obj);
     delete obj;
   });
@@ -406,11 +431,16 @@ vk::CommandPoolPtr Device::createCommandPool(vk::CommandPoolCreateInfo const& in
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::DescriptorPoolPtr Device::createDescriptorPool(vk::DescriptorPoolCreateInfo const& info) const {
-  ILLUSION_TRACE << "Creating vk::DescriptorPool." << std::endl;
+vk::DescriptorPoolPtr Device::createDescriptorPool(
+    std::string const& name, vk::DescriptorPoolCreateInfo const& info) const {
+  ILLUSION_TRACE << "Creating vk::DescriptorPool [" << name << "]" << std::endl;
+
+  auto vkObject = mDevice->createDescriptorPool(info);
+  assignName(uint64_t(VkDescriptorPool(vkObject)), vk::ObjectType::eDescriptorPool, name);
+
   auto device{mDevice};
-  return VulkanPtr::create(device->createDescriptorPool(info), [device](vk::DescriptorPool* obj) {
-    ILLUSION_TRACE << "Deleting vk::DescriptorPool." << std::endl;
+  return VulkanPtr::create(vkObject, [device, name](vk::DescriptorPool* obj) {
+    ILLUSION_TRACE << "Deleting vk::DescriptorPool [" << name << "]" << std::endl;
     device->destroyDescriptorPool(*obj);
     delete obj;
   });
@@ -419,24 +449,32 @@ vk::DescriptorPoolPtr Device::createDescriptorPool(vk::DescriptorPoolCreateInfo 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 vk::DescriptorSetLayoutPtr Device::createDescriptorSetLayout(
-    vk::DescriptorSetLayoutCreateInfo const& info) const {
-  ILLUSION_TRACE << "Creating vk::DescriptorSetLayout." << std::endl;
+    std::string const& name, vk::DescriptorSetLayoutCreateInfo const& info) const {
+  ILLUSION_TRACE << "Creating vk::DescriptorSetLayout [" << name << "]" << std::endl;
+
+  auto vkObject = mDevice->createDescriptorSetLayout(info);
+  assignName(uint64_t(VkDescriptorSetLayout(vkObject)), vk::ObjectType::eDescriptorSetLayout, name);
+
   auto device{mDevice};
-  return VulkanPtr::create(
-      device->createDescriptorSetLayout(info), [device](vk::DescriptorSetLayout* obj) {
-        ILLUSION_TRACE << "Deleting vk::DescriptorSetLayout." << std::endl;
-        device->destroyDescriptorSetLayout(*obj);
-        delete obj;
-      });
+  return VulkanPtr::create(vkObject, [device, name](vk::DescriptorSetLayout* obj) {
+    ILLUSION_TRACE << "Deleting vk::DescriptorSetLayout [" << name << "]" << std::endl;
+    device->destroyDescriptorSetLayout(*obj);
+    delete obj;
+  });
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::DeviceMemoryPtr Device::createMemory(vk::MemoryAllocateInfo const& info) const {
-  ILLUSION_TRACE << "Allocating vk::DeviceMemory." << std::endl;
+vk::DeviceMemoryPtr Device::createMemory(
+    std::string const& name, vk::MemoryAllocateInfo const& info) const {
+  ILLUSION_TRACE << "Allocating vk::DeviceMemory [" << name << "]" << std::endl;
+
+  auto vkObject = mDevice->allocateMemory(info);
+  assignName(uint64_t(VkDeviceMemory(vkObject)), vk::ObjectType::eDeviceMemory, name);
+
   auto device{mDevice};
-  return VulkanPtr::create(device->allocateMemory(info), [device](vk::DeviceMemory* obj) {
-    ILLUSION_TRACE << "Freeing vk::DeviceMemory." << std::endl;
+  return VulkanPtr::create(vkObject, [device, name](vk::DeviceMemory* obj) {
+    ILLUSION_TRACE << "Freeing vk::DeviceMemory [" << name << "]" << std::endl;
     device->freeMemory(*obj);
     delete obj;
   });
@@ -444,11 +482,15 @@ vk::DeviceMemoryPtr Device::createMemory(vk::MemoryAllocateInfo const& info) con
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::FencePtr Device::createFence(vk::FenceCreateFlags const& flags) const {
-  ILLUSION_TRACE << "Creating vk::Fence." << std::endl;
+vk::FencePtr Device::createFence(std::string const& name, vk::FenceCreateFlags const& flags) const {
+  ILLUSION_TRACE << "Creating vk::Fence [" << name << "]" << std::endl;
+
+  auto vkObject = mDevice->createFence({flags});
+  assignName(uint64_t(VkFence(vkObject)), vk::ObjectType::eFence, name);
+
   auto device{mDevice};
-  return VulkanPtr::create(device->createFence({flags}), [device](vk::Fence* obj) {
-    ILLUSION_TRACE << "Deleting vk::Fence." << std::endl;
+  return VulkanPtr::create(vkObject, [device, name](vk::Fence* obj) {
+    ILLUSION_TRACE << "Deleting vk::Fence [" << name << "]" << std::endl;
     device->destroyFence(*obj);
     delete obj;
   });
@@ -456,11 +498,16 @@ vk::FencePtr Device::createFence(vk::FenceCreateFlags const& flags) const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::FramebufferPtr Device::createFramebuffer(vk::FramebufferCreateInfo const& info) const {
-  ILLUSION_TRACE << "Creating vk::Framebuffer." << std::endl;
+vk::FramebufferPtr Device::createFramebuffer(
+    std::string const& name, vk::FramebufferCreateInfo const& info) const {
+  ILLUSION_TRACE << "Creating vk::Framebuffer [" << name << "]" << std::endl;
+
+  auto vkObject = mDevice->createFramebuffer(info);
+  assignName(uint64_t(VkFramebuffer(vkObject)), vk::ObjectType::eFramebuffer, name);
+
   auto device{mDevice};
-  return VulkanPtr::create(device->createFramebuffer(info), [device](vk::Framebuffer* obj) {
-    ILLUSION_TRACE << "Deleting vk::Framebuffer." << std::endl;
+  return VulkanPtr::create(vkObject, [device, name](vk::Framebuffer* obj) {
+    ILLUSION_TRACE << "Deleting vk::Framebuffer [" << name << "]" << std::endl;
     device->destroyFramebuffer(*obj);
     delete obj;
   });
@@ -468,11 +515,15 @@ vk::FramebufferPtr Device::createFramebuffer(vk::FramebufferCreateInfo const& in
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::ImagePtr Device::createImage(vk::ImageCreateInfo const& info) const {
-  ILLUSION_TRACE << "Creating vk::Image." << std::endl;
+vk::ImagePtr Device::createImage(std::string const& name, vk::ImageCreateInfo const& info) const {
+  ILLUSION_TRACE << "Creating vk::Image [" << name << "]" << std::endl;
+
+  auto vkObject = mDevice->createImage(info);
+  assignName(uint64_t(VkImage(vkObject)), vk::ObjectType::eImage, name);
+
   auto device{mDevice};
-  return VulkanPtr::create(device->createImage(info), [device](vk::Image* obj) {
-    ILLUSION_TRACE << "Deleting vk::Image." << std::endl;
+  return VulkanPtr::create(vkObject, [device, name](vk::Image* obj) {
+    ILLUSION_TRACE << "Deleting vk::Image [" << name << "]" << std::endl;
     device->destroyImage(*obj);
     delete obj;
   });
@@ -480,11 +531,16 @@ vk::ImagePtr Device::createImage(vk::ImageCreateInfo const& info) const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::ImageViewPtr Device::createImageView(vk::ImageViewCreateInfo const& info) const {
-  ILLUSION_TRACE << "Creating vk::ImageView." << std::endl;
+vk::ImageViewPtr Device::createImageView(
+    std::string const& name, vk::ImageViewCreateInfo const& info) const {
+  ILLUSION_TRACE << "Creating vk::ImageView [" << name << "]" << std::endl;
+
+  auto vkObject = mDevice->createImageView(info);
+  assignName(uint64_t(VkImageView(vkObject)), vk::ObjectType::eImageView, name);
+
   auto device{mDevice};
-  return VulkanPtr::create(device->createImageView(info), [device](vk::ImageView* obj) {
-    ILLUSION_TRACE << "Deleting vk::ImageView." << std::endl;
+  return VulkanPtr::create(vkObject, [device, name](vk::ImageView* obj) {
+    ILLUSION_TRACE << "Deleting vk::ImageView [" << name << "]" << std::endl;
     device->destroyImageView(*obj);
     delete obj;
   });
@@ -492,37 +548,50 @@ vk::ImageViewPtr Device::createImageView(vk::ImageViewCreateInfo const& info) co
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::PipelinePtr Device::createComputePipeline(vk::ComputePipelineCreateInfo const& info) const {
-  ILLUSION_TRACE << "Creating vk::Pipeline (compute)." << std::endl;
+vk::PipelinePtr Device::createComputePipeline(
+    std::string const& name, vk::ComputePipelineCreateInfo const& info) const {
+  ILLUSION_TRACE << "Creating vk::Pipeline [" << name << "]" << std::endl;
+
+  auto vkObject = mDevice->createComputePipeline(nullptr, info);
+  assignName(uint64_t(VkPipeline(vkObject)), vk::ObjectType::ePipeline, name);
+
   auto device{mDevice};
-  return VulkanPtr::create(
-      device->createComputePipeline(nullptr, info), [device](vk::Pipeline* obj) {
-        ILLUSION_TRACE << "Deleting vk::Pipeline (compute)." << std::endl;
-        device->destroyPipeline(*obj);
-        delete obj;
-      });
+  return VulkanPtr::create(vkObject, [device, name](vk::Pipeline* obj) {
+    ILLUSION_TRACE << "Deleting vk::Pipeline [" << name << "]" << std::endl;
+    device->destroyPipeline(*obj);
+    delete obj;
+  });
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::PipelinePtr Device::createGraphicsPipeline(vk::GraphicsPipelineCreateInfo const& info) const {
-  ILLUSION_TRACE << "Creating vk::Pipeline (graphics)." << std::endl;
+vk::PipelinePtr Device::createGraphicsPipeline(
+    std::string const& name, vk::GraphicsPipelineCreateInfo const& info) const {
+  ILLUSION_TRACE << "Creating vk::Pipeline [" << name << "]" << std::endl;
+
+  auto vkObject = mDevice->createGraphicsPipeline(nullptr, info);
+  assignName(uint64_t(VkPipeline(vkObject)), vk::ObjectType::ePipeline, name);
+
   auto device{mDevice};
-  return VulkanPtr::create(
-      device->createGraphicsPipeline(nullptr, info), [device](vk::Pipeline* obj) {
-        ILLUSION_TRACE << "Deleting vk::Pipeline (graphics)." << std::endl;
-        device->destroyPipeline(*obj);
-        delete obj;
-      });
+  return VulkanPtr::create(vkObject, [device, name](vk::Pipeline* obj) {
+    ILLUSION_TRACE << "Deleting vk::Pipeline [" << name << "]" << std::endl;
+    device->destroyPipeline(*obj);
+    delete obj;
+  });
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::PipelineLayoutPtr Device::createPipelineLayout(vk::PipelineLayoutCreateInfo const& info) const {
-  ILLUSION_TRACE << "Creating vk::PipelineLayout." << std::endl;
+vk::PipelineLayoutPtr Device::createPipelineLayout(
+    std::string const& name, vk::PipelineLayoutCreateInfo const& info) const {
+  ILLUSION_TRACE << "Creating vk::PipelineLayout [" << name << "]" << std::endl;
+
+  auto vkObject = mDevice->createPipelineLayout(info);
+  assignName(uint64_t(VkPipelineLayout(vkObject)), vk::ObjectType::ePipelineLayout, name);
+
   auto device{mDevice};
-  return VulkanPtr::create(device->createPipelineLayout(info), [device](vk::PipelineLayout* obj) {
-    ILLUSION_TRACE << "Deleting vk::PipelineLayout." << std::endl;
+  return VulkanPtr::create(vkObject, [device, name](vk::PipelineLayout* obj) {
+    ILLUSION_TRACE << "Deleting vk::PipelineLayout [" << name << "]" << std::endl;
     device->destroyPipelineLayout(*obj);
     delete obj;
   });
@@ -530,11 +599,16 @@ vk::PipelineLayoutPtr Device::createPipelineLayout(vk::PipelineLayoutCreateInfo 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::RenderPassPtr Device::createRenderPass(vk::RenderPassCreateInfo const& info) const {
-  ILLUSION_TRACE << "Creating vk::RenderPass." << std::endl;
+vk::RenderPassPtr Device::createRenderPass(
+    std::string const& name, vk::RenderPassCreateInfo const& info) const {
+  ILLUSION_TRACE << "Creating vk::RenderPass [" << name << "]" << std::endl;
+
+  auto vkObject = mDevice->createRenderPass(info);
+  assignName(uint64_t(VkRenderPass(vkObject)), vk::ObjectType::eRenderPass, name);
+
   auto device{mDevice};
-  return VulkanPtr::create(device->createRenderPass(info), [device](vk::RenderPass* obj) {
-    ILLUSION_TRACE << "Deleting vk::RenderPass." << std::endl;
+  return VulkanPtr::create(vkObject, [device, name](vk::RenderPass* obj) {
+    ILLUSION_TRACE << "Deleting vk::RenderPass [" << name << "]" << std::endl;
     device->destroyRenderPass(*obj);
     delete obj;
   });
@@ -542,11 +616,16 @@ vk::RenderPassPtr Device::createRenderPass(vk::RenderPassCreateInfo const& info)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::SamplerPtr Device::createSampler(vk::SamplerCreateInfo const& info) const {
-  ILLUSION_TRACE << "Creating vk::Sampler." << std::endl;
+vk::SamplerPtr Device::createSampler(
+    std::string const& name, vk::SamplerCreateInfo const& info) const {
+  ILLUSION_TRACE << "Creating vk::Sampler [" << name << "]" << std::endl;
+
+  auto vkObject = mDevice->createSampler(info);
+  assignName(uint64_t(VkSampler(vkObject)), vk::ObjectType::eSampler, name);
+
   auto device{mDevice};
-  return VulkanPtr::create(device->createSampler(info), [device](vk::Sampler* obj) {
-    ILLUSION_TRACE << "Deleting vk::Sampler." << std::endl;
+  return VulkanPtr::create(vkObject, [device, name](vk::Sampler* obj) {
+    ILLUSION_TRACE << "Deleting vk::Sampler [" << name << "]" << std::endl;
     device->destroySampler(*obj);
     delete obj;
   });
@@ -554,11 +633,16 @@ vk::SamplerPtr Device::createSampler(vk::SamplerCreateInfo const& info) const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::SemaphorePtr Device::createSemaphore(vk::SemaphoreCreateFlags const& flags) const {
-  ILLUSION_TRACE << "Creating vk::Semaphore." << std::endl;
+vk::SemaphorePtr Device::createSemaphore(
+    std::string const& name, vk::SemaphoreCreateFlags const& flags) const {
+  ILLUSION_TRACE << "Creating vk::Semaphore [" << name << "]" << std::endl;
+
+  auto vkObject = mDevice->createSemaphore({flags});
+  assignName(uint64_t(VkSemaphore(vkObject)), vk::ObjectType::eSemaphore, name);
+
   auto device{mDevice};
-  return VulkanPtr::create(device->createSemaphore({flags}), [device](vk::Semaphore* obj) {
-    ILLUSION_TRACE << "Deleting vk::Semaphore." << std::endl;
+  return VulkanPtr::create(vkObject, [device, name](vk::Semaphore* obj) {
+    ILLUSION_TRACE << "Deleting vk::Semaphore [" << name << "]" << std::endl;
     device->destroySemaphore(*obj);
     delete obj;
   });
@@ -566,11 +650,16 @@ vk::SemaphorePtr Device::createSemaphore(vk::SemaphoreCreateFlags const& flags) 
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::ShaderModulePtr Device::createShaderModule(vk::ShaderModuleCreateInfo const& info) const {
-  ILLUSION_TRACE << "Creating vk::ShaderModule." << std::endl;
+vk::ShaderModulePtr Device::createShaderModule(
+    std::string const& name, vk::ShaderModuleCreateInfo const& info) const {
+  ILLUSION_TRACE << "Creating vk::ShaderModule [" << name << "]" << std::endl;
+
+  auto vkObject = mDevice->createShaderModule(info);
+  assignName(uint64_t(VkShaderModule(vkObject)), vk::ObjectType::eShaderModule, name);
+
   auto device{mDevice};
-  return VulkanPtr::create(device->createShaderModule(info), [device](vk::ShaderModule* obj) {
-    ILLUSION_TRACE << "Deleting vk::ShaderModule." << std::endl;
+  return VulkanPtr::create(vkObject, [device, name](vk::ShaderModule* obj) {
+    ILLUSION_TRACE << "Deleting vk::ShaderModule [" << name << "]" << std::endl;
     device->destroyShaderModule(*obj);
     delete obj;
   });
@@ -578,11 +667,16 @@ vk::ShaderModulePtr Device::createShaderModule(vk::ShaderModuleCreateInfo const&
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::SwapchainKHRPtr Device::createSwapChainKhr(vk::SwapchainCreateInfoKHR const& info) const {
-  ILLUSION_TRACE << "Creating vk::SwapchainKHR." << std::endl;
+vk::SwapchainKHRPtr Device::createSwapChainKhr(
+    std::string const& name, vk::SwapchainCreateInfoKHR const& info) const {
+  ILLUSION_TRACE << "Creating vk::SwapchainKHR [" << name << "]" << std::endl;
+
+  auto vkObject = mDevice->createSwapchainKHR(info);
+  assignName(uint64_t(VkSwapchainKHR(vkObject)), vk::ObjectType::eSwapchainKHR, name);
+
   auto device{mDevice};
-  return VulkanPtr::create(device->createSwapchainKHR(info), [device](vk::SwapchainKHR* obj) {
-    ILLUSION_TRACE << "Deleting vk::SwapchainKHR." << std::endl;
+  return VulkanPtr::create(vkObject, [device, name](vk::SwapchainKHR* obj) {
+    ILLUSION_TRACE << "Deleting vk::SwapchainKHR [" << name << "]" << std::endl;
     device->destroySwapchainKHR(*obj);
     delete obj;
   });
@@ -672,6 +766,17 @@ vk::DevicePtr Device::createDevice() const {
     ILLUSION_TRACE << "Deleting vk::Device." << std::endl;
     obj->destroy();
   });
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Device::assignName(
+    uint64_t vulkanHandle, vk::ObjectType objectType, std::string const& name) const {
+  vk::DebugUtilsObjectNameInfoEXT nameInfo;
+  nameInfo.objectType   = objectType;
+  nameInfo.objectHandle = vulkanHandle;
+  nameInfo.pObjectName  = name.c_str();
+  mSetObjectNameFunc(*mDevice, (VkDebugUtilsObjectNameInfoEXT*)(&nameInfo));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

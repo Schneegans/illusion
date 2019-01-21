@@ -21,7 +21,7 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class RenderPass : public Core::StaticCreate<RenderPass> {
+class RenderPass : public Core::StaticCreate<RenderPass>, public Core::NamedObject {
 
  public:
   struct SubPass {
@@ -30,7 +30,7 @@ class RenderPass : public Core::StaticCreate<RenderPass> {
     std::vector<uint32_t> mOutputAttachments;
   };
 
-  RenderPass(DevicePtr const& device);
+  RenderPass(std::string const& name, DevicePtr const& device);
   virtual ~RenderPass();
 
   void init();

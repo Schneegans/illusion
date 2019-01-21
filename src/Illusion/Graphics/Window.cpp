@@ -20,11 +20,12 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Window::Window(InstancePtr const& instance, DevicePtr const& device)
-    : mInstance(instance)
+Window::Window(std::string const& name, InstancePtr const& instance, DevicePtr const& device)
+    : Core::NamedObject(name)
+    , mInstance(instance)
     , mDevice(device) {
 
-  ILLUSION_TRACE << "Creating Window." << std::endl;
+  ILLUSION_TRACE << "Creating Window [" + getName() + "]" << std::endl;
 
   pCursor.onChange().connect([this](Cursor cursor) {
     if (mCursor) {
@@ -111,7 +112,7 @@ Window::Window(InstancePtr const& instance, DevicePtr const& device)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Window::~Window() {
-  ILLUSION_TRACE << "Deleting Window." << std::endl;
+  ILLUSION_TRACE << "Deleting Window [" + getName() + "]" << std::endl;
 
   if (mCursor) {
     glfwDestroyCursor(mCursor);
@@ -134,8 +135,8 @@ void Window::open() {
       mWindow = glfwCreateWindow(pExtent().x, pExtent().y, pTitle().c_str(), nullptr, nullptr);
     }
 
-    mSurface   = mInstance->createSurface(mWindow);
-    mSwapchain = std::make_shared<Swapchain>(mDevice, mSurface);
+    mSurface   = mInstance->createSurface("Surface of " + getName(), mWindow);
+    mSwapchain = std::make_shared<Swapchain>("Swapchain of " + getName(), mDevice, mSurface);
 
     pLockAspect.touch();
     pHideCursor.touch();

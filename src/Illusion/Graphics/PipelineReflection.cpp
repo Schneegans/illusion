@@ -18,8 +18,9 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-PipelineReflection::PipelineReflection(DevicePtr const& device)
-    : mDevice(device) {
+PipelineReflection::PipelineReflection(std::string const& name, DevicePtr const& device)
+    : Core::NamedObject(name)
+    , mDevice(device) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -53,7 +54,7 @@ void PipelineReflection::addResource(PipelineResource const& resource) {
       map = &mInputs;
     } else if (resource.mResourceType == PipelineResource::ResourceType::eOutput) {
       map = &mOutputs;
-    } else if (resource.mResourceType == PipelineResource::ResourceType::ePushConstantBuffer) {
+    } else /*if (resource.mResourceType == PipelineResource::ResourceType::ePushConstantBuffer)*/ {
       map = &mPushConstantBuffers;
     }
 
@@ -68,8 +69,10 @@ void PipelineReflection::addResource(PipelineResource const& resource) {
   }
 
   while (mDescriptorSetReflections.size() <= resource.mSet) {
-    mDescriptorSetReflections.emplace_back(
-        std::make_shared<DescriptorSetReflection>(mDevice, mDescriptorSetReflections.size()));
+    mDescriptorSetReflections.emplace_back(std::make_shared<DescriptorSetReflection>(
+        "DescriptorSetReflection " + std::to_string(mDescriptorSetReflections.size()) + " of " +
+            getName(),
+        mDevice, mDescriptorSetReflections.size()));
   }
 
   mDescriptorSetReflections[resource.mSet]->addResource(resource);
@@ -146,7 +149,7 @@ vk::PipelineLayoutPtr const& PipelineReflection::getLayout() const {
     pipelineLayoutInfo.pushConstantRangeCount = static_cast<uint32_t>(pushConstantRanges.size());
     pipelineLayoutInfo.pPushConstantRanges    = pushConstantRanges.data();
 
-    mLayout = mDevice->createPipelineLayout(pipelineLayoutInfo);
+    mLayout = mDevice->createPipelineLayout("PipelineLayout for " + getName(), pipelineLayoutInfo);
   }
 
   return mLayout;

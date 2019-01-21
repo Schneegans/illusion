@@ -106,8 +106,10 @@ vk::PrimitiveTopology convertPrimitiveTopology(int value) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Model::Model(DevicePtr const& device, std::string const& file, LoadOptions options)
-    : mDevice(device)
+Model::Model(
+    std::string const& name, DevicePtr const& device, std::string const& file, LoadOptions options)
+    : Core::NamedObject(name)
+    , mDevice(device)
     , mRootNode(std::make_shared<Node>()) {
 
   // load the file ---------------------------------------------------------------------------------
@@ -203,9 +205,10 @@ Model::Model(DevicePtr const& device, std::string const& file, LoadOptions optio
           imageInfo.initialLayout = vk::ImageLayout::eUndefined;
 
           // create the texture
-          auto texture = mDevice->createTexture(imageInfo, samplerInfo, vk::ImageViewType::e2D,
-              vk::ImageAspectFlagBits::eColor, vk::ImageLayout::eShaderReadOnlyOptimal,
-              vk::ComponentMapping(), image.image.size(), (void*)image.image.data());
+          auto texture = mDevice->createTexture("Texture " + std::to_string(i) + " of " + getName(),
+              imageInfo, samplerInfo, vk::ImageViewType::e2D, vk::ImageAspectFlagBits::eColor,
+              vk::ImageLayout::eShaderReadOnlyOptimal, vk::ComponentMapping(), image.image.size(),
+              (void*)image.image.data());
 
           Texture::updateMipmaps(mDevice, texture);
 
@@ -613,8 +616,8 @@ Model::Model(DevicePtr const& device, std::string const& file, LoadOptions optio
       mMeshes.emplace_back(mesh);
     }
 
-    mVertexBuffer = mDevice->createVertexBuffer(vertexBuffer);
-    mIndexBuffer  = mDevice->createIndexBuffer(indexBuffer);
+    mVertexBuffer = mDevice->createVertexBuffer("VertexBuffer of " + getName(), vertexBuffer);
+    mIndexBuffer  = mDevice->createIndexBuffer("IndexBuffer of " + getName(), indexBuffer);
   }
 
   // pre-create nodes (they are referenced by themselves as children and by the skins) -------------

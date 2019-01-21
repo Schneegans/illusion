@@ -101,9 +101,11 @@ class CustomCompiler : public spirv_cross::CompilerGLSL {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ShaderModule::ShaderModule(DevicePtr const& device, ShaderSourcePtr const& source,
-    vk::ShaderStageFlagBits stage, std::set<std::string> const& dynamicBuffers)
-    : mDevice(device)
+ShaderModule::ShaderModule(std::string const& name, DevicePtr const& device,
+    ShaderSourcePtr const& source, vk::ShaderStageFlagBits stage,
+    std::set<std::string> const& dynamicBuffers)
+    : Core::NamedObject(name)
+    , mDevice(device)
     , mStage(stage)
     , mSource(source)
     , mDynamicBuffers(dynamicBuffers) {
@@ -138,7 +140,7 @@ void ShaderModule::reload() {
   vk::ShaderModuleCreateInfo info;
   info.codeSize = spirv.size() * 4;
   info.pCode    = spirv.data();
-  mHandle       = mDevice->createShaderModule(info);
+  mHandle       = mDevice->createShaderModule(getName(), info);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

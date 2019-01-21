@@ -52,13 +52,17 @@ struct CameraUniforms {
 struct PerFrame {
   PerFrame() = default;
 
-  PerFrame(Illusion::Graphics::DevicePtr const& device, vk::DeviceSize uboAlignment)
-      : mCmd(Illusion::Graphics::CommandBuffer::create(device))
-      , mRenderPass(Illusion::Graphics::RenderPass::create(device))
+  PerFrame(uint32_t index, Illusion::Graphics::DevicePtr const& device, vk::DeviceSize uboAlignment)
+      : mCmd(Illusion::Graphics::CommandBuffer::create(
+            "CommandBuffer " + std::to_string(index), device))
+      , mRenderPass(
+            Illusion::Graphics::RenderPass::create("RenderPass " + std::to_string(index), device))
       , mUniformBuffer(Illusion::Graphics::CoherentUniformBuffer::create(
-            device, std::pow(2, 20), uboAlignment))
-      , mRenderFinishedFence(device->createFence())
-      , mRenderFinishedSemaphore(device->createSemaphore()) {
+            "CoherentUniformBuffer " + std::to_string(index), device, std::pow(2, 20),
+            uboAlignment))
+      , mRenderFinishedFence(device->createFence("RenderFinished " + std::to_string(index)))
+      , mRenderFinishedSemaphore(
+            device->createSemaphore("FrameFinished " + std::to_string(index))) {
 
     mRenderPass->addAttachment(vk::Format::eR8G8B8A8Unorm);
     mRenderPass->addAttachment(vk::Format::eD32Sfloat);
@@ -165,8 +169,8 @@ int main(int argc, char* argv[]) {
   }
 
   auto instance = Illusion::Graphics::Instance::create("Simple GLTF Loader");
-  auto device   = Illusion::Graphics::Device::create(instance->getPhysicalDevice());
-  auto window   = Illusion::Graphics::Window::create(instance, device);
+  auto device   = Illusion::Graphics::Device::create("Device", instance->getPhysicalDevice());
+  auto window   = Illusion::Graphics::Window::create("Window", instance, device);
 
   Illusion::Graphics::Gltf::LoadOptions loadOptions;
   if (options.mAnimation >= 0) {
@@ -179,7 +183,8 @@ int main(int argc, char* argv[]) {
     loadOptions |= Illusion::Graphics::Gltf::LoadOptionBits::eTextures;
   }
 
-  auto model = Illusion::Graphics::Gltf::Model::create(device, options.mModelFile, loadOptions);
+  auto model =
+      Illusion::Graphics::Gltf::Model::create("GltfModel", device, options.mModelFile, loadOptions);
 
   if (options.mPrintInfo) {
     model->printInfo();
@@ -191,27 +196,27 @@ int main(int argc, char* argv[]) {
   glm::mat4 modelMatrix = glm::scale(glm::vec3(1.f / modelSize));
   modelMatrix           = glm::translate(modelMatrix, -modelCenter);
 
-  auto brdflut = Illusion::Graphics::Texture::createBRDFLuT(device, 128);
+  auto brdflut = Illusion::Graphics::Texture::createBRDFLuT("BRDFLuT", device, 128);
   auto skybox  = Illusion::Graphics::Texture::createCubemapFrom360PanoramaFile(
-      device, options.mSkyboxFile, 1024);
-  auto prefilteredIrradiance =
-      Illusion::Graphics::Texture::createPrefilteredIrradianceCubemap(device, 64, skybox);
-  auto prefilteredReflection =
-      Illusion::Graphics::Texture::createPrefilteredReflectionCubemap(device, 128, skybox);
+      "Skybox", device, options.mSkyboxFile, 1024);
+  auto prefilteredIrradiance = Illusion::Graphics::Texture::createPrefilteredIrradianceCubemap(
+      "Irradiance", device, 64, skybox);
+  auto prefilteredReflection = Illusion::Graphics::Texture::createPrefilteredReflectionCubemap(
+      "Reflection", device, 128, skybox);
 
-  auto pbrShader = Illusion::Graphics::Shader::createFromFiles(device,
+  auto pbrShader = Illusion::Graphics::Shader::createFromFiles("PBRShader", device,
       {"data/GltfViewer/shaders/GltfShader.vert", "data/GltfViewer/shaders/GltfShader.frag"},
       {"SkinUniforms"});
 
-  auto skyShader = Illusion::Graphics::Shader::createFromFiles(
-      device, {"data/GltfViewer/shaders/Skybox.vert", "data/GltfViewer/shaders/Skybox.frag"});
+  auto skyShader = Illusion::Graphics::Shader::createFromFiles("SkyboxShader", device,
+      {"data/GltfViewer/shaders/Skybox.vert", "data/GltfViewer/shaders/Skybox.frag"});
 
   auto uboAlignment =
       instance->getPhysicalDevice()->getProperties().limits.minUniformBufferOffsetAlignment;
 
   auto frameIndex = Illusion::Graphics::FrameResourceIndex::create(2);
   Illusion::Graphics::FrameResource<PerFrame> perFrame(
-      frameIndex, [=]() { return PerFrame(device, uboAlignment); });
+      frameIndex, [=](uint32_t index) { return PerFrame(index, device, uboAlignment); });
 
   glm::vec3 cameraPolar(0.f, 0.f, 1.5f);
 

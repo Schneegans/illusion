@@ -10,6 +10,7 @@
 #define ILLUSION_GRAPHICS_DEVICE_HPP
 
 #include "../Core/BitHash.hpp"
+#include "../Core/NamedObject.hpp"
 #include "../Core/StaticCreate.hpp"
 #include "fwd.hpp"
 
@@ -25,12 +26,12 @@ namespace Illusion::Graphics {
 // Device for your application.                                                                   //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class Device : public Core::StaticCreate<Device> {
+class Device : public Core::StaticCreate<Device>, public Core::NamedObject {
 
  public:
   // The device needs the physical device it should be created for. You can get one from your
   // Instance.
-  explicit Device(PhysicalDevicePtr const& physicalDevice);
+  explicit Device(std::string const& name, PhysicalDevicePtr const& physicalDevice);
   virtual ~Device();
 
   // high-level create methods ---------------------------------------------------------------------
@@ -39,42 +40,47 @@ class Device : public Core::StaticCreate<Device> {
 
   // Creates a BackedImage and optionally uploads data to the GPU. This uses a BackedBuffer as
   // staging buffer.
-  BackedImagePtr createBackedImage(vk::ImageCreateInfo info, vk::ImageViewType viewType,
-      vk::ImageAspectFlags imageAspectMask, vk::MemoryPropertyFlags properties,
-      vk::ImageLayout layout, vk::ComponentMapping const& componentMapping = vk::ComponentMapping(),
+  BackedImagePtr createBackedImage(std::string const& name, vk::ImageCreateInfo info,
+      vk::ImageViewType viewType, vk::ImageAspectFlags imageAspectMask,
+      vk::MemoryPropertyFlags properties, vk::ImageLayout layout,
+      vk::ComponentMapping const& componentMapping = vk::ComponentMapping(),
       vk::DeviceSize dataSize = 0, const void* data = nullptr) const;
 
   // Creates a BackedBuffer and optionally uploads data to the GPU. If the memory is eHostVisible
   // and eHostCoherent, the data will be uploaded by mapping. Else a staging buffer will be used.
-  BackedBufferPtr createBackedBuffer(vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties,
-      vk::DeviceSize dataSize, const void* data = nullptr) const;
+  BackedBufferPtr createBackedBuffer(std::string const& name, vk::BufferUsageFlags usage,
+      vk::MemoryPropertyFlags properties, vk::DeviceSize dataSize,
+      const void* data = nullptr) const;
 
   // Creates a device-local BackedBuffer with vk::BufferUsageFlagBits::eVertexBuffer and uploads the
   // given data. You may use the convenience template-version below to directly upload objects such
   // as structs.
-  BackedBufferPtr createVertexBuffer(vk::DeviceSize dataSize, const void* data) const;
+  BackedBufferPtr createVertexBuffer(
+      std::string const& name, vk::DeviceSize dataSize, const void* data) const;
 
   template <typename T>
-  BackedBufferPtr createVertexBuffer(T const& data) const {
-    return createVertexBuffer(sizeof(typename T::value_type) * data.size(), data.data());
+  BackedBufferPtr createVertexBuffer(std::string const& name, T const& data) const {
+    return createVertexBuffer(name, sizeof(typename T::value_type) * data.size(), data.data());
   }
 
   // Creates a device-local BackedBuffer with vk::BufferUsageFlagBits::eIndexBuffer and uploads the
   // given data. You may use the convenience template-version below to directly upload objects such
   // as structs.
-  BackedBufferPtr createIndexBuffer(vk::DeviceSize dataSize, const void* data) const;
+  BackedBufferPtr createIndexBuffer(
+      std::string const& name, vk::DeviceSize dataSize, const void* data) const;
 
   template <typename T>
-  BackedBufferPtr createIndexBuffer(T const& data) const {
-    return createIndexBuffer(sizeof(typename T::value_type) * data.size(), data.data());
+  BackedBufferPtr createIndexBuffer(std::string const& name, T const& data) const {
+    return createIndexBuffer(name, sizeof(typename T::value_type) * data.size(), data.data());
   }
 
   // Creates a device-local BackedBuffer with vk::BufferUsageFlagBits::eUniformBuffer and
   // vk::BufferUsageFlagBits::eTransferDst.
-  BackedBufferPtr createUniformBuffer(vk::DeviceSize size) const;
+  BackedBufferPtr createUniformBuffer(std::string const& name, vk::DeviceSize size) const;
 
-  TexturePtr createTexture(vk::ImageCreateInfo imageInfo, vk::SamplerCreateInfo samplerInfo,
-      vk::ImageViewType viewType, vk::ImageAspectFlags imageAspectMask, vk::ImageLayout layout,
+  TexturePtr createTexture(std::string const& name, vk::ImageCreateInfo imageInfo,
+      vk::SamplerCreateInfo samplerInfo, vk::ImageViewType viewType,
+      vk::ImageAspectFlags imageAspectMask, vk::ImageLayout layout,
       vk::ComponentMapping const& componentMapping = vk::ComponentMapping(),
       vk::DeviceSize dataSize = 0, const void* data = nullptr) const;
 
@@ -97,24 +103,24 @@ class Device : public Core::StaticCreate<Device> {
   // are deleted.
 
   // clang-format off
-  vk::CommandBufferPtr       allocateCommandBuffer(QueueType = QueueType::eGeneric, vk::CommandBufferLevel = vk::CommandBufferLevel::ePrimary) const;
-  vk::BufferPtr              createBuffer(vk::BufferCreateInfo const&) const;
-  vk::CommandPoolPtr         createCommandPool(vk::CommandPoolCreateInfo const&) const;
-  vk::DescriptorPoolPtr      createDescriptorPool(vk::DescriptorPoolCreateInfo const&) const;
-  vk::DescriptorSetLayoutPtr createDescriptorSetLayout(vk::DescriptorSetLayoutCreateInfo const&) const;
-  vk::DeviceMemoryPtr        createMemory(vk::MemoryAllocateInfo const&) const;
-  vk::FencePtr               createFence(vk::FenceCreateFlags const& = vk::FenceCreateFlagBits::eSignaled) const;
-  vk::FramebufferPtr         createFramebuffer(vk::FramebufferCreateInfo const&) const;
-  vk::ImagePtr               createImage(vk::ImageCreateInfo const&) const;
-  vk::ImageViewPtr           createImageView(vk::ImageViewCreateInfo const&) const;
-  vk::PipelinePtr            createComputePipeline(vk::ComputePipelineCreateInfo const&) const;
-  vk::PipelinePtr            createGraphicsPipeline(vk::GraphicsPipelineCreateInfo const&) const;
-  vk::PipelineLayoutPtr      createPipelineLayout(vk::PipelineLayoutCreateInfo const&) const;
-  vk::RenderPassPtr          createRenderPass(vk::RenderPassCreateInfo const&) const;
-  vk::SamplerPtr             createSampler(vk::SamplerCreateInfo const&) const;
-  vk::SemaphorePtr           createSemaphore(vk::SemaphoreCreateFlags const& = {}) const;
-  vk::ShaderModulePtr        createShaderModule(vk::ShaderModuleCreateInfo const&) const;
-  vk::SwapchainKHRPtr        createSwapChainKhr(vk::SwapchainCreateInfoKHR const&) const;
+  vk::CommandBufferPtr       allocateCommandBuffer(std::string const& name, QueueType = QueueType::eGeneric, vk::CommandBufferLevel = vk::CommandBufferLevel::ePrimary) const;
+  vk::BufferPtr              createBuffer(std::string const& name, vk::BufferCreateInfo const&) const;
+  vk::CommandPoolPtr         createCommandPool(std::string const& name, vk::CommandPoolCreateInfo const&) const;
+  vk::DescriptorPoolPtr      createDescriptorPool(std::string const& name, vk::DescriptorPoolCreateInfo const&) const;
+  vk::DescriptorSetLayoutPtr createDescriptorSetLayout(std::string const& name, vk::DescriptorSetLayoutCreateInfo const&) const;
+  vk::DeviceMemoryPtr        createMemory(std::string const& name, vk::MemoryAllocateInfo const&) const;
+  vk::FencePtr               createFence(std::string const& name, vk::FenceCreateFlags const& = vk::FenceCreateFlagBits::eSignaled) const;
+  vk::FramebufferPtr         createFramebuffer(std::string const& name, vk::FramebufferCreateInfo const&) const;
+  vk::ImagePtr               createImage(std::string const& name, vk::ImageCreateInfo const&) const;
+  vk::ImageViewPtr           createImageView(std::string const& name, vk::ImageViewCreateInfo const&) const;
+  vk::PipelinePtr            createComputePipeline(std::string const& name, vk::ComputePipelineCreateInfo const&) const;
+  vk::PipelinePtr            createGraphicsPipeline(std::string const& name, vk::GraphicsPipelineCreateInfo const&) const;
+  vk::PipelineLayoutPtr      createPipelineLayout(std::string const& name, vk::PipelineLayoutCreateInfo const&) const;
+  vk::RenderPassPtr          createRenderPass(std::string const& name, vk::RenderPassCreateInfo const&) const;
+  vk::SamplerPtr             createSampler(std::string const& name, vk::SamplerCreateInfo const&) const;
+  vk::SemaphorePtr           createSemaphore(std::string const& name, vk::SemaphoreCreateFlags const& = {}) const;
+  vk::ShaderModulePtr        createShaderModule(std::string const& name, vk::ShaderModuleCreateInfo const&) const;
+  vk::SwapchainKHRPtr        createSwapChainKhr(std::string const& name, vk::SwapchainCreateInfoKHR const&) const;
   // clang-format on
 
   // vulkan getters --------------------------------------------------------------------------------
@@ -132,9 +138,12 @@ class Device : public Core::StaticCreate<Device> {
 
  private:
   vk::DevicePtr createDevice() const;
+  void assignName(uint64_t vulkanHandle, vk::ObjectType objectType, std::string const& name) const;
 
   PhysicalDevicePtr mPhysicalDevice;
   vk::DevicePtr     mDevice;
+
+  PFN_vkSetDebugUtilsObjectNameEXT mSetObjectNameFunc;
 
   // One for each QueueType
   std::array<vk::Queue, 3>          mQueues;

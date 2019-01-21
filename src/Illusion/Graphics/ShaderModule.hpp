@@ -9,6 +9,7 @@
 #ifndef ILLUSION_GRAPHICS_SHADERMODULE_HPP
 #define ILLUSION_GRAPHICS_SHADERMODULE_HPP
 
+#include "../Core/NamedObject.hpp"
 #include "PipelineResource.hpp"
 #include "ShaderSource.hpp"
 #include "fwd.hpp"
@@ -25,12 +26,12 @@ namespace Illusion::Graphics {
 // PipelineReflection of the Shader class provides some easier-to-use interfaces.                 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class ShaderModule : public Core::StaticCreate<ShaderModule> {
+class ShaderModule : public Core::StaticCreate<ShaderModule>, public Core::NamedObject {
  public:
   // Creates a new ShaderModule. The source can be one of the sources defined in ShaderSource.hpp.
   // If there are any uniform and storage buffers defined in your shader source which should be
   // dynamic in the reflection, you should provide their names in the dynamicBuffers parameter.
-  ShaderModule(DevicePtr const& device, ShaderSourcePtr const& source,
+  ShaderModule(std::string const& name, DevicePtr const& device, ShaderSourcePtr const& source,
       vk::ShaderStageFlagBits stage, std::set<std::string> const& dynamicBuffers = {});
 
   virtual ~ShaderModule();

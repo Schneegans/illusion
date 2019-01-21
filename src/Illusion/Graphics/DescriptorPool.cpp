@@ -41,11 +41,12 @@ const std::unordered_map<PipelineResource::ResourceType, vk::DescriptorType> res
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 DescriptorPool::DescriptorPool(
-    DevicePtr const& device, DescriptorSetReflectionPtr const& reflection)
-    : mDevice(device)
+    std::string const& name, DevicePtr const& device, DescriptorSetReflectionPtr const& reflection)
+    : Core::NamedObject(name)
+    , mDevice(device)
     , mReflection(reflection) {
 
-  ILLUSION_TRACE << "Creating DescriptorPool." << std::endl;
+  ILLUSION_TRACE << "Creating DescriptorPool [" + getName() + "]" << std::endl;
 
   // calculate pool sizes for later pool creation
   std::unordered_map<vk::DescriptorType, uint32_t> descriptorTypeCounts;
@@ -64,7 +65,7 @@ DescriptorPool::DescriptorPool(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 DescriptorPool::~DescriptorPool() {
-  ILLUSION_TRACE << "Deleting DescriptorPool." << std::endl;
+  ILLUSION_TRACE << "Deleting DescriptorPool [" + getName() + "]" << std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -96,7 +97,7 @@ vk::DescriptorSetPtr DescriptorPool::allocateDescriptorSet() {
     info.flags         = vk::DescriptorPoolCreateFlagBits::eFreeDescriptorSet;
 
     pool                   = std::make_shared<PoolInfo>();
-    pool->mPool            = mDevice->createDescriptorPool(info);
+    pool->mPool            = mDevice->createDescriptorPool(getName(), info);
     pool->mAllocationCount = 0;
     mDescriptorPools.push_back(pool);
   }

@@ -33,16 +33,22 @@ bool glfwInitialized{false};
 
 VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
     VkDebugUtilsMessageTypeFlagsEXT                           messageType,
-    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
+    const VkDebugUtilsMessengerCallbackDataEXT*               pCallbackData, void* /*pUserData*/) {
+
+  std::string object = "[Unnamed Object] ";
+
+  if (pCallbackData->pObjects && pCallbackData->pObjects->pObjectName) {
+    object = "[" + std::string(pCallbackData->pObjects->pObjectName) + "] ";
+  }
 
   if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
-    ILLUSION_TRACE << pCallbackData->pMessage << std::endl;
+    ILLUSION_TRACE << object << pCallbackData->pMessage << std::endl;
   } else if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
-    ILLUSION_MESSAGE << pCallbackData->pMessage << std::endl;
+    ILLUSION_MESSAGE << object << pCallbackData->pMessage << std::endl;
   } else if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-    ILLUSION_WARNING << pCallbackData->pMessage << std::endl;
+    ILLUSION_WARNING << object << pCallbackData->pMessage << std::endl;
   } else if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
-    ILLUSION_ERROR << pCallbackData->pMessage << std::endl;
+    ILLUSION_ERROR << object << pCallbackData->pMessage << std::endl;
   }
 
   return false;
@@ -139,21 +145,27 @@ PhysicalDevicePtr Instance::getPhysicalDevice(std::vector<std::string> const& ex
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::SurfaceKHRPtr Instance::createSurface(GLFWwindow* window) const {
+vk::SurfaceKHRPtr Instance::createSurface(std::string const& name, GLFWwindow* window) const {
   VkSurfaceKHR tmp;
   if (glfwCreateWindowSurface(*mInstance, window, nullptr, &tmp) != VK_SUCCESS) {
     throw std::runtime_error("Failed to create window surface!");
   }
 
-  ILLUSION_TRACE << "Creating vk::SurfaceKHR." << std::endl;
+  ILLUSION_TRACE << "Creating vk::SurfaceKHR [" + name + "]" << std::endl;
 
   // copying instance to keep reference counting up until the surface is destroyed
   auto instance{mInstance};
-  return VulkanPtr::create(vk::SurfaceKHR(tmp), [instance](vk::SurfaceKHR* obj) {
-    ILLUSION_TRACE << "Deleting vk::SurfaceKHR." << std::endl;
+  return VulkanPtr::create(vk::SurfaceKHR(tmp), [instance, name](vk::SurfaceKHR* obj) {
+    ILLUSION_TRACE << "Deleting vk::SurfaceKHR [" + name + "]" << std::endl;
     instance->destroySurfaceKHR(*obj);
     delete obj;
   });
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+vk::InstancePtr Instance::getHandle() const {
+  return mInstance;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

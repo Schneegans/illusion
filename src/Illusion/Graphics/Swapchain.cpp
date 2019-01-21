@@ -20,17 +20,19 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Swapchain::Swapchain(DevicePtr const& device, vk::SurfaceKHRPtr const& surface)
-    : mDevice(device)
+Swapchain::Swapchain(
+    std::string const& name, DevicePtr const& device, vk::SurfaceKHRPtr const& surface)
+    : Core::NamedObject(name)
+    , mDevice(device)
     , mSurface(surface) {
 
-  ILLUSION_TRACE << "Creating Swapchain." << std::endl;
+  ILLUSION_TRACE << "Creating Swapchain [" + getName() + "]" << std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Swapchain::~Swapchain() {
-  ILLUSION_TRACE << "Deleting Swapchain." << std::endl;
+  ILLUSION_TRACE << "Deleting Swapchain [" + getName() + "]" << std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -75,7 +77,7 @@ void Swapchain::present(BackedImagePtr const& image,
 
     mImages = mDevice->getHandle()->getSwapchainImagesKHR(*mSwapchain);
 
-    auto cmd = std::make_shared<CommandBuffer>(mDevice);
+    auto cmd = std::make_shared<CommandBuffer>("Transition swapchain image layouts", mDevice);
     cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
     for (auto const& image : mImages) {
       cmd->transitionImageLayout(image, vk::ImageLayout::eUndefined,
@@ -289,23 +291,26 @@ void Swapchain::createSwapchain() {
                    << "support presentation!" << std::endl;
   }
 
-  mSwapchain = mDevice->createSwapChainKhr(info);
+  mSwapchain = mDevice->createSwapChainKhr(getName(), info);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Swapchain::createSemaphores() {
-  for (auto const& i : mImages) {
-    mImageAvailableSemaphores.push_back(mDevice->createSemaphore());
-    mCopyFinishedSemaphores.push_back(mDevice->createSemaphore());
+  for (size_t i(0); i < mImages.size(); ++i) {
+    mImageAvailableSemaphores.push_back(
+        mDevice->createSemaphore("ImageAvailable " + std::to_string(i) + " of " + getName()));
+    mCopyFinishedSemaphores.push_back(
+        mDevice->createSemaphore("ImageCopyFinished " + std::to_string(i) + " of " + getName()));
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Swapchain::createCommandBuffers() {
-  for (auto const& i : mImages) {
-    mPresentCommandBuffers.push_back(std::make_shared<CommandBuffer>(mDevice));
+  for (size_t i(0); i < mImages.size(); ++i) {
+    mPresentCommandBuffers.push_back(std::make_shared<CommandBuffer>(
+        "Presentation " + std::to_string(i) + " of " + getName(), mDevice));
   }
 }
 

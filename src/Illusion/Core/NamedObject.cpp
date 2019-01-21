@@ -6,32 +6,28 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_CORE_SCOPED_TIMER_HPP
-#define ILLUSION_CORE_SCOPED_TIMER_HPP
-
 #include "NamedObject.hpp"
-#include <string>
 
 namespace Illusion::Core {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Can be used to measure time taken by some part of code.                                        //
+
+NamedObject::NamedObject(std::string const& name)
+    : mName(name) {
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class ScopedTimer : public NamedObject {
- public:
-  explicit ScopedTimer(std::string const& name);
+std::string const& NamedObject::getName() const {
+  return mName;
+}
 
-  // The desctructor will print the time elapsed since the constructor was called. The print is done
-  // using ILLUSION_DEBUG from the Logger class.
-  virtual ~ScopedTimer();
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
- private:
-  double getNow();
+void NamedObject::setName(std::string const& name) {
+  mName = name;
+}
 
-  double mStartTime;
-};
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 } // namespace Illusion::Core
-
-#endif // ILLUSION_CORE_SCOPED_TIMER_HPP

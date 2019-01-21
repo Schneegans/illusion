@@ -35,11 +35,11 @@ const std::unordered_map<std::string, vk::ShaderStageFlagBits> hlslExtensionMapp
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ShaderPtr Shader::createFromFiles(DevicePtr const& device,
+ShaderPtr Shader::createFromFiles(std::string const& name, DevicePtr const& device,
     std::vector<std::string> const& fileNames, std::set<std::string> dynamicBuffers,
     bool reloadOnChanges) {
 
-  auto shader = Shader::create(device);
+  auto shader = Shader::create(name, device);
 
   for (auto const& fileName : fileNames) {
     auto extension = fileName.substr(fileName.find_last_of('.'));
@@ -68,8 +68,9 @@ ShaderPtr Shader::createFromFiles(DevicePtr const& device,
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Shader::Shader(DevicePtr const& device)
-    : mDevice(device) {
+Shader::Shader(std::string const& name, DevicePtr const& device)
+    : Core::NamedObject(name)
+    , mDevice(device) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -130,14 +131,15 @@ void Shader::reload() {
   if (mDirty) {
     std::vector<ShaderModulePtr> modules;
 
-    auto reflection = std::make_shared<PipelineReflection>(mDevice);
+    auto reflection =
+        std::make_shared<PipelineReflection>("PipelineReflection for " + getName(), mDevice);
 
     try {
 
       // create modules
       for (auto const& s : mSources) {
-        modules.emplace_back(
-            ShaderModule::create(mDevice, s.second, s.first, mDynamicBuffers[s.first]));
+        modules.emplace_back(ShaderModule::create(
+            "ShaderModule of " + getName(), mDevice, s.second, s.first, mDynamicBuffers[s.first]));
       }
 
       // create reflection

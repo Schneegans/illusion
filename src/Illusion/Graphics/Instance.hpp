@@ -35,7 +35,10 @@ class Instance : public Core::StaticCreate<Instance> {
       std::vector<std::string> const& extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME}) const;
 
   // This is used by the Window class.
-  vk::SurfaceKHRPtr createSurface(GLFWwindow* window) const;
+  vk::SurfaceKHRPtr createSurface(std::string const& name, GLFWwindow* window) const;
+
+  // Access to the underlying vk::instance
+  vk::InstancePtr getHandle() const;
 
  private:
   vk::InstancePtr createInstance(std::string const& engine, std::string const& app) const;

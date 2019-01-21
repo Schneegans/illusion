@@ -9,7 +9,6 @@
 #ifndef ILLUSION_GRAPHICS_DESCRIPTOR_SET_CACHE_HPP
 #define ILLUSION_GRAPHICS_DESCRIPTOR_SET_CACHE_HPP
 
-#include "../Core/BitHash.hpp"
 #include "DescriptorSetReflection.hpp"
 
 #include <map>
@@ -22,9 +21,9 @@ namespace Illusion::Graphics {
 // DescriptorSetLayouts. It is used by the CommandBuffer class.                                   //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class DescriptorSetCache {
+class DescriptorSetCache : public Core::NamedObject {
  public:
-  DescriptorSetCache(DevicePtr const& device);
+  DescriptorSetCache(std::string const& name, DevicePtr const& device);
   virtual ~DescriptorSetCache();
 
   // A reference to the acquired vk::DescriptorSet is also stored in the internal cache of this

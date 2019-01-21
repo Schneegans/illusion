@@ -23,13 +23,15 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-CommandBuffer::CommandBuffer(DevicePtr const& device, QueueType type, vk::CommandBufferLevel level)
-    : mDevice(device)
-    , mVkCmd(device->allocateCommandBuffer(type, level))
+CommandBuffer::CommandBuffer(
+    std::string const& name, DevicePtr const& device, QueueType type, vk::CommandBufferLevel level)
+    : Core::NamedObject(name)
+    , mDevice(device)
+    , mVkCmd(device->allocateCommandBuffer(name, type, level))
     , mType(type)
     , mLevel(level)
     , mGraphicsState(device)
-    , mDescriptorSetCache(device) {
+    , mDescriptorSetCache(name, device) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -554,7 +556,7 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
     info.stage.pSpecializationInfo = nullptr;
     info.layout                    = *mCurrentShader->getReflection()->getLayout();
 
-    auto pipeline = mDevice->createComputePipeline(info);
+    auto pipeline = mDevice->createComputePipeline("ComputePipeline of " + getName(), info);
 
     mPipelineCache[hash] = pipeline;
 
@@ -744,7 +746,7 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
     info.layout = *mCurrentShader->getReflection()->getLayout();
   }
 
-  auto pipeline = mDevice->createGraphicsPipeline(info);
+  auto pipeline = mDevice->createGraphicsPipeline("GraphicsPipeline of " + getName(), info);
 
   mPipelineCache[hash] = pipeline;
 
