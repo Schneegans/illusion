@@ -25,7 +25,7 @@ Window::Window(std::string const& name, InstancePtr const& instance, DevicePtr c
     , mInstance(instance)
     , mDevice(device) {
 
-  ILLUSION_TRACE << "Creating Window [" + getName() + "]" << std::endl;
+  Core::Logger::trace() << "Creating Window [" + getName() + "]" << std::endl;
 
   pCursor.onChange().connect([this](Cursor cursor) {
     if (mCursor) {
@@ -112,7 +112,7 @@ Window::Window(std::string const& name, InstancePtr const& instance, DevicePtr c
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Window::~Window() {
-  ILLUSION_TRACE << "Deleting Window [" + getName() + "]" << std::endl;
+  Core::Logger::trace() << "Deleting Window [" + getName() + "]" << std::endl;
 
   if (mCursor) {
     glfwDestroyCursor(mCursor);
@@ -184,7 +184,7 @@ void Window::open() {
     });
 
   } else {
-    ILLUSION_WARNING << "Attempting to open an already opened window!" << std::endl;
+    Core::Logger::warning() << "Attempting to open an already opened window!" << std::endl;
   }
 }
 

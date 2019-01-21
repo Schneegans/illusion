@@ -45,7 +45,7 @@ class File {
 
     std::ifstream ifs(mPath, std::ifstream::in | std::ios::binary);
     if (!ifs) {
-      ILLUSION_WARNING << "Cannot open file \"" << mPath << "\"!" << std::endl;
+      Logger::warning() << "Cannot open file \"" << mPath << "\"!" << std::endl;
       return T();
     }
 
@@ -70,7 +70,7 @@ class File {
   bool save(T const& data) const {
     std::ofstream ofs(mPath, std::ifstream::out | std::ios::binary);
     if (!ofs) {
-      ILLUSION_WARNING << "Cannot open file \"" << mPath << "\"!" << std::endl;
+      Logger::warning() << "Cannot open file \"" << mPath << "\"!" << std::endl;
       return false;
     }
 

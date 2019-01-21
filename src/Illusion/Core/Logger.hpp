@@ -17,7 +17,7 @@ namespace Illusion::Core {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Prints beautiful messages to the console output. You can use the macros at the bottom of this  //
 // file like this:                                                                                //
-// ILLUSION_MESSAGE << "hello world" << std::endl;                                                //
+// Logger::message() << "hello world" << std::endl; //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Logger {
@@ -40,10 +40,6 @@ class Logger {
   const static std::string PRINT_BOLD;
   const static std::string PRINT_RESET;
 
-  // Modify those to enable or disable printing of file names or line numbers.
-  static bool printFile;
-  static bool printLine;
-
   // If any one of these is set to false, the corresponding messages are discarded.
   static bool enableTrace;
   static bool enableDebug;
@@ -51,23 +47,14 @@ class Logger {
   static bool enableWarning;
   static bool enableError;
 
-  // These are used by the marcos below. You can also use them directly, however using the macros
-  // might be a better idea.
-  static std::ostream& traceImpl(const char* file, int line);
-  static std::ostream& debugImpl(const char* file, int line);
-  static std::ostream& messageImpl(const char* file, int line);
-  static std::ostream& warningImpl(const char* file, int line);
-  static std::ostream& errorImpl(const char* file, int line);
+  // Use these to print something.
+  static std::ostream& trace();
+  static std::ostream& debug();
+  static std::ostream& message();
+  static std::ostream& warning();
+  static std::ostream& error();
 };
 
 } // namespace Illusion::Core
-
-// Use these macros in your code like this:
-// LOG_MESSAGE << "hello world" << std::endl;
-#define ILLUSION_TRACE Illusion::Core::Logger::traceImpl(__FILE__, __LINE__)
-#define ILLUSION_DEBUG Illusion::Core::Logger::debugImpl(__FILE__, __LINE__)
-#define ILLUSION_MESSAGE Illusion::Core::Logger::messageImpl(__FILE__, __LINE__)
-#define ILLUSION_WARNING Illusion::Core::Logger::warningImpl(__FILE__, __LINE__)
-#define ILLUSION_ERROR Illusion::Core::Logger::errorImpl(__FILE__, __LINE__)
 
 #endif // ILLUSION_LOGGER_HPP

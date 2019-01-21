@@ -119,7 +119,7 @@ void Shader::reload() {
       try {
         m->reload();
       } catch (std::runtime_error const& e) {
-        ILLUSION_ERROR << "Shader reloading failed. " << e.what() << std::endl;
+        Core::Logger::error() << "Shader reloading failed. " << e.what() << std::endl;
         m->resetReloadingRequired();
       }
     }
@@ -149,7 +149,7 @@ void Shader::reload() {
         }
       }
     } catch (std::runtime_error const& e) {
-      ILLUSION_ERROR << "Failed to compile shader: " << e.what() << std::endl;
+      Core::Logger::error() << "Failed to compile shader: " << e.what() << std::endl;
 
       // setting mDirty to false to prevent multiple error prints
       mDirty = false;

@@ -27,7 +27,7 @@ Framebuffer::Framebuffer(std::string const& name, DevicePtr const& device,
     , mRenderPass(renderPass)
     , mExtent(extent) {
 
-  ILLUSION_TRACE << "Creating Framebuffer [" + getName() + "]" << std::endl;
+  Core::Logger::trace() << "Creating Framebuffer [" + getName() + "]" << std::endl;
 
   for (size_t i(0); i < attachments.size(); ++i) {
     vk::ImageAspectFlags aspect;
@@ -93,7 +93,7 @@ Framebuffer::Framebuffer(std::string const& name, DevicePtr const& device,
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Framebuffer::~Framebuffer() {
-  ILLUSION_TRACE << "Deleting Framebuffer [" + getName() + "]" << std::endl;
+  Core::Logger::trace() << "Deleting Framebuffer [" + getName() + "]" << std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

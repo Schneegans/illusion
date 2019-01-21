@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
   std::string shaderFile = "data/ShaderSandbox/Sandbox.frag";
   bool        printHelp  = false;
 
-  // The --trace option enables ILLUSION_TRACE output. This mainly shows when Vulkan objects are
+  // The --trace option enables Logger::trace() output. This mainly shows when Vulkan objects are
   // created and destroyed.
   Illusion::Core::CommandLineOptions args("Renders a full screen texture.");
   args.addOption({"-h", "--help"}, &printHelp, "Print this help");

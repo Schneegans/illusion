@@ -25,9 +25,10 @@ namespace {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void printCap(std::string const& name, vk::Bool32 cap) {
-  ILLUSION_MESSAGE << std::left << std::setw(50) << std::setfill('.') << (name + " ")
-                   << (cap ? Core::Logger::PRINT_GREEN + " yes" : Core::Logger::PRINT_RED + " no")
-                   << Core::Logger::PRINT_RESET << std::endl;
+  Core::Logger::message() << std::left << std::setw(50) << std::setfill('.') << (name + " ")
+                          << (cap ? Core::Logger::PRINT_GREEN + " yes"
+                                  : Core::Logger::PRINT_RED + " no")
+                          << Core::Logger::PRINT_RESET << std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42,8 +43,8 @@ void printVal(std::string const& name, std::vector<std::string> const& vals) {
     }
   }
 
-  ILLUSION_MESSAGE << std::left << std::setw(50) << std::setfill('.') << (name + " ") << " "
-                   << sstr.str() << std::endl;
+  Core::Logger::message() << std::left << std::setw(50) << std::setfill('.') << (name + " ") << " "
+                          << sstr.str() << std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -196,8 +197,8 @@ uint32_t PhysicalDevice::getQueueIndex(QueueType type) const {
 void PhysicalDevice::printInfo() {
   // basic information
   vk::PhysicalDeviceProperties properties{getProperties()};
-  ILLUSION_MESSAGE << Core::Logger::PRINT_BOLD << "Physical Device Information "
-                   << Core::Logger::PRINT_RESET << std::endl;
+  Core::Logger::message() << Core::Logger::PRINT_BOLD << "Physical Device Information "
+                          << Core::Logger::PRINT_RESET << std::endl;
   printVal("apiVersion", {std::to_string(properties.apiVersion)});
   printVal("driverVersion", {std::to_string(properties.driverVersion)});
   printVal("vendorID", {std::to_string(properties.vendorID)});
@@ -207,8 +208,8 @@ void PhysicalDevice::printInfo() {
 
   // memory information
   vk::PhysicalDeviceMemoryProperties memoryProperties = getMemoryProperties();
-  ILLUSION_MESSAGE << Core::Logger::PRINT_BOLD << "Memory Information " << Core::Logger::PRINT_RESET
-                   << std::endl;
+  Core::Logger::message() << Core::Logger::PRINT_BOLD << "Memory Information "
+                          << Core::Logger::PRINT_RESET << std::endl;
   for (unsigned i{0}; i < memoryProperties.memoryTypeCount; ++i) {
     printVal("Memory type " + std::to_string(i),
         {vk::to_string(memoryProperties.memoryTypes[i].propertyFlags)});
@@ -223,7 +224,7 @@ void PhysicalDevice::printInfo() {
   // clang-format off
   // features
   vk::PhysicalDeviceFeatures features{getFeatures()};
-  ILLUSION_MESSAGE << Core::Logger::PRINT_BOLD << "Features " << Core::Logger::PRINT_RESET << std::endl;
+  Core::Logger::message() << Core::Logger::PRINT_BOLD << "Features " << Core::Logger::PRINT_RESET << std::endl;
   printCap("robustBufferAccess",                      features.robustBufferAccess);
   printCap("fullDrawIndexUint32",                     features.fullDrawIndexUint32);
   printCap("imageCubeArray",                          features.imageCubeArray);
@@ -281,7 +282,7 @@ void PhysicalDevice::printInfo() {
   printCap("inheritedQueries",                        features.inheritedQueries);
 
   // format properties
-  ILLUSION_MESSAGE << Core::Logger::PRINT_BOLD << "Format Properties " << Core::Logger::PRINT_RESET << std::endl;
+  Core::Logger::message() << Core::Logger::PRINT_BOLD << "Format Properties " << Core::Logger::PRINT_RESET << std::endl;
   for (int i(VK_FORMAT_BEGIN_RANGE+1); i<=VK_FORMAT_END_RANGE; ++i)
   {
     vk::FormatProperties props = getFormatProperties(vk::Format(i));
@@ -293,24 +294,24 @@ void PhysicalDevice::printInfo() {
       sstr << Core::Logger::PRINT_RED + "no" << Core::Logger::PRINT_RESET;
     }
 
-    ILLUSION_MESSAGE << std::left << std::setw(50) << std::setfill('.') 
+    Core::Logger::message() << std::left << std::setw(50) << std::setfill('.') 
                      << (vk::to_string(vk::Format(i)) + " ") << " "
                      << sstr.str() << std::endl;
 
     if (props.optimalTilingFeatures) {
-      ILLUSION_MESSAGE << std::right << std::setw(50) << std::setfill(' ') 
+      Core::Logger::message() << std::right << std::setw(50) << std::setfill(' ') 
                        << "Optimal Tiling:" << " " << vk::to_string(props.optimalTilingFeatures) 
                        << std::endl;
     }
 
     if (props.linearTilingFeatures) {
-      ILLUSION_MESSAGE << std::right << std::setw(50) << std::setfill(' ') 
+      Core::Logger::message() << std::right << std::setw(50) << std::setfill(' ') 
                        << "Linear Tiling:" << " " << vk::to_string(props.linearTilingFeatures) 
                        << std::endl;
     }
 
     if (props.bufferFeatures) {
-      ILLUSION_MESSAGE << std::right << std::setw(50) << std::setfill(' ') 
+      Core::Logger::message() << std::right << std::setw(50) << std::setfill(' ') 
                        << "Buffer Features:" << " " << vk::to_string(props.bufferFeatures) 
                        << std::endl;
     }
@@ -319,7 +320,7 @@ void PhysicalDevice::printInfo() {
 
   // limits
   vk::PhysicalDeviceLimits limits = properties.limits;
-  ILLUSION_MESSAGE << Core::Logger::PRINT_BOLD << "Limits " << Core::Logger::PRINT_RESET << std::endl;
+  Core::Logger::message() << Core::Logger::PRINT_BOLD << "Limits " << Core::Logger::PRINT_RESET << std::endl;
   printVal("maxImageDimension1D",                             {printMin(limits.maxImageDimension1D, 4096u)});
   printVal("maxImageDimension2D",                             {printMin(limits.maxImageDimension2D, 4096u)});
   printVal("maxImageDimension3D",                             {printMin(limits.maxImageDimension3D, 256u)});
