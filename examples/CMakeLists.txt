@@ -9,6 +9,7 @@
 # make each example --------------------------------------------------------------------------------
 set(ENABLED_EXAMPLES
   "GltfViewer"
+  "GPUInfo"
   "ShaderSandbox"
   "TexturedCube"
   "TexturedQuad"
