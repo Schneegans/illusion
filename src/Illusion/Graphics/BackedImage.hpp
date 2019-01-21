@@ -21,13 +21,13 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct BackedImage {
+  vk::DeviceMemoryPtr mMemory;
   vk::ImagePtr        mImage;
   vk::ImageViewPtr    mView;
-  vk::DeviceMemoryPtr mMemory;
 
+  vk::MemoryAllocateInfo  mMemoryInfo;
   vk::ImageCreateInfo     mImageInfo;
   vk::ImageViewCreateInfo mViewInfo;
-  vk::MemoryAllocateInfo  mMemoryInfo;
 
   vk::ImageLayout mCurrentLayout = vk::ImageLayout::eUndefined;
 };

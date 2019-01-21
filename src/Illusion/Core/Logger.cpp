@@ -9,6 +9,7 @@
 // ---------------------------------------------------------------------------------------- includes
 #include "Logger.hpp"
 
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 
@@ -106,6 +107,24 @@ std::ostream& Logger::warning() {
 
 std::ostream& Logger::error() {
   return print(enableError, "[ILLUSION][E]", PRINT_RED);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Logger::traceCreation(std::string const& type, std::string const& name) {
+  if (enableTrace) {
+    trace() << PRINT_GREEN << "[create] " << PRINT_RESET << std::left << std::setw(20) << type
+            << ((name.size() > 0) ? " (" + name + ")" : "") << std::endl;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Logger::traceDeletion(std::string const& type, std::string const& name) {
+  if (enableTrace) {
+    trace() << PRINT_RED << "[delete] " << PRINT_RESET << std::left << std::setw(20) << type
+            << " (" + name + ")" << std::endl;
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

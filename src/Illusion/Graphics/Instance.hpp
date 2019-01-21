@@ -9,6 +9,7 @@
 #ifndef ILLUSION_GRAPHICS_INSTANCE_HPP
 #define ILLUSION_GRAPHICS_INSTANCE_HPP
 
+#include "../Core/NamedObject.hpp"
 #include "../Core/StaticCreate.hpp"
 #include "fwd.hpp"
 
@@ -23,11 +24,11 @@ namespace Illusion::Graphics {
 // have a Device, you can create all othe Vulkan resources.                                       //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class Instance : public Core::StaticCreate<Instance> {
+class Instance : public Core::StaticCreate<Instance>, public Core::NamedObject {
 
  public:
   // When debugMode is set to true, validation layers will be loaded.
-  explicit Instance(std::string const& appName, bool debugMode = true);
+  explicit Instance(std::string const& name, bool debugMode = true);
   virtual ~Instance();
 
   // Tries to find a physical device which supports the given extensions.

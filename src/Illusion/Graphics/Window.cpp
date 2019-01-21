@@ -25,7 +25,7 @@ Window::Window(std::string const& name, InstancePtr const& instance, DevicePtr c
     , mInstance(instance)
     , mDevice(device) {
 
-  Core::Logger::trace() << "Creating Window [" + getName() + "]" << std::endl;
+  Core::Logger::traceCreation("Window", getName());
 
   pCursor.onChange().connect([this](Cursor cursor) {
     if (mCursor) {
@@ -112,7 +112,7 @@ Window::Window(std::string const& name, InstancePtr const& instance, DevicePtr c
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Window::~Window() {
-  Core::Logger::trace() << "Deleting Window [" + getName() + "]" << std::endl;
+  Core::Logger::traceDeletion("Window", getName());
 
   if (mCursor) {
     glfwDestroyCursor(mCursor);

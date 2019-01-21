@@ -24,13 +24,13 @@ RenderPass::RenderPass(std::string const& name, DevicePtr const& device)
     : Core::NamedObject(name)
     , mDevice(device) {
 
-  Core::Logger::trace() << "Creating RenderPass [" + getName() + "]" << std::endl;
+  Core::Logger::traceCreation("RenderPass", getName());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 RenderPass::~RenderPass() {
-  Core::Logger::trace() << "Deleting RenderPass [" + getName() + "]" << std::endl;
+  Core::Logger::traceDeletion("RenderPass", getName());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

@@ -6,27 +6,29 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_BACKED_BUFFER_HPP
-#define ILLUSION_GRAPHICS_BACKED_BUFFER_HPP
+#ifndef ILLUSION_CORE_UTILS_HPP
+#define ILLUSION_CORE_UTILS_HPP
 
-#include "fwd.hpp"
+#include <memory>
+#include <vector>
 
-namespace Illusion::Graphics {
+namespace Illusion::Core::Utils {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// A BackedBuffer stores a vk::Buffer and some vk::DeviceMemory attached to this buffer.          //
-// Additionally all create-info objects are stored in order to access the properties of the       //
-// buffer and the memory. Use the Device class to easily create a BackedBuffer.                   //
+
+template <typename T, typename... Args>
+std::unique_ptr<T> makeUnique(Args&&... args) {
+  return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct BackedBuffer {
-  vk::DeviceMemoryPtr mMemory;
-  vk::BufferPtr       mBuffer;
+std::vector<std::string> splitString(std::string const& s, char delim);
+bool                     stringContains(std::string const& s, char c);
+uint32_t replaceString(std::string& s, std::string const& oldString, std::string const& newString);
 
-  vk::MemoryAllocateInfo mMemoryInfo;
-  vk::BufferCreateInfo   mBufferInfo;
-};
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-} // namespace Illusion::Graphics
+} // namespace Illusion::Core::Utils
 
-#endif // ILLUSION_GRAPHICS_BACKED_BUFFER_HPP
+#endif // ILLUSION_CORE_UTILS_HPP

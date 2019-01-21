@@ -198,11 +198,11 @@ int main(int argc, char* argv[]) {
 
   auto brdflut = Illusion::Graphics::Texture::createBRDFLuT("BRDFLuT", device, 128);
   auto skybox  = Illusion::Graphics::Texture::createCubemapFrom360PanoramaFile(
-      "Skybox", device, options.mSkyboxFile, 1024);
+      "SkyboxTexture", device, options.mSkyboxFile, 1024);
   auto prefilteredIrradiance = Illusion::Graphics::Texture::createPrefilteredIrradianceCubemap(
-      "Irradiance", device, 64, skybox);
+      "IrradianceTexture", device, 64, skybox);
   auto prefilteredReflection = Illusion::Graphics::Texture::createPrefilteredReflectionCubemap(
-      "Reflection", device, 128, skybox);
+      "ReflectionTexture", device, 128, skybox);
 
   auto pbrShader = Illusion::Graphics::Shader::createFromFiles("PBRShader", device,
       {"data/GltfViewer/shaders/GltfShader.vert", "data/GltfViewer/shaders/GltfShader.frag"},

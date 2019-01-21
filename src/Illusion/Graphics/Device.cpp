@@ -35,9 +35,9 @@ const std::vector<const char*> DEVICE_EXTENSIONS{VK_KHR_SWAPCHAIN_EXTENSION_NAME
 Device::Device(std::string const& name, PhysicalDevicePtr const& physicalDevice)
     : Core::NamedObject(name)
     , mPhysicalDevice(physicalDevice)
-    , mDevice(createDevice()) {
+    , mDevice(createDevice(name)) {
 
-  Core::Logger::trace() << "Creating Device [" + getName() + "]" << std::endl;
+  Core::Logger::traceCreation("Device", getName());
 
   mSetObjectNameFunc =
       PFN_vkSetDebugUtilsObjectNameEXT(mDevice->getProcAddr("vkSetDebugUtilsObjectNameEXT"));
@@ -59,7 +59,7 @@ Device::Device(std::string const& name, PhysicalDevicePtr const& physicalDevice)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Device::~Device() {
-  Core::Logger::trace() << "Deleting Device [" + getName() + "]" << std::endl;
+  Core::Logger::traceDeletion("Device", getName());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -381,15 +381,15 @@ vk::CommandBufferPtr Device::allocateCommandBuffer(
   info.commandPool        = *mCommandPools[Core::enumCast(type)];
   info.commandBufferCount = 1;
 
-  Core::Logger::trace() << "Allocating vk::CommandBuffer [" << name << "]" << std::endl;
+  Core::Logger::traceCreation("vk::CommandBuffer", name);
 
   auto vkObject = mDevice->allocateCommandBuffers(info)[0];
   assignName(uint64_t(VkCommandBuffer(vkObject)), vk::ObjectType::eCommandBuffer, name);
 
-  auto device{mDevice};
-  auto pool{mCommandPools[Core::enumCast(type)]};
+  auto device = mDevice;
+  auto pool   = mCommandPools[Core::enumCast(type)];
   return VulkanPtr::create(vkObject, [device, pool, name](vk::CommandBuffer* obj) {
-    Core::Logger::trace() << "Freeing vk::CommandBuffer [" << name << "]" << std::endl;
+    Core::Logger::traceDeletion("vk::CommandBuffer", name);
     device->freeCommandBuffers(*pool, *obj);
     delete obj;
   });
@@ -399,14 +399,14 @@ vk::CommandBufferPtr Device::allocateCommandBuffer(
 
 vk::BufferPtr Device::createBuffer(
     std::string const& name, vk::BufferCreateInfo const& info) const {
-  Core::Logger::trace() << "Creating vk::Buffer [" << name << "]" << std::endl;
+  Core::Logger::traceCreation("vk::Buffer", name);
 
   auto vkObject = mDevice->createBuffer(info);
   assignName(uint64_t(VkBuffer(vkObject)), vk::ObjectType::eBuffer, name);
 
-  auto device{mDevice};
+  auto device = mDevice;
   return VulkanPtr::create(vkObject, [device, name](vk::Buffer* obj) {
-    Core::Logger::trace() << "Deleting vk::Buffer [" << name << "]" << std::endl;
+    Core::Logger::traceDeletion("vk::Buffer", name);
     device->destroyBuffer(*obj);
     delete obj;
   });
@@ -416,14 +416,14 @@ vk::BufferPtr Device::createBuffer(
 
 vk::CommandPoolPtr Device::createCommandPool(
     std::string const& name, vk::CommandPoolCreateInfo const& info) const {
-  Core::Logger::trace() << "Creating vk::CommandPool [" << name << "]" << std::endl;
+  Core::Logger::traceCreation("vk::CommandPool", name);
 
   auto vkObject = mDevice->createCommandPool(info);
   assignName(uint64_t(VkCommandPool(vkObject)), vk::ObjectType::eCommandPool, name);
 
-  auto device{mDevice};
+  auto device = mDevice;
   return VulkanPtr::create(vkObject, [device, name](vk::CommandPool* obj) {
-    Core::Logger::trace() << "Deleting vk::CommandPool [" << name << "]" << std::endl;
+    Core::Logger::traceDeletion("vk::CommandPool", name);
     device->destroyCommandPool(*obj);
     delete obj;
   });
@@ -433,14 +433,14 @@ vk::CommandPoolPtr Device::createCommandPool(
 
 vk::DescriptorPoolPtr Device::createDescriptorPool(
     std::string const& name, vk::DescriptorPoolCreateInfo const& info) const {
-  Core::Logger::trace() << "Creating vk::DescriptorPool [" << name << "]" << std::endl;
+  Core::Logger::traceCreation("vk::DescriptorPool", name);
 
   auto vkObject = mDevice->createDescriptorPool(info);
   assignName(uint64_t(VkDescriptorPool(vkObject)), vk::ObjectType::eDescriptorPool, name);
 
-  auto device{mDevice};
+  auto device = mDevice;
   return VulkanPtr::create(vkObject, [device, name](vk::DescriptorPool* obj) {
-    Core::Logger::trace() << "Deleting vk::DescriptorPool [" << name << "]" << std::endl;
+    Core::Logger::traceDeletion("vk::DescriptorPool", name);
     device->destroyDescriptorPool(*obj);
     delete obj;
   });
@@ -450,14 +450,14 @@ vk::DescriptorPoolPtr Device::createDescriptorPool(
 
 vk::DescriptorSetLayoutPtr Device::createDescriptorSetLayout(
     std::string const& name, vk::DescriptorSetLayoutCreateInfo const& info) const {
-  Core::Logger::trace() << "Creating vk::DescriptorSetLayout [" << name << "]" << std::endl;
+  Core::Logger::traceCreation("vk::DescriptorSetLayout", name);
 
   auto vkObject = mDevice->createDescriptorSetLayout(info);
   assignName(uint64_t(VkDescriptorSetLayout(vkObject)), vk::ObjectType::eDescriptorSetLayout, name);
 
-  auto device{mDevice};
+  auto device = mDevice;
   return VulkanPtr::create(vkObject, [device, name](vk::DescriptorSetLayout* obj) {
-    Core::Logger::trace() << "Deleting vk::DescriptorSetLayout [" << name << "]" << std::endl;
+    Core::Logger::traceDeletion("vk::DescriptorSetLayout", name);
     device->destroyDescriptorSetLayout(*obj);
     delete obj;
   });
@@ -467,14 +467,14 @@ vk::DescriptorSetLayoutPtr Device::createDescriptorSetLayout(
 
 vk::DeviceMemoryPtr Device::createMemory(
     std::string const& name, vk::MemoryAllocateInfo const& info) const {
-  Core::Logger::trace() << "Allocating vk::DeviceMemory [" << name << "]" << std::endl;
+  Core::Logger::traceCreation("vk::DeviceMemory", name);
 
   auto vkObject = mDevice->allocateMemory(info);
   assignName(uint64_t(VkDeviceMemory(vkObject)), vk::ObjectType::eDeviceMemory, name);
 
-  auto device{mDevice};
+  auto device = mDevice;
   return VulkanPtr::create(vkObject, [device, name](vk::DeviceMemory* obj) {
-    Core::Logger::trace() << "Freeing vk::DeviceMemory [" << name << "]" << std::endl;
+    Core::Logger::traceDeletion("vk::DeviceMemory", name);
     device->freeMemory(*obj);
     delete obj;
   });
@@ -483,14 +483,14 @@ vk::DeviceMemoryPtr Device::createMemory(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 vk::FencePtr Device::createFence(std::string const& name, vk::FenceCreateFlags const& flags) const {
-  Core::Logger::trace() << "Creating vk::Fence [" << name << "]" << std::endl;
+  Core::Logger::traceCreation("vk::Fence", name);
 
   auto vkObject = mDevice->createFence({flags});
   assignName(uint64_t(VkFence(vkObject)), vk::ObjectType::eFence, name);
 
-  auto device{mDevice};
+  auto device = mDevice;
   return VulkanPtr::create(vkObject, [device, name](vk::Fence* obj) {
-    Core::Logger::trace() << "Deleting vk::Fence [" << name << "]" << std::endl;
+    Core::Logger::traceDeletion("vk::Fence", name);
     device->destroyFence(*obj);
     delete obj;
   });
@@ -500,14 +500,14 @@ vk::FencePtr Device::createFence(std::string const& name, vk::FenceCreateFlags c
 
 vk::FramebufferPtr Device::createFramebuffer(
     std::string const& name, vk::FramebufferCreateInfo const& info) const {
-  Core::Logger::trace() << "Creating vk::Framebuffer [" << name << "]" << std::endl;
+  Core::Logger::traceCreation("vk::Framebuffer", name);
 
   auto vkObject = mDevice->createFramebuffer(info);
   assignName(uint64_t(VkFramebuffer(vkObject)), vk::ObjectType::eFramebuffer, name);
 
-  auto device{mDevice};
+  auto device = mDevice;
   return VulkanPtr::create(vkObject, [device, name](vk::Framebuffer* obj) {
-    Core::Logger::trace() << "Deleting vk::Framebuffer [" << name << "]" << std::endl;
+    Core::Logger::traceDeletion("vk::Framebuffer", name);
     device->destroyFramebuffer(*obj);
     delete obj;
   });
@@ -516,14 +516,14 @@ vk::FramebufferPtr Device::createFramebuffer(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 vk::ImagePtr Device::createImage(std::string const& name, vk::ImageCreateInfo const& info) const {
-  Core::Logger::trace() << "Creating vk::Image [" << name << "]" << std::endl;
+  Core::Logger::traceCreation("vk::Image", name);
 
   auto vkObject = mDevice->createImage(info);
   assignName(uint64_t(VkImage(vkObject)), vk::ObjectType::eImage, name);
 
-  auto device{mDevice};
+  auto device = mDevice;
   return VulkanPtr::create(vkObject, [device, name](vk::Image* obj) {
-    Core::Logger::trace() << "Deleting vk::Image [" << name << "]" << std::endl;
+    Core::Logger::traceDeletion("vk::Image", name);
     device->destroyImage(*obj);
     delete obj;
   });
@@ -533,14 +533,14 @@ vk::ImagePtr Device::createImage(std::string const& name, vk::ImageCreateInfo co
 
 vk::ImageViewPtr Device::createImageView(
     std::string const& name, vk::ImageViewCreateInfo const& info) const {
-  Core::Logger::trace() << "Creating vk::ImageView [" << name << "]" << std::endl;
+  Core::Logger::traceCreation("vk::ImageView", name);
 
   auto vkObject = mDevice->createImageView(info);
   assignName(uint64_t(VkImageView(vkObject)), vk::ObjectType::eImageView, name);
 
-  auto device{mDevice};
+  auto device = mDevice;
   return VulkanPtr::create(vkObject, [device, name](vk::ImageView* obj) {
-    Core::Logger::trace() << "Deleting vk::ImageView [" << name << "]" << std::endl;
+    Core::Logger::traceDeletion("vk::ImageView", name);
     device->destroyImageView(*obj);
     delete obj;
   });
@@ -550,14 +550,14 @@ vk::ImageViewPtr Device::createImageView(
 
 vk::PipelinePtr Device::createComputePipeline(
     std::string const& name, vk::ComputePipelineCreateInfo const& info) const {
-  Core::Logger::trace() << "Creating vk::Pipeline [" << name << "]" << std::endl;
+  Core::Logger::traceCreation("vk::Pipeline", name);
 
   auto vkObject = mDevice->createComputePipeline(nullptr, info);
   assignName(uint64_t(VkPipeline(vkObject)), vk::ObjectType::ePipeline, name);
 
-  auto device{mDevice};
+  auto device = mDevice;
   return VulkanPtr::create(vkObject, [device, name](vk::Pipeline* obj) {
-    Core::Logger::trace() << "Deleting vk::Pipeline [" << name << "]" << std::endl;
+    Core::Logger::traceDeletion("vk::Pipeline", name);
     device->destroyPipeline(*obj);
     delete obj;
   });
@@ -567,14 +567,14 @@ vk::PipelinePtr Device::createComputePipeline(
 
 vk::PipelinePtr Device::createGraphicsPipeline(
     std::string const& name, vk::GraphicsPipelineCreateInfo const& info) const {
-  Core::Logger::trace() << "Creating vk::Pipeline [" << name << "]" << std::endl;
+  Core::Logger::traceCreation("vk::Pipeline", name);
 
   auto vkObject = mDevice->createGraphicsPipeline(nullptr, info);
   assignName(uint64_t(VkPipeline(vkObject)), vk::ObjectType::ePipeline, name);
 
-  auto device{mDevice};
+  auto device = mDevice;
   return VulkanPtr::create(vkObject, [device, name](vk::Pipeline* obj) {
-    Core::Logger::trace() << "Deleting vk::Pipeline [" << name << "]" << std::endl;
+    Core::Logger::traceDeletion("vk::Pipeline", name);
     device->destroyPipeline(*obj);
     delete obj;
   });
@@ -584,14 +584,14 @@ vk::PipelinePtr Device::createGraphicsPipeline(
 
 vk::PipelineLayoutPtr Device::createPipelineLayout(
     std::string const& name, vk::PipelineLayoutCreateInfo const& info) const {
-  Core::Logger::trace() << "Creating vk::PipelineLayout [" << name << "]" << std::endl;
+  Core::Logger::traceCreation("vk::PipelineLayout", name);
 
   auto vkObject = mDevice->createPipelineLayout(info);
   assignName(uint64_t(VkPipelineLayout(vkObject)), vk::ObjectType::ePipelineLayout, name);
 
-  auto device{mDevice};
+  auto device = mDevice;
   return VulkanPtr::create(vkObject, [device, name](vk::PipelineLayout* obj) {
-    Core::Logger::trace() << "Deleting vk::PipelineLayout [" << name << "]" << std::endl;
+    Core::Logger::traceDeletion("vk::PipelineLayout", name);
     device->destroyPipelineLayout(*obj);
     delete obj;
   });
@@ -601,14 +601,14 @@ vk::PipelineLayoutPtr Device::createPipelineLayout(
 
 vk::RenderPassPtr Device::createRenderPass(
     std::string const& name, vk::RenderPassCreateInfo const& info) const {
-  Core::Logger::trace() << "Creating vk::RenderPass [" << name << "]" << std::endl;
+  Core::Logger::traceCreation("vk::RenderPass", name);
 
   auto vkObject = mDevice->createRenderPass(info);
   assignName(uint64_t(VkRenderPass(vkObject)), vk::ObjectType::eRenderPass, name);
 
-  auto device{mDevice};
+  auto device = mDevice;
   return VulkanPtr::create(vkObject, [device, name](vk::RenderPass* obj) {
-    Core::Logger::trace() << "Deleting vk::RenderPass [" << name << "]" << std::endl;
+    Core::Logger::traceDeletion("vk::RenderPass", name);
     device->destroyRenderPass(*obj);
     delete obj;
   });
@@ -618,14 +618,14 @@ vk::RenderPassPtr Device::createRenderPass(
 
 vk::SamplerPtr Device::createSampler(
     std::string const& name, vk::SamplerCreateInfo const& info) const {
-  Core::Logger::trace() << "Creating vk::Sampler [" << name << "]" << std::endl;
+  Core::Logger::traceCreation("vk::Sampler", name);
 
   auto vkObject = mDevice->createSampler(info);
   assignName(uint64_t(VkSampler(vkObject)), vk::ObjectType::eSampler, name);
 
-  auto device{mDevice};
+  auto device = mDevice;
   return VulkanPtr::create(vkObject, [device, name](vk::Sampler* obj) {
-    Core::Logger::trace() << "Deleting vk::Sampler [" << name << "]" << std::endl;
+    Core::Logger::traceDeletion("vk::Sampler", name);
     device->destroySampler(*obj);
     delete obj;
   });
@@ -635,14 +635,14 @@ vk::SamplerPtr Device::createSampler(
 
 vk::SemaphorePtr Device::createSemaphore(
     std::string const& name, vk::SemaphoreCreateFlags const& flags) const {
-  Core::Logger::trace() << "Creating vk::Semaphore [" << name << "]" << std::endl;
+  Core::Logger::traceCreation("vk::Semaphore", name);
 
   auto vkObject = mDevice->createSemaphore({flags});
   assignName(uint64_t(VkSemaphore(vkObject)), vk::ObjectType::eSemaphore, name);
 
-  auto device{mDevice};
+  auto device = mDevice;
   return VulkanPtr::create(vkObject, [device, name](vk::Semaphore* obj) {
-    Core::Logger::trace() << "Deleting vk::Semaphore [" << name << "]" << std::endl;
+    Core::Logger::traceDeletion("vk::Semaphore", name);
     device->destroySemaphore(*obj);
     delete obj;
   });
@@ -652,14 +652,14 @@ vk::SemaphorePtr Device::createSemaphore(
 
 vk::ShaderModulePtr Device::createShaderModule(
     std::string const& name, vk::ShaderModuleCreateInfo const& info) const {
-  Core::Logger::trace() << "Creating vk::ShaderModule [" << name << "]" << std::endl;
+  Core::Logger::traceCreation("vk::ShaderModule", name);
 
   auto vkObject = mDevice->createShaderModule(info);
   assignName(uint64_t(VkShaderModule(vkObject)), vk::ObjectType::eShaderModule, name);
 
-  auto device{mDevice};
+  auto device = mDevice;
   return VulkanPtr::create(vkObject, [device, name](vk::ShaderModule* obj) {
-    Core::Logger::trace() << "Deleting vk::ShaderModule [" << name << "]" << std::endl;
+    Core::Logger::traceDeletion("vk::ShaderModule", name);
     device->destroyShaderModule(*obj);
     delete obj;
   });
@@ -669,14 +669,14 @@ vk::ShaderModulePtr Device::createShaderModule(
 
 vk::SwapchainKHRPtr Device::createSwapChainKhr(
     std::string const& name, vk::SwapchainCreateInfoKHR const& info) const {
-  Core::Logger::trace() << "Creating vk::SwapchainKHR [" << name << "]" << std::endl;
+  Core::Logger::traceCreation("vk::SwapchainKHR", name);
 
   auto vkObject = mDevice->createSwapchainKHR(info);
   assignName(uint64_t(VkSwapchainKHR(vkObject)), vk::ObjectType::eSwapchainKHR, name);
 
-  auto device{mDevice};
+  auto device = mDevice;
   return VulkanPtr::create(vkObject, [device, name](vk::SwapchainKHR* obj) {
-    Core::Logger::trace() << "Deleting vk::SwapchainKHR [" << name << "]" << std::endl;
+    Core::Logger::traceDeletion("vk::SwapchainKHR", name);
     device->destroySwapchainKHR(*obj);
     delete obj;
   });
@@ -733,7 +733,7 @@ void Device::waitIdle() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::DevicePtr Device::createDevice() const {
+vk::DevicePtr Device::createDevice(std::string const& name) const {
 
   std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
 
@@ -761,9 +761,9 @@ vk::DevicePtr Device::createDevice() const {
   createInfo.enabledExtensionCount   = static_cast<uint32_t>(DEVICE_EXTENSIONS.size());
   createInfo.ppEnabledExtensionNames = DEVICE_EXTENSIONS.data();
 
-  Core::Logger::trace() << "Creating vk::Device." << std::endl;
-  return VulkanPtr::create(mPhysicalDevice->createDevice(createInfo), [](vk::Device* obj) {
-    Core::Logger::trace() << "Deleting vk::Device." << std::endl;
+  Core::Logger::traceCreation("vk::Device", name);
+  return VulkanPtr::create(mPhysicalDevice->createDevice(createInfo), [name](vk::Device* obj) {
+    Core::Logger::traceDeletion("vk::Device", name);
     obj->destroy();
   });
 }

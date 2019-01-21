@@ -26,13 +26,13 @@ Swapchain::Swapchain(
     , mDevice(device)
     , mSurface(surface) {
 
-  Core::Logger::trace() << "Creating Swapchain [" + getName() + "]" << std::endl;
+  Core::Logger::traceCreation("Swapchain", getName());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Swapchain::~Swapchain() {
-  Core::Logger::trace() << "Deleting Swapchain." << std::endl;
+  Core::Logger::traceDeletion("Swapchain", getName());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

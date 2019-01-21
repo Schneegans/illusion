@@ -9,6 +9,7 @@
 #include "Instance.hpp"
 
 #include "../Core/Logger.hpp"
+#include "../Core/Utils.hpp"
 #include "PhysicalDevice.hpp"
 #include "VulkanPtr.hpp"
 
@@ -23,11 +24,11 @@ namespace {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const std::vector<const char*> VALIDATION_LAYERS{"VK_LAYER_LUNARG_standard_validation"};
+const std::vector<const char*> VALIDATION_LAYERS = {"VK_LAYER_LUNARG_standard_validation"};
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool glfwInitialized{false};
+bool glfwInitialized = false;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -35,20 +36,31 @@ VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
     VkDebugUtilsMessageTypeFlagsEXT                           messageType,
     const VkDebugUtilsMessengerCallbackDataEXT*               pCallbackData, void* /*pUserData*/) {
 
-  std::string object = "[Unnamed Object] ";
+  // In the error message, Vulkan objects are referred to by a hex-string of their handle. In order
+  // to improve the readability, we will try to replace each mention of a Vulkan object with the
+  // actual name of the object.
+  std::string message(pCallbackData->pMessage);
 
-  if (pCallbackData->pObjects && pCallbackData->pObjects->pObjectName) {
-    object = "[" + std::string(pCallbackData->pObjects->pObjectName) + "] ";
+  for (uint32_t i(0); i < pCallbackData->objectCount; ++i) {
+    if (pCallbackData->pObjects[i].pObjectName) {
+      std::ostringstream address;
+      address << (void const*)pCallbackData->pObjects[i].objectHandle;
+
+      std::string hexHandle  = address.str();
+      std::string objectName = "\"" + std::string(pCallbackData->pObjects[i].pObjectName) + "\"";
+
+      Core::Utils::replaceString(message, hexHandle, objectName);
+    }
   }
 
   if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
-    Core::Logger::trace() << object << pCallbackData->pMessage << std::endl;
+    Core::Logger::trace() << message << std::endl;
   } else if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
-    Core::Logger::message() << object << pCallbackData->pMessage << std::endl;
+    Core::Logger::message() << message << std::endl;
   } else if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-    Core::Logger::warning() << object << pCallbackData->pMessage << std::endl;
+    Core::Logger::warning() << message << std::endl;
   } else if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
-    Core::Logger::error() << object << pCallbackData->pMessage << std::endl;
+    Core::Logger::error() << message << std::endl;
   }
 
   return false;
@@ -99,12 +111,13 @@ std::vector<const char*> getRequiredInstanceExtensions(bool debugMode) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Instance::Instance(std::string const& app, bool debugMode)
-    : mDebugMode(debugMode)
-    , mInstance(createInstance("Illusion", app))
+Instance::Instance(std::string const& name, bool debugMode)
+    : Core::NamedObject(name)
+    , mDebugMode(debugMode)
+    , mInstance(createInstance("Illusion", name))
     , mDebugCallback(createDebugCallback()) {
 
-  Core::Logger::trace() << "Creating Instance." << std::endl;
+  Core::Logger::traceCreation("Instance", getName());
 
   for (auto const& vkPhysicalDevice : mInstance->enumeratePhysicalDevices()) {
     mPhysicalDevices.push_back(
@@ -115,7 +128,7 @@ Instance::Instance(std::string const& app, bool debugMode)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Instance::~Instance() {
-  Core::Logger::trace() << "Deleting Instance." << std::endl;
+  Core::Logger::traceDeletion("Instance", getName());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -151,12 +164,12 @@ vk::SurfaceKHRPtr Instance::createSurface(std::string const& name, GLFWwindow* w
     throw std::runtime_error("Failed to create window surface!");
   }
 
-  Core::Logger::trace() << "Creating vk::SurfaceKHR [" + name + "]" << std::endl;
+  Core::Logger::traceCreation("vk::SurfaceKHR", name);
 
   // copying instance to keep reference counting up until the surface is destroyed
   auto instance{mInstance};
   return VulkanPtr::create(vk::SurfaceKHR(tmp), [instance, name](vk::SurfaceKHR* obj) {
-    Core::Logger::trace() << "Deleting vk::SurfaceKHR [" + name + "]" << std::endl;
+    Core::Logger::traceDeletion("vk::SurfaceKHR", name);
     instance->destroySurfaceKHR(*obj);
     delete obj;
   });
@@ -212,9 +225,10 @@ vk::InstancePtr Instance::createInstance(std::string const& engine, std::string 
     info.enabledLayerCount = 0;
   }
 
-  Core::Logger::trace() << "Creating vk::Instance." << std::endl;
-  return VulkanPtr::create(vk::createInstance(info), [](vk::Instance* obj) {
-    Core::Logger::trace() << "Deleting vk::Instance." << std::endl;
+  Core::Logger::traceCreation("vk::Instance", getName());
+  auto name = getName();
+  return VulkanPtr::create(vk::createInstance(info), [name](vk::Instance* obj) {
+    Core::Logger::traceDeletion("vk::Instance", name);
     obj->destroy();
     delete obj;
   });
@@ -244,13 +258,14 @@ vk::DebugUtilsMessengerEXTPtr Instance::createDebugCallback() const {
     throw std::runtime_error("Failed to set up debug callback!");
   }
 
-  Core::Logger::trace() << "Creating vk::DebugUtilsMessengerEXT." << std::endl;
-  auto instance{mInstance};
+  auto name = "DebugCallback for " + getName();
+  Core::Logger::traceCreation("vk::DebugUtilsMessengerEXT", name);
+  auto instance = mInstance;
   return VulkanPtr::create(
-      vk::DebugUtilsMessengerEXT(tmp), [instance](vk::DebugUtilsMessengerEXT* obj) {
+      vk::DebugUtilsMessengerEXT(tmp), [instance, name](vk::DebugUtilsMessengerEXT* obj) {
         auto destroyCallback = (PFN_vkDestroyDebugUtilsMessengerEXT)instance->getProcAddr(
             "vkDestroyDebugUtilsMessengerEXT");
-        Core::Logger::trace() << "Deleting vk::DebugUtilsMessengerEXT." << std::endl;
+        Core::Logger::traceDeletion("vk::DebugUtilsMessengerEXT", name);
         destroyCallback(*instance, *obj, nullptr);
         delete obj;
       });

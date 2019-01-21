@@ -137,7 +137,7 @@ class Device : public Core::StaticCreate<Device>, public Core::NamedObject {
   void waitIdle();
 
  private:
-  vk::DevicePtr createDevice() const;
+  vk::DevicePtr createDevice(std::string const& name) const;
   void assignName(uint64_t vulkanHandle, vk::ObjectType objectType, std::string const& name) const;
 
   PhysicalDevicePtr mPhysicalDevice;

@@ -121,10 +121,8 @@ Model::Model(
     tinygltf::TinyGLTF loader;
 
     if (extension == ".glb") {
-      Core::Logger::trace() << "Loading binary file " << file << "..." << std::endl;
       success = loader.LoadBinaryFromFile(&model, &error, &warn, file);
     } else if (extension == ".gltf") {
-      Core::Logger::trace() << "Loading ascii file " << file << "..." << std::endl;
       success = loader.LoadASCIIFromFile(&model, &error, &warn, file);
     } else {
       throw std::runtime_error(
