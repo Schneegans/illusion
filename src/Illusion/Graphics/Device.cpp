@@ -737,7 +737,7 @@ vk::DevicePtr Device::createDevice(std::string const& name) const {
 
   std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
 
-  const float              queuePriority{1.0f};
+  const float              queuePriority = 1.0f;
   const std::set<uint32_t> uniqueQueueFamilies{
       (uint32_t)mPhysicalDevice->getQueueFamily(QueueType::eGeneric),
       (uint32_t)mPhysicalDevice->getQueueFamily(QueueType::eCompute),

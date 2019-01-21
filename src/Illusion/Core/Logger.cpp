@@ -111,18 +111,18 @@ std::ostream& Logger::error() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Logger::traceCreation(std::string const& type, std::string const& name) {
+void Logger::traceCreation(std::string const& object, std::string const& name) {
   if (enableTrace) {
-    trace() << PRINT_GREEN << "[create] " << PRINT_RESET << std::left << std::setw(20) << type
+    trace() << PRINT_GREEN << "[create] " << PRINT_RESET << std::left << std::setw(20) << object
             << ((name.size() > 0) ? " (" + name + ")" : "") << std::endl;
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Logger::traceDeletion(std::string const& type, std::string const& name) {
+void Logger::traceDeletion(std::string const& object, std::string const& name) {
   if (enableTrace) {
-    trace() << PRINT_RED << "[delete] " << PRINT_RESET << std::left << std::setw(20) << type
+    trace() << PRINT_RED << "[delete] " << PRINT_RESET << std::left << std::setw(20) << object
             << " (" + name + ")" << std::endl;
   }
 }

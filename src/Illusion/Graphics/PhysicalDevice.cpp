@@ -51,7 +51,7 @@ void printVal(std::string const& name, std::vector<std::string> const& vals) {
 
 template <typename S, typename T>
 std::string printMin(S val, T ref) {
-  std::string color{Core::Logger::PRINT_RED};
+  std::string color = Core::Logger::PRINT_RED;
 
   if (val == ref)
     color = Core::Logger::PRINT_YELLOW;
@@ -65,7 +65,7 @@ std::string printMin(S val, T ref) {
 
 template <typename S, typename T>
 std::string printMax(S val, T ref) {
-  std::string color{Core::Logger::PRINT_RED};
+  std::string color = Core::Logger::PRINT_RED;
 
   if (val == ref)
     color = Core::Logger::PRINT_YELLOW;
@@ -168,16 +168,16 @@ PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice 
 uint32_t PhysicalDevice::findMemoryType(
     uint32_t typeFilter, vk::MemoryPropertyFlags properties) const {
 
-  auto memProperties{getMemoryProperties()};
+  auto memProperties = getMemoryProperties();
 
-  for (uint32_t i{0}; i < memProperties.memoryTypeCount; i++) {
+  for (uint32_t i(0); i < memProperties.memoryTypeCount; i++) {
     if ((typeFilter & (1 << i)) &&
         (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
       return i;
     }
   }
 
-  throw std::runtime_error{"Failed to find suitable memory type."};
+  throw std::runtime_error("Failed to find suitable memory type.");
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -196,7 +196,7 @@ uint32_t PhysicalDevice::getQueueIndex(QueueType type) const {
 
 void PhysicalDevice::printInfo() {
   // basic information
-  vk::PhysicalDeviceProperties properties{getProperties()};
+  vk::PhysicalDeviceProperties properties = getProperties();
   Core::Logger::message() << Core::Logger::PRINT_BOLD << "Physical Device Information "
                           << Core::Logger::PRINT_RESET << std::endl;
   printVal("apiVersion", {std::to_string(properties.apiVersion)});
@@ -210,12 +210,12 @@ void PhysicalDevice::printInfo() {
   vk::PhysicalDeviceMemoryProperties memoryProperties = getMemoryProperties();
   Core::Logger::message() << Core::Logger::PRINT_BOLD << "Memory Information "
                           << Core::Logger::PRINT_RESET << std::endl;
-  for (unsigned i{0}; i < memoryProperties.memoryTypeCount; ++i) {
+  for (unsigned i(0); i < memoryProperties.memoryTypeCount; ++i) {
     printVal("Memory type " + std::to_string(i),
         {vk::to_string(memoryProperties.memoryTypes[i].propertyFlags)});
   }
 
-  for (unsigned i{0}; i < memoryProperties.memoryHeapCount; ++i) {
+  for (unsigned i(0); i < memoryProperties.memoryHeapCount; ++i) {
     printVal("Memory heap " + std::to_string(i),
         {std::to_string(memoryProperties.memoryHeaps[i].size / (1024 * 1024)) + " MB " +
             vk::to_string(memoryProperties.memoryHeaps[i].flags)});
@@ -223,7 +223,7 @@ void PhysicalDevice::printInfo() {
 
   // clang-format off
   // features
-  vk::PhysicalDeviceFeatures features{getFeatures()};
+  vk::PhysicalDeviceFeatures features = getFeatures();
   Core::Logger::message() << Core::Logger::PRINT_BOLD << "Features " << Core::Logger::PRINT_RESET << std::endl;
   printCap("robustBufferAccess",                      features.robustBufferAccess);
   printCap("fullDrawIndexUint32",                     features.fullDrawIndexUint32);

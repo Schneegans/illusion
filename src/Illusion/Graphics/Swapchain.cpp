@@ -240,7 +240,7 @@ void Swapchain::createSwapchain() {
   auto presentModes = mDevice->getPhysicalDevice()->getSurfacePresentModesKHR(*mSurface);
 
   // Fifo is actually required to be supported and is a decent choice for V-Sync
-  vk::PresentModeKHR presentMode{vk::PresentModeKHR::eFifo};
+  vk::PresentModeKHR presentMode = vk::PresentModeKHR::eFifo;
 
   if (!mEnableVsync) {
     // Immediate is an option for no V-Sync but will result in tearing

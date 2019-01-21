@@ -55,8 +55,8 @@ class Logger {
   static std::ostream& error();
 
   // Use this to print beautiful and consistent object life-time notifications on tracing level.
-  static void traceCreation(std::string const& type, std::string const& name);
-  static void traceDeletion(std::string const& type, std::string const& name);
+  static void traceCreation(std::string const& object, std::string const& name);
+  static void traceDeletion(std::string const& object, std::string const& name);
 };
 
 } // namespace Illusion::Core

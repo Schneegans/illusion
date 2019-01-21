@@ -70,7 +70,7 @@ VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 
 bool checkValidationLayerSupport() {
   for (auto const& layer : VALIDATION_LAYERS) {
-    bool layerFound{false};
+    bool layerFound = false;
 
     for (auto const& property : vk::enumerateInstanceLayerProperties()) {
       if (std::strcmp(layer, property.layerName) == 0) {
@@ -90,8 +90,8 @@ bool checkValidationLayerSupport() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::vector<const char*> getRequiredInstanceExtensions(bool debugMode) {
-  unsigned int glfwExtensionCount{0};
-  const char** glfwExtensions{glfwGetRequiredInstanceExtensions(&glfwExtensionCount)};
+  unsigned int glfwExtensionCount = 0;
+  const char** glfwExtensions     = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
 
   std::vector<const char*> extensions;
   for (unsigned int i = 0; i < glfwExtensionCount; ++i) {
@@ -167,7 +167,7 @@ vk::SurfaceKHRPtr Instance::createSurface(std::string const& name, GLFWwindow* w
   Core::Logger::traceCreation("vk::SurfaceKHR", name);
 
   // copying instance to keep reference counting up until the surface is destroyed
-  auto instance{mInstance};
+  auto instance = mInstance;
   return VulkanPtr::create(vk::SurfaceKHR(tmp), [instance, name](vk::SurfaceKHR* obj) {
     Core::Logger::traceDeletion("vk::SurfaceKHR", name);
     instance->destroySurfaceKHR(*obj);
