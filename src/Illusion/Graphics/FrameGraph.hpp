@@ -9,6 +9,7 @@
 #ifndef ILLUSION_GRAPHICS_RENDER_GRAPH_HPP
 #define ILLUSION_GRAPHICS_RENDER_GRAPH_HPP
 
+#include "../Core/NamedObject.hpp"
 #include "FrameResource.hpp"
 
 #include <functional>
@@ -23,7 +24,7 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class FrameGraph : public Core::StaticCreate<FrameGraph> {
+class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObject {
  public:
   // -----------------------------------------------------------------------------------------------
   enum class ResourceSizing { eAbsolute, eRelative };
@@ -94,7 +95,8 @@ class FrameGraph : public Core::StaticCreate<FrameGraph> {
 
   // -----------------------------------------------------------------------------------------------
 
-  FrameGraph(DevicePtr const& device, FrameResourceIndexPtr const& frameIndex);
+  FrameGraph(
+      std::string const& name, DevicePtr const& device, FrameResourceIndexPtr const& frameIndex);
 
   LogicalResource& createResource();
   LogicalPass&     createPass();

@@ -22,12 +22,12 @@ int main(int argc, char* argv[]) {
 
   Illusion::Core::Logger::enableTrace = true;
 
-  auto instance = Illusion::Graphics::Instance::create("Deferred Rendering Demo");
-  auto device   = Illusion::Graphics::Device::create(instance->getPhysicalDevice());
-  auto window   = Illusion::Graphics::Window::create(instance, device);
+  auto instance = Illusion::Graphics::Instance::create("DeferredRenderingDemo");
+  auto device   = Illusion::Graphics::Device::create("Device", instance->getPhysicalDevice());
+  auto window   = Illusion::Graphics::Window::create("Window", instance, device);
 
   auto index = Illusion::Graphics::FrameResourceIndex::create(3);
-  auto graph = Illusion::Graphics::FrameGraph::create(device, index);
+  auto graph = Illusion::Graphics::FrameGraph::create("FrameGraph", device, index);
 
   // create resources ------------------------------------------------------------------------------
   auto& albedo = graph->createResource().setName("albedo").setFormat(vk::Format::eR8G8B8Unorm);
@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
       .assignResource(normal, Usage::eColorAttachment, Access::eWriteOnly, clearColor)
       .assignResource(depth, Usage::eDepthAttachment, Access::eWriteOnly, clearDepth)
       .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
-        ILLUSION_MESSAGE << "Record gbuffer pass!" << std::endl;
+        Illusion::Core::Logger::message() << "Record gbuffer pass!" << std::endl;
       });
 
   graph->createPass()
@@ -58,7 +58,7 @@ int main(int argc, char* argv[]) {
       .assignResource(depth, Usage::eColorAttachment, Access::eReadOnly)
       .assignResource(hdr, Usage::eColorAttachment, Access::eWriteOnly)
       .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
-        ILLUSION_MESSAGE << "Record lighting pass!" << std::endl;
+        Illusion::Core::Logger::message() << "Record lighting pass!" << std::endl;
       });
 
   graph->createPass()
@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
       .assignResource(depth, Usage::eDepthAttachment, Access::eReadOnly)
       .assignResource(hdr, Usage::eColorAttachment, Access::eBlend)
       .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
-        ILLUSION_MESSAGE << "Record transparencies pass!" << std::endl;
+        Illusion::Core::Logger::message() << "Record transparencies pass!" << std::endl;
       });
 
   graph->createPass()
@@ -74,7 +74,7 @@ int main(int argc, char* argv[]) {
       .assignResource(hdr, Usage::eColorAttachment, Access::eReadOnly)
       .setOutputWindow(window)
       .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
-        ILLUSION_MESSAGE << "Record tonemapping pass!" << std::endl;
+        Illusion::Core::Logger::message() << "Record tonemapping pass!" << std::endl;
       });
 
   // do one rendering step -------------------------------------------------------------------------

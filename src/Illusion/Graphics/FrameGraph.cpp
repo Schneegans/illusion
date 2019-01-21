@@ -95,13 +95,17 @@ FrameGraph::LogicalPass& FrameGraph::LogicalPass::setProcessCallback(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-FrameGraph::FrameGraph(DevicePtr const& device, FrameResourceIndexPtr const& frameIndex)
-    : mDevice(device)
-    , mPerFrame(frameIndex, [device]() {
-      PerFrame perFrame;
-      perFrame.mPrimaryCommandBuffer    = CommandBuffer::create(device);
-      perFrame.mRenderFinishedSemaphore = device->createSemaphore();
-      perFrame.mFrameFinishedFence      = device->createFence();
+FrameGraph::FrameGraph(
+    std::string const& name, DevicePtr const& device, FrameResourceIndexPtr const& frameIndex)
+    : Core::NamedObject(name)
+    , mDevice(device)
+    , mPerFrame(frameIndex, [device, this](uint32_t index) {
+      PerFrame    perFrame;
+      std::string prefix = std::to_string(index) + " of " + getName();
+
+      perFrame.mPrimaryCommandBuffer    = CommandBuffer::create("CommandBuffer " + prefix, device);
+      perFrame.mRenderFinishedSemaphore = device->createSemaphore("RenderFinished " + prefix);
+      perFrame.mFrameFinishedFence      = device->createFence("FrameFinished " + prefix);
       return perFrame;
     }) {
 }
@@ -164,7 +168,7 @@ void FrameGraph::process() {
   // with more fine-grained dirty flags, but as this should not happen on a frame-to-frame basis, it
   // seems to be ok to recreate everything from scratch here.
   if (perFrame.mDirty) {
-    ILLUSION_TRACE << "Reconstructing frame graph..." << std::endl;
+    Core::Logger::trace() << "Reconstructing frame graph..." << std::endl;
     perFrame.mPhysicalResources.clear();
     perFrame.mPhysicalPasses.clear();
 
@@ -197,7 +201,8 @@ void FrameGraph::process() {
       passQueue.pop_front();
       culledPasses.push_back(pass);
 
-      ILLUSION_TRACE << "  Resolving dependencies of pass \"" + pass->mName + "\"..." << std::endl;
+      Core::Logger::trace() << "  Resolving dependencies of pass \"" + pass->mName + "\"..."
+                            << std::endl;
 
       // We start searching for preceding passes at our current pass.
       auto currentPassIt = mLogicalPasses.rbegin();
@@ -208,7 +213,7 @@ void FrameGraph::process() {
       // Now we have to find the passes which are in front of the current pass in mLogicalPasses
       // list of the FrameGraph and write to the resources of the current pass.
       for (auto r : pass->mLogicalResources) {
-        ILLUSION_TRACE << "    resource \"" + r.first->mName + "\"" << std::endl;
+        Core::Logger::trace() << "    resource \"" + r.first->mName + "\"" << std::endl;
 
         // Step backwards through all LogicalPasses until we find a pass referencing this resource.
         auto prePassIt = currentPassIt;
@@ -237,14 +242,16 @@ void FrameGraph::process() {
                                        "\"!");
             } else if (prePassIt->mLogicalResources.find(r.first)->second.mAccess ==
                        ResourceAccess::eReadOnly) {
-              ILLUSION_TRACE << "      is read-only in \"" + prePassIt->mName + "\"." << std::endl;
+              Core::Logger::trace()
+                  << "      is read-only in \"" + prePassIt->mName + "\"." << std::endl;
             } else {
               // In order to make sure that there are no duplicates in our queue, we first remove
               // all entries referencing the same pass.
               LogicalPass* prePass = &(*prePassIt);
               passQueue.remove(prePass);
               passQueue.push_back(prePass);
-              ILLUSION_TRACE << "      is written by \"" + prePassIt->mName + "\"." << std::endl;
+              Core::Logger::trace()
+                  << "      is written by \"" + prePassIt->mName + "\"." << std::endl;
               break;
             }
           } else if (r.second.mAccess != ResourceAccess::eWriteOnly) {
@@ -252,7 +259,7 @@ void FrameGraph::process() {
                                      "\" of pass \"" + pass->mName +
                                      "\" is not the output of any previous pass!");
           } else {
-            ILLUSION_TRACE << "      is created by this pass." << std::endl;
+            Core::Logger::trace() << "      is created by this pass." << std::endl;
             break;
           }
         }
@@ -263,13 +270,13 @@ void FrameGraph::process() {
     culledPasses.reverse();
 
     // Print some debugging information.
-    ILLUSION_TRACE << "  Logical pass execution order will be" << std::endl;
+    Core::Logger::trace() << "  Logical pass execution order will be" << std::endl;
     for (auto const& p : culledPasses) {
-      ILLUSION_TRACE << "    " << p->mName << std::endl;
+      Core::Logger::trace() << "    " << p->mName << std::endl;
     }
 
     perFrame.mDirty = false;
-    ILLUSION_TRACE << "Frame graph reconstruction done." << std::endl;
+    Core::Logger::trace() << "Frame graph reconstruction done." << std::endl;
   }
 
   // recording phase -------------------------------------------------------------------------------
@@ -337,7 +344,7 @@ void FrameGraph::clearDirty() {
 
 void FrameGraph::validate() const {
 
-  ILLUSION_TRACE << "Validating frame graph..." << std::endl;
+  Core::Logger::trace() << "Validating frame graph..." << std::endl;
 
   // Check whether each resource of each pass was actually created by this frame graph.
   for (auto const& pass : mLogicalPasses) {
@@ -394,7 +401,7 @@ void FrameGraph::validate() const {
     }
   }
 
-  ILLUSION_TRACE << "  all good." << std::endl;
+  Core::Logger::trace() << "  all good." << std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
