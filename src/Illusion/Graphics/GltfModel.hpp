@@ -52,7 +52,8 @@ typedef Core::Flags<LoadOptionBits> LoadOptions;
 class Model : public Core::StaticCreate<Model>, public Core::NamedObject {
  public:
   // Creates a new Gltf::Model. The fileName should either be a *.gltf or a *.glb file. With the
-  // options parameter you can prevent loading of some components such as textures.
+  // options parameter you can prevent loading of some components such as textures. It is a good
+  // idea to give the object a descriptive name.
   Model(std::string const& name, DevicePtr const& device, std::string const& fileName,
       LoadOptions options = LoadOptionBits::eAll);
 

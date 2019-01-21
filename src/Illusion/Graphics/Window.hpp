@@ -66,7 +66,8 @@ class Window : public Core::StaticCreate<Window>, public Core::NamedObject {
 
   // methods ---------------------------------------------------------------------------------------
 
-  // Once you created an Instance and a Device, you can start creating Windows.
+  // Once you created an Instance and a Device, you can start creating Windows. It is a good idea to
+  // give the object a descriptive name.
   Window(std::string const& name, InstancePtr const& instance, DevicePtr const& device);
   virtual ~Window();
 

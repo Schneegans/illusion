@@ -14,20 +14,26 @@
 
 namespace Illusion::Core::Utils {
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
+// -------------------------------------------------------------------------------------------------
 
+// Similar to std::make_shared(), this can be used to create a std::unique_ptr.
 template <typename T, typename... Args>
 std::unique_ptr<T> makeUnique(Args&&... args) {
   return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
+// -------------------------------------------------------------------------------------------------
 
+// Splits the given string into parts, using the given delimiter.
 std::vector<std::string> splitString(std::string const& s, char delim);
-bool                     stringContains(std::string const& s, char c);
+
+// Returns true when the given string contains the character c.
+bool stringContains(std::string const& s, char c);
+
+// Places all occurences of oldString with newString in s. Returns the number of occurences.
 uint32_t replaceString(std::string& s, std::string const& oldString, std::string const& newString);
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
+// -------------------------------------------------------------------------------------------------
 
 } // namespace Illusion::Core::Utils
 

@@ -26,7 +26,8 @@ namespace Illusion::Graphics {
 
 class PipelineReflection : public Core::StaticCreate<PipelineReflection>, public Core::NamedObject {
  public:
-  // Initially, the PipelineReflection is empty. Resources can be added with addResource()
+  // Initially, the PipelineReflection is empty. Resources can be added with addResource(). It is a
+  // good idea to give the object a descriptive name.
   PipelineReflection(std::string const& name, DevicePtr const& device);
   virtual ~PipelineReflection();
 

@@ -28,7 +28,8 @@ namespace Illusion::Graphics {
 class DescriptorSetReflection : public Core::StaticCreate<DescriptorSetReflection>,
                                 public Core::NamedObject {
  public:
-  // Initially, the DescriptorSetReflection is empty. Resources can be added with addResource()
+  // Initially, the DescriptorSetReflection is empty. Resources can be added with addResource(). It
+  // is a good idea to give the object a descriptive name.
   DescriptorSetReflection(std::string const& name, DevicePtr const& device, uint32_t set);
   virtual ~DescriptorSetReflection();
 

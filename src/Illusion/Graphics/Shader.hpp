@@ -40,7 +40,8 @@ class Shader : public Core::StaticCreate<Shader>, public Core::NamedObject {
       bool reloadOnChanges = true);
 
   // Creates an "empty" shader program with no modules attached to. Use the method addModule() to
-  // add modules for each required shader stage.
+  // add modules for each required shader stage. It is a good idea to give the object a descriptive
+  // name.
   Shader(std::string const& name, DevicePtr const& device);
   virtual ~Shader();
 

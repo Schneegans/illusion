@@ -29,7 +29,8 @@ namespace Illusion::Graphics {
 
 class DescriptorPool : public Core::StaticCreate<DescriptorPool>, public Core::NamedObject {
  public:
-  // The allocated DescriptorSets are created according to the given reflection.
+  // The allocated DescriptorSets are created according to the given reflection.  It is a good idea
+  // to give the instance a object name.
   DescriptorPool(std::string const& name, DevicePtr const& device,
       DescriptorSetReflectionPtr const& reflection);
   virtual ~DescriptorPool();

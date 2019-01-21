@@ -30,7 +30,7 @@ class Device : public Core::StaticCreate<Device>, public Core::NamedObject {
 
  public:
   // The device needs the physical device it should be created for. You can get one from your
-  // Instance.
+  // Instance. It is a good idea to give the object a descriptive name.
   explicit Device(std::string const& name, PhysicalDevicePtr const& physicalDevice);
   virtual ~Device();
 

@@ -16,7 +16,8 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // A Texture is a BackedImage and stores in addition a vk::Sampler with the corresponding         //
-// create-info object.                                                                            //
+// create-info object. There are several static methods to load textures. It is a good idea to    //
+// give each texture a descriptive name.                                                          //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct Texture : public BackedImage {

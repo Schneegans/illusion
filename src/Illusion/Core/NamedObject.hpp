@@ -24,6 +24,7 @@ class NamedObject {
  public:
   NamedObject(std::string const& name = "Unamed Object");
 
+  // Returns the name of the NamedObject.
   std::string const& getName() const;
 
  protected:
