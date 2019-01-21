@@ -45,7 +45,7 @@ DescriptorPool::DescriptorPool(
     : mDevice(device)
     , mReflection(reflection) {
 
-  ILLUSION_TRACE << "Creating DescriptorPool." << std::endl;
+  Core::Logger::trace() << "Creating DescriptorPool." << std::endl;
 
   // calculate pool sizes for later pool creation
   std::unordered_map<vk::DescriptorType, uint32_t> descriptorTypeCounts;
@@ -64,7 +64,7 @@ DescriptorPool::DescriptorPool(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 DescriptorPool::~DescriptorPool() {
-  ILLUSION_TRACE << "Deleting DescriptorPool." << std::endl;
+  Core::Logger::trace() << "Deleting DescriptorPool." << std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -109,12 +109,12 @@ vk::DescriptorSetPtr DescriptorPool::allocateDescriptorSet() {
   info.descriptorSetCount = 1;
   info.pSetLayouts        = descriptorSetLayouts;
 
-  ILLUSION_TRACE << "Allocating DescriptorSet." << std::endl;
+  Core::Logger::trace() << "Allocating DescriptorSet." << std::endl;
 
   auto device{mDevice->getHandle()};
   return VulkanPtr::create(
       device->allocateDescriptorSets(info)[0], [device, pool](vk::DescriptorSet* obj) {
-        ILLUSION_TRACE << "Freeing DescriptorSet." << std::endl;
+        Core::Logger::trace() << "Freeing DescriptorSet." << std::endl;
         --pool->mAllocationCount;
         device->freeDescriptorSets(*pool->mPool, *obj);
         delete obj;

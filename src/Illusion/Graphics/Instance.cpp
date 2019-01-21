@@ -36,13 +36,13 @@ VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
     const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
 
   if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT) {
-    ILLUSION_TRACE << pCallbackData->pMessage << std::endl;
+    Core::Logger::trace() << pCallbackData->pMessage << std::endl;
   } else if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT) {
-    ILLUSION_MESSAGE << pCallbackData->pMessage << std::endl;
+    Core::Logger::message() << pCallbackData->pMessage << std::endl;
   } else if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
-    ILLUSION_WARNING << pCallbackData->pMessage << std::endl;
+    Core::Logger::warning() << pCallbackData->pMessage << std::endl;
   } else if (messageSeverity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT) {
-    ILLUSION_ERROR << pCallbackData->pMessage << std::endl;
+    Core::Logger::error() << pCallbackData->pMessage << std::endl;
   }
 
   return false;
@@ -98,7 +98,7 @@ Instance::Instance(std::string const& app, bool debugMode)
     , mInstance(createInstance("Illusion", app))
     , mDebugCallback(createDebugCallback()) {
 
-  ILLUSION_TRACE << "Creating Instance." << std::endl;
+  Core::Logger::trace() << "Creating Instance." << std::endl;
 
   for (auto const& vkPhysicalDevice : mInstance->enumeratePhysicalDevices()) {
     mPhysicalDevices.push_back(
@@ -109,7 +109,7 @@ Instance::Instance(std::string const& app, bool debugMode)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Instance::~Instance() {
-  ILLUSION_TRACE << "Deleting Instance." << std::endl;
+  Core::Logger::trace() << "Deleting Instance." << std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -145,12 +145,12 @@ vk::SurfaceKHRPtr Instance::createSurface(GLFWwindow* window) const {
     throw std::runtime_error("Failed to create window surface!");
   }
 
-  ILLUSION_TRACE << "Creating vk::SurfaceKHR." << std::endl;
+  Core::Logger::trace() << "Creating vk::SurfaceKHR." << std::endl;
 
   // copying instance to keep reference counting up until the surface is destroyed
   auto instance{mInstance};
   return VulkanPtr::create(vk::SurfaceKHR(tmp), [instance](vk::SurfaceKHR* obj) {
-    ILLUSION_TRACE << "Deleting vk::SurfaceKHR." << std::endl;
+    Core::Logger::trace() << "Deleting vk::SurfaceKHR." << std::endl;
     instance->destroySurfaceKHR(*obj);
     delete obj;
   });
@@ -200,9 +200,9 @@ vk::InstancePtr Instance::createInstance(std::string const& engine, std::string 
     info.enabledLayerCount = 0;
   }
 
-  ILLUSION_TRACE << "Creating vk::Instance." << std::endl;
+  Core::Logger::trace() << "Creating vk::Instance." << std::endl;
   return VulkanPtr::create(vk::createInstance(info), [](vk::Instance* obj) {
-    ILLUSION_TRACE << "Deleting vk::Instance." << std::endl;
+    Core::Logger::trace() << "Deleting vk::Instance." << std::endl;
     obj->destroy();
     delete obj;
   });
@@ -232,13 +232,13 @@ vk::DebugUtilsMessengerEXTPtr Instance::createDebugCallback() const {
     throw std::runtime_error("Failed to set up debug callback!");
   }
 
-  ILLUSION_TRACE << "Creating vk::DebugUtilsMessengerEXT." << std::endl;
+  Core::Logger::trace() << "Creating vk::DebugUtilsMessengerEXT." << std::endl;
   auto instance{mInstance};
   return VulkanPtr::create(
       vk::DebugUtilsMessengerEXT(tmp), [instance](vk::DebugUtilsMessengerEXT* obj) {
         auto destroyCallback = (PFN_vkDestroyDebugUtilsMessengerEXT)instance->getProcAddr(
             "vkDestroyDebugUtilsMessengerEXT");
-        ILLUSION_TRACE << "Deleting vk::DebugUtilsMessengerEXT." << std::endl;
+        Core::Logger::trace() << "Deleting vk::DebugUtilsMessengerEXT." << std::endl;
         destroyCallback(*instance, *obj, nullptr);
         delete obj;
       });

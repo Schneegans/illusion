@@ -14,8 +14,6 @@
 
 namespace Illusion::Core {
 
-bool Logger::printFile     = false;
-bool Logger::printLine     = false;
 bool Logger::enableTrace   = false;
 bool Logger::enableDebug   = true;
 bool Logger::enableMessage = true;
@@ -71,30 +69,9 @@ class NullBuffer : public std::streambuf {
 NullBuffer   nullBuffer;
 std::ostream devNull(&nullBuffer);
 
-std::string locationString(const char* f, int l) {
-  if (!Logger::printFile && !Logger::printLine) {
-    return "";
-  }
-
-  std::stringstream sstr;
-
-  sstr << "[";
-
-  if (Logger::printFile)
-    sstr << std::string(f);
-  if (Logger::printFile && Logger::printLine)
-    sstr << ":";
-  if (Logger::printLine)
-    sstr << l;
-
-  sstr << "]";
-  return sstr.str();
-}
-
-std::ostream& print(
-    bool enable, std::string const& header, std::string const& color, const char* file, int line) {
+std::ostream& print(bool enable, std::string const& header, std::string const& color) {
   if (enable) {
-    return std::cout << color << header << locationString(file, line) << Logger::PRINT_RESET << " ";
+    return std::cout << color << header << Logger::PRINT_RESET << " ";
   } else {
     return devNull;
   }
@@ -103,32 +80,32 @@ std::ostream& print(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::ostream& Logger::traceImpl(const char* file, int line) {
-  return print(enableTrace, "[ILLUSION][T]", PRINT_TURQUOISE, file, line);
+std::ostream& Logger::trace() {
+  return print(enableTrace, "[ILLUSION][T]", PRINT_TURQUOISE);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::ostream& Logger::debugImpl(const char* file, int line) {
-  return print(enableDebug, "[ILLUSION][D]", PRINT_BLUE, file, line);
+std::ostream& Logger::debug() {
+  return print(enableDebug, "[ILLUSION][D]", PRINT_BLUE);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::ostream& Logger::messageImpl(const char* file, int line) {
-  return print(enableMessage, "[ILLUSION][M]", PRINT_GREEN, file, line);
+std::ostream& Logger::message() {
+  return print(enableMessage, "[ILLUSION][M]", PRINT_GREEN);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::ostream& Logger::warningImpl(const char* file, int line) {
-  return print(enableWarning, "[ILLUSION][W]", PRINT_YELLOW, file, line);
+std::ostream& Logger::warning() {
+  return print(enableWarning, "[ILLUSION][W]", PRINT_YELLOW);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::ostream& Logger::errorImpl(const char* file, int line) {
-  return print(enableError, "[ILLUSION][E]", PRINT_RED, file, line);
+std::ostream& Logger::error() {
+  return print(enableError, "[ILLUSION][E]", PRINT_RED);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

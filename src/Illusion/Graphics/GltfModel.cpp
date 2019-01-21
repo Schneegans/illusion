@@ -119,10 +119,10 @@ Model::Model(DevicePtr const& device, std::string const& file, LoadOptions optio
     tinygltf::TinyGLTF loader;
 
     if (extension == ".glb") {
-      ILLUSION_TRACE << "Loading binary file " << file << "..." << std::endl;
+      Core::Logger::trace() << "Loading binary file " << file << "..." << std::endl;
       success = loader.LoadBinaryFromFile(&model, &error, &warn, file);
     } else if (extension == ".gltf") {
-      ILLUSION_TRACE << "Loading ascii file " << file << "..." << std::endl;
+      Core::Logger::trace() << "Loading ascii file " << file << "..." << std::endl;
       success = loader.LoadASCIIFromFile(&model, &error, &warn, file);
     } else {
       throw std::runtime_error(
@@ -263,8 +263,8 @@ Model::Model(DevicePtr const& device, std::string const& file, LoadOptions optio
             auto fac         = p.second.ColorFactor();
             m->mAlbedoFactor = glm::vec4(fac[0], fac[1], fac[2], fac[3]);
           } else {
-            ILLUSION_WARNING << "Ignoring GLTF property \"" << p.first << "\" of material "
-                             << m->mName << "\"!" << std::endl;
+            Core::Logger::warning() << "Ignoring GLTF property \"" << p.first << "\" of material "
+                                    << m->mName << "\"!" << std::endl;
           }
         }
 
@@ -306,8 +306,8 @@ Model::Model(DevicePtr const& device, std::string const& file, LoadOptions optio
                   val.Get(2).IsInt() ? val.Get(2).Get<int>() : val.Get(2).Get<double>());
             }
           } else {
-            ILLUSION_WARNING << "Ignoring GLTF extension \"" << p.first << "\" of material "
-                             << m->mName << "\"!" << std::endl;
+            Core::Logger::warning() << "Ignoring GLTF extension \"" << p.first << "\" of material "
+                                    << m->mName << "\"!" << std::endl;
           }
         }
 
@@ -353,8 +353,8 @@ Model::Model(DevicePtr const& device, std::string const& file, LoadOptions optio
           } else if (p.first == "name") {
             // tinygltf already loaded the name
           } else {
-            ILLUSION_WARNING << "Ignoring GLTF property \"" << p.first << "\" of material \""
-                             << m->mName << "\"!" << std::endl;
+            Core::Logger::warning() << "Ignoring GLTF property \"" << p.first << "\" of material \""
+                                    << m->mName << "\"!" << std::endl;
           }
         }
 
@@ -702,9 +702,9 @@ Model::Model(DevicePtr const& device, std::string const& file, LoadOptions optio
         } else if (source.interpolation == "CUBICSPLINE") {
           sampler.mType = Animation::Sampler::Type::eCubicSpline;
         } else {
-          ILLUSION_WARNING << "Ignoring unknown animation interpolation type \""
-                           << source.interpolation << "\" for GLTF model \"" << file << "\"."
-                           << std::endl;
+          Core::Logger::warning() << "Ignoring unknown animation interpolation type \""
+                                  << source.interpolation << "\" for GLTF model \"" << file << "\"."
+                                  << std::endl;
           sampler.mType = Animation::Sampler::Type::eLinear;
         }
 
@@ -772,8 +772,8 @@ Model::Model(DevicePtr const& device, std::string const& file, LoadOptions optio
         } else if (source.target_path == "scale") {
           channel.mType = Animation::Channel::Type::eScale;
         } else {
-          ILLUSION_WARNING << "Ignoring animation path type \"" << source.target_path
-                           << "\" for GLTF model \"" << file << "\"." << std::endl;
+          Core::Logger::warning() << "Ignoring animation path type \"" << source.target_path
+                                  << "\" for GLTF model \"" << file << "\"." << std::endl;
           continue;
         }
 
@@ -810,15 +810,16 @@ void Model::setAnimationTime(uint32_t animationIndex, float time) {
             sampler.mKeyFrames.size() * 3 != sampler.mValues.size()) ||
         (sampler.mType != Animation::Sampler::Type::eCubicSpline &&
             sampler.mKeyFrames.size() != sampler.mValues.size())) {
-      ILLUSION_WARNING << "Failed to update GLTF animation: Number of data points does not match "
-                          "the number of keyframes. This should not happen!"
-                       << std::endl;
+      Core::Logger::warning()
+          << "Failed to update GLTF animation: Number of data points does not match "
+             "the number of keyframes. This should not happen!"
+          << std::endl;
       continue;
     }
 
     if (sampler.mKeyFrames.size() == 0) {
-      ILLUSION_WARNING << "Failed to update GLTF animation: There must be at least one key frame!"
-                       << std::endl;
+      Core::Logger::warning()
+          << "Failed to update GLTF animation: There must be at least one key frame!" << std::endl;
       continue;
     }
 
@@ -938,54 +939,54 @@ std::vector<AnimationPtr> const& Model::getAnimations() const {
 void Model::printInfo() const {
 
   // clang-format off
-  ILLUSION_MESSAGE << "Textures:" << std::endl;
+  Core::Logger::message() << "Textures:" << std::endl;
   for (auto const& t : mTextures) {
-    ILLUSION_MESSAGE << "  " << t << ": " << t->mImageInfo.extent.width << "x"
+    Core::Logger::message() << "  " << t << ": " << t->mImageInfo.extent.width << "x"
                      << t->mImageInfo.extent.width << ", "
                      << vk::to_string(t->mImageInfo.format) << std::endl;
   }
 
-  ILLUSION_MESSAGE << "Materials:" << std::endl;
+  Core::Logger::message() << "Materials:" << std::endl;
   for (auto const& m : mMaterials) {
-    ILLUSION_MESSAGE << "  " << m << ": " << m->mName << std::endl;
-    ILLUSION_MESSAGE << "    SpecularGlossinessWF:     " << m->mSpecularGlossinessWorkflow << std::endl;
-    ILLUSION_MESSAGE << "    AlbedoTexture:            " << m->mAlbedoTexture << std::endl;
-    ILLUSION_MESSAGE << "    MetallicRoughnessTexture: " << m->mMetallicRoughnessTexture << std::endl;
-    ILLUSION_MESSAGE << "    NormalTexture:            " << m->mNormalTexture << std::endl;
-    ILLUSION_MESSAGE << "    OcclusionTexture:         " << m->mOcclusionTexture << std::endl;
-    ILLUSION_MESSAGE << "    EmissiveTexture:          " << m->mEmissiveTexture << std::endl;
-    ILLUSION_MESSAGE << "    DoAlphaBlending:          " << m->mDoAlphaBlending << std::endl;
-    ILLUSION_MESSAGE << "    DoubleSided:              " << m->mDoubleSided << std::endl;
-    ILLUSION_MESSAGE << "    AlbedoFactor:             " << m->mAlbedoFactor << std::endl;
-    ILLUSION_MESSAGE << "    EmissiveFactor:           " << m->mEmissiveFactor << std::endl;
-    ILLUSION_MESSAGE << "    MetallicRoughnessFactor:  " << m->mMetallicRoughnessFactor << std::endl;
-    ILLUSION_MESSAGE << "    NormalScale:              " << m->mNormalScale << std::endl;
-    ILLUSION_MESSAGE << "    OcclusionStrength:        " << m->mOcclusionStrength << std::endl;
-    ILLUSION_MESSAGE << "    AlphaCutoff:              " << m->mAlphaCutoff << std::endl;
+    Core::Logger::message() << "  " << m << ": " << m->mName << std::endl;
+    Core::Logger::message() << "    SpecularGlossinessWF:     " << m->mSpecularGlossinessWorkflow << std::endl;
+    Core::Logger::message() << "    AlbedoTexture:            " << m->mAlbedoTexture << std::endl;
+    Core::Logger::message() << "    MetallicRoughnessTexture: " << m->mMetallicRoughnessTexture << std::endl;
+    Core::Logger::message() << "    NormalTexture:            " << m->mNormalTexture << std::endl;
+    Core::Logger::message() << "    OcclusionTexture:         " << m->mOcclusionTexture << std::endl;
+    Core::Logger::message() << "    EmissiveTexture:          " << m->mEmissiveTexture << std::endl;
+    Core::Logger::message() << "    DoAlphaBlending:          " << m->mDoAlphaBlending << std::endl;
+    Core::Logger::message() << "    DoubleSided:              " << m->mDoubleSided << std::endl;
+    Core::Logger::message() << "    AlbedoFactor:             " << m->mAlbedoFactor << std::endl;
+    Core::Logger::message() << "    EmissiveFactor:           " << m->mEmissiveFactor << std::endl;
+    Core::Logger::message() << "    MetallicRoughnessFactor:  " << m->mMetallicRoughnessFactor << std::endl;
+    Core::Logger::message() << "    NormalScale:              " << m->mNormalScale << std::endl;
+    Core::Logger::message() << "    OcclusionStrength:        " << m->mOcclusionStrength << std::endl;
+    Core::Logger::message() << "    AlphaCutoff:              " << m->mAlphaCutoff << std::endl;
   }
 
-  ILLUSION_MESSAGE << "Meshes:" << std::endl;
+  Core::Logger::message() << "Meshes:" << std::endl;
   for (auto const& m : mMeshes) {
-    ILLUSION_MESSAGE << "  " << m << ": " << m->mName << std::endl;
-    ILLUSION_MESSAGE << "    BoundingBox: " << m->mBoundingBox.mMin << " - " << m->mBoundingBox.mMax << std::endl;
-    ILLUSION_MESSAGE << "    Primitives:" << std::endl;
+    Core::Logger::message() << "  " << m << ": " << m->mName << std::endl;
+    Core::Logger::message() << "    BoundingBox: " << m->mBoundingBox.mMin << " - " << m->mBoundingBox.mMax << std::endl;
+    Core::Logger::message() << "    Primitives:" << std::endl;
     for (auto const& p : m->mPrimitives) {
-      ILLUSION_MESSAGE << "      Material: " << p.mMaterial << " Topology: " << vk::to_string(p.mTopology) 
+      Core::Logger::message() << "      Material: " << p.mMaterial << " Topology: " << vk::to_string(p.mTopology) 
                        << " IndexCount: " << p.mIndexCount << " IndexOffset: " << p.mIndexOffset 
                        << " BoundingBox: " << p.mBoundingBox.mMin << " - " << p.mBoundingBox.mMax << std::endl;
     }
   }
 
-  ILLUSION_MESSAGE << "Nodes:" << std::endl;
+  Core::Logger::message() << "Nodes:" << std::endl;
   std::function<void(Node const&, uint32_t)> printNode = [&printNode](Node const& n, uint32_t indent) {
-    ILLUSION_MESSAGE << std::string(indent, ' ') << "  " << &n << ": " << n.mName << std::endl;
+    Core::Logger::message() << std::string(indent, ' ') << "  " << &n << ": " << n.mName << std::endl;
 
     if (n.mMesh) {
-      ILLUSION_MESSAGE << std::string(indent, ' ') << "    Mesh:        " << n.mMesh << std::endl;
+      Core::Logger::message() << std::string(indent, ' ') << "    Mesh:        " << n.mMesh << std::endl;
     }
 
     if (n.mChildren.size() > 0) {
-      ILLUSION_MESSAGE << std::string(indent, ' ') << "    Children:" << std::endl;
+      Core::Logger::message() << std::string(indent, ' ') << "    Children:" << std::endl;
       for (auto const& c : n.mChildren) {
         printNode(*c, indent+2);
       }
@@ -996,20 +997,20 @@ void Model::printInfo() const {
     printNode(*c, 0);
   }
 
-  ILLUSION_MESSAGE << "Animations:" << std::endl;
+  Core::Logger::message() << "Animations:" << std::endl;
   for (auto const& a : mAnimations) {
-    ILLUSION_MESSAGE << "  " << a << ": " << a->mName << std::endl;
-    ILLUSION_MESSAGE << "    Samplers: " << a->mSamplers.size() << std::endl;
-    ILLUSION_MESSAGE << "    Channels: " << a->mChannels.size() << std::endl;
-    ILLUSION_MESSAGE << "    Start:    " << a->mStart << std::endl;
-    ILLUSION_MESSAGE << "    End:      " << a->mEnd << std::endl;
+    Core::Logger::message() << "  " << a << ": " << a->mName << std::endl;
+    Core::Logger::message() << "    Samplers: " << a->mSamplers.size() << std::endl;
+    Core::Logger::message() << "    Channels: " << a->mChannels.size() << std::endl;
+    Core::Logger::message() << "    Start:    " << a->mStart << std::endl;
+    Core::Logger::message() << "    End:      " << a->mEnd << std::endl;
   }
 
-  ILLUSION_MESSAGE << "Skins:" << std::endl;
+  Core::Logger::message() << "Skins:" << std::endl;
   for (auto const& s : mSkins) {
-    ILLUSION_MESSAGE << "  " << s << ": " << s->mName << std::endl;
-    ILLUSION_MESSAGE << "    Joints:              " << s->mJoints.size() << std::endl;
-    ILLUSION_MESSAGE << "    InverseBindMatrices: " << s->mInverseBindMatrices.size() << std::endl;
+    Core::Logger::message() << "  " << s << ": " << s->mName << std::endl;
+    Core::Logger::message() << "    Joints:              " << s->mJoints.size() << std::endl;
+    Core::Logger::message() << "    InverseBindMatrices: " << s->mInverseBindMatrices.size() << std::endl;
   }
   // clang-format on
 }

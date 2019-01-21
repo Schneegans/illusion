@@ -155,25 +155,25 @@ vk::PipelineLayoutPtr const& PipelineReflection::getLayout() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void PipelineReflection::printInfo() const {
-  ILLUSION_MESSAGE << "Inputs" << std::endl;
+  Core::Logger::message() << "Inputs" << std::endl;
   for (auto const& r : mInputs) {
-    ILLUSION_MESSAGE << "  - \"" << r.second.mName << "\" (" << vk::to_string(r.second.mStages)
-                     << ", binding: " << r.second.mBinding << ", location: " << r.second.mLocation
-                     << ")" << std::endl;
+    Core::Logger::message() << "  - \"" << r.second.mName << "\" ("
+                            << vk::to_string(r.second.mStages) << ", binding: " << r.second.mBinding
+                            << ", location: " << r.second.mLocation << ")" << std::endl;
   }
 
-  ILLUSION_MESSAGE << "Outputs" << std::endl;
+  Core::Logger::message() << "Outputs" << std::endl;
   for (auto const& r : mOutputs) {
-    ILLUSION_MESSAGE << "  - \"" << r.second.mName << "\" (" << vk::to_string(r.second.mStages)
-                     << ", binding: " << r.second.mBinding << ", location: " << r.second.mLocation
-                     << ")" << std::endl;
+    Core::Logger::message() << "  - \"" << r.second.mName << "\" ("
+                            << vk::to_string(r.second.mStages) << ", binding: " << r.second.mBinding
+                            << ", location: " << r.second.mLocation << ")" << std::endl;
   }
 
-  ILLUSION_MESSAGE << "PushConstants" << std::endl;
+  Core::Logger::message() << "PushConstants" << std::endl;
   for (auto const& r : mPushConstantBuffers) {
-    ILLUSION_MESSAGE << "  - \"" << r.second.mName << "\" (" << vk::to_string(r.second.mStages)
-                     << ", size: " << r.second.mSize << ", offset: " << r.second.mOffset << ")"
-                     << std::endl;
+    Core::Logger::message() << "  - \"" << r.second.mName << "\" ("
+                            << vk::to_string(r.second.mStages) << ", size: " << r.second.mSize
+                            << ", offset: " << r.second.mOffset << ")" << std::endl;
   }
 
   for (auto const& s : mDescriptorSetReflections) {

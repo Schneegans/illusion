@@ -24,13 +24,13 @@ Swapchain::Swapchain(DevicePtr const& device, vk::SurfaceKHRPtr const& surface)
     : mDevice(device)
     , mSurface(surface) {
 
-  ILLUSION_TRACE << "Creating Swapchain." << std::endl;
+  Core::Logger::trace() << "Creating Swapchain." << std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Swapchain::~Swapchain() {
-  ILLUSION_TRACE << "Deleting Swapchain." << std::endl;
+  Core::Logger::trace() << "Deleting Swapchain." << std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -105,7 +105,7 @@ void Swapchain::present(BackedImagePtr const& image,
   }
 
   if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR) {
-    ILLUSION_ERROR << "Suboptimal swap chain!" << std::endl;
+    Core::Logger::error() << "Suboptimal swap chain!" << std::endl;
   }
 
   // copy image ------------------------------------------------------------------------------------
@@ -178,10 +178,10 @@ void Swapchain::present(BackedImagePtr const& image,
 
       if (result == vk::Result::eErrorOutOfDateKHR || result == vk::Result::eSuboptimalKHR) {
         // when does this happen?
-        ILLUSION_ERROR << "out of date 1!" << std::endl;
+        Core::Logger::error() << "out of date 1!" << std::endl;
       } else if (result != vk::Result::eSuccess) {
         // when does this happen?
-        ILLUSION_ERROR << "out of date 2!" << std::endl;
+        Core::Logger::error() << "out of date 2!" << std::endl;
       }
     } catch (...) { mDirty = true; }
   }
@@ -198,7 +198,7 @@ void Swapchain::chooseExtent() {
   } else {
 
     // when does this happen?
-    ILLUSION_WARNING << "TODO" << std::endl;
+    Core::Logger::warning() << "TODO" << std::endl;
     mExtent = {500, 500};
 
     mExtent.x = std::max(
@@ -285,8 +285,8 @@ void Swapchain::createSwapchain() {
   // presentation support
   if (!mDevice->getPhysicalDevice()->getSurfaceSupportKHR(
           mDevice->getPhysicalDevice()->getQueueFamily(QueueType::eGeneric), *mSurface)) {
-    ILLUSION_ERROR << "The selected queue family does not "
-                   << "support presentation!" << std::endl;
+    Core::Logger::error() << "The selected queue family does not "
+                          << "support presentation!" << std::endl;
   }
 
   mSwapchain = mDevice->createSwapChainKhr(info);

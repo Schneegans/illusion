@@ -36,7 +36,7 @@ void CommandLineOptions::addOption(
 void CommandLineOptions::printHelp() const {
 
   // print the general description
-  ILLUSION_MESSAGE << mDescription << std::endl;
+  Logger::message() << mDescription << std::endl;
 
   // find the option with the longest combined name length (in order to align the help messages)
   uint32_t maxNameLength = 0;
@@ -73,7 +73,7 @@ void CommandLineOptions::printHelp() const {
       currentSpacePos = nextSpacePos;
 
       if (currentLineWidth > 60) {
-        ILLUSION_MESSAGE << sstr.str() << std::endl;
+        Logger::message() << sstr.str() << std::endl;
         sstr = std::stringstream();
         sstr << std::left << std::setw(maxNameLength - 1) << " ";
         currentLineWidth = 0;
@@ -148,7 +148,7 @@ void CommandLineOptions::parse(int argc, char* argv[]) const {
 
     // Print a warning if there was an unknown option
     if (!foundOption) {
-      ILLUSION_WARNING << "Ignoring unknown command line option \"" << name << "\"." << std::endl;
+      Logger::warning() << "Ignoring unknown command line option \"" << name << "\"." << std::endl;
     }
 
     if (foundOption && valueIsSeperate) {

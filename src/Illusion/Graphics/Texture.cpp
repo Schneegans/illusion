@@ -50,7 +50,7 @@ TexturePtr Texture::createFromFile(DevicePtr const& device, std::string const& f
   gli::texture texture(gli::load(fileName));
   if (!texture.empty()) {
 
-    ILLUSION_TRACE << "Creating Texture for file " << fileName << " with gli." << std::endl;
+    Core::Logger::trace() << "Creating Texture for file " << fileName << " with gli." << std::endl;
 
     vk::ImageType     type;
     vk::ImageViewType viewType;
@@ -114,11 +114,12 @@ TexturePtr Texture::createFromFile(DevicePtr const& device, std::string const& f
   void* data;
 
   if (stbi_is_hdr(fileName.c_str())) {
-    ILLUSION_TRACE << "Creating HDR Texture for file " << fileName << " with stb." << std::endl;
+    Core::Logger::trace() << "Creating HDR Texture for file " << fileName << " with stb."
+                          << std::endl;
     data  = stbi_loadf(fileName.c_str(), &width, &height, &components, 4);
     bytes = 4;
   } else {
-    ILLUSION_TRACE << "Creating Texture for file " << fileName << " with stb." << std::endl;
+    Core::Logger::trace() << "Creating Texture for file " << fileName << " with stb." << std::endl;
     data  = stbi_load(fileName.c_str(), &width, &height, &components, 4);
     bytes = 1;
   }
