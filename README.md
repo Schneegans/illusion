@@ -19,7 +19,7 @@ Illusion uses C++17 and can be build on Linux (gcc or clang), Windows (msvc) and
   - [x] Window creation using [glfw](https://github.com/glfw/glfw)
   - [x] Automatic Vulkan object lifetime management using reference counting
   - [x] Automatic resource re-creation on swapchain changes
-  - [x] Very readable validation error messages since Illusion forces you to assign descriptive names to each and every Vulkan object
+  - [x] Very readable validation error messages since Illusion forces you to assign descriptive names to each and every Vulkan object (using `PFN_vkSetDebugUtilsObjectNameEXT`)
   - [x] Explicit graphics state per command buffer
   - [x] Explicit binding state per command buffer
   - [x] A ring-buffer for per-frame resources
