@@ -37,12 +37,15 @@ CommandBuffer::CommandBuffer(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::reset() {
+
+  // First clear all state of the CommandBuffer. Except for the GraphicsState, this is kept.
   mBindingState.reset();
   mCurrentDescriptorSets.clear();
   mDescriptorSetCache.releaseAll();
   mCurrentRenderPass.reset();
   mCurrentSubPass = 0;
 
+  // Then do the actual vk::CommandBuffer resetting.
   mVkCmd->reset({});
 }
 
@@ -63,7 +66,11 @@ void CommandBuffer::end() const {
 void CommandBuffer::submit(std::vector<vk::SemaphorePtr> const& waitSemaphores,
     std::vector<vk::PipelineStageFlags> const&                  waitStages,
     std::vector<vk::SemaphorePtr> const& signalSemaphores, vk::FencePtr const& fence) const {
+
   vk::CommandBuffer bufs[] = {*mVkCmd};
+
+  // As all Semaphores are passed in as std::shared_ptr's, we have to put them dereferenced into
+  // temporary vectors.
 
   std::vector<vk::Semaphore> tmpWaitSemaphores(waitSemaphores.size());
   for (size_t i(0); i < waitSemaphores.size(); ++i) {
@@ -84,6 +91,7 @@ void CommandBuffer::submit(std::vector<vk::SemaphorePtr> const& waitSemaphores,
   info.waitSemaphoreCount   = static_cast<uint32_t>(tmpWaitSemaphores.size());
   info.pWaitSemaphores      = tmpWaitSemaphores.data();
 
+  // Submit to the queue which was defined at contruction time.
   mDevice->getQueue(mType).submit(info, fence ? *fence : nullptr);
 }
 
@@ -117,6 +125,8 @@ void CommandBuffer::beginRenderPass(RenderPassPtr const& renderPass) {
 
   mVkCmd->beginRenderPass(passInfo, vk::SubpassContents::eInline);
 
+  // Store a pointer to the currently active RenderPass. This is required for later construction of
+  // the Pipelines.
   mCurrentRenderPass = renderPass;
   mCurrentSubPass    = 0;
 }
@@ -125,6 +135,8 @@ void CommandBuffer::beginRenderPass(RenderPassPtr const& renderPass) {
 
 void CommandBuffer::endRenderPass() {
   mVkCmd->endRenderPass();
+
+  // There is no currently active RenderPass anymore.
   mCurrentRenderPass.reset();
 }
 
@@ -197,6 +209,11 @@ void CommandBuffer::bindVertexBuffers(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::pushConstants(const void* data, uint32_t size, uint32_t offset) const {
+
+  if (!mCurrentShader) {
+    throw std::runtime_error("Failed to set push constants: There must be an active Shader!");
+  }
+
   auto const& reflection = mCurrentShader->getReflection();
   auto constants = reflection->getResources(PipelineResource::ResourceType::ePushConstantBuffer);
 
@@ -213,7 +230,11 @@ void CommandBuffer::pushConstants(const void* data, uint32_t size, uint32_t offs
 
 void CommandBuffer::draw(
     uint32_t vertexCount, uint32_t instanceCount, uint32_t firstVertex, uint32_t firstInstance) {
+
+  // First, bind a Pipeline and create, update and bind DescriptorSets.
   flush();
+
+  // The record the actual draw call.
   mVkCmd->draw(vertexCount, instanceCount, firstVertex, firstInstance);
 }
 
@@ -221,14 +242,22 @@ void CommandBuffer::draw(
 
 void CommandBuffer::drawIndexed(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex,
     int32_t vertexOffset, uint32_t firstInstance) {
+
+  // First, bind a Pipeline and create, update and bind DescriptorSets.
   flush();
+
+  // The record the actual draw call.
   mVkCmd->drawIndexed(indexCount, instanceCount, firstIndex, vertexOffset, firstInstance);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::dispatch(uint32_t groupCountX, uint32_t groupCountY, uint32_t groupCountZ) {
+
+  // First, bind a Pipeline and create, update and bind DescriptorSets.
   flush();
+
+  // The record the actual dispatch call.
   mVkCmd->dispatch(groupCountX, groupCountY, groupCountZ);
 }
 
@@ -353,6 +382,11 @@ void CommandBuffer::copyBufferToImage(vk::Buffer src, vk::Image dst, vk::ImageLa
 
 void CommandBuffer::flush() {
 
+  if (!mCurrentShader) {
+    throw std::runtime_error(
+        "Failed to flush CommandBuffer \"" + getName() + "\": There must be an active Shader!");
+  }
+
   vk::PipelineBindPoint bindPoint = mType == QueueType::eCompute ? vk::PipelineBindPoint::eCompute
                                                                  : vk::PipelineBindPoint::eGraphics;
 
@@ -360,61 +394,61 @@ void CommandBuffer::flush() {
   auto pipeline = getPipelineHandle();
   mVkCmd->bindPipeline(bindPoint, *pipeline);
 
-  // now bind and update all descriptor sets -------------------------------------------------------
+  // now bind and update all DescriptorSets -------------------------------------------------------
 
   // the logic is roughly as follows:
 
-  // for each descriptor set number of the current program
-  //   if binding state of this set number is dirty (a binding for this set has been changed)
-  //     or no descriptor set is currently bound for this set
-  //     or the layout of the currently bound descriptor set is incompatible to the current program
-  //       acquire new descriptor set
-  //       update descriptor set
-  //       bind descriptor set
+  // for each DescriptorSet number of the current program
+  //   if BindingState of this set number is dirty (a binding for this set has been changed)
+  //     or no DescriptorSet is currently bound for this set
+  //     or the layout of the currently bound DescriptorSet is incompatible to the current program
+  //       acquire new DescriptorSet
+  //       update DescriptorSet
+  //       bind DescriptorSet
   //       store hash for compatibility checks
   //   else if a dynamic offset has been changed
-  //       re-bind current descriptor set
+  //       re-bind current DescriptorSet
 
-  // get descriptor set layouts of the current program
+  // get DescriptorSet layouts of the current program
   auto const& setReflections = mCurrentShader->getDescriptorSetReflections();
 
   for (uint32_t setNum = 0; setNum < setReflections.size(); ++setNum) {
 
-    // ignore empty descriptor sets
+    // Ignore empty DescriptorSets.
     if (setReflections[setNum]->getResources().size() == 0) {
       continue;
     }
 
-    // there is nothing to bind, most likely the user forgot to bind something - but it may also be
-    // on purpose when the current program actually does not need this set
+    // There is nothing to bind, most likely the user forgot to bind something - but it may also be
+    // on purpose when the current program actually does not need this set.
     if (mBindingState.getBindings(setNum).size() == 0) {
       continue;
     }
 
-    // get hash of the currently bound descriptor set (if any) to check if it is compatible with the
-    // descriptor set layout of the currently bound program
+    // Get hash of the currently bound DescriptorSet (if any) to check if it is compatible with the
+    // DescriptorSet layout of the currently bound program.
     auto currentSetIt = mCurrentDescriptorSets.find(setNum);
 
-    // we need to bind a new descriptor set if
-    //   binding state of this set number is dirty (a binding for this set has been changed)
-    //   or no descriptor set is currently bound for this set
-    //   or the layout of the currently bound descriptor set is incompatible to the current program
+    // We need to bind a new DescriptorSet if
+    //   BindingState of this set number is dirty (a binding for this set has been changed),
+    //   or no DescriptorSet is currently bound for this set,
+    //   or the layout of the currently bound DescriptorSet is incompatible to the current program.
     if (mBindingState.getDirtySets().find(setNum) != mBindingState.getDirtySets().end() ||
         currentSetIt == mCurrentDescriptorSets.end() ||
         currentSetIt->second.mSetLayoutHash != setReflections[setNum]->getHash()) {
 
-      // acquire an unused descriptor set
+      // Acquire an unused DescriptorSet.
       auto descriptorSet = mDescriptorSetCache.acquireHandle(
           mCurrentShader->getDescriptorSetReflections().at(setNum));
 
-      // get all bindings of the current descriptor set
+      // Get all bindings of the current DescriptorSet.
       auto const& bindings     = mBindingState.getBindings(setNum);
       size_t      bindingCount = bindings.size();
 
-      // this will store the offsets of dynamic uniform and storage buffers
+      // This will store the offsets of dynamic uniform and storage buffers.
       std::vector<uint32_t> dynamicOffsets;
 
-      // write descriptor set for each binding
+      // Write DescriptorSet for each binding.
       vk::WriteDescriptorSet defaulWriteInfo;
       defaulWriteInfo.dstSet          = *descriptorSet;
       defaulWriteInfo.dstArrayElement = 0;
@@ -490,21 +524,22 @@ void CommandBuffer::flush() {
         ++i;
       }
 
+      // Do the actual update of the DescriptorSet.
       if (bindingCount > 0) {
         mDevice->getHandle()->updateDescriptorSets(writeInfos, nullptr);
       }
 
-      // now the descriptor set is up-to-date and we can bind it
+      // Now the DescriptorSet is up-to-date and we can bind it.
       mVkCmd->bindDescriptorSets(bindPoint, *mCurrentShader->getReflection()->getLayout(), setNum,
           *descriptorSet, dynamicOffsets);
 
-      // store the hash of the descriptor set layout so that we can check for
-      // compatibility if a new program is bound
+      // Store the hash of the DescriptorSet layout so that we can check for
+      // compatibility if a new program is bound.
       mCurrentDescriptorSets[setNum] = {descriptorSet, setReflections[setNum]->getHash()};
 
     }
-    // there is a matching descriptor set currently bound,
-    // however the dynamic offsets have been changed
+    // There is a matching DescriptorSet currently bound,
+    // however the dynamic offsets have been changed.
     else if (mBindingState.getDirtyDynamicOffsets().find(setNum) !=
              mBindingState.getDirtyDynamicOffsets().end()) {
 
@@ -521,6 +556,7 @@ void CommandBuffer::flush() {
     }
   }
 
+  // Reset dirty state.
   mBindingState.clearDirtySets();
   mBindingState.clearDirtyDynamicOffsets();
 }
@@ -529,11 +565,12 @@ void CommandBuffer::flush() {
 
 vk::PipelinePtr CommandBuffer::getPipelineHandle() {
 
-  if (mType == QueueType::eCompute) {
+  if (!mCurrentShader) {
+    throw std::runtime_error("Failed to create pipeline for CommandBuffer \"" + getName() +
+                             "\": There must be an active Shader!");
+  }
 
-    if (!mCurrentShader) {
-      throw std::runtime_error("Failed to create compute pipeline: No Shader given!");
-    }
+  if (mType == QueueType::eCompute) {
 
     Core::BitHash hash;
     hash.push<64>(mCurrentShader.get());
@@ -546,8 +583,8 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
     vk::ComputePipelineCreateInfo info;
 
     if (mCurrentShader->getModules().size() != 1) {
-      throw std::runtime_error(
-          "Failed to create compute pipeline: There must be exactly one ShaderModule!");
+      throw std::runtime_error("Failed to create compute pipeline for CommandBuffer \"" +
+                               getName() + "\": There must be exactly one ShaderModule!");
     }
 
     info.stage.stage               = mCurrentShader->getModules()[0]->getStage();
