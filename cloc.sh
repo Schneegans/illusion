@@ -32,6 +32,5 @@ LINES_OF_CODE=${TOKENS[4]}
 # cloc also does not count inline codes, so this number should be more or less correct.
 COMMENT_LINES=$(($COMMENT_LINES - 7 * $NUMBER_OF_FILES))
 
-echo "Lines of code    : $LINES_OF_CODE" 
-echo "Lines of comments: $COMMENT_LINES" 
-
+awk -v lines=$LINES_OF_CODE 'BEGIN {printf "Lines of code:     %5.1fk\n", lines/1000}'
+awk -v lines=$COMMENT_LINES 'BEGIN {printf "Lines of comments: %5.1fk\n", lines/1000}'
