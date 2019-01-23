@@ -21,6 +21,7 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Map PipelineResource::ResourceType to vk::DescriptorType.
 const std::unordered_map<PipelineResource::ResourceType, vk::DescriptorType> resourceTypeMapping = {
     {PipelineResource::ResourceType::eCombinedImageSampler,
         vk::DescriptorType::eCombinedImageSampler},
@@ -46,14 +47,14 @@ DescriptorPool::DescriptorPool(
     , mDevice(device)
     , mReflection(reflection) {
 
-  Core::Logger::traceCreation("DescriptorPool", getName());
-
-  // calculate pool sizes for later pool creation
+  // Get the number of descriptors for each DescriptorType.
   std::unordered_map<vk::DescriptorType, uint32_t> descriptorTypeCounts;
   for (auto const& r : reflection->getResources()) {
     descriptorTypeCounts[resourceTypeMapping.at(r.second.mResourceType)] += r.second.mArraySize;
   }
 
+  // Now multiply those numbers with the number of descriptor sets allocated from each internal
+  // vk::DescriptorPool. This is required for the lazy pool creation.
   for (auto it : descriptorTypeCounts) {
     vk::DescriptorPoolSize pool;
     pool.type            = it.first;
@@ -65,19 +66,19 @@ DescriptorPool::DescriptorPool(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 DescriptorPool::~DescriptorPool() {
-  Core::Logger::traceDeletion("DescriptorPool", getName());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 vk::DescriptorSetPtr DescriptorPool::allocateDescriptorSet() {
 
+  // Throw error when there is no resource in this descriptor set.
   if (mPoolSizes.size() == 0) {
     throw std::runtime_error(
         "Cannot allocated DescriptorSet: Set does not contain any active resources!");
   }
 
-  // find a free pool
+  // Find a free pool.
   std::shared_ptr<PoolInfo> pool;
 
   for (auto& p : mDescriptorPools) {
@@ -88,7 +89,7 @@ vk::DescriptorSetPtr DescriptorPool::allocateDescriptorSet() {
     }
   }
 
-  // if no free pool has been found, create a new one
+  // If no free pool has been found, create a new one.
   if (!pool) {
     vk::DescriptorPoolCreateInfo info;
     info.poolSizeCount = static_cast<uint32_t>(mPoolSizes.size());
@@ -102,7 +103,7 @@ vk::DescriptorSetPtr DescriptorPool::allocateDescriptorSet() {
     mDescriptorPools.push_back(pool);
   }
 
-  // now allocate the descriptor set from this pool
+  // Now allocate the descriptor set from this pool.
   vk::DescriptorSetLayout descriptorSetLayouts[] = {*mReflection->getLayout()};
 
   vk::DescriptorSetAllocateInfo info;
@@ -110,13 +111,13 @@ vk::DescriptorSetPtr DescriptorPool::allocateDescriptorSet() {
   info.descriptorSetCount = 1;
   info.pSetLayouts        = descriptorSetLayouts;
 
-  Core::Logger::traceCreation("DescriptorSet", "DescriptorSet from " + getName());
+  Core::Logger::traceCreation("vk::DescriptorSet", "DescriptorSet from " + getName());
 
   auto device = mDevice->getHandle();
   auto name   = getName();
   return VulkanPtr::create(
       device->allocateDescriptorSets(info)[0], [device, pool, name](vk::DescriptorSet* obj) {
-        Core::Logger::traceDeletion("DescriptorSet", "DescriptorSet from " + name);
+        Core::Logger::traceDeletion("vk::DescriptorSet", "DescriptorSet from " + name);
         --pool->mAllocationCount;
         device->freeDescriptorSets(*pool->mPool, *obj);
         delete obj;

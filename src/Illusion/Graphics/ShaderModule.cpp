@@ -15,13 +15,18 @@
 #include <SPIRV/GLSL.std.450.h>
 #include <spirv_glsl.hpp>
 
-// parts of this code is based on Vulkan-EZ
-// (MIT, Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.)
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// Parts of this code is based on Vulkan-EZ                                                       //
+// (MIT, Copyright (c) 2018 Advanced Micro Devices, Inc. All rights reserved.)                    //
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 namespace Illusion::Graphics {
 
 namespace {
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Map spirv-types to Illusion's PipelineResource::BaseTypes.
 static std::unordered_map<spirv_cross::SPIRType::BaseType, PipelineResource::BaseType>
     spirvTypeToBaseType = {
         {spirv_cross::SPIRType::Boolean, PipelineResource::BaseType::eBool},
@@ -34,7 +39,9 @@ static std::unordered_map<spirv_cross::SPIRType::BaseType, PipelineResource::Bas
         {spirv_cross::SPIRType::Struct, PipelineResource::BaseType::eStruct},
 };
 
-static std::vector<PipelineResource::Member> ParseMembers(
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+static std::vector<PipelineResource::Member> parseMembers(
     spirv_cross::CompilerGLSL& compiler, const spirv_cross::SPIRType& spirType) {
 
   std::vector<PipelineResource::Member> members;
@@ -45,7 +52,7 @@ static std::vector<PipelineResource::Member> ParseMembers(
     if (spirvTypeToBaseType.find(memberType.basetype) == spirvTypeToBaseType.end())
       continue;
 
-    // Create a new VezMemberInfo entry.
+    // Create a new PipelineResource::Member entry.
     PipelineResource::Member member;
     member.mBaseType = spirvTypeToBaseType.at(memberType.basetype);
     member.mOffset   = compiler.type_struct_member_offset(spirType, static_cast<uint32_t>(i));
@@ -57,7 +64,7 @@ static std::vector<PipelineResource::Member> ParseMembers(
 
     // Recursively process members that are structs.
     if (memberType.basetype == spirv_cross::SPIRType::Struct) {
-      member.mMembers = ParseMembers(compiler, memberType);
+      member.mMembers = parseMembers(compiler, memberType);
     }
 
     members.push_back(member);
@@ -67,13 +74,15 @@ static std::vector<PipelineResource::Member> ParseMembers(
   return members;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 class CustomCompiler : public spirv_cross::CompilerGLSL {
  public:
   CustomCompiler(const std::vector<uint32_t>& spirv)
       : spirv_cross::CompilerGLSL(spirv) {
   }
 
-  vk::AccessFlags GetAccessFlags(const spirv_cross::SPIRType& type) {
+  vk::AccessFlags get_access_flags(const spirv_cross::SPIRType& type) {
     // SPIRV-Cross hack to get the correct readonly and writeonly attributes on ssbos.
     // This isn't working correctly via Compiler::get_decoration(id, spv::DecorationNonReadable) for
     // example. So the code below is extracted from private methods within spirv_cross.cpp. The
@@ -133,10 +142,14 @@ void ShaderModule::resetReloadingRequired() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void ShaderModule::reload() {
+  // Get spirv code. This comes either from file, from inline code or is compiled on-the-fly from
+  // GLSL or HLSL. This depends on the ShaderSource.
   auto spirv = mSource->getSpirv(mStage);
 
+  // Create reflection information.
   createReflection(spirv);
 
+  // And the the actual vk::ShaderModule.
   vk::ShaderModuleCreateInfo info;
   info.codeSize = spirv.size() * 4;
   info.pCode    = spirv.data();
@@ -234,7 +247,7 @@ void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) {
     pipelineResource.mArraySize = (spirType.array.size() == 0) ? 1 : spirType.array[0];
     pipelineResource.mSize      = compiler.get_declared_struct_size(spirType);
     pipelineResource.mName      = resource.name;
-    pipelineResource.mMembers   = ParseMembers(compiler, spirType);
+    pipelineResource.mMembers   = parseMembers(compiler, spirType);
     mResources.push_back(pipelineResource);
   }
 
@@ -249,13 +262,13 @@ void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) {
     pipelineResource.mResourceType = isDynamic
                                          ? PipelineResource::ResourceType::eStorageBufferDynamic
                                          : PipelineResource::ResourceType::eStorageBuffer;
-    pipelineResource.mAccess  = compiler.GetAccessFlags(spirType);
+    pipelineResource.mAccess  = compiler.get_access_flags(spirType);
     pipelineResource.mSet     = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
     pipelineResource.mBinding = compiler.get_decoration(resource.id, spv::DecorationBinding);
     pipelineResource.mArraySize = (spirType.array.size() == 0) ? 1 : spirType.array[0];
     pipelineResource.mSize      = compiler.get_declared_struct_size(spirType);
     pipelineResource.mName      = resource.name;
-    pipelineResource.mMembers   = ParseMembers(compiler, spirType);
+    pipelineResource.mMembers   = parseMembers(compiler, spirType);
     mResources.push_back(pipelineResource);
   }
 
@@ -382,7 +395,7 @@ void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) {
     pipelineResource.mOffset       = offset;
     pipelineResource.mSize         = compiler.get_declared_struct_size(spirType);
     pipelineResource.mName         = resource.name;
-    pipelineResource.mMembers      = ParseMembers(compiler, spirType);
+    pipelineResource.mMembers      = parseMembers(compiler, spirType);
     mResources.push_back(pipelineResource);
   }
 }

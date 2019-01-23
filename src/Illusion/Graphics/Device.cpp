@@ -37,8 +37,6 @@ Device::Device(std::string const& name, PhysicalDevicePtr const& physicalDevice)
     , mPhysicalDevice(physicalDevice)
     , mDevice(createDevice(name)) {
 
-  Core::Logger::traceCreation("Device", getName());
-
   mSetObjectNameFunc =
       PFN_vkSetDebugUtilsObjectNameEXT(mDevice->getProcAddr("vkSetDebugUtilsObjectNameEXT"));
 
@@ -59,7 +57,6 @@ Device::Device(std::string const& name, PhysicalDevicePtr const& physicalDevice)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Device::~Device() {
-  Core::Logger::traceDeletion("Device", getName());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

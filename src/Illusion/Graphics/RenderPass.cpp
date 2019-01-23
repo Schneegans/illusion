@@ -23,14 +23,11 @@ namespace Illusion::Graphics {
 RenderPass::RenderPass(std::string const& name, DevicePtr const& device)
     : Core::NamedObject(name)
     , mDevice(device) {
-
-  Core::Logger::traceCreation("RenderPass", getName());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 RenderPass::~RenderPass() {
-  Core::Logger::traceDeletion("RenderPass", getName());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

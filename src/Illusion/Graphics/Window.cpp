@@ -25,8 +25,7 @@ Window::Window(std::string const& name, InstancePtr const& instance, DevicePtr c
     , mInstance(instance)
     , mDevice(device) {
 
-  Core::Logger::traceCreation("Window", getName());
-
+  // Change the mouse pointer when pCursor is changed.
   pCursor.onChange().connect([this](Cursor cursor) {
     if (mCursor) {
       glfwDestroyCursor(mCursor);
@@ -60,6 +59,7 @@ Window::Window(std::string const& name, InstancePtr const& instance, DevicePtr c
     return true;
   });
 
+  // Lock / unlock window's aspecti ratio when requested.
   pLockAspect.onChange().connect([this](bool val) {
     if (mWindow) {
       if (val) {
@@ -71,6 +71,9 @@ Window::Window(std::string const& name, InstancePtr const& instance, DevicePtr c
     return true;
   });
 
+  // Toggle fullscreen when requested. When going fullscreen, the original window position and size
+  // is stored in mOrigPos and mOrigSize so that the original window state can be restored when
+  // leaving fullscreen mode.
   pFullscreen.onChange().connect([this](bool fullscreen) {
     if (mWindow) {
       if (fullscreen) {
@@ -87,6 +90,7 @@ Window::Window(std::string const& name, InstancePtr const& instance, DevicePtr c
     return true;
   });
 
+  // Tell our swapchain thar v-sync has been changed.
   pVsync.onChange().connect([this](bool vsync) {
     if (mSwapchain) {
       mSwapchain->setEnableVsync(vsync);
@@ -94,6 +98,7 @@ Window::Window(std::string const& name, InstancePtr const& instance, DevicePtr c
     return true;
   });
 
+  // Set the window's title when the pTitle property changes.
   pTitle.onChange().connect([this](std::string const& title) {
     if (mWindow) {
       glfwSetWindowTitle(mWindow, title.c_str());
@@ -101,6 +106,7 @@ Window::Window(std::string const& name, InstancePtr const& instance, DevicePtr c
     return true;
   });
 
+  // Optionally hide the mouse pointer when it is over the window.
   pHideCursor.onChange().connect([this](bool hide) {
     if (mWindow) {
       glfwSetInputMode(mWindow, GLFW_CURSOR, hide ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);
@@ -112,11 +118,11 @@ Window::Window(std::string const& name, InstancePtr const& instance, DevicePtr c
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Window::~Window() {
-  Core::Logger::traceDeletion("Window", getName());
-
   if (mCursor) {
     glfwDestroyCursor(mCursor);
   }
+
+  // Descrutor closes the window.
   close();
 }
 
@@ -125,6 +131,7 @@ Window::~Window() {
 void Window::open() {
   if (!mWindow) {
 
+    // We will use Vulkan, no context is required.
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
     if (pFullscreen()) {
@@ -135,14 +142,18 @@ void Window::open() {
       mWindow = glfwCreateWindow(pExtent().x, pExtent().y, pTitle().c_str(), nullptr, nullptr);
     }
 
+    // Create a surface and a swapchain for the window.
     mSurface   = mInstance->createSurface("Surface of " + getName(), mWindow);
     mSwapchain = std::make_shared<Swapchain>("Swapchain of " + getName(), mDevice, mSurface);
 
+    // Initialize some aspects of the window by triggering the onChange() signal of our properties.
     pLockAspect.touch();
     pHideCursor.touch();
     pVsync.touch();
     pCursor.touch();
 
+    // Store a pointer to "this" as user pointer for the glfw window. This is used to access
+    // properties of "this" in the glfw callbacks below.
     glfwSetWindowUserPointer(mWindow, this);
 
     glfwSetWindowCloseCallback(mWindow, [](GLFWwindow* w) {
