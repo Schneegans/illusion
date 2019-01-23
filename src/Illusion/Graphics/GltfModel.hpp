@@ -53,13 +53,15 @@ class Model : public Core::StaticCreate<Model>, public Core::NamedObject {
  public:
   // Creates a new Gltf::Model. The fileName should either be a *.gltf or a *.glb file. With the
   // options parameter you can prevent loading of some components such as textures. It is a good
-  // idea to give the object a descriptive name.
+  // idea to give the object a descriptive name. There are several reasons why this could throw a
+  // std::runtime_error. It is a good idea to catch those cases and report the error message to the
+  // user.
   Model(std::string const& name, DevicePtr const& device, std::string const& fileName,
       LoadOptions options = LoadOptionBits::eAll);
 
   // Updates all transformations of all Nodes according to the given animation and time. The time is
   // automatically clamped to the start and end time of the animation and is usually provided in
-  // seconds.
+  // seconds. This will throw a std::runtime_error when animationIndex is not supported.
   void setAnimationTime(uint32_t animationIndex, float time);
 
   // Gets the root node of the default scene. This usually does not exist in the glTF format but is

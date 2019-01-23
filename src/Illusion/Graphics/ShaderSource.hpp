@@ -21,7 +21,9 @@ namespace Illusion::Graphics {
 // A ShaderSource is given to the Shader for each stage. Internally, the Shader class uses the    //
 // ShaderSource to construct ShaderModules for each stage.                                        //
 // A ShaderSource can be either inline code or a shader file on disc. It can contain GLSL, HLSL   //
-// or Spir-V code                                                                                 //
+// or Spir-V code. GLSL and HLSL will be compiled to Spir-V. This will throw a std::runtime_error //
+// when compilation failed for some reason. The getSpirv() methods support shader includes,       //
+// however a std::runtime_error will be thrown when an include is not found.                      //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Abstract base class for all shader sources.

@@ -37,7 +37,8 @@ class DescriptorPool : public Core::StaticCreate<DescriptorPool>, public Core::N
 
   // Allocates a fresh vk::DescriptorSet, may create a vk::DescriptorPool if no free pool is
   // available. Once the reference count on this handle runs out of scope, the vk::DescriptorSet
-  // will be freed.
+  // will be freed. This will throw a std::runtime_error when the reflection does not contain any
+  // resources.
   vk::DescriptorSetPtr allocateDescriptorSet();
 
  private:

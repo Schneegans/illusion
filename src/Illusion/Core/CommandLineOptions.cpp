@@ -105,7 +105,6 @@ void CommandLineOptions::parse(int argc, char* argv[]) const {
     else if (i + 1 < argc) {
       value           = argv[i + 1];
       valueIsSeperate = true;
-      ;
     }
 
     // search for an option with the provided name

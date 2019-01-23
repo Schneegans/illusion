@@ -38,8 +38,9 @@ class DescriptorSetReflection : public Core::StaticCreate<DescriptorSetReflectio
   // was added before, the mStages of the new resource will be appended to those of the previous
   // resource.
   // Trying to add a resource with mResourceType eInput, eOutput or ePushConstantBuffer will cause
-  // an exception.
-  // Trying to add a resource with mSet being not equal to this->mSet will also cause an exception.
+  // throwing of a std::runtime_error.
+  // Trying to add a resource with mSet being not equal to this->mSet will also cause throwing of a
+  // std::runtime_error.
   void addResource(PipelineResource const& resource);
 
   // Returns all resources stored in this DescriptorSetReflection.

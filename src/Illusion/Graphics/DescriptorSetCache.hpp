@@ -35,7 +35,8 @@ class DescriptorSetCache : public Core::NamedObject {
   // This should only be used with handles created by the method above. The passed in handle is
   // marked as not being used anymore and will be returned by subsequent calls to acquireHandle()
   // if the construction parameters are the same. This will not delete the allocated
-  // vk::DescriptorSet.
+  // vk::DescriptorSet. This will throw a std::runtime_error when the given handle has not been
+  // acquired before.
   void releaseHandle(vk::DescriptorSetPtr const& handle);
 
   // Calls releaseHandle() for all DescriptorSets which have been created by this

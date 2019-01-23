@@ -79,7 +79,7 @@ void DescriptorSetCache::releaseHandle(vk::DescriptorSetPtr const& handle) {
   }
 
   throw std::runtime_error("Failed to release descriptor set from DescriptorSetCache: The given "
-                           "handle has not been released before or has never been created by this "
+                           "handle has not been acquired before or has never been created by this "
                            "cache!");
 }
 

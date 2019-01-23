@@ -57,7 +57,8 @@ class CommandLineOptions {
   void printHelp() const;
 
   // The command line arguments are traversed from start to end. That means, if an option is set
-  // multiple times, the last will be the one which is finally used.
+  // multiple times, the last will be the one which is finally used. This will throw a
+  // std::runtime_error when a value is missing for a given option.
   void parse(int argc, char* argv[]) const;
 
  private:

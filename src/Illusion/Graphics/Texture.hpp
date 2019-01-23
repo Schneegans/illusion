@@ -29,7 +29,8 @@ struct Texture : public BackedImage {
 
   // This method will first try to load the given file with gli (DDS file format) and if that is
   // impossible it will try using stb. If the file does not contain mipmaps and generateMipmaps is
-  // set to true, all mipmap levels will be created with linearly filtered blits.
+  // set to true, all mipmap levels will be created with linearly filtered blits. This will throw a
+  // std::runtime_error when texture loading failed for some reason.
   static TexturePtr createFromFile(std::string const& name, DevicePtr const& device,
       std::string const& fileName, vk::SamplerCreateInfo samplerInfo = Device::createSamplerInfo(),
       bool                        generateMipmaps  = true,

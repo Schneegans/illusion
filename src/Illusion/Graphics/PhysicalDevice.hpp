@@ -25,7 +25,8 @@ class PhysicalDevice : public vk::PhysicalDevice, public Core::StaticCreate<Phys
   // The PysicalDeviceis created by the Instance. So you do not have to create this on your own.
   PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice const& device);
 
-  // Tries to find a memory type matching both parameters.
+  // Tries to find a memory type matching both parameters. This will throw a std::runtime_error when
+  // there is no suitable memory type.
   uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags properties) const;
 
   // The PhysicalDevice will try to pick different Queues for each QueueType. If that is not
