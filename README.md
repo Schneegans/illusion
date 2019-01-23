@@ -3,8 +3,10 @@
 </p>
 
 
-In order to learn the concepts behind Vulkan, I am creating Illusion. For now, Illusion is a convenience layer on top of Vulkan, similar in spirit to [V-EZ](https://github.com/GPUOpen-LibrariesAndSDKs/V-EZ). However, I plan to add more features as I progress in learning.
+For now, Illusion is a convenience layer on top of Vulkan, similar in spirit to [V-EZ](https://github.com/GPUOpen-LibrariesAndSDKs/V-EZ). However, I plan to add more features as I progress in learning.
+
 Illusion uses C++17 and can be build on Linux (gcc or clang), Windows (msvc) and OS X (xcode). Nearly all dependencies are included as [git submodules](externals), please refer to the section [Building Illusion](#building-illusion) in order to get started.
+
 Since everybody loves badges, here are some decribing Illusion:
 
 [![Build Status](https://travis-ci.org/Simmesimme/illusion.svg?branch=develop)](https://travis-ci.org/Simmesimme/illusion/branches)
