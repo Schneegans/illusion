@@ -4,9 +4,6 @@
 
 
 For now, Illusion is a convenience layer on top of Vulkan, similar in spirit to [V-EZ](https://github.com/GPUOpen-LibrariesAndSDKs/V-EZ). However, I plan to add more features as I progress in learning.
-
-Illusion uses C++17 and can be build on Linux (gcc or clang), Windows (msvc) and OS X (xcode). Nearly all dependencies are included as [git submodules](externals), please refer to the section [Building Illusion](#building-illusion) in order to get started.
-
 Since everybody loves badges, here are some decribing Illusion:
 
 [![Build Status](https://travis-ci.org/Simmesimme/illusion.svg?branch=develop)](https://travis-ci.org/Simmesimme/illusion/branches)
@@ -15,12 +12,13 @@ Since everybody loves badges, here are some decribing Illusion:
 ![loc](https://img.shields.io/badge/loc-10.9k-green.svg)
 ![code](https://img.shields.io/badge/comments-1.3k-green.svg)
 
-I try to add as many comments to the source code as possible. The number of source code lines and comment lines above is computed with the script [cloc.sh](cloc.sh). This script only counts *real comments*. Any dumb comments (such as copy-right headers or stuff like `/////////` or `// -----`) are not included in this number.
+Illusion uses C++17 and can be build on Linux (gcc or clang), Windows (msvc) and OS X (xcode). Nearly all dependencies are included as [git submodules](externals), please refer to the section [Building Illusion](#building-illusion) in order to get started.
+
+I try to add as many comments to the source code as possible. The number of source code lines and comment lines above is computed with the script [cloc.sh](cloc.sh). This script only counts *real comments*. Any dumb comments (such as copy-right headers or stuff like `/////////`) are not included in this number.
 
 ## Features
 
 - [ ] Vulkan convenience layer
-  - [x] Window creation using [glfw](https://github.com/glfw/glfw)
   - [x] Automatic Vulkan object lifetime management using reference counting
   - [x] Automatic resource re-creation on swapchain changes
   - [x] Very readable validation error messages since Illusion forces you to assign descriptive names to each and every Vulkan object (using `PFN_vkSetDebugUtilsObjectNameEXT`)
@@ -32,6 +30,8 @@ I try to add as many comments to the source code as possible. The number of sour
   - [ ] Parallel command buffer recording
   - [ ] A frame or render-graph to automatically create renderpasses and subpasses with dependencies
   - [ ] ...
+- [x] Window creation using [glfw](https://github.com/glfw/glfw)
+- [x] Mouse and joystick input using [glfw](https://github.com/glfw/glfw)
 - [x] Shader support
   - [x] Loading from Spir-V, GLSL and HLSL using [glslang](https://github.com/KhronosGroup/glslang) - if you feel adventurous you can even mix GLSL and HLSL modules in one shader program :grimacing:
   - [x] Shader includes using `#extension GL_GOOGLE_include_directive`
@@ -55,7 +55,6 @@ I try to add as many comments to the source code as possible. The number of sour
   - [ ] Sparse accessors
   - [ ] Multiple texture coordinates
   - [ ] Multiple scenes
-- [x] Mouse and joystick input using [glfw](https://github.com/glfw/glfw)
 
 ## Building Illusion
 
