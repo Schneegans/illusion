@@ -3,15 +3,17 @@
 </p>
 
 
-In order to learn the concepts behind Vulkan, I am creating Illusion. For now, Illusion is a convenience layer on top of Vulkan, similar in spirit to [V-EZ](https://github.com/GPUOpen-LibrariesAndSDKs/V-EZ). However, I plan to add more features as I progress in learning. Since everybody loves badges, here are some decribing Illusion:
+In order to learn the concepts behind Vulkan, I am creating Illusion. For now, Illusion is a convenience layer on top of Vulkan, similar in spirit to [V-EZ](https://github.com/GPUOpen-LibrariesAndSDKs/V-EZ). However, I plan to add more features as I progress in learning.
+Illusion uses C++17 and can be build on Linux (gcc or clang), Windows (msvc) and OS X (xcode). Nearly all dependencies are included as [git submodules](externals), please refer to the section [Building Illusion](#building-illusion) in order to get started.
+Since everybody loves badges, here are some decribing Illusion:
 
 [![Build Status](https://travis-ci.org/Simmesimme/illusion.svg?branch=develop)](https://travis-ci.org/Simmesimme/illusion/branches)
 ![license](https://img.shields.io/badge/license-MIT-blue.svg)
 ![code](https://img.shields.io/badge/code-C++17-orange.svg)
 ![loc](https://img.shields.io/badge/loc-10.9k-green.svg)
-![code](https://img.shields.io/badge/comments-2.0k-green.svg)
+![code](https://img.shields.io/badge/comments-1.3k-green.svg)
 
-Illusion uses C++17 and can be build on Linux (gcc or clang), Windows (msvc) and OS X (xcode). Nearly all dependencies are included as [git submodules](externals), please refer to the section [Building Illusion](#building-illusion) in order to get started.
+I try to add as many comments to the source code as possible. The number of source code lines and comment lines above is computed with the script [cloc.sh](cloc.sh). This script only counts *real comments*. Any dumb comments (such as copy-right headers or stuff like `/////////` or `// -----`) are not included in this number.
 
 ## Features
 
