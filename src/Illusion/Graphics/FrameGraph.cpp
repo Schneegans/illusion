@@ -17,6 +17,9 @@
 #include <queue>
 #include <unordered_set>
 
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/io.hpp>
+
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -48,6 +51,13 @@ FrameGraph::LogicalResource& FrameGraph::LogicalResource::setExtent(glm::uvec2 c
   mExtent = extent;
   mDirty  = true;
   return *this;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+glm::uvec2 FrameGraph::LogicalResource::getAbsoluteExtent(glm::uvec2 const& windowExtent) const {
+  return (mSizing == ResourceSizing::eAbsolute) ? glm::uvec2(mExtent)
+                                                : glm::uvec2(mExtent * glm::vec2(windowExtent));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -166,21 +176,24 @@ void FrameGraph::process() {
 
   // The PhysicalPasses and PhysicalResources need to be updated. This could definitely be optimized
   // with more fine-grained dirty flags, but as this should not happen on a frame-to-frame basis, it
-  // seems to be ok to recreate everything from scratch here.
+  // seems to be ok to recreate everything from scratch here. To give an overview of the code below,
+  // here is a rough outline:
+  // * Create a list of PhysicalPasses, one for each reachable LogicalPass
+  //   * Find the final output pass.
+  //   * Recursively add required input passes to the list.
+  //   * Reverse the list
+  // * Merge adjacent PhysicalPasses which can be executed as subpasses
   if (perFrame.mDirty) {
-    Core::Logger::trace() << "Reconstructing frame graph..." << std::endl;
+    Core::Logger::debug() << "Reconstructing frame graph..." << std::endl;
     perFrame.mPhysicalResources.clear();
     perFrame.mPhysicalPasses.clear();
 
-    // First we will create a list of LogicalPasses with a valid execution order. This list may not
-    // contain all LogicalPasses of this FrameGraph, as some passes may not be connected to our
-    // final pass (pass culling).
-    // We will collect the passes bottom-up; that means we start with the final output pass and then
-    // collect all passes which provide input for this pass. Then we search for the passes which
-    // provide input for those passes... and so on.
-    std::list<LogicalPass*> culledPasses;
-
-    // Therefore we have first to find the final pass. That is the one with an output window. Due to
+    // First we will create a list of PhysicalPasses with a valid execution order. This list may
+    // contain less passes than this FrameGraph has LogicalPasses, as some passes may not be
+    // connected to our final pass (pass culling). We will collect the passes bottom-up; that means
+    // we start with the final output pass and then collect all passes which provide input for this
+    // pass. Then we search for the passes which provide input for those passes... and so on.
+    // Therefore we first have to find the final pass. That is the one with an output window. Due to
     // the validation above, we are sure that there is exactly one.
     LogicalPass* finalPass = nullptr;
     for (auto& pass : mLogicalPasses) {
@@ -190,32 +203,53 @@ void FrameGraph::process() {
       }
     }
 
-    // Then we will create a queue of inputs which are required for the processing of the passes
-    // inserted into our culledPasses. We will insert all the inputs for our final pass first.
+    // Then we will create a queue (actually we use a std::list as we have to remove duplictes) of
+    // inputs which are required for the processing of the passes inserted into our mPhysicalPasses.
+    // We will start with our final pass.
     std::list<LogicalPass*> passQueue;
     passQueue.push_back(finalPass);
 
     while (!passQueue.empty()) {
-      // Pop the current pass from the queue and add it to cullepPasses.
-      auto pass = passQueue.front();
+      // Pop the current pass from the queue.
+      auto logicalPass = passQueue.front();
       passQueue.pop_front();
-      culledPasses.push_back(pass);
 
-      Core::Logger::trace() << "  Resolving dependencies of pass \"" + pass->mName + "\"..."
+      // Skip passes without any resources
+      if (logicalPass->mLogicalResources.size() == 0) {
+        Core::Logger::debug() << "  Skipping pass \"" + logicalPass->mName +
+                                     "\" because it has no resources assigned."
+                              << std::endl;
+        continue;
+      }
+
+      // And create a PhysicalPass for it. We store the extent of the pass for easier later access.
+      // Due to the previous graph validation we are sure that all resources have the same
+      // resolution.
+      PhysicalPass physicalPass({{logicalPass}});
+      for (auto const& resource : logicalPass->mLogicalResources) {
+        if (resource.second.mUsage == ResourceUsage::eColorAttachment ||
+            resource.second.mUsage == ResourceUsage::eDepthAttachment) {
+          physicalPass.mExtent =
+              resource.first->getAbsoluteExtent(finalPass->mOutputWindow->pExtent.get());
+          break;
+        }
+      }
+
+      Core::Logger::debug() << "  Resolving dependencies of pass \"" + logicalPass->mName + "\"..."
                             << std::endl;
 
       // We start searching for preceding passes at our current pass.
       auto currentPassIt = mLogicalPasses.rbegin();
-      while (&(*currentPassIt) != pass) {
+      while (&(*currentPassIt) != logicalPass) {
         ++currentPassIt;
       }
 
-      // Now we have to find the passes which are in front of the current pass in mLogicalPasses
-      // list of the FrameGraph and write to the resources of the current pass.
-      for (auto r : pass->mLogicalResources) {
-        Core::Logger::trace() << "    resource \"" + r.first->mName + "\"" << std::endl;
+      // Now we have to find the passes which are in front of the current pass in the mLogicalPasses
+      // list of the FrameGraph and write to its the resources.
+      for (auto r : logicalPass->mLogicalResources) {
+        Core::Logger::debug() << "    resource \"" + r.first->mName + "\"" << std::endl;
 
-        // Step backwards through all LogicalPasses until we find a pass referencing this resource.
+        // Step backwards through all LogicalPasses, collecting all passes writing to this resource.
         auto prePassIt = currentPassIt;
         while (prePassIt != mLogicalPasses.rend()) {
           do {
@@ -225,24 +259,25 @@ void FrameGraph::process() {
               prePassIt->mLogicalResources.find(r.first) == prePassIt->mLogicalResources.end());
 
           // Now there are several cases:
-          //  * There is a preceding use of this resource and we use it as write-only: As this would
-          //    discard any content, we consider this as an error for now.
-          //  * There is a preceding use of this resource and it is read-only: We can ignore this
-          //    case
-          //    as the resource won't be modified by this pass.
-          //  * There is a preceding use of this resource and it writes to the resource: The
-          //    corresponding pass has to be executed before.
-          //  * There is no preceding use: This is alright, if our access is write-only. As soon as
-          //    we want to read the resource, this becomes an error.
+          // * There is a preceding use of this resource and ...
+          //   * we use it as write-only: As this would discard any content, we consider this as an
+          //     error for now.
+          //   * there it is used as read-only: We can ignore this case as the resource won't be
+          //     modified by this pass.
+          //   * there it is written: The corresponding pass has to be executed before the current
+          //     pass.
+          // * There is no preceding use and ...
+          //   * we use it as write-only: This is alright, we are "creating" the resource
+          //   * we want to read from the resouce. This is an error.
           if (prePassIt != mLogicalPasses.rend()) {
             if (r.second.mAccess == ResourceAccess::eWriteOnly) {
               throw std::runtime_error("Frame graph construction failed: Write-only output \"" +
-                                       r.first->mName + "\" of pass \"" + pass->mName +
+                                       r.first->mName + "\" of pass \"" + logicalPass->mName +
                                        "\" is used by the preceding pass \"" + prePassIt->mName +
                                        "\"!");
             } else if (prePassIt->mLogicalResources.find(r.first)->second.mAccess ==
                        ResourceAccess::eReadOnly) {
-              Core::Logger::trace()
+              Core::Logger::debug()
                   << "      is read-only in \"" + prePassIt->mName + "\"." << std::endl;
             } else {
               // In order to make sure that there are no duplicates in our queue, we first remove
@@ -250,33 +285,43 @@ void FrameGraph::process() {
               LogicalPass* prePass = &(*prePassIt);
               passQueue.remove(prePass);
               passQueue.push_back(prePass);
-              Core::Logger::trace()
+              physicalPass.mPrePasses.push_back(prePass);
+
+              Core::Logger::debug()
                   << "      is written by \"" + prePassIt->mName + "\"." << std::endl;
-              break;
             }
-          } else if (r.second.mAccess != ResourceAccess::eWriteOnly) {
-            throw std::runtime_error("Frame graph construction failed: Input \"" + r.first->mName +
-                                     "\" of pass \"" + pass->mName +
-                                     "\" is not the output of any previous pass!");
-          } else {
-            Core::Logger::trace() << "      is created by this pass." << std::endl;
-            break;
+          } else if (physicalPass.mPrePasses.size() == 0) {
+            if (r.second.mAccess == ResourceAccess::eWriteOnly) {
+              Core::Logger::debug() << "      is created by this pass." << std::endl;
+            } else {
+              throw std::runtime_error("Frame graph construction failed: Input \"" +
+                                       r.first->mName + "\" of pass \"" + logicalPass->mName +
+                                       "\" is not the output of any previous pass!");
+            }
           }
         }
       }
+
+      // Finally we can add the physicalPass to the list.
+      perFrame.mPhysicalPasses.push_back(physicalPass);
     }
 
-    // Now we have to reverse our list of passes.
-    culledPasses.reverse();
+    // Now we have to reverse our list of passes as we collected it bottom-up.
+    perFrame.mPhysicalPasses.reverse();
 
     // Print some debugging information.
-    Core::Logger::trace() << "  Logical pass execution order will be" << std::endl;
-    for (auto const& p : culledPasses) {
-      Core::Logger::trace() << "    " << p->mName << std::endl;
+    Core::Logger::debug() << "  Logical pass execution order will be" << std::endl;
+    for (auto const& p : perFrame.mPhysicalPasses) {
+      Core::Logger::debug() << "    " << std::setw(20) << p.mLogicalPasses[0]->mName << " "
+                            << p.mExtent << std::endl;
     }
 
+    // Now we can merge adjacent PhysicalPasses which have the same extent and share the same depth
+    // attachment. To do this, we traverse the list of PhysicalPasses front-to-back and for each
+    // pass we search for the next pass which
+
     perFrame.mDirty = false;
-    Core::Logger::trace() << "Frame graph reconstruction done." << std::endl;
+    Core::Logger::debug() << "Frame graph reconstruction done." << std::endl;
   }
 
   // recording phase -------------------------------------------------------------------------------
@@ -344,7 +389,7 @@ void FrameGraph::clearDirty() {
 
 void FrameGraph::validate() const {
 
-  Core::Logger::trace() << "Validating frame graph..." << std::endl;
+  Core::Logger::debug() << "Validating frame graph..." << std::endl;
 
   // Check whether each resource of each pass was actually created by this frame graph.
   for (auto const& pass : mLogicalPasses) {
@@ -382,16 +427,14 @@ void FrameGraph::validate() const {
   }
 
   // Check whether the resolutions of all attachments of each pass are the same
-  glm::vec2 windowExtent = finalPass->mOutputWindow->pExtent.get();
+  glm::ivec2 windowExtent = finalPass->mOutputWindow->pExtent.get();
   for (auto const& pass : mLogicalPasses) {
-    glm::vec2 passExtent = glm::vec2(-1);
+    glm::ivec2 passExtent = glm::ivec2(-1);
     for (auto const& resource : pass.mLogicalResources) {
       if (resource.second.mUsage == ResourceUsage::eColorAttachment ||
           resource.second.mUsage == ResourceUsage::eDepthAttachment) {
-        glm::vec2 resourceExtent = (resource.first->mSizing == ResourceSizing::eAbsolute)
-                                       ? resource.first->mExtent
-                                       : resource.first->mExtent * windowExtent;
-        if (passExtent == glm::vec2(-1)) {
+        glm::ivec2 resourceExtent = resource.first->getAbsoluteExtent(windowExtent);
+        if (passExtent == glm::ivec2(-1)) {
           passExtent = resourceExtent;
         } else if (passExtent != resourceExtent) {
           throw std::runtime_error(
@@ -401,7 +444,7 @@ void FrameGraph::validate() const {
     }
   }
 
-  Core::Logger::trace() << "  all good." << std::endl;
+  Core::Logger::debug() << "  all good." << std::endl;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

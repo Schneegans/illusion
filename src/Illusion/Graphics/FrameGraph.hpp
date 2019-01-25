@@ -39,6 +39,8 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
     LogicalResource& setSizing(ResourceSizing sizing);
     LogicalResource& setExtent(glm::uvec2 const& extent);
 
+    glm::uvec2 getAbsoluteExtent(glm::uvec2 const& windowExtent) const;
+
     friend class FrameGraph;
 
    private:
@@ -83,14 +85,16 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
 
   // -----------------------------------------------------------------------------------------------
   struct PhysicalResource {
-    BackedImagePtr                      mImage;
     std::vector<LogicalResource const*> mLogicalResources;
+    BackedImagePtr                      mImage;
   };
 
   // -----------------------------------------------------------------------------------------------
   struct PhysicalPass {
-    RenderPassPtr                   mRenderPass;
     std::vector<LogicalPass const*> mLogicalPasses;
+    std::vector<LogicalPass const*> mPrePasses;
+    RenderPassPtr                   mRenderPass;
+    glm::uvec2                      mExtent = glm::uvec2(0);
   };
 
   // -----------------------------------------------------------------------------------------------
@@ -117,9 +121,9 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
     vk::SemaphorePtr mRenderFinishedSemaphore;
     vk::FencePtr     mFrameFinishedFence;
 
-    std::vector<PhysicalResource> mPhysicalResources;
-    std::vector<PhysicalPass>     mPhysicalPasses;
-    bool                          mDirty = true;
+    std::list<PhysicalResource> mPhysicalResources;
+    std::list<PhysicalPass>     mPhysicalPasses;
+    bool                        mDirty = true;
   };
 
   FrameResource<PerFrame> mPerFrame;
