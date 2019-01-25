@@ -117,8 +117,6 @@ Instance::Instance(std::string const& name, bool debugMode)
     , mInstance(createInstance("Illusion", name))
     , mDebugCallback(createDebugCallback()) {
 
-  Core::Logger::traceCreation("Instance", getName());
-
   for (auto const& vkPhysicalDevice : mInstance->enumeratePhysicalDevices()) {
     mPhysicalDevices.push_back(
         std::make_shared<PhysicalDevice>(*mInstance.get(), vkPhysicalDevice));
@@ -128,7 +126,6 @@ Instance::Instance(std::string const& name, bool debugMode)
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Instance::~Instance() {
-  Core::Logger::traceDeletion("Instance", getName());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

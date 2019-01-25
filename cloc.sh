@@ -8,6 +8,9 @@
 #                                                                                                  #
 # ------------------------------------------------------------------------------------------------ #
 
+# This scripts counts the lines of code and comments in the src/ and example/ directories.
+# The copyright-header are substracted. It uses the commandline tool "cloc".
+
 # Get the location of this script
 SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 
@@ -27,10 +30,12 @@ COMMENT_LINES=${TOKENS[3]}
 LINES_OF_CODE=${TOKENS[4]}
 
 # To make the estimate of commented lines more accurate, we have to substract the copyright header
-# which is included in each file. This header has the length of seven lines.
-# Still there are some dumb comments which are counted (like those // ------------ things), however
-# cloc also does not count inline codes, so this number should be more or less correct.
-COMMENT_LINES=$(($COMMENT_LINES - 7 * $NUMBER_OF_FILES))
+# which is included in each file. This header has the length of five lines.
+# All dumb comments like those /////////// or those // ------------ are also substracted. As cloc
+# does not count inline comments, the overall estimate should be rather conservative.
+DUMB_COMMENTS="$(grep -r -- "//////" examples src | wc -l)"
+MORE_DUMB_COMMENTS="$(grep -r -- "// -----" examples src | wc -l)"
+COMMENT_LINES=$(($COMMENT_LINES - 5 * $NUMBER_OF_FILES - $DUMB_COMMENTS - $MORE_DUMB_COMMENTS))
 
 awk -v lines=$LINES_OF_CODE 'BEGIN {printf "Lines of code:     %5.1fk\n", lines/1000}'
 awk -v lines=$COMMENT_LINES 'BEGIN {printf "Lines of comments: %5.1fk\n", lines/1000}'

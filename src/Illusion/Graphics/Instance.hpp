@@ -27,15 +27,18 @@ namespace Illusion::Graphics {
 class Instance : public Core::StaticCreate<Instance>, public Core::NamedObject {
 
  public:
-  // When debugMode is set to true, validation layers will be loaded.
+  // When debugMode is set to true, validation layers will be loaded. This can throw a
+  // std::runtime_error for various reasons.
   explicit Instance(std::string const& name, bool debugMode = true);
   virtual ~Instance();
 
-  // Tries to find a physical device which supports the given extensions.
+  // Tries to find a physical device which supports the given extensions. This will throw a
+  // std::runtime_error when there is no suitable Vulkan device.
   PhysicalDevicePtr getPhysicalDevice(
       std::vector<std::string> const& extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME}) const;
 
-  // This is used by the Window class.
+  // This is used by the Window class. This will throw a std::runtime_error when glfw failed to
+  // create a Vulkan surface.
   vk::SurfaceKHRPtr createSurface(std::string const& name, GLFWwindow* window) const;
 
   // Access to the underlying vk::instance

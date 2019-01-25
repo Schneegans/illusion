@@ -95,11 +95,13 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
   void bindVertexBuffers(uint32_t firstBinding, std::vector<BackedBufferPtr> const& buffers) const;
 
   // Sets the given data (size in bytes) as push constant data. You have to make sure that there is
-  // a shader program currently bound.
+  // a shader program currently bound. This will throw a std::runtime_error when there is no active
+  // shader or when the active shader does not define a push constant buffer.
   void pushConstants(const void* data, uint32_t size, uint32_t offset = 0) const;
 
   // Convenience method calling the method above. This allows setting any type (e.g. structs) as
-  // push constant data
+  // push constant data. This will throw a std::runtime_error when there is no active shader or when
+  // the active shader does not define a push constant buffer.
   template <typename T>
   void pushConstants(T const& data, uint32_t offset = 0) const {
     pushConstants(&data, sizeof(T), offset);
@@ -111,7 +113,8 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
   // the private method flush() is called. This will either create a vk::Pipeline object based on
   // the currently bound shader program and the current graphics state or retrieve a matching cached
   // vk::Pipeline. This pipeline will be bound. Then, based on the binding state, descriptor sets
-  // will be allocated, updated and bound.
+  // will be allocated, updated and bound. These will throw a std::runtime_error when there is no
+  // active shader.
   void draw(uint32_t vertexCount, uint32_t instanceCount = 1, uint32_t firstVertex = 0,
       uint32_t firstInstance = 0);
   void drawIndexed(uint32_t indexCount, uint32_t instanceCount = 1, uint32_t firstIndex = 0,
@@ -120,6 +123,7 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
 
   // convenience methods ---------------------------------------------------------------------------
 
+  // This will throw a std::runtime_error when the layout transition is impossible.
   void transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout,
       vk::PipelineStageFlagBits srcStage, vk::PipelineStageFlagBits dstStage,
       vk::ImageSubresourceRange range = {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}) const;

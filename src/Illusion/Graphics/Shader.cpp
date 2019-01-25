@@ -20,17 +20,27 @@
 namespace Illusion::Graphics {
 
 namespace {
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Map GLSL file extensions to vk::ShaderStageFlagBits.
 const std::unordered_map<std::string, vk::ShaderStageFlagBits> glslExtensionMapping = {
     {".frag", vk::ShaderStageFlagBits::eFragment}, {".vert", vk::ShaderStageFlagBits::eVertex},
     {".geom", vk::ShaderStageFlagBits::eGeometry}, {".comp", vk::ShaderStageFlagBits::eCompute},
     {".tesc", vk::ShaderStageFlagBits::eTessellationControl},
     {".tese", vk::ShaderStageFlagBits::eTessellationEvaluation}};
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Map HLSL file extensions to vk::ShaderStageFlagBits.
 const std::unordered_map<std::string, vk::ShaderStageFlagBits> hlslExtensionMapping = {
     {".ps", vk::ShaderStageFlagBits::eFragment}, {".vs", vk::ShaderStageFlagBits::eVertex},
     {".gs", vk::ShaderStageFlagBits::eGeometry}, {".cs", vk::ShaderStageFlagBits::eCompute},
     {".hs", vk::ShaderStageFlagBits::eTessellationControl},
     {".ds", vk::ShaderStageFlagBits::eTessellationEvaluation}};
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -39,26 +49,28 @@ ShaderPtr Shader::createFromFiles(std::string const& name, DevicePtr const& devi
     std::vector<std::string> const& fileNames, std::set<std::string> dynamicBuffers,
     bool reloadOnChanges) {
 
+  // First create a new Shader.
   auto shader = Shader::create(name, device);
 
+  // Then attach a module for each given file name.
   for (auto const& fileName : fileNames) {
     auto extension = fileName.substr(fileName.find_last_of('.'));
 
-    // first check whether the file has a glsl extension
+    // First check whether the file has a glsl extension.
     auto stage = glslExtensionMapping.find(extension);
     if (stage != glslExtensionMapping.end()) {
       shader->addModule(stage->second, GlslFile::create(fileName, reloadOnChanges), dynamicBuffers);
       continue;
     }
 
-    // then check whether the file has a hlsl extension
+    // If not, check whether the file has a hlsl extension.
     stage = hlslExtensionMapping.find(extension);
     if (stage != hlslExtensionMapping.end()) {
       shader->addModule(stage->second, HlslFile::create(fileName, reloadOnChanges), dynamicBuffers);
       continue;
     }
 
-    // throw an error if did not find a supported extension
+    // Throw an error if we did not find a supported extension.
     throw std::runtime_error(
         "Failed to add shader stage: File " + fileName + " has an unknown extension!");
   }

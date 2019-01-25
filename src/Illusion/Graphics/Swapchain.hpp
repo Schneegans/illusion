@@ -44,11 +44,7 @@ class Swapchain : public Core::StaticCreate<Swapchain>, public Core::NamedObject
       vk::FencePtr const& signalFence);
 
  private:
-  void chooseExtent();
-  void chooseFormat();
-  void createSwapchain();
-  void createSemaphores();
-  void createCommandBuffers();
+  void recreate();
 
   DevicePtr            mDevice;
   vk::SurfaceKHRPtr    mSurface;

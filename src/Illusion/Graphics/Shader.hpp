@@ -35,6 +35,7 @@ class Shader : public Core::StaticCreate<Shader>, public Core::NamedObject {
   // .tesc / .hs: Tessellation Control Shader / Hull Shader
   // .tese / .ds: Tessellation Evaluation Shader / Domain Shader
   // .comp / .cs: Compute Shader
+  // This will throw a std::runtime_error when none of the above extensions is detected.
   static ShaderPtr createFromFiles(std::string const& name, DevicePtr const& device,
       std::vector<std::string> const& fileNames, std::set<std::string> dynamicBuffers = {},
       bool reloadOnChanges = true);
