@@ -181,7 +181,7 @@ FrameGraph::LogicalPass& FrameGraph::createPass() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void FrameGraph::process() {
+void FrameGraph::process(uint32_t threadCount) {
 
   // graph validation phase ------------------------------------------------------------------------
 
@@ -225,7 +225,7 @@ void FrameGraph::process() {
   //   * Find the final output pass.
   //   * Recursively add required input passes to the list.
   //   * Reverse the list
-  // * Merge adjacent PhysicalPasses which can be executed as subpasses
+  // * Merge adjacent PhysicalPasses which can be executed as sub passes
   // * Create a RenderPass for each remaining PhysicalPass
   // * Create BackedImages for each PhysicalResource
   // * Create FrameBuffers for each RenderPass
@@ -249,7 +249,7 @@ void FrameGraph::process() {
       }
     }
 
-    // Then we will create a queue (actually we use a std::list as we have to remove duplictes) of
+    // Then we will create a queue (actually we use a std::list as we have to remove duplicates) of
     // inputs which are required for the processing of the passes inserted into our mPhysicalPasses.
     // We will start with our final pass.
     std::list<LogicalPass*> passQueue;
@@ -314,7 +314,7 @@ void FrameGraph::process() {
           //     pass.
           // * There is no preceding use and ...
           //   * we use it as write-only: This is alright, we are "creating" the resource
-          //   * we want to read from the resouce. This is an error.
+          //   * we want to read from the resource. This is an error.
           if (prePassIt != mLogicalPasses.rend()) {
             if (r.second.mAccess == ResourceAccess::eWriteOnly) {
               throw std::runtime_error("Frame graph construction failed: Write-only output \"" +
@@ -449,13 +449,18 @@ void FrameGraph::process() {
 
   // perFrame.mPrimaryCommandBuffer->beginRenderPass(res.mRenderPass);
 
+  mThreadPool.setThreadCount(threadCount);
+
   for (auto& physicalPass : perFrame.mPhysicalPasses) {
     for (auto& pass : physicalPass.mSubPasses) {
       if (pass->mProcessCallback) {
-        pass->mProcessCallback(perFrame.mPrimaryCommandBuffer);
+        mThreadPool.enqueue(
+            [pass, perFrame]() { pass->mProcessCallback(perFrame.mPrimaryCommandBuffer); });
       }
     }
   }
+
+  mThreadPool.waitIdle();
 
   // perFrame.mPrimaryCommandBuffer->endRenderPass();
 

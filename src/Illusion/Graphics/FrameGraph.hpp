@@ -10,6 +10,7 @@
 #define ILLUSION_GRAPHICS_RENDER_GRAPH_HPP
 
 #include "../Core/NamedObject.hpp"
+#include "../Core/ThreadPool.hpp"
 #include "FrameResource.hpp"
 
 #include <functional>
@@ -113,16 +114,12 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
   LogicalResource& createResource();
   LogicalPass&     createPass();
 
-  void process();
+  void process(uint32_t threadCount = 8);
 
  private:
   bool isDirty() const;
   void clearDirty();
   void validate() const;
-
-  DevicePtr                  mDevice;
-  std::list<LogicalResource> mLogicalResources;
-  std::list<LogicalPass>     mLogicalPasses;
 
   struct PerFrame {
     CommandBufferPtr mPrimaryCommandBuffer;
@@ -134,9 +131,12 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
     bool                        mDirty = true;
   };
 
-  FrameResource<PerFrame> mPerFrame;
-
-  bool mDirty = true;
+  DevicePtr                  mDevice;
+  std::list<LogicalResource> mLogicalResources;
+  std::list<LogicalPass>     mLogicalPasses;
+  Core::ThreadPool           mThreadPool;
+  FrameResource<PerFrame>    mPerFrame;
+  bool                       mDirty = true;
 };
 
 } // namespace Illusion::Graphics
