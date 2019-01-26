@@ -64,17 +64,31 @@ glm::uvec2 FrameGraph::LogicalResource::getAbsoluteExtent(glm::uvec2 const& wind
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-FrameGraph::LogicalPass& FrameGraph::LogicalPass::assignResource(LogicalResource const& resource,
-    ResourceUsage usage, ResourceAccess access, std::optional<vk::ClearValue> clear) {
+FrameGraph::LogicalPass& FrameGraph::LogicalPass::assignResource(
+    LogicalResource const& resource, ResourceUsage usage, ResourceAccess access) {
 
-  if (mLogicalResources.find(&resource) != mLogicalResources.end()) {
+  try {
+    assignResource(resource, usage, access, {});
+  } catch (std::runtime_error const& e) {
     throw std::runtime_error("Failed to add resource \"" + resource.mName +
-                             "\" to frame graph pass \"" + mName +
-                             "\": Resource has already been added to this pass!");
+                             "\" to frame graph pass \"" + mName + "\": " + e.what());
   }
 
-  mLogicalResources[&resource] = {usage, access, clear};
-  mDirty                       = true;
+  return *this;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+FrameGraph::LogicalPass& FrameGraph::LogicalPass::assignResource(
+    LogicalResource const& resource, ResourceUsage usage, vk::ClearValue const& clear) {
+
+  try {
+    assignResource(resource, usage, ResourceAccess::eWriteOnly, clear);
+  } catch (std::runtime_error const& e) {
+    throw std::runtime_error("Failed to add resource \"" + resource.mName +
+                             "\" to frame graph pass \"" + mName + "\": " + e.what());
+  }
+
   return *this;
 }
 
@@ -99,6 +113,35 @@ FrameGraph::LogicalPass& FrameGraph::LogicalPass::setProcessCallback(
     std::function<void(CommandBufferPtr)> const& callback) {
   mProcessCallback = callback;
   return *this;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+FrameGraph::LogicalResource const* FrameGraph::LogicalPass::getDepthAttachment() const {
+  for (auto const& r : mLogicalResources) {
+    if (r.second.mUsage == ResourceUsage::eDepthAttachment) {
+      return r.first;
+    }
+  }
+  return nullptr;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void FrameGraph::LogicalPass::assignResource(LogicalResource const& resource, ResourceUsage usage,
+    ResourceAccess access, std::optional<vk::ClearValue> const& clear) {
+  // We cannot add the same resource twice.
+  if (mLogicalResources.find(&resource) != mLogicalResources.end()) {
+    throw std::runtime_error("Resource has already been added to this pass!");
+  }
+
+  // We cannot add multiple depth attachments.
+  if (usage == ResourceUsage::eDepthAttachment && getDepthAttachment() != nullptr) {
+    throw std::runtime_error("Pass already has a depth attachment!");
+  }
+
+  mLogicalResources[&resource] = {usage, access, clear};
+  mDirty                       = true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -183,8 +226,11 @@ void FrameGraph::process() {
   //   * Recursively add required input passes to the list.
   //   * Reverse the list
   // * Merge adjacent PhysicalPasses which can be executed as subpasses
+  // * Create a RenderPass for each remaining PhysicalPass
+  // * Create BackedImages for each PhysicalResource
+  // * Create FrameBuffers for each RenderPass
   if (perFrame.mDirty) {
-    Core::Logger::debug() << "Reconstructing frame graph..." << std::endl;
+    Core::Logger::debug() << "Constructing frame graph..." << std::endl;
     perFrame.mPhysicalResources.clear();
     perFrame.mPhysicalPasses.clear();
 
@@ -285,18 +331,18 @@ void FrameGraph::process() {
               LogicalPass* prePass = &(*prePassIt);
               passQueue.remove(prePass);
               passQueue.push_back(prePass);
-              physicalPass.mPrePasses.push_back(prePass);
+              physicalPass.mDependencies.push_back(prePass);
 
               Core::Logger::debug()
                   << "      is written by \"" + prePassIt->mName + "\"." << std::endl;
             }
-          } else if (physicalPass.mPrePasses.size() == 0) {
+          } else if (physicalPass.mDependencies.size() == 0) {
             if (r.second.mAccess == ResourceAccess::eWriteOnly) {
               Core::Logger::debug() << "      is created by this pass." << std::endl;
             } else {
               throw std::runtime_error("Frame graph construction failed: Input \"" +
                                        r.first->mName + "\" of pass \"" + logicalPass->mName +
-                                       "\" is not the output of any previous pass!");
+                                       "\" is not write-only but no previous pass writes to it!");
             }
           }
         }
@@ -312,16 +358,87 @@ void FrameGraph::process() {
     // Print some debugging information.
     Core::Logger::debug() << "  Logical pass execution order will be" << std::endl;
     for (auto const& p : perFrame.mPhysicalPasses) {
-      Core::Logger::debug() << "    " << std::setw(20) << p.mLogicalPasses[0]->mName << " "
-                            << p.mExtent << std::endl;
+      Core::Logger::debug() << "    Pass " << p.mSubPasses[0]->mName << std::endl;
     }
 
     // Now we can merge adjacent PhysicalPasses which have the same extent and share the same depth
     // attachment. To do this, we traverse the list of PhysicalPasses front-to-back and for each
-    // pass we search for the next pass which
+    // pass we search for candidates sharing extent, depth attachment and dependencies.
+    auto current = perFrame.mPhysicalPasses.begin();
+    while (current != perFrame.mPhysicalPasses.end()) {
+
+      // Keep a reference to the current depth attachment. This may be nullptr, in this case we
+      // accept any depth attachment of the candidates.
+      auto currentDepthAttachment = current->mSubPasses[0]->getDepthAttachment();
+
+      // Now look for merge candidates. We start with the next pass.
+      auto candidate = current;
+      ++candidate;
+
+      while (candidate != perFrame.mPhysicalPasses.end()) {
+        // For each candidate, the depth attachment must be the same as the current passes depth
+        // attachment. Or either may be nullptr.
+        auto candidateDepthAttachment = candidate->mSubPasses[0]->getDepthAttachment();
+        bool sameDepthAttachment      = currentDepthAttachment == nullptr ||
+                                   candidateDepthAttachment == nullptr ||
+                                   candidateDepthAttachment == currentDepthAttachment;
+
+        // They must share the same extent.
+        bool extentMatches = candidate->mExtent == current->mExtent;
+
+        // And all dependencies of the candidate must be satisfied. That means all dependencies of
+        // the candidate must either be dependencies of the current pass as well or they have to be
+        // sub passes of the current pass.
+        bool dependenciesSatisfied = true;
+        for (auto const& dependency : candidate->mDependencies) {
+          bool isDependencyOfCurrent =
+              std::find(current->mDependencies.begin(), current->mDependencies.end(), dependency) !=
+              current->mDependencies.end();
+          bool isSubPassOfCurrent =
+              std::find(current->mSubPasses.begin(), current->mSubPasses.end(), dependency) !=
+              current->mSubPasses.end();
+          if (!isDependencyOfCurrent && !isSubPassOfCurrent) {
+            dependenciesSatisfied = false;
+            break;
+          }
+        }
+
+        // If all conditions are fulfilled, we can make the candidate a sub pass of the current
+        // PhysicalPass. If the current depth attachment has been nullptr, we can now use the depth
+        // attachment of the candidate for further candidate checks.
+        if (extentMatches && sameDepthAttachment && dependenciesSatisfied) {
+          current->mSubPasses.push_back(candidate->mSubPasses[0]);
+
+          if (!currentDepthAttachment) {
+            currentDepthAttachment = candidateDepthAttachment;
+          }
+
+          // Erase the candidate from the list of PhysicalPasses and look for more merge candidates
+          // in the next iteration.
+          candidate = perFrame.mPhysicalPasses.erase(candidate);
+        } else {
+          // Look for more merge candidates in the next iteration.
+          ++candidate;
+        }
+      }
+
+      // Look for potential merge candidates of the next PhysicalPass.
+      ++current;
+    }
+
+    // Print some debugging information.
+    Core::Logger::debug() << "  Physical pass execution order will be" << std::endl;
+    uint32_t counter = 0;
+    for (auto const& pass : perFrame.mPhysicalPasses) {
+      Core::Logger::debug() << "    RenderPass " << counter++ << std::endl;
+
+      for (auto const& subPass : pass.mSubPasses) {
+        Core::Logger::debug() << "      SubPass " << subPass->mName << " " << std::endl;
+      }
+    }
 
     perFrame.mDirty = false;
-    Core::Logger::debug() << "Frame graph reconstruction done." << std::endl;
+    Core::Logger::debug() << "Frame graph construction done." << std::endl;
   }
 
   // recording phase -------------------------------------------------------------------------------
@@ -333,8 +450,10 @@ void FrameGraph::process() {
   // perFrame.mPrimaryCommandBuffer->beginRenderPass(res.mRenderPass);
 
   for (auto& physicalPass : perFrame.mPhysicalPasses) {
-    for (auto& logicalPass : physicalPass.mLogicalPasses) {
-      logicalPass->mProcessCallback(perFrame.mPrimaryCommandBuffer);
+    for (auto& pass : physicalPass.mSubPasses) {
+      if (pass->mProcessCallback) {
+        pass->mProcessCallback(perFrame.mPrimaryCommandBuffer);
+      }
     }
   }
 

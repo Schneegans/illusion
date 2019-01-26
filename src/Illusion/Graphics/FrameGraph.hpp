@@ -28,8 +28,8 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
  public:
   // -----------------------------------------------------------------------------------------------
   enum class ResourceSizing { eAbsolute, eRelative };
-  enum class ResourceUsage { eColorAttachment, eDepthAttachment, eTexture };
-  enum class ResourceAccess { eReadOnly, eWriteOnly, eReadWrite, eBlend };
+  enum class ResourceUsage { eColorAttachment, eDepthAttachment };
+  enum class ResourceAccess { eReadOnly, eWriteOnly, eReadWrite, eTestOrBlend };
 
   // -----------------------------------------------------------------------------------------------
   class LogicalResource {
@@ -59,15 +59,22 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
    public:
     LogicalPass& setName(std::string const& name);
 
-    LogicalPass& assignResource(LogicalResource const& resource, ResourceUsage usage,
-        ResourceAccess access, std::optional<vk::ClearValue> clear = {});
+    LogicalPass& assignResource(
+        LogicalResource const& resource, ResourceUsage usage, ResourceAccess access);
+    LogicalPass& assignResource(
+        LogicalResource const& resource, ResourceUsage usage, vk::ClearValue const& clear);
 
     LogicalPass& setOutputWindow(WindowPtr const& window);
     LogicalPass& setProcessCallback(std::function<void(CommandBufferPtr)> const& callback);
 
+    LogicalResource const* getDepthAttachment() const;
+
     friend class FrameGraph;
 
    private:
+    void assignResource(LogicalResource const& resource, ResourceUsage usage, ResourceAccess access,
+        std::optional<vk::ClearValue> const& clear);
+
     struct Info {
       ResourceUsage                 mUsage;
       ResourceAccess                mAccess;
@@ -91,10 +98,11 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
 
   // -----------------------------------------------------------------------------------------------
   struct PhysicalPass {
-    std::vector<LogicalPass const*> mLogicalPasses;
-    std::vector<LogicalPass const*> mPrePasses;
-    RenderPassPtr                   mRenderPass;
-    glm::uvec2                      mExtent = glm::uvec2(0);
+    std::vector<LogicalPass const*> mSubPasses;
+    std::vector<LogicalPass const*> mDependencies;
+
+    glm::uvec2    mExtent = glm::uvec2(0);
+    RenderPassPtr mRenderPass;
   };
 
   // -----------------------------------------------------------------------------------------------

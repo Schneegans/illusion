@@ -20,7 +20,7 @@
 
 int main(int argc, char* argv[]) {
 
-  Illusion::Core::Logger::enableTrace = true;
+  Illusion::Core::Logger::enableTrace = false;
 
   auto instance = Illusion::Graphics::Instance::create("DeferredRenderingDemo");
   auto device   = Illusion::Graphics::Device::create("Device", instance->getPhysicalDevice());
@@ -44,9 +44,9 @@ int main(int argc, char* argv[]) {
 
   graph->createPass()
       .setName("gbuffer")
-      .assignResource(albedo, Usage::eColorAttachment, Access::eWriteOnly, clearColor)
-      .assignResource(normal, Usage::eColorAttachment, Access::eWriteOnly, clearColor)
-      .assignResource(depth, Usage::eDepthAttachment, Access::eWriteOnly, clearDepth)
+      .assignResource(albedo, Usage::eColorAttachment, clearColor)
+      .assignResource(normal, Usage::eColorAttachment, clearColor)
+      .assignResource(depth, Usage::eDepthAttachment, clearDepth)
       .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
         Illusion::Core::Logger::message() << "Record gbuffer pass!" << std::endl;
       });
@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
   graph->createPass()
       .setName("transparencies")
       .assignResource(depth, Usage::eDepthAttachment, Access::eReadOnly)
-      .assignResource(hdr, Usage::eColorAttachment, Access::eBlend)
+      .assignResource(hdr, Usage::eColorAttachment, Access::eTestOrBlend)
       .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
         Illusion::Core::Logger::message() << "Record transparencies pass!" << std::endl;
       });
@@ -96,10 +96,17 @@ int main(int argc, char* argv[]) {
     // next ring bffer entry.
     index->step();
 
-    graph->process();
+    try {
+      graph->process();
+    } catch (std::runtime_error const& e) {
+      Illusion::Core::Logger::error() << e.what() << std::endl;
+    }
 
     // Prevent the GPU from over-heating :)
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
+
+    device->waitIdle();
+    return 0;
   }
 
   // The window has been closed. We wait for all pending operations and then all objects will be
