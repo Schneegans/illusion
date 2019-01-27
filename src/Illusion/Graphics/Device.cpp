@@ -153,13 +153,18 @@ BackedImagePtr Device::createBackedImage(std::string const& name, vk::ImageCreat
     cmd->copyBufferToImage(
         *stagingBuffer->mBuffer, *result->mImage, vk::ImageLayout::eTransferDstOptimal, infos);
 
-    barrier.oldLayout = vk::ImageLayout::eTransferDstOptimal;
-    barrier.newLayout = layout;
+    result->mCurrentLayout = vk::ImageLayout::eTransferDstOptimal;
 
-    cmd->pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer,
-        vk::DependencyFlagBits(), nullptr, nullptr, barrier);
+    if (layout != vk::ImageLayout::eUndefined) {
+      barrier.oldLayout = result->mCurrentLayout;
+      barrier.newLayout = layout;
 
-    result->mCurrentLayout = layout;
+      cmd->pipelineBarrier(vk::PipelineStageFlagBits::eTransfer,
+          vk::PipelineStageFlagBits::eTransfer, vk::DependencyFlagBits(), nullptr, nullptr,
+          barrier);
+
+      result->mCurrentLayout = layout;
+    }
 
     cmd->end();
 
@@ -171,7 +176,7 @@ BackedImagePtr Device::createBackedImage(std::string const& name, vk::ImageCreat
     getQueue(QueueType::eGeneric).submit(info, nullptr);
     getQueue(QueueType::eGeneric).waitIdle();
 
-  } else {
+  } else if (layout != vk::ImageLayout::eUndefined) {
 
     auto cmd = allocateCommandBuffer("Transition image layout");
     cmd->begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit});

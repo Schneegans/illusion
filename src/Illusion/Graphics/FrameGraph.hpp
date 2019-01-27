@@ -29,8 +29,15 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
  public:
   // -----------------------------------------------------------------------------------------------
   enum class ResourceSizing { eAbsolute, eRelative };
-  enum class ResourceUsage { eColorAttachment, eDepthAttachment };
-  enum class ResourceAccess { eReadOnly, eWriteOnly, eReadWrite, eTestOrBlend };
+
+  enum class ResourceAccess {
+    eReadOnly,
+    eWriteOnly,
+    eReadWrite,
+    eLoad,
+    eLoadWrite,
+    eLoadReadWrite
+  };
 
   // -----------------------------------------------------------------------------------------------
   class LogicalResource {
@@ -41,6 +48,8 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
     LogicalResource& setExtent(glm::uvec2 const& extent);
 
     glm::uvec2 getAbsoluteExtent(glm::uvec2 const& windowExtent) const;
+    bool       isDepthResource() const;
+    bool       isColorResource() const;
 
     friend class FrameGraph;
 
@@ -60,12 +69,9 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
    public:
     LogicalPass& setName(std::string const& name);
 
-    LogicalPass& assignResource(
-        LogicalResource const& resource, ResourceUsage usage, ResourceAccess access);
-    LogicalPass& assignResource(
-        LogicalResource const& resource, ResourceUsage usage, vk::ClearValue const& clear);
+    LogicalPass& assignResource(LogicalResource const& resource, ResourceAccess access);
+    LogicalPass& assignResource(LogicalResource const& resource, vk::ClearValue const& clear);
 
-    LogicalPass& setOutputWindow(WindowPtr const& window);
     LogicalPass& setProcessCallback(std::function<void(CommandBufferPtr)> const& callback);
 
     LogicalResource const* getDepthAttachment() const;
@@ -73,18 +79,16 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
     friend class FrameGraph;
 
    private:
-    void assignResource(LogicalResource const& resource, ResourceUsage usage, ResourceAccess access,
+    void assignResource(LogicalResource const& resource, ResourceAccess access,
         std::optional<vk::ClearValue> const& clear);
 
     struct Info {
-      ResourceUsage                 mUsage;
       ResourceAccess                mAccess;
       std::optional<vk::ClearValue> mClear;
     };
 
     std::unordered_map<LogicalResource const*, Info> mLogicalResources;
     std::string                                      mName = "Unnamed Pass";
-    WindowPtr                                        mOutputWindow;
     std::function<void(CommandBufferPtr)>            mProcessCallback;
 
     // this is directly accessed by the FrameGraph
@@ -114,6 +118,7 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
   LogicalResource& createResource();
   LogicalPass&     createPass();
 
+  void setOutput(WindowPtr const& window, LogicalPass const& pass, LogicalResource const& resource);
   void process(uint32_t threadCount = 8);
 
  private:
@@ -131,7 +136,12 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
     bool                        mDirty = true;
   };
 
-  DevicePtr                  mDevice;
+  DevicePtr mDevice;
+
+  WindowPtr              mOutputWindow;
+  LogicalPass const*     mOutputPass     = nullptr;
+  LogicalResource const* mOutputResource = nullptr;
+
   std::list<LogicalResource> mLogicalResources;
   std::list<LogicalPass>     mLogicalPasses;
   Core::ThreadPool           mThreadPool;

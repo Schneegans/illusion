@@ -20,7 +20,7 @@
 
 int main(int argc, char* argv[]) {
 
-  Illusion::Core::Logger::enableTrace = false;
+  Illusion::Core::Logger::enableTrace = true;
 
   auto instance = Illusion::Graphics::Instance::create("DeferredRenderingDemo");
   auto device   = Illusion::Graphics::Device::create("Device", instance->getPhysicalDevice());
@@ -30,52 +30,54 @@ int main(int argc, char* argv[]) {
   auto graph = Illusion::Graphics::FrameGraph::create("FrameGraph", device, index);
 
   // create resources ------------------------------------------------------------------------------
-  auto& albedo = graph->createResource().setName("albedo").setFormat(vk::Format::eR8G8B8Unorm);
-  auto& normal = graph->createResource().setName("normal").setFormat(vk::Format::eR8G8B8Unorm);
+  auto& albedo = graph->createResource().setName("albedo").setFormat(vk::Format::eR8G8B8A8Unorm);
+  auto& normal = graph->createResource().setName("normal").setFormat(vk::Format::eR8G8B8A8Unorm);
   auto& depth  = graph->createResource().setName("depth").setFormat(vk::Format::eD32Sfloat);
-  auto& hdr    = graph->createResource().setName("hdr").setFormat(vk::Format::eR32G32B32Sfloat);
+  auto& hdr    = graph->createResource().setName("hdr").setFormat(vk::Format::eR32G32B32A32Sfloat);
 
   // create passes ---------------------------------------------------------------------------------
-  using Usage  = Illusion::Graphics::FrameGraph::ResourceUsage;
   using Access = Illusion::Graphics::FrameGraph::ResourceAccess;
 
   auto clearColor = vk::ClearColorValue(std::array<float, 4>{{0.f, 0.f, 0.f, 0.f}});
   auto clearDepth = vk::ClearDepthStencilValue(1.f, 0u);
 
-  graph->createPass()
-      .setName("gbuffer")
-      .assignResource(albedo, Usage::eColorAttachment, clearColor)
-      .assignResource(normal, Usage::eColorAttachment, clearColor)
-      .assignResource(depth, Usage::eDepthAttachment, clearDepth)
-      .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
-        Illusion::Core::Logger::message() << "Record gbuffer pass!" << std::endl;
-      });
+  // clang-format off
+  auto& gbuffer = graph->createPass()
+     .setName("gbuffer")
+     .assignResource(albedo, clearColor)
+     .assignResource(normal, clearColor)
+     .assignResource(depth, clearDepth)
+     .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
+       Illusion::Core::Logger::message() << "Record gbuffer pass!" << std::endl;
+     });
 
-  graph->createPass()
-      .setName("lighting")
-      .assignResource(albedo, Usage::eColorAttachment, Access::eReadOnly)
-      .assignResource(normal, Usage::eColorAttachment, Access::eReadOnly)
-      .assignResource(depth, Usage::eColorAttachment, Access::eReadOnly)
-      .assignResource(hdr, Usage::eColorAttachment, Access::eWriteOnly)
-      .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
-        Illusion::Core::Logger::message() << "Record lighting pass!" << std::endl;
-      });
+  auto& lighting = graph->createPass()
+    .setName("lighting")
+    .assignResource(albedo, Access::eReadOnly)
+    .assignResource(normal, Access::eReadOnly)
+    .assignResource(depth, Access::eReadOnly)
+    .assignResource(hdr, Access::eWriteOnly)
+    .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
+      Illusion::Core::Logger::message() << "Record lighting pass!" << std::endl;
+    });
 
-  graph->createPass()
-      .setName("transparencies")
-      .assignResource(depth, Usage::eDepthAttachment, Access::eReadOnly)
-      .assignResource(hdr, Usage::eColorAttachment, Access::eTestOrBlend)
-      .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
-        Illusion::Core::Logger::message() << "Record transparencies pass!" << std::endl;
-      });
+  auto& transparencies = graph->createPass()
+    .setName("transparencies")
+    .assignResource(depth, Access::eLoad)
+    .assignResource(hdr, Access::eLoadWrite)
+    .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
+      Illusion::Core::Logger::message() << "Record transparencies pass!" << std::endl;
+    });
 
-  graph->createPass()
-      .setName("tonemapping")
-      .assignResource(hdr, Usage::eColorAttachment, Access::eReadOnly)
-      .setOutputWindow(window)
-      .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
-        Illusion::Core::Logger::message() << "Record tonemapping pass!" << std::endl;
-      });
+  auto& tonemapping = graph->createPass()
+    .setName("tonemapping")
+    .assignResource(hdr, Access::eReadWrite)
+    .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
+      Illusion::Core::Logger::message() << "Record tonemapping pass!" << std::endl;
+    });
+  // clang-format on
+
+  graph->setOutput(window, tonemapping, hdr);
 
   // do one rendering step -------------------------------------------------------------------------
 

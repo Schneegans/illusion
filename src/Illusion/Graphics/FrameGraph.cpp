@@ -9,8 +9,10 @@
 #include "FrameGraph.hpp"
 
 #include "../Core/Logger.hpp"
+#include "BackedImage.hpp"
 #include "CommandBuffer.hpp"
 #include "Device.hpp"
+#include "Utils.hpp"
 #include "Window.hpp"
 
 #include <iostream>
@@ -61,14 +63,26 @@ glm::uvec2 FrameGraph::LogicalResource::getAbsoluteExtent(glm::uvec2 const& wind
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool FrameGraph::LogicalResource::isDepthResource() const {
+  return Utils::isDepthFormat(mFormat);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool FrameGraph::LogicalResource::isColorResource() const {
+  return Utils::isColorFormat(mFormat);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 FrameGraph::LogicalPass& FrameGraph::LogicalPass::assignResource(
-    LogicalResource const& resource, ResourceUsage usage, ResourceAccess access) {
+    LogicalResource const& resource, ResourceAccess access) {
 
   try {
-    assignResource(resource, usage, access, {});
+    assignResource(resource, access, {});
   } catch (std::runtime_error const& e) {
     throw std::runtime_error("Failed to add resource \"" + resource.mName +
                              "\" to frame graph pass \"" + mName + "\": " + e.what());
@@ -80,10 +94,10 @@ FrameGraph::LogicalPass& FrameGraph::LogicalPass::assignResource(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 FrameGraph::LogicalPass& FrameGraph::LogicalPass::assignResource(
-    LogicalResource const& resource, ResourceUsage usage, vk::ClearValue const& clear) {
+    LogicalResource const& resource, vk::ClearValue const& clear) {
 
   try {
-    assignResource(resource, usage, ResourceAccess::eWriteOnly, clear);
+    assignResource(resource, ResourceAccess::eWriteOnly, clear);
   } catch (std::runtime_error const& e) {
     throw std::runtime_error("Failed to add resource \"" + resource.mName +
                              "\" to frame graph pass \"" + mName + "\": " + e.what());
@@ -101,14 +115,6 @@ FrameGraph::LogicalPass& FrameGraph::LogicalPass::setName(std::string const& nam
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-FrameGraph::LogicalPass& FrameGraph::LogicalPass::setOutputWindow(WindowPtr const& window) {
-  mOutputWindow = window;
-  mDirty        = true;
-  return *this;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
 FrameGraph::LogicalPass& FrameGraph::LogicalPass::setProcessCallback(
     std::function<void(CommandBufferPtr)> const& callback) {
   mProcessCallback = callback;
@@ -119,7 +125,7 @@ FrameGraph::LogicalPass& FrameGraph::LogicalPass::setProcessCallback(
 
 FrameGraph::LogicalResource const* FrameGraph::LogicalPass::getDepthAttachment() const {
   for (auto const& r : mLogicalResources) {
-    if (r.second.mUsage == ResourceUsage::eDepthAttachment) {
+    if (r.first->isDepthResource()) {
       return r.first;
     }
   }
@@ -128,19 +134,19 @@ FrameGraph::LogicalResource const* FrameGraph::LogicalPass::getDepthAttachment()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void FrameGraph::LogicalPass::assignResource(LogicalResource const& resource, ResourceUsage usage,
-    ResourceAccess access, std::optional<vk::ClearValue> const& clear) {
+void FrameGraph::LogicalPass::assignResource(LogicalResource const& resource, ResourceAccess access,
+    std::optional<vk::ClearValue> const& clear) {
   // We cannot add the same resource twice.
   if (mLogicalResources.find(&resource) != mLogicalResources.end()) {
     throw std::runtime_error("Resource has already been added to this pass!");
   }
 
   // We cannot add multiple depth attachments.
-  if (usage == ResourceUsage::eDepthAttachment && getDepthAttachment() != nullptr) {
+  if (resource.isDepthResource() && getDepthAttachment() != nullptr) {
     throw std::runtime_error("Pass already has a depth attachment!");
   }
 
-  mLogicalResources[&resource] = {usage, access, clear};
+  mLogicalResources[&resource] = {access, clear};
   mDirty                       = true;
 }
 
@@ -177,6 +183,16 @@ FrameGraph::LogicalPass& FrameGraph::createPass() {
   mDirty = true;
   mLogicalPasses.push_back({});
   return mLogicalPasses.back();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void FrameGraph::setOutput(
+    WindowPtr const& window, LogicalPass const& pass, LogicalResource const& resource) {
+  mOutputWindow   = window;
+  mOutputPass     = &pass;
+  mOutputResource = &resource;
+  mDirty          = true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -231,7 +247,6 @@ void FrameGraph::process(uint32_t threadCount) {
   // * Create FrameBuffers for each RenderPass
   if (perFrame.mDirty) {
     Core::Logger::debug() << "Constructing frame graph..." << std::endl;
-    perFrame.mPhysicalResources.clear();
     perFrame.mPhysicalPasses.clear();
 
     // First we will create a list of PhysicalPasses with a valid execution order. This list may
@@ -239,21 +254,11 @@ void FrameGraph::process(uint32_t threadCount) {
     // connected to our final pass (pass culling). We will collect the passes bottom-up; that means
     // we start with the final output pass and then collect all passes which provide input for this
     // pass. Then we search for the passes which provide input for those passes... and so on.
-    // Therefore we first have to find the final pass. That is the one with an output window. Due to
-    // the validation above, we are sure that there is exactly one.
-    LogicalPass* finalPass = nullptr;
-    for (auto& pass : mLogicalPasses) {
-      if (pass.mOutputWindow) {
-        finalPass = &pass;
-        break;
-      }
-    }
-
-    // Then we will create a queue (actually we use a std::list as we have to remove duplicates) of
-    // inputs which are required for the processing of the passes inserted into our mPhysicalPasses.
-    // We will start with our final pass.
-    std::list<LogicalPass*> passQueue;
-    passQueue.push_back(finalPass);
+    // Therefore we will create a queue (actually we use a std::list as we have to remove
+    // duplicates) of inputs which are required for the processing of the passes inserted into our
+    // mPhysicalPasses. We will start with our final pass.
+    std::list<LogicalPass const*> passQueue;
+    passQueue.push_back(mOutputPass);
 
     while (!passQueue.empty()) {
       // Pop the current pass from the queue.
@@ -273,21 +278,17 @@ void FrameGraph::process(uint32_t threadCount) {
       // resolution.
       PhysicalPass physicalPass({{logicalPass}});
       for (auto const& resource : logicalPass->mLogicalResources) {
-        if (resource.second.mUsage == ResourceUsage::eColorAttachment ||
-            resource.second.mUsage == ResourceUsage::eDepthAttachment) {
-          physicalPass.mExtent =
-              resource.first->getAbsoluteExtent(finalPass->mOutputWindow->pExtent.get());
-          break;
-        }
+        physicalPass.mExtent = resource.first->getAbsoluteExtent(mOutputWindow->pExtent.get());
+        break;
       }
 
       Core::Logger::debug() << "  Resolving dependencies of pass \"" + logicalPass->mName + "\"..."
                             << std::endl;
 
       // We start searching for preceding passes at our current pass.
-      auto currentPassIt = mLogicalPasses.rbegin();
-      while (&(*currentPassIt) != logicalPass) {
-        ++currentPassIt;
+      auto currentPass = mLogicalPasses.rbegin();
+      while (&(*currentPass) != logicalPass) {
+        ++currentPass;
       }
 
       // Now we have to find the passes which are in front of the current pass in the mLogicalPasses
@@ -296,13 +297,15 @@ void FrameGraph::process(uint32_t threadCount) {
         Core::Logger::debug() << "    resource \"" + r.first->mName + "\"" << std::endl;
 
         // Step backwards through all LogicalPasses, collecting all passes writing to this resource.
-        auto prePassIt = currentPassIt;
-        while (prePassIt != mLogicalPasses.rend()) {
+        auto previousPass = currentPass;
+        auto previousUse  = previousPass->mLogicalResources.find(r.first);
+
+        while (previousPass != mLogicalPasses.rend()) {
           do {
-            ++prePassIt;
-          } while (
-              prePassIt != mLogicalPasses.rend() &&
-              prePassIt->mLogicalResources.find(r.first) == prePassIt->mLogicalResources.end());
+            ++previousPass;
+          } while (previousPass != mLogicalPasses.rend() &&
+                   (previousUse = previousPass->mLogicalResources.find(r.first)) ==
+                       previousPass->mLogicalResources.end());
 
           // Now there are several cases:
           // * There is a preceding use of this resource and ...
@@ -315,26 +318,25 @@ void FrameGraph::process(uint32_t threadCount) {
           // * There is no preceding use and ...
           //   * we use it as write-only: This is alright, we are "creating" the resource
           //   * we want to read from the resource. This is an error.
-          if (prePassIt != mLogicalPasses.rend()) {
+          if (previousPass != mLogicalPasses.rend()) {
             if (r.second.mAccess == ResourceAccess::eWriteOnly) {
               throw std::runtime_error("Frame graph construction failed: Write-only output \"" +
                                        r.first->mName + "\" of pass \"" + logicalPass->mName +
-                                       "\" is used by the preceding pass \"" + prePassIt->mName +
+                                       "\" is used by the preceding pass \"" + previousPass->mName +
                                        "\"!");
-            } else if (prePassIt->mLogicalResources.find(r.first)->second.mAccess ==
-                       ResourceAccess::eReadOnly) {
+            } else if (previousUse->second.mAccess == ResourceAccess::eReadOnly ||
+                       previousUse->second.mAccess == ResourceAccess::eLoad) {
               Core::Logger::debug()
-                  << "      is read-only in \"" + prePassIt->mName + "\"." << std::endl;
+                  << "      is read-only in pass \"" + previousPass->mName + "\"." << std::endl;
             } else {
               // In order to make sure that there are no duplicates in our queue, we first remove
               // all entries referencing the same pass.
-              LogicalPass* prePass = &(*prePassIt);
-              passQueue.remove(prePass);
-              passQueue.push_back(prePass);
-              physicalPass.mDependencies.push_back(prePass);
+              passQueue.remove(&(*previousPass));
+              passQueue.push_back(&(*previousPass));
+              physicalPass.mDependencies.push_back(&(*previousPass));
 
               Core::Logger::debug()
-                  << "      is written by \"" + prePassIt->mName + "\"." << std::endl;
+                  << "      is written by pass \"" + previousPass->mName + "\"." << std::endl;
             }
           } else if (physicalPass.mDependencies.size() == 0) {
             if (r.second.mAccess == ResourceAccess::eWriteOnly) {
@@ -437,6 +439,79 @@ void FrameGraph::process(uint32_t threadCount) {
       }
     }
 
+    // Now we will create actual PhysicalResources. We will create everything from scratch here.
+    // This can definitely be optimized, but for now frequent graph changes are not planned anyways.
+    perFrame.mPhysicalResources.clear();
+
+    // First we will create a set of resources which are actually used by the passes we collected.
+    // For each resource we will accumulate the vk::ImageUsageFlagBits.
+    std::unordered_map<LogicalResource const*, vk::ImageUsageFlags> resources;
+
+    // eTransferSrc is actually only required for the attachment which will be blitted to the
+    // swapchain images
+    for (auto const& pass : perFrame.mPhysicalPasses) {
+      for (auto const& subPass : pass.mSubPasses) {
+        for (auto const& resource : subPass->mLogicalResources) {
+          switch (resource.second.mAccess) {
+          case ResourceAccess::eReadOnly:
+            resources[resource.first] |= vk::ImageUsageFlagBits::eInputAttachment;
+            break;
+          case ResourceAccess::eLoad:
+          case ResourceAccess::eWriteOnly:
+          case ResourceAccess::eLoadWrite:
+            if (resource.first->isColorResource()) {
+              resources[resource.first] |= vk::ImageUsageFlagBits::eColorAttachment;
+            } else if (resource.first->isDepthResource()) {
+              resources[resource.first] |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
+            }
+            break;
+          case ResourceAccess::eReadWrite:
+          case ResourceAccess::eLoadReadWrite:
+            resources[resource.first] |= vk::ImageUsageFlagBits::eInputAttachment;
+            if (resource.first->isColorResource()) {
+              resources[resource.first] |= vk::ImageUsageFlagBits::eColorAttachment;
+            } else if (resource.first->isDepthResource()) {
+              resources[resource.first] |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
+            }
+            break;
+          }
+        }
+      }
+    }
+
+    // Now we will create a PhysicalResource for each LogicalResource.
+    for (auto resource : resources) {
+      vk::ImageAspectFlags aspect;
+
+      if (Utils::isDepthOnlyFormat(resource.first->mFormat)) {
+        aspect |= vk::ImageAspectFlagBits::eDepth;
+      } else if (Utils::isDepthStencilFormat(resource.first->mFormat)) {
+        aspect |= vk::ImageAspectFlagBits::eDepth;
+        aspect |= vk::ImageAspectFlagBits::eStencil;
+      } else {
+        aspect |= vk::ImageAspectFlagBits::eColor;
+      }
+
+      vk::ImageCreateInfo imageInfo;
+      imageInfo.imageType     = vk::ImageType::e2D;
+      imageInfo.format        = resource.first->mFormat;
+      imageInfo.extent.width  = resource.first->mExtent.x;
+      imageInfo.extent.height = resource.first->mExtent.y;
+      imageInfo.extent.depth  = 1;
+      imageInfo.mipLevels     = 1;
+      imageInfo.arrayLayers   = 1;
+      imageInfo.samples       = vk::SampleCountFlagBits::e1;
+      imageInfo.tiling        = vk::ImageTiling::eOptimal;
+      imageInfo.usage         = resource.second;
+      imageInfo.sharingMode   = vk::SharingMode::eExclusive;
+      imageInfo.initialLayout = vk::ImageLayout::eUndefined;
+
+      perFrame.mPhysicalResources.push_back({{resource.first},
+          mDevice->createBackedImage("Resource \"" + resource.first->mName + "\" of " + getName(),
+              imageInfo, vk::ImageViewType::e2D, aspect, vk::MemoryPropertyFlagBits::eDeviceLocal,
+              vk::ImageLayout::eUndefined)});
+    }
+
     perFrame.mDirty = false;
     Core::Logger::debug() << "Frame graph construction done." << std::endl;
   }
@@ -534,36 +609,59 @@ void FrameGraph::validate() const {
     }
   }
 
-  // Check whether we have exactly one pass with an output window.
-  LogicalPass const* finalPass = nullptr;
+  // Check whether we have a valid output window, pass and resource.
+  if (!mOutputWindow) {
+    throw std::runtime_error("There is no output window set!");
+  }
+
+  if (!mOutputPass) {
+    throw std::runtime_error("There is no output pass set!");
+  }
+
+  if (!mOutputResource) {
+    throw std::runtime_error("There is no output resource set!");
+  }
+
+  // Check whether the output pass actually belongs to this graph.
+  bool isOurOutputPass = false;
   for (auto const& pass : mLogicalPasses) {
-    if (pass.mOutputWindow) {
-      if (!finalPass) {
-        finalPass = &pass;
-      } else {
-        throw std::runtime_error("There are multiple output windows in the graph!");
-      }
+    if (mOutputPass == &pass) {
+      isOurOutputPass = true;
+      break;
     }
   }
 
-  if (!finalPass) {
-    throw std::runtime_error("There is no output window in the graph!");
+  if (!isOurOutputPass) {
+    throw std::runtime_error("The output pass \"" + mOutputPass->mName +
+                             "\" does not belong to this frame graph. Did you accidentally "
+                             "create a copy of the reference?");
+  }
+
+  // Check whether the output resource actually belongs to the output pass.
+  bool isOurOutputResource = false;
+  for (auto const& resource : mOutputPass->mLogicalResources) {
+    if (mOutputResource == resource.first) {
+      isOurOutputResource = true;
+      break;
+    }
+  }
+  if (!isOurOutputResource) {
+    throw std::runtime_error("Output resource \"" + mOutputResource->mName +
+                             "\" does not belong to output pass \"" + mOutputPass->mName +
+                             "\".. Did you accidentally create a copy of the reference?");
   }
 
   // Check whether the resolutions of all attachments of each pass are the same
-  glm::ivec2 windowExtent = finalPass->mOutputWindow->pExtent.get();
+  glm::ivec2 windowExtent = mOutputWindow->pExtent.get();
   for (auto const& pass : mLogicalPasses) {
     glm::ivec2 passExtent = glm::ivec2(-1);
     for (auto const& resource : pass.mLogicalResources) {
-      if (resource.second.mUsage == ResourceUsage::eColorAttachment ||
-          resource.second.mUsage == ResourceUsage::eDepthAttachment) {
-        glm::ivec2 resourceExtent = resource.first->getAbsoluteExtent(windowExtent);
-        if (passExtent == glm::ivec2(-1)) {
-          passExtent = resourceExtent;
-        } else if (passExtent != resourceExtent) {
-          throw std::runtime_error(
-              "Attachments of pass \"" + pass.mName + "\" do not have the same size!");
-        }
+      glm::ivec2 resourceExtent = resource.first->getAbsoluteExtent(windowExtent);
+      if (passExtent == glm::ivec2(-1)) {
+        passExtent = resourceExtent;
+      } else if (passExtent != resourceExtent) {
+        throw std::runtime_error(
+            "Attachments of pass \"" + pass.mName + "\" do not have the same size!");
       }
     }
   }
