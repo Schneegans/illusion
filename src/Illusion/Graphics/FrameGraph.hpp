@@ -18,7 +18,6 @@
 #include <list>
 #include <optional>
 #include <unordered_map>
-#include <unordered_set>
 
 namespace Illusion::Graphics {
 
@@ -46,6 +45,7 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
     LogicalResource& setFormat(vk::Format format);
     LogicalResource& setSizing(ResourceSizing sizing);
     LogicalResource& setExtent(glm::uvec2 const& extent);
+    LogicalResource& setSamples(vk::SampleCountFlagBits const& samples);
 
     glm::uvec2 getAbsoluteExtent(glm::uvec2 const& windowExtent) const;
     bool       isDepthResource() const;
@@ -54,10 +54,11 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
     friend class FrameGraph;
 
    private:
-    std::string    mName   = "Unnamed Resource";
-    vk::Format     mFormat = vk::Format::eR8G8B8A8Unorm;
-    ResourceSizing mSizing = ResourceSizing::eRelative;
-    glm::vec2      mExtent = glm::vec2(1.f, 1.f);
+    std::string             mName    = "Unnamed Resource";
+    vk::Format              mFormat  = vk::Format::eR8G8B8A8Unorm;
+    ResourceSizing          mSizing  = ResourceSizing::eRelative;
+    glm::vec2               mExtent  = glm::vec2(1.f, 1.f);
+    vk::SampleCountFlagBits mSamples = vk::SampleCountFlagBits::e1;
 
     // this is directly accessed by the FrameGraph
     bool mDirty = true;
@@ -97,8 +98,7 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
 
   // -----------------------------------------------------------------------------------------------
   struct PhysicalResource {
-    std::vector<LogicalResource const*> mLogicalResources;
-    BackedImagePtr                      mImage;
+    BackedImagePtr mImage;
   };
 
   // -----------------------------------------------------------------------------------------------
@@ -131,9 +131,9 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
     vk::SemaphorePtr mRenderFinishedSemaphore;
     vk::FencePtr     mFrameFinishedFence;
 
-    std::list<PhysicalResource> mPhysicalResources;
-    std::list<PhysicalPass>     mPhysicalPasses;
-    bool                        mDirty = true;
+    std::unordered_map<LogicalResource const*, PhysicalResource> mPhysicalResources;
+    std::list<PhysicalPass>                                      mPhysicalPasses;
+    bool                                                         mDirty = true;
   };
 
   DevicePtr mDevice;

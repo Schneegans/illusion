@@ -108,7 +108,7 @@ void CommandBuffer::beginRenderPass(RenderPassPtr const& renderPass) {
 
   vk::RenderPassBeginInfo passInfo;
   passInfo.renderPass               = *renderPass->getHandle();
-  passInfo.framebuffer              = *renderPass->getFramebuffer()->getHandle();
+  passInfo.framebuffer              = *renderPass->getFramebuffer();
   passInfo.renderArea.offset        = vk::Offset2D(0, 0);
   passInfo.renderArea.extent.width  = renderPass->getExtent().x;
   passInfo.renderArea.extent.height = renderPass->getExtent().y;

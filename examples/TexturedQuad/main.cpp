@@ -107,8 +107,7 @@ int main(int argc, char* argv[]) {
     // Present the color attachment of the render pass on the window. This operation will wait for
     // the renderFinishedSemaphore and signal the frameFinishedFence so that we know when to start
     // the next frame.
-    window->present(
-        renderPass->getFramebuffer()->getImages()[0], renderFinishedSemaphore, frameFinishedFence);
+    window->present(renderPass->getAttachments()[0], renderFinishedSemaphore, frameFinishedFence);
 
     // Prevent the GPU from over-heating :)
     std::this_thread::sleep_for(std::chrono::milliseconds(5));

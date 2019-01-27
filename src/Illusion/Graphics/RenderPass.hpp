@@ -10,7 +10,6 @@
 #define ILLUSION_GRAPHICS_RENDER_PASS_HPP
 
 #include "Device.hpp"
-#include "Framebuffer.hpp"
 
 #include <functional>
 #include <glm/glm.hpp>
@@ -44,19 +43,23 @@ class RenderPass : public Core::StaticCreate<RenderPass>, public Core::NamedObje
   void              setExtent(glm::uvec2 const& extent);
   glm::uvec2 const& getExtent() const;
 
-  FramebufferPtr const&    getFramebuffer() const;
-  vk::RenderPassPtr const& getHandle() const;
+  std::vector<BackedImagePtr> const& getAttachments() const;
+
+  vk::FramebufferPtr const& getFramebuffer() const;
+  vk::RenderPassPtr const&  getHandle() const;
 
  private:
-  vk::RenderPassPtr createRenderPass() const;
+  void createRenderPass();
+  void createFramebuffer();
 
-  DevicePtr               mDevice;
-  vk::RenderPassPtr       mRenderPass;
-  FramebufferPtr          mFramebuffer;
-  std::vector<vk::Format> mFrameBufferAttachmentFormats;
-  std::vector<SubPass>    mSubPasses;
-  bool                    mAttachmentsDirty = true;
-  glm::uvec2              mExtent           = {100, 100};
+  DevicePtr                   mDevice;
+  vk::RenderPassPtr           mRenderPass;
+  vk::FramebufferPtr          mFramebuffer;
+  std::vector<vk::Format>     mFrameBufferAttachmentFormats;
+  std::vector<BackedImagePtr> mImageStore;
+  std::vector<SubPass>        mSubPasses;
+  bool                        mAttachmentsDirty = true;
+  glm::uvec2                  mExtent           = {100, 100};
 };
 
 } // namespace Illusion::Graphics

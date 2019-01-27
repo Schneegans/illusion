@@ -15,12 +15,7 @@
 #include "Utils.hpp"
 #include "Window.hpp"
 
-#include <iostream>
 #include <queue>
-#include <unordered_set>
-
-#define GLM_ENABLE_EXPERIMENTAL
-#include <glm/gtx/io.hpp>
 
 namespace Illusion::Graphics {
 
@@ -52,6 +47,15 @@ FrameGraph::LogicalResource& FrameGraph::LogicalResource::setSizing(ResourceSizi
 FrameGraph::LogicalResource& FrameGraph::LogicalResource::setExtent(glm::uvec2 const& extent) {
   mExtent = extent;
   mDirty  = true;
+  return *this;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+FrameGraph::LogicalResource& FrameGraph::LogicalResource::setSamples(
+    vk::SampleCountFlagBits const& samples) {
+  mSamples = samples;
+  mDirty   = true;
   return *this;
 }
 
@@ -199,7 +203,9 @@ void FrameGraph::setOutput(
 
 void FrameGraph::process(uint32_t threadCount) {
 
-  // graph validation phase ------------------------------------------------------------------------
+  // -------------------------------------------------------------------------------------------- //
+  // ---------------------------------- graph validation phase ---------------------------------- //
+  // -------------------------------------------------------------------------------------------- //
 
   // The FrameGraph is dirty when a LogicalPass or LogicalResource was added, when a LogicalResource
   // was added to one of its LogicalPasses or when one of its LogicalResources was reconfigured.
@@ -223,7 +229,9 @@ void FrameGraph::process(uint32_t threadCount) {
     clearDirty();
   }
 
-  // resource allocation phase ---------------------------------------------------------------------
+  // -------------------------------------------------------------------------------------------- //
+  // ------------------------------- resource allocation phase ---------------------------------- //
+  // -------------------------------------------------------------------------------------------- //
 
   // Acquire our current set of per-frame resources.
   auto& perFrame = mPerFrame.current();
@@ -242,11 +250,14 @@ void FrameGraph::process(uint32_t threadCount) {
   //   * Recursively add required input passes to the list.
   //   * Reverse the list
   // * Merge adjacent PhysicalPasses which can be executed as sub passes
-  // * Create a RenderPass for each remaining PhysicalPass
-  // * Create BackedImages for each PhysicalResource
-  // * Create FrameBuffers for each RenderPass
+  // * Create a BackedImage for each PhysicalResource
+  // * Create a RenderPass for each PhysicalPass
+  // * Create a FrameBuffer for each RenderPass
   if (perFrame.mDirty) {
     Core::Logger::debug() << "Constructing frame graph..." << std::endl;
+
+    // Compute logical pass execution order --------------------------------------------------------
+
     perFrame.mPhysicalPasses.clear();
 
     // First we will create a list of PhysicalPasses with a valid execution order. This list may
@@ -363,6 +374,8 @@ void FrameGraph::process(uint32_t threadCount) {
       Core::Logger::debug() << "    Pass " << p.mSubPasses[0]->mName << std::endl;
     }
 
+    // Merge adjacent PhysicalPasses which can be executed as sub passes ---------------------------
+
     // Now we can merge adjacent PhysicalPasses which have the same extent and share the same depth
     // attachment. To do this, we traverse the list of PhysicalPasses front-to-back and for each
     // pass we search for candidates sharing extent, depth attachment and dependencies.
@@ -439,6 +452,8 @@ void FrameGraph::process(uint32_t threadCount) {
       }
     }
 
+    // Create a BackedImage for each PhysicalResource ----------------------------------------------
+
     // Now we will create actual PhysicalResources. We will create everything from scratch here.
     // This can definitely be optimized, but for now frequent graph changes are not planned anyways.
     perFrame.mPhysicalResources.clear();
@@ -447,8 +462,6 @@ void FrameGraph::process(uint32_t threadCount) {
     // For each resource we will accumulate the vk::ImageUsageFlagBits.
     std::unordered_map<LogicalResource const*, vk::ImageUsageFlags> resources;
 
-    // eTransferSrc is actually only required for the attachment which will be blitted to the
-    // swapchain images
     for (auto const& pass : perFrame.mPhysicalPasses) {
       for (auto const& subPass : pass.mSubPasses) {
         for (auto const& resource : subPass->mLogicalResources) {
@@ -479,6 +492,10 @@ void FrameGraph::process(uint32_t threadCount) {
       }
     }
 
+    // For the final output resource we will need eTransferSrc as it will be blitted to the
+    // swapchain images.
+    resources[mOutputResource] |= vk::ImageUsageFlagBits::eTransferSrc;
+
     // Now we will create a PhysicalResource for each LogicalResource.
     for (auto resource : resources) {
       vk::ImageAspectFlags aspect;
@@ -500,23 +517,29 @@ void FrameGraph::process(uint32_t threadCount) {
       imageInfo.extent.depth  = 1;
       imageInfo.mipLevels     = 1;
       imageInfo.arrayLayers   = 1;
-      imageInfo.samples       = vk::SampleCountFlagBits::e1;
+      imageInfo.samples       = resource.first->mSamples;
       imageInfo.tiling        = vk::ImageTiling::eOptimal;
       imageInfo.usage         = resource.second;
       imageInfo.sharingMode   = vk::SharingMode::eExclusive;
       imageInfo.initialLayout = vk::ImageLayout::eUndefined;
 
-      perFrame.mPhysicalResources.push_back({{resource.first},
+      perFrame.mPhysicalResources[resource.first] = {
           mDevice->createBackedImage("Resource \"" + resource.first->mName + "\" of " + getName(),
               imageInfo, vk::ImageViewType::e2D, aspect, vk::MemoryPropertyFlagBits::eDeviceLocal,
-              vk::ImageLayout::eUndefined)});
+              vk::ImageLayout::eUndefined)};
     }
+
+    // Create FrameBuffers for each RenderPass -----------------------------------------------------
+
+    // Create a RenderPass for each PhysicalPass ---------------------------------------------------
 
     perFrame.mDirty = false;
     Core::Logger::debug() << "Frame graph construction done." << std::endl;
   }
 
-  // recording phase -------------------------------------------------------------------------------
+  // -------------------------------------------------------------------------------------------- //
+  // ------------------------------------ recording phase --------------------------------------- //
+  // -------------------------------------------------------------------------------------------- //
 
   // Now we can finally start recording our command buffer.
   perFrame.mPrimaryCommandBuffer->reset();
@@ -543,9 +566,8 @@ void FrameGraph::process(uint32_t threadCount) {
 
   perFrame.mPrimaryCommandBuffer->submit({}, {}, {perFrame.mRenderFinishedSemaphore});
 
-  // window->present(mRenderPass->getFramebuffer()->getImages()[0],
-  // perFrame.mRenderFinishedSemaphore,
-  //     perFrame.mFrameFinishedFence);
+  mOutputWindow->present(perFrame.mPhysicalResources[mOutputResource].mImage,
+      perFrame.mRenderFinishedSemaphore, perFrame.mFrameFinishedFence);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
