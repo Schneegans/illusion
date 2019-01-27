@@ -11,7 +11,7 @@
 #include <Illusion/Core/Timer.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/Instance.hpp>
-#include <Illusion/Graphics/RenderPass.hpp>
+#include <Illusion/Graphics/LazyRenderPass.hpp>
 #include <Illusion/Graphics/Shader.hpp>
 #include <Illusion/Graphics/Window.hpp>
 
@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
   auto cmd = Illusion::Graphics::CommandBuffer::create("CommandBuffer", device);
 
   // Then we create our render pass with one color attachment.
-  auto renderPass = Illusion::Graphics::RenderPass::create("RenderPass", device);
+  auto renderPass = Illusion::Graphics::LazyRenderPass::create("RenderPass", device);
   renderPass->addAttachment(vk::Format::eR8G8B8A8Unorm);
 
   // This semaphore will be signaled when rendering has finished and the frame buffer is ready to be

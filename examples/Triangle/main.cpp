@@ -8,7 +8,7 @@
 
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/Instance.hpp>
-#include <Illusion/Graphics/RenderPass.hpp>
+#include <Illusion/Graphics/LazyRenderPass.hpp>
 #include <Illusion/Graphics/Shader.hpp>
 #include <Illusion/Graphics/Window.hpp>
 
@@ -38,7 +38,7 @@ int main() {
   // All rendering is done inside an active render pass. This render pass creates an associated
   // frame buffer with the given attachments (a color buffer in this case). We use the window's
   // resolution for the render pass.
-  auto renderPass = Illusion::Graphics::RenderPass::create("RenderPass", device);
+  auto renderPass = Illusion::Graphics::LazyRenderPass::create("RenderPass", device);
   renderPass->addAttachment(vk::Format::eR8G8B8A8Unorm);
   renderPass->setExtent(window->pExtent.get());
 

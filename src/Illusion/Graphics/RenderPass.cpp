@@ -49,9 +49,14 @@ void RenderPass::init() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void RenderPass::addAttachment(vk::Format format) {
-  mFrameBufferAttachmentFormats.push_back(format);
-  mAttachmentsDirty = true;
+void RenderPass::addAttachment(BackedImagePtr const& image) {
+  // Make sure that extent is the same.
+  if (mImageStore.size() > 0 && image->mImageInfo.extent != mImageStore[0]->mImageInfo.extent) {
+    throw std::runtime_error("Failed to add attachment to RenderPass \"" + getName() +
+                             "\": Extent does not match previously added attachment!");
+  }
+
+  mImageStore.push_back(image);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -63,17 +68,13 @@ void RenderPass::setSubPasses(std::vector<SubPass> const& subPasses) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void RenderPass::setExtent(glm::uvec2 const& extent) {
-  if (mExtent != extent) {
-    mExtent           = extent;
-    mAttachmentsDirty = true;
+glm::uvec2 RenderPass::getExtent() const {
+  if (mImageStore.size() > 0) {
+    return glm::uvec2(
+        mImageStore[0]->mImageInfo.extent.width, mImageStore[0]->mImageInfo.extent.height);
   }
-}
 
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-glm::uvec2 const& RenderPass::getExtent() const {
-  return mExtent;
+  return glm::uvec2(0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -97,18 +98,12 @@ vk::RenderPassPtr const& RenderPass::getHandle() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool RenderPass::hasDepthAttachment() const {
-  for (auto format : mFrameBufferAttachmentFormats) {
-    if (Utils::isDepthFormat(format))
+  for (auto image : mImageStore) {
+    if (Utils::isDepthFormat(image->mImageInfo.format))
       return true;
   }
 
   return false;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-std::vector<vk::Format> const& RenderPass::getFrameBufferAttachmentFormats() const {
-  return mFrameBufferAttachmentFormats;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -119,12 +114,12 @@ void RenderPass::createRenderPass() {
   std::vector<vk::AttachmentReference>   attachmentRefs;
   int                                    depthStencilAttachmentRef(-1);
 
-  for (size_t i(0); i < mFrameBufferAttachmentFormats.size(); ++i) {
+  for (auto const& image : mImageStore) {
     vk::AttachmentDescription attachment;
     vk::AttachmentReference   attachmentRef;
 
-    attachment.format        = mFrameBufferAttachmentFormats[i];
-    attachment.samples       = vk::SampleCountFlagBits::e1;
+    attachment.format        = image->mImageInfo.format;
+    attachment.samples       = image->mImageInfo.samples;
     attachment.initialLayout = vk::ImageLayout::eUndefined;
     attachment.loadOp        = vk::AttachmentLoadOp::eClear;
     attachment.storeOp       = vk::AttachmentStoreOp::eStore;
@@ -236,49 +231,6 @@ void RenderPass::createRenderPass() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void RenderPass::createFramebuffer() {
-  for (size_t i(0); i < mFrameBufferAttachmentFormats.size(); ++i) {
-    vk::ImageAspectFlags aspect;
-
-    if (Utils::isDepthOnlyFormat(mFrameBufferAttachmentFormats[i])) {
-      aspect |= vk::ImageAspectFlagBits::eDepth;
-    } else if (Utils::isDepthStencilFormat(mFrameBufferAttachmentFormats[i])) {
-      aspect |= vk::ImageAspectFlagBits::eDepth;
-      aspect |= vk::ImageAspectFlagBits::eStencil;
-    } else {
-      aspect |= vk::ImageAspectFlagBits::eColor;
-    }
-
-    // eTransferSrc is actually only required for the attachment which will be blitted to the
-    // swapchain images
-    vk::ImageUsageFlags usage =
-        vk::ImageUsageFlagBits::eColorAttachment | vk::ImageUsageFlagBits::eTransferSrc;
-    vk::ImageLayout layout = vk::ImageLayout::eColorAttachmentOptimal;
-
-    if (Utils::isDepthFormat(mFrameBufferAttachmentFormats[i])) {
-      usage  = vk::ImageUsageFlagBits::eDepthStencilAttachment;
-      layout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
-    }
-
-    vk::ImageCreateInfo imageInfo;
-    imageInfo.imageType     = vk::ImageType::e2D;
-    imageInfo.format        = mFrameBufferAttachmentFormats[i];
-    imageInfo.extent.width  = mExtent.x;
-    imageInfo.extent.height = mExtent.y;
-    imageInfo.extent.depth  = 1;
-    imageInfo.mipLevels     = 1;
-    imageInfo.arrayLayers   = 1;
-    imageInfo.samples       = vk::SampleCountFlagBits::e1;
-    imageInfo.tiling        = vk::ImageTiling::eOptimal;
-    imageInfo.usage         = usage;
-    imageInfo.sharingMode   = vk::SharingMode::eExclusive;
-    imageInfo.initialLayout = vk::ImageLayout::eUndefined;
-
-    auto image = mDevice->createBackedImage("Attachment " + std::to_string(i) + " of " + getName(),
-        imageInfo, vk::ImageViewType::e2D, aspect, vk::MemoryPropertyFlagBits::eDeviceLocal,
-        layout);
-
-    mImageStore.push_back(image);
-  }
 
   std::vector<vk::ImageView> imageViews(mImageStore.size());
 
@@ -290,12 +242,13 @@ void RenderPass::createFramebuffer() {
   info.renderPass      = *mRenderPass;
   info.attachmentCount = static_cast<uint32_t>(imageViews.size());
   info.pAttachments    = imageViews.data();
-  info.width           = mExtent.x;
-  info.height          = mExtent.y;
+  info.width           = mImageStore[0]->mImageInfo.extent.width;
+  info.height          = mImageStore[0]->mImageInfo.extent.height;
   info.layers          = 1;
 
   mFramebuffer = mDevice->createFramebuffer(getName(), info);
 }
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 } // namespace Illusion::Graphics

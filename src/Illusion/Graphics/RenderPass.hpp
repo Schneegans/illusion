@@ -32,34 +32,32 @@ class RenderPass : public Core::StaticCreate<RenderPass>, public Core::NamedObje
   RenderPass(std::string const& name, DevicePtr const& device);
   virtual ~RenderPass();
 
-  void init();
+  virtual void init();
 
-  void                           addAttachment(vk::Format format);
-  bool                           hasDepthAttachment() const;
-  std::vector<vk::Format> const& getFrameBufferAttachmentFormats() const;
+  void addAttachment(BackedImagePtr const& image);
+
+  virtual bool hasDepthAttachment() const;
 
   void setSubPasses(std::vector<SubPass> const& subPasses);
 
-  void              setExtent(glm::uvec2 const& extent);
-  glm::uvec2 const& getExtent() const;
+  virtual glm::uvec2 getExtent() const;
 
   std::vector<BackedImagePtr> const& getAttachments() const;
+  vk::FramebufferPtr const&          getFramebuffer() const;
+  vk::RenderPassPtr const&           getHandle() const;
 
-  vk::FramebufferPtr const& getFramebuffer() const;
-  vk::RenderPassPtr const&  getHandle() const;
+ protected:
+  DevicePtr                   mDevice;
+  std::vector<BackedImagePtr> mImageStore;
+  bool                        mAttachmentsDirty = true;
 
  private:
   void createRenderPass();
   void createFramebuffer();
 
-  DevicePtr                   mDevice;
-  vk::RenderPassPtr           mRenderPass;
-  vk::FramebufferPtr          mFramebuffer;
-  std::vector<vk::Format>     mFrameBufferAttachmentFormats;
-  std::vector<BackedImagePtr> mImageStore;
-  std::vector<SubPass>        mSubPasses;
-  bool                        mAttachmentsDirty = true;
-  glm::uvec2                  mExtent           = {100, 100};
+  vk::RenderPassPtr    mRenderPass;
+  vk::FramebufferPtr   mFramebuffer;
+  std::vector<SubPass> mSubPasses;
 };
 
 } // namespace Illusion::Graphics
