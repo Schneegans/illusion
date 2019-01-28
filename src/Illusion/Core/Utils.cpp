@@ -29,6 +29,41 @@ std::vector<std::string> splitString(std::string const& s, char delim) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+std::string joinStrings(std::vector<std::string> const& parts, std::string const& delim) {
+  std::string result;
+
+  for (size_t i(0); i < parts.size(); ++i) {
+    result += parts[i];
+
+    if (i + 1 < parts.size()) {
+      result += delim;
+    }
+  }
+
+  return result;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::string joinStrings(
+    std::vector<std::string> const& parts, std::string const& delim, std::string const& lastDelim) {
+  std::string result;
+
+  for (size_t i(0); i < parts.size(); ++i) {
+    result += parts[i];
+
+    if (i + 2 == parts.size()) {
+      result += lastDelim;
+    } else if (i + 1 < parts.size()) {
+      result += delim;
+    }
+  }
+
+  return result;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool stringContains(std::string const& s, char c) {
   return s.find(c) != std::string::npos;
 }

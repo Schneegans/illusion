@@ -27,6 +27,15 @@ std::unique_ptr<T> makeUnique(Args&&... args) {
 // Splits the given string into parts, using the given delimiter.
 std::vector<std::string> splitString(std::string const& s, char delim);
 
+// Joins the given strings, putting delim between each part.
+std::string joinStrings(std::vector<std::string> const& parts, std::string const& delim);
+
+// Joins the given strings, putting delim between each part; lastDelim is used as the last delimiter
+// (or the only one if parts only contains two strings). A typical use case is delim = ", " and
+// lastDelim = " and ".
+std::string joinStrings(
+    std::vector<std::string> const& parts, std::string const& delim, std::string const& lastDelim);
+
 // Returns true when the given string contains the character c.
 bool stringContains(std::string const& s, char c);
 
