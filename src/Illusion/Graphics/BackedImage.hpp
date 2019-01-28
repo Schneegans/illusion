@@ -21,6 +21,8 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct BackedImage {
+  std::string mName;
+
   vk::DeviceMemoryPtr mMemory;
   vk::ImagePtr        mImage;
   vk::ImageViewPtr    mView;

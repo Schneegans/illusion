@@ -20,6 +20,8 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct BackedBuffer {
+  std::string mName;
+
   vk::DeviceMemoryPtr mMemory;
   vk::BufferPtr       mBuffer;
 

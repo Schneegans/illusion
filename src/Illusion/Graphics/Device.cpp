@@ -66,7 +66,8 @@ BackedImagePtr Device::createBackedImage(std::string const& name, vk::ImageCreat
     vk::MemoryPropertyFlags properties, vk::ImageLayout layout,
     vk::ComponentMapping const& componentMapping, vk::DeviceSize dataSize, const void* data) const {
 
-  auto result = std::make_shared<BackedImage>();
+  auto result   = std::make_shared<BackedImage>();
+  result->mName = name;
 
   // make sure eTransferDst is set when we have data to upload
   if (data) {
@@ -215,7 +216,8 @@ BackedImagePtr Device::createBackedImage(std::string const& name, vk::ImageCreat
 BackedBufferPtr Device::createBackedBuffer(std::string const& name, vk::BufferUsageFlags usage,
     vk::MemoryPropertyFlags properties, vk::DeviceSize dataSize, const void* data) const {
 
-  auto result = std::make_shared<BackedBuffer>();
+  auto result   = std::make_shared<BackedBuffer>();
+  result->mName = name;
 
   result->mBufferInfo.size        = dataSize;
   result->mBufferInfo.usage       = usage;
