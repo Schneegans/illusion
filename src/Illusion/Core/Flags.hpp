@@ -43,6 +43,10 @@ class Flags {
       : mMask(flags) {
   }
 
+  bool has(Flags<BitType> const& flags) {
+    return (mMask & flags.mMask) == flags.mMask;
+  }
+
   Flags<BitType>& operator=(Flags<BitType> const& rhs) {
     mMask = rhs.mMask;
     return *this;
