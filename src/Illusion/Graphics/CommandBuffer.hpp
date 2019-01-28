@@ -63,6 +63,10 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
   // Ends and releases the current RenderPass.
   void endRenderPass();
 
+  // Executes the given secondary CommandBuffers.
+  void execute(CommandBufferPtr const& secondary);
+  void execute(std::vector<CommandBufferPtr> const& secondaries);
+
   // state modification ----------------------------------------------------------------------------
 
   // Read and write access to the current GraphicsState. Changes will not directly affect the

@@ -142,6 +142,24 @@ void CommandBuffer::endRenderPass() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void CommandBuffer::execute(CommandBufferPtr const& secondary) {
+  mVkCmd->executeCommands(*secondary->mVkCmd);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CommandBuffer::execute(std::vector<CommandBufferPtr> const& secondaries) {
+  std::vector<vk::CommandBuffer> cmds(secondaries.size());
+
+  for (size_t i(0); i < secondaries.size(); ++i) {
+    cmds[i] = *secondaries[i]->mVkCmd;
+  }
+
+  mVkCmd->executeCommands(cmds);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 GraphicsState& CommandBuffer::graphicsState() {
   return mGraphicsState;
 }
