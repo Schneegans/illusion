@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
     index->step();
 
     try {
-      graph->process();
+      graph->process(Illusion::Graphics::FrameGraph::ProcessingFlagBits::eParallelSubPassRecording);
     } catch (std::runtime_error const& e) {
       Illusion::Core::Logger::error() << e.what() << std::endl;
     }

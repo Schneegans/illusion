@@ -9,13 +9,16 @@
 #include "FrameGraph.hpp"
 
 #include "../Core/Logger.hpp"
+#include "../Core/Utils.hpp"
 #include "BackedImage.hpp"
 #include "CommandBuffer.hpp"
 #include "Device.hpp"
+#include "RenderPass.hpp"
 #include "Utils.hpp"
 #include "Window.hpp"
 
 #include <queue>
+#include <unordered_set>
 
 namespace Illusion::Graphics {
 
@@ -201,7 +204,7 @@ void FrameGraph::setOutput(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void FrameGraph::process(uint32_t threadCount) {
+void FrameGraph::process(ProcessingFlags flags) {
 
   // -------------------------------------------------------------------------------------------- //
   // ---------------------------------- graph validation phase ---------------------------------- //
@@ -252,7 +255,7 @@ void FrameGraph::process(uint32_t threadCount) {
   // * Merge adjacent PhysicalPasses which can be executed as sub passes
   // * Create a BackedImage for each PhysicalResource
   // * Create a RenderPass for each PhysicalPass
-  // * Create a FrameBuffer for each RenderPass
+  // * Create a secondary CommandBuffer for each LogicalPass
   if (perFrame.mDirty) {
     Core::Logger::debug() << "Constructing frame graph..." << std::endl;
 
@@ -441,14 +444,55 @@ void FrameGraph::process(uint32_t threadCount) {
       ++current;
     }
 
+    // Assign a name to each PhysicalPass to allow for descriptive error / warning / debug output.
+    uint32_t counter = 0;
+    for (auto& pass : perFrame.mPhysicalPasses) {
+      std::vector<std::string> subPassNames;
+      for (auto const& subPass : pass.mSubPasses) {
+        subPassNames.push_back("\"" + subPass->mName + "\"");
+      }
+
+      pass.mName = "RenderPass " + std::to_string(counter++) + " (" +
+                   Core::Utils::joinStrings(subPassNames, ", ", " and ") + ")";
+    }
+
     // Print some debugging information.
     Core::Logger::debug() << "  Physical pass execution order will be" << std::endl;
-    uint32_t counter = 0;
     for (auto const& pass : perFrame.mPhysicalPasses) {
-      Core::Logger::debug() << "    RenderPass " << counter++ << std::endl;
+      Core::Logger::debug() << "    " << pass.mName << std::endl;
+    }
 
+    // Identify resource usage per PhysicalPass ----------------------------------------------------
+
+    // For each physical pass we will collect information on how the individual resources are used.
+    // This information is stored in the mResourceUsage member of the PhysicalPass.
+    for (auto& pass : perFrame.mPhysicalPasses) {
       for (auto const& subPass : pass.mSubPasses) {
-        Core::Logger::debug() << "      SubPass " << subPass->mName << " " << std::endl;
+        for (auto const& r : subPass->mLogicalResources) {
+          switch (r.second.mAccess) {
+          case ResourceAccess::eReadOnly:
+            pass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eInputAttachment;
+            break;
+          case ResourceAccess::eLoad:
+          case ResourceAccess::eWriteOnly:
+          case ResourceAccess::eLoadWrite:
+            if (r.first->isColorResource()) {
+              pass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eColorAttachment;
+            } else if (r.first->isDepthResource()) {
+              pass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
+            }
+            break;
+          case ResourceAccess::eReadWrite:
+          case ResourceAccess::eLoadReadWrite:
+            pass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eInputAttachment;
+            if (r.first->isColorResource()) {
+              pass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eColorAttachment;
+            } else if (r.first->isDepthResource()) {
+              pass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
+            }
+            break;
+          }
+        }
       }
     }
 
@@ -458,46 +502,21 @@ void FrameGraph::process(uint32_t threadCount) {
     // This can definitely be optimized, but for now frequent graph changes are not planned anyways.
     perFrame.mPhysicalResources.clear();
 
-    // First we will create a set of resources which are actually used by the passes we collected.
+    // First we will create a map of resources which are actually used by the passes we collected.
     // For each resource we will accumulate the vk::ImageUsageFlagBits.
-    std::unordered_map<LogicalResource const*, vk::ImageUsageFlags> resources;
-
-    for (auto const& pass : perFrame.mPhysicalPasses) {
-      for (auto const& subPass : pass.mSubPasses) {
-        for (auto const& resource : subPass->mLogicalResources) {
-          switch (resource.second.mAccess) {
-          case ResourceAccess::eReadOnly:
-            resources[resource.first] |= vk::ImageUsageFlagBits::eInputAttachment;
-            break;
-          case ResourceAccess::eLoad:
-          case ResourceAccess::eWriteOnly:
-          case ResourceAccess::eLoadWrite:
-            if (resource.first->isColorResource()) {
-              resources[resource.first] |= vk::ImageUsageFlagBits::eColorAttachment;
-            } else if (resource.first->isDepthResource()) {
-              resources[resource.first] |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
-            }
-            break;
-          case ResourceAccess::eReadWrite:
-          case ResourceAccess::eLoadReadWrite:
-            resources[resource.first] |= vk::ImageUsageFlagBits::eInputAttachment;
-            if (resource.first->isColorResource()) {
-              resources[resource.first] |= vk::ImageUsageFlagBits::eColorAttachment;
-            } else if (resource.first->isDepthResource()) {
-              resources[resource.first] |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
-            }
-            break;
-          }
-        }
+    std::unordered_map<LogicalResource const*, vk::ImageUsageFlags> resourceUsage;
+    for (auto& pass : perFrame.mPhysicalPasses) {
+      for (auto const& resource : pass.mResourceUsage) {
+        resourceUsage[resource.first] |= resource.second;
       }
     }
 
     // For the final output resource we will need eTransferSrc as it will be blitted to the
     // swapchain images.
-    resources[mOutputResource] |= vk::ImageUsageFlagBits::eTransferSrc;
+    resourceUsage[mOutputResource] |= vk::ImageUsageFlagBits::eTransferSrc;
 
-    // Now we will create a PhysicalResource for each LogicalResource.
-    for (auto resource : resources) {
+    // Now we will create a BackedImage for each PhysicalResource.
+    for (auto resource : resourceUsage) {
       vk::ImageAspectFlags aspect;
 
       if (Utils::isDepthOnlyFormat(resource.first->mFormat)) {
@@ -529,10 +548,48 @@ void FrameGraph::process(uint32_t threadCount) {
               vk::ImageLayout::eUndefined)};
     }
 
-    // Create FrameBuffers for each RenderPass -----------------------------------------------------
-
     // Create a RenderPass for each PhysicalPass ---------------------------------------------------
 
+    // For each PhysicalPass we will create a RenderPass, attach the PhysicalResources we cjust
+    // created and setup the sub passes.
+    for (auto& pass : perFrame.mPhysicalPasses) {
+
+      // First we have to create an "empty" RenderPass.
+      pass.mRenderPass = RenderPass::create(pass.mName, mDevice);
+
+      // Then we have to collect all PhysicalResources which are required for this pass. We use a
+      // unordered_set here to remove duplicates.
+      std::unordered_set<PhysicalResource const*> passResources;
+      for (auto const& subPass : pass.mSubPasses) {
+        for (auto const& resource : subPass->mLogicalResources) {
+          passResources.insert(&perFrame.mPhysicalResources[resource.first]);
+        }
+      }
+
+      // Then we can add those resources to our RenderPass.
+      Core::Logger::debug() << "  Adding attachments to " << pass.mRenderPass->getName()
+                            << std::endl;
+
+      for (auto passResource : passResources) {
+        Core::Logger::debug() << "    " << passResource->mImage->mName << std::endl;
+        pass.mRenderPass->addAttachment(passResource->mImage);
+      }
+
+      // Now we have to setup the sub passes.
+    }
+
+    // Create a secondary CommandBuffer for each LogicalPass ---------------------------------------
+
+    // Since LogicalPasses can be recorded in parallel, we need separate secondary CommandBuffers
+    // for each one.
+    for (auto& pass : perFrame.mPhysicalPasses) {
+      for (auto const& subPass : pass.mSubPasses) {
+        pass.mSubPassCommandBuffers.push_back(CommandBuffer::create(
+            subPass->mName, mDevice, QueueType::eGeneric, vk::CommandBufferLevel::eSecondary));
+      }
+    }
+
+    // We are done! A new frame graph has been constructed.
     perFrame.mDirty = false;
     Core::Logger::debug() << "Frame graph construction done." << std::endl;
   }
@@ -545,22 +602,38 @@ void FrameGraph::process(uint32_t threadCount) {
   perFrame.mPrimaryCommandBuffer->reset();
   perFrame.mPrimaryCommandBuffer->begin();
 
-  // perFrame.mPrimaryCommandBuffer->beginRenderPass(res.mRenderPass);
-
-  mThreadPool.setThreadCount(threadCount);
-
-  for (auto& physicalPass : perFrame.mPhysicalPasses) {
-    for (auto& pass : physicalPass.mSubPasses) {
-      if (pass->mProcessCallback) {
-        mThreadPool.enqueue(
-            [pass, perFrame]() { pass->mProcessCallback(perFrame.mPrimaryCommandBuffer); });
-      }
-    }
+  if (flags.has(ProcessingFlagBits::eParallelRenderPassRecording)) {
+    throw std::runtime_error("Parallel RenderPass recording is not implemented yet!");
   }
 
-  mThreadPool.waitIdle();
+  if (flags.has(ProcessingFlagBits::eParallelSubPassRecording)) {
+    mThreadPool.setThreadCount(0);
+  } else {
+    mThreadPool.setThreadCount(1);
+  }
 
-  // perFrame.mPrimaryCommandBuffer->endRenderPass();
+  for (auto& physicalPass : perFrame.mPhysicalPasses) {
+
+    perFrame.mPrimaryCommandBuffer->beginRenderPass(physicalPass.mRenderPass);
+
+    std::vector<CommandBufferPtr> secondaryCommandBuffers;
+
+    for (size_t i(0); i < physicalPass.mSubPasses.size(); ++i) {
+      auto logicalPass = physicalPass.mSubPasses[i];
+      if (logicalPass->mProcessCallback) {
+        auto commandBuffer = physicalPass.mSubPassCommandBuffers[i];
+        secondaryCommandBuffers.push_back(commandBuffer);
+        mThreadPool.enqueue(
+            [logicalPass, commandBuffer]() { logicalPass->mProcessCallback(commandBuffer); });
+      }
+    }
+
+    mThreadPool.waitIdle();
+
+    perFrame.mPrimaryCommandBuffer->execute(secondaryCommandBuffers);
+
+    perFrame.mPrimaryCommandBuffer->endRenderPass();
+  }
 
   perFrame.mPrimaryCommandBuffer->end();
 
@@ -568,7 +641,7 @@ void FrameGraph::process(uint32_t threadCount) {
 
   mOutputWindow->present(perFrame.mPhysicalResources[mOutputResource].mImage,
       perFrame.mRenderFinishedSemaphore, perFrame.mFrameFinishedFence);
-}
+} // namespace Illusion::Graphics
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

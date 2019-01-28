@@ -9,6 +9,7 @@
 #ifndef ILLUSION_GRAPHICS_RENDER_GRAPH_HPP
 #define ILLUSION_GRAPHICS_RENDER_GRAPH_HPP
 
+#include "../Core/Flags.hpp"
 #include "../Core/NamedObject.hpp"
 #include "../Core/ThreadPool.hpp"
 #include "FrameResource.hpp"
@@ -27,6 +28,7 @@ namespace Illusion::Graphics {
 class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObject {
  public:
   // -----------------------------------------------------------------------------------------------
+
   enum class ResourceSizing { eAbsolute, eRelative };
 
   enum class ResourceAccess {
@@ -38,7 +40,16 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
     eLoadReadWrite
   };
 
+  enum class ProcessingFlagBits {
+    eNone                        = 0,
+    eParallelRenderPassRecording = 1 << 0,
+    eParallelSubPassRecording    = 1 << 1
+  };
+
+  typedef Core::Flags<ProcessingFlagBits> ProcessingFlags;
+
   // -----------------------------------------------------------------------------------------------
+
   class LogicalResource {
    public:
     LogicalResource& setName(std::string const& name);
@@ -97,17 +108,24 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
   };
 
   // -----------------------------------------------------------------------------------------------
+
   struct PhysicalResource {
     BackedImagePtr mImage;
   };
 
   // -----------------------------------------------------------------------------------------------
+
   struct PhysicalPass {
     std::vector<LogicalPass const*> mSubPasses;
     std::vector<LogicalPass const*> mDependencies;
 
+    std::vector<CommandBufferPtr> mSubPassCommandBuffers;
+
+    std::unordered_map<LogicalResource const*, vk::ImageUsageFlags> mResourceUsage;
+
     glm::uvec2    mExtent = glm::uvec2(0);
     RenderPassPtr mRenderPass;
+    std::string   mName;
   };
 
   // -----------------------------------------------------------------------------------------------
@@ -119,7 +137,7 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
   LogicalPass&     createPass();
 
   void setOutput(WindowPtr const& window, LogicalPass const& pass, LogicalResource const& resource);
-  void process(uint32_t threadCount = 8);
+  void process(ProcessingFlags flags = ProcessingFlagBits::eNone);
 
  private:
   bool isDirty() const;
