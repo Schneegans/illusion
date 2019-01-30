@@ -23,8 +23,8 @@ namespace Illusion::Graphics {
 class RenderPass : public Core::StaticCreate<RenderPass>, public Core::NamedObject {
 
  public:
-  struct SubPass {
-    std::vector<uint32_t> mPreSubPasses;
+  struct SubpassInfo {
+    std::vector<uint32_t> mPreSubpasses;
     std::vector<uint32_t> mInputAttachments;
     std::vector<uint32_t> mOutputAttachments;
   };
@@ -38,7 +38,7 @@ class RenderPass : public Core::StaticCreate<RenderPass>, public Core::NamedObje
 
   virtual bool hasDepthAttachment() const;
 
-  void setSubPasses(std::vector<SubPass> const& subPasses);
+  void setSubpasses(std::vector<SubpassInfo> const& subpasses);
 
   virtual glm::uvec2 getExtent() const;
 
@@ -55,9 +55,9 @@ class RenderPass : public Core::StaticCreate<RenderPass>, public Core::NamedObje
   void createRenderPass();
   void createFramebuffer();
 
-  vk::RenderPassPtr    mRenderPass;
-  vk::FramebufferPtr   mFramebuffer;
-  std::vector<SubPass> mSubPasses;
+  vk::RenderPassPtr        mRenderPass;
+  vk::FramebufferPtr       mFramebuffer;
+  std::vector<SubpassInfo> mSubpasses;
 };
 
 } // namespace Illusion::Graphics

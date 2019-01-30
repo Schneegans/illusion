@@ -61,8 +61,8 @@ void RenderPass::addAttachment(BackedImagePtr const& image) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void RenderPass::setSubPasses(std::vector<SubPass> const& subPasses) {
-  mSubPasses        = subPasses;
+void RenderPass::setSubpasses(std::vector<SubpassInfo> const& subpasses) {
+  mSubpasses        = subpasses;
   mAttachmentsDirty = true;
 }
 
@@ -150,7 +150,7 @@ void RenderPass::createRenderPass() {
   }
 
   // create default subpass if none are specified
-  if (mSubPasses.size() == 0) {
+  if (mSubpasses.size() == 0) {
     std::vector<vk::AttachmentReference> colorAttachmentRefs;
     for (size_t i(0); i < attachmentRefs.size(); ++i) {
       if ((int)i != depthStencilAttachmentRef) {
@@ -158,53 +158,53 @@ void RenderPass::createRenderPass() {
       }
     }
 
-    vk::SubpassDescription subPass;
-    subPass.pipelineBindPoint    = vk::PipelineBindPoint::eGraphics;
-    subPass.colorAttachmentCount = static_cast<uint32_t>(colorAttachmentRefs.size());
-    subPass.pColorAttachments    = colorAttachmentRefs.data();
+    vk::SubpassDescription subpass;
+    subpass.pipelineBindPoint    = vk::PipelineBindPoint::eGraphics;
+    subpass.colorAttachmentCount = static_cast<uint32_t>(colorAttachmentRefs.size());
+    subpass.pColorAttachments    = colorAttachmentRefs.data();
 
     if (depthStencilAttachmentRef >= 0) {
-      subPass.pDepthStencilAttachment = &attachmentRefs[depthStencilAttachmentRef];
+      subpass.pDepthStencilAttachment = &attachmentRefs[depthStencilAttachmentRef];
     }
 
     vk::RenderPassCreateInfo info;
     info.attachmentCount = static_cast<uint32_t>(attachments.size());
     info.pAttachments    = attachments.data();
     info.subpassCount    = 1;
-    info.pSubpasses      = &subPass;
+    info.pSubpasses      = &subpass;
 
     mRenderPass = mDevice->createRenderPass(getName(), info);
     return;
   }
 
-  std::vector<vk::SubpassDescription>               subPasses(mSubPasses.size());
-  std::vector<std::vector<vk::AttachmentReference>> inputAttachmentRefs(mSubPasses.size());
-  std::vector<std::vector<vk::AttachmentReference>> outputAttachmentRefs(mSubPasses.size());
+  std::vector<vk::SubpassDescription>               subpasses(mSubpasses.size());
+  std::vector<std::vector<vk::AttachmentReference>> inputAttachmentRefs(mSubpasses.size());
+  std::vector<std::vector<vk::AttachmentReference>> outputAttachmentRefs(mSubpasses.size());
 
-  for (size_t i(0); i < mSubPasses.size(); ++i) {
+  for (size_t i(0); i < mSubpasses.size(); ++i) {
 
-    for (uint32_t attachment : mSubPasses[i].mInputAttachments) {
+    for (uint32_t attachment : mSubpasses[i].mInputAttachments) {
       inputAttachmentRefs[i].push_back(attachmentRefs[attachment]);
     }
 
-    for (auto attachment : mSubPasses[i].mOutputAttachments) {
+    for (auto attachment : mSubpasses[i].mOutputAttachments) {
       if ((int)attachment == depthStencilAttachmentRef) {
-        subPasses[i].pDepthStencilAttachment = &attachmentRefs[depthStencilAttachmentRef];
+        subpasses[i].pDepthStencilAttachment = &attachmentRefs[depthStencilAttachmentRef];
       } else {
         outputAttachmentRefs[i].push_back(attachmentRefs[attachment]);
       }
     }
 
-    subPasses[i].pipelineBindPoint    = vk::PipelineBindPoint::eGraphics;
-    subPasses[i].inputAttachmentCount = static_cast<uint32_t>(inputAttachmentRefs[i].size());
-    subPasses[i].pInputAttachments    = inputAttachmentRefs[i].data();
-    subPasses[i].colorAttachmentCount = static_cast<uint32_t>(outputAttachmentRefs[i].size());
-    subPasses[i].pColorAttachments    = outputAttachmentRefs[i].data();
+    subpasses[i].pipelineBindPoint    = vk::PipelineBindPoint::eGraphics;
+    subpasses[i].inputAttachmentCount = static_cast<uint32_t>(inputAttachmentRefs[i].size());
+    subpasses[i].pInputAttachments    = inputAttachmentRefs[i].data();
+    subpasses[i].colorAttachmentCount = static_cast<uint32_t>(outputAttachmentRefs[i].size());
+    subpasses[i].pColorAttachments    = outputAttachmentRefs[i].data();
   }
 
   std::vector<vk::SubpassDependency> dependencies;
-  for (size_t dst(0); dst < mSubPasses.size(); ++dst) {
-    for (auto src : mSubPasses[dst].mPreSubPasses) {
+  for (size_t dst(0); dst < mSubpasses.size(); ++dst) {
+    for (auto src : mSubpasses[dst].mPreSubpasses) {
       vk::SubpassDependency dependency;
       dependency.srcSubpass    = src;
       dependency.dstSubpass    = static_cast<uint32_t>(dst);
@@ -220,8 +220,8 @@ void RenderPass::createRenderPass() {
   vk::RenderPassCreateInfo info;
   info.attachmentCount = static_cast<uint32_t>(attachments.size());
   info.pAttachments    = attachments.data();
-  info.subpassCount    = static_cast<uint32_t>(subPasses.size());
-  info.pSubpasses      = subPasses.data();
+  info.subpassCount    = static_cast<uint32_t>(subpasses.size());
+  info.pSubpasses      = subpasses.data();
   info.dependencyCount = static_cast<uint32_t>(dependencies.size());
   info.pDependencies   = dependencies.data();
 
