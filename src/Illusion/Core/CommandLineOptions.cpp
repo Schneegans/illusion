@@ -9,6 +9,7 @@
 #include "CommandLineOptions.hpp"
 
 #include "Logger.hpp"
+#include "Utils.hpp"
 
 #include <algorithm>
 #include <iomanip>
@@ -111,7 +112,7 @@ void CommandLineOptions::parse(int argc, char* argv[]) const {
     bool foundOption = false;
 
     for (auto const& option : mOptions) {
-      if (std::find(option.mNames.begin(), option.mNames.end(), name) != option.mNames.end()) {
+      if (Utils::contains(option.mNames, name)) {
         foundOption = true;
 
         // In the case of booleans, there must not be a value present. So if the value is neither

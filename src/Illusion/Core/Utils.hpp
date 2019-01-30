@@ -9,6 +9,7 @@
 #ifndef ILLUSION_CORE_UTILS_HPP
 #define ILLUSION_CORE_UTILS_HPP
 
+#include <algorithm>
 #include <memory>
 #include <vector>
 
@@ -20,6 +21,13 @@ namespace Illusion::Core::Utils {
 template <typename T, typename... Args>
 std::unique_ptr<T> makeUnique(Args&&... args) {
   return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+
+// -------------------------------------------------------------------------------------------------
+
+template <typename T>
+bool contains(T const& container, typename T::value_type const& item) {
+  return std::find(std::begin(container), std::end(container), item) != std::end(container);
 }
 
 // -------------------------------------------------------------------------------------------------
