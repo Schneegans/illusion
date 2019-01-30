@@ -269,8 +269,8 @@ void Swapchain::recreate() {
   mImages = mDevice->getHandle()->getSwapchainImagesKHR(*mSwapchain);
 
   // Transfer Swapchain images from eUndefined to ePresentSrcKHR.
-  auto cmd = std::make_shared<CommandBuffer>("Transition swapchain image layouts", mDevice);
-  cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+  auto cmd = CommandBuffer::create("Transition swapchain image layouts", mDevice);
+  cmd->begin();
   for (auto const& image : mImages) {
     cmd->transitionImageLayout(image, vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR,
         vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTransfer);

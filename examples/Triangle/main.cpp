@@ -42,13 +42,16 @@ int main() {
   renderPass->addAttachment(vk::Format::eR8G8B8A8Unorm);
   renderPass->setExtent(window->pExtent.get());
 
+  // The color our framebuffer attachment will be cleared to.
+  vk::ClearColorValue clearColor(std::array<float, 4>{{0.f, 0.f, 0.f, 0.f}});
+
   // Now create and record the command buffer. In this example we use a pre-recorded command buffer
   // during rendering. Usually you will re-record the command buffer every frame.
   auto cmd = Illusion::Graphics::CommandBuffer::create("CommandBuffer", device);
   cmd->graphicsState().addViewport({glm::vec2(window->pExtent.get())}); // Set the viewport
   cmd->setShader(shader);                                               // Set the shader
-  cmd->begin();                                                         // Begin recording
-  cmd->beginRenderPass(renderPass);                                     // Begin our render pass
+  cmd->begin(vk::CommandBufferUsageFlagBits::eSimultaneousUse);         // Begin recording
+  cmd->beginRenderPass(renderPass, {clearColor});                       // Begin our render pass
   cmd->draw(3);                                                         // Draw three vertices
   cmd->endRenderPass();                                                 // End our render pass
   cmd->end();                                                           // Finish recording

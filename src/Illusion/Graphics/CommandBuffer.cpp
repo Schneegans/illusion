@@ -57,6 +57,13 @@ void CommandBuffer::begin(vk::CommandBufferUsageFlagBits usage) const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void CommandBuffer::begin(
+    vk::CommandBufferInheritanceInfo info, vk::CommandBufferUsageFlagBits usage) const {
+  mVkCmd->begin({usage, &info});
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void CommandBuffer::end() const {
   mVkCmd->end();
 }
@@ -103,7 +110,8 @@ void CommandBuffer::waitIdle() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::beginRenderPass(RenderPassPtr const& renderPass) {
+void CommandBuffer::beginRenderPass(RenderPassPtr const& renderPass,
+    std::vector<vk::ClearValue> const& clearValues, vk::SubpassContents contents) {
   renderPass->init();
 
   vk::RenderPassBeginInfo passInfo;
@@ -112,18 +120,10 @@ void CommandBuffer::beginRenderPass(RenderPassPtr const& renderPass) {
   passInfo.renderArea.offset        = vk::Offset2D(0, 0);
   passInfo.renderArea.extent.width  = renderPass->getExtent().x;
   passInfo.renderArea.extent.height = renderPass->getExtent().y;
+  passInfo.clearValueCount          = static_cast<uint32_t>(clearValues.size());
+  passInfo.pClearValues             = clearValues.data();
 
-  std::vector<vk::ClearValue> clearValues;
-  clearValues.push_back(vk::ClearColorValue(std::array<float, 4>{{0.f, 0.f, 0.f, 0.f}}));
-
-  if (renderPass->hasDepthAttachment()) {
-    clearValues.push_back(vk::ClearDepthStencilValue(1.f, 0u));
-  }
-
-  passInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-  passInfo.pClearValues    = clearValues.data();
-
-  mVkCmd->beginRenderPass(passInfo, vk::SubpassContents::eInline);
+  mVkCmd->beginRenderPass(passInfo, contents);
 
   // Store a pointer to the currently active RenderPass. This is required for later construction of
   // the Pipelines.
@@ -161,6 +161,7 @@ void CommandBuffer::execute(std::vector<CommandBufferPtr> const& secondaries) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::nextSubpass(vk::SubpassContents contents) {
+  ++mCurrentSubPass;
   mVkCmd->nextSubpass(contents);
 }
 

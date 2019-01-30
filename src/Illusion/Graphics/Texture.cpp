@@ -257,7 +257,7 @@ TexturePtr Texture::createCubemapFrom360PanoramaFile(std::string const& name,
   cmd->bindingState().setTexture(panorama, 0, 0);
   cmd->bindingState().setStorageImage(outputCubemap, 0, 1);
 
-  cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+  cmd->begin();
   cmd->setShader(shader);
 
   uint32_t groupCount = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / 16.f));
@@ -379,7 +379,7 @@ TexturePtr Texture::createPrefilteredIrradianceCubemap(std::string const& name,
   cmd->bindingState().setTexture(inputCubemap, 0, 0);
   cmd->bindingState().setStorageImage(outputCubemap, 0, 1);
 
-  cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+  cmd->begin();
   cmd->setShader(shader);
 
   uint32_t groupCount = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / 16.f));
@@ -562,7 +562,7 @@ TexturePtr Texture::createPrefilteredReflectionCubemap(std::string const& name,
   auto cmd = CommandBuffer::create("CommandBuffer for " + name, device, QueueType::eCompute);
   cmd->bindingState().setTexture(inputCubemap, 0, 0);
 
-  cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+  cmd->begin();
   cmd->setShader(shader);
 
   std::vector<vk::ImageViewPtr> mipViews;
@@ -723,7 +723,7 @@ TexturePtr Texture::createBRDFLuT(std::string const& name, DevicePtr const& devi
   auto cmd = CommandBuffer::create("CommandBuffer for " + name, device, QueueType::eCompute);
   cmd->bindingState().setStorageImage(outputImage, 0, 0);
 
-  cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+  cmd->begin();
   cmd->setShader(shader);
 
   uint32_t groupCount = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / 16.f));
@@ -745,7 +745,7 @@ void Texture::updateMipmaps(DevicePtr const& device, TexturePtr const& texture) 
   }
 
   auto cmd = CommandBuffer::create("UpdateMipmaps", device, QueueType::eGeneric);
-  cmd->begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
+  cmd->begin();
 
   vk::ImageSubresourceRange subresourceRange;
   subresourceRange.aspectMask   = vk::ImageAspectFlagBits::eColor;

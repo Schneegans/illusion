@@ -293,7 +293,12 @@ int main(int argc, char* argv[]) {
         glm::lookAt(camera.mPosition.xyz(), glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
     res.mUniformBuffer->addData(camera);
 
-    res.mCmd->beginRenderPass(res.mRenderPass);
+    // The color and depth our framebuffer attachments will be cleared to.
+    std::vector<vk::ClearValue> clearValues;
+    clearValues.push_back(vk::ClearColorValue(std::array<float, 4>{{0.f, 0.f, 0.f, 0.f}}));
+    clearValues.push_back(vk::ClearDepthStencilValue(1.f, 0u));
+
+    res.mCmd->beginRenderPass(res.mRenderPass, clearValues);
 
     res.mCmd->bindingState().setUniformBuffer(
         res.mUniformBuffer->getBuffer(), sizeof(CameraUniforms), 0, 0, 0);

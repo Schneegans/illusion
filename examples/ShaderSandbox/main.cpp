@@ -96,6 +96,9 @@ int main(int argc, char* argv[]) {
     renderPass->setExtent(windowSize);
     cmd->graphicsState().setViewports({{windowSize}});
 
+    // The color our framebuffer attachment will be cleared to.
+    vk::ClearColorValue clearColor(std::array<float, 4>{{0.f, 0.f, 0.f, 0.f}});
+
     // Then record our command buffer. This is basically the same as in the TexturedQuad example.
     // One difference is that we have to reset the command buffer before re-recording it. The other
     // is the call to pushConstants to upload the time and the window's aspect ratio to the GPU.
@@ -104,7 +107,7 @@ int main(int argc, char* argv[]) {
     cmd->setShader(shader);
     cmd->pushConstants(
         std::array<float, 2>{float(timer.getElapsed()), windowSize.x / windowSize.y});
-    cmd->beginRenderPass(renderPass);
+    cmd->beginRenderPass(renderPass, {clearColor});
     cmd->draw(4);
     cmd->endRenderPass();
     cmd->end();

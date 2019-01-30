@@ -210,8 +210,13 @@ int main() {
     // Bind the texture to descriptor set 1
     res.mCmd->bindingState().setTexture(texture, 1, 0);
 
+    // The color and depth our framebuffer attachments will be cleared to.
+    std::vector<vk::ClearValue> clearValues;
+    clearValues.push_back(vk::ClearColorValue(std::array<float, 4>{{0.f, 0.f, 0.f, 0.f}}));
+    clearValues.push_back(vk::ClearDepthStencilValue(1.f, 0u));
+
     // Begin our render pass.
-    res.mCmd->beginRenderPass(res.mRenderPass);
+    res.mCmd->beginRenderPass(res.mRenderPass, clearValues);
 
     // Compute a modelView matrix based on the simulation time (this makes th cube spin). Then
     // upload this matrix via push constants.

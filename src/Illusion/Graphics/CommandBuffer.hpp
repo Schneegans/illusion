@@ -39,9 +39,14 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
   // The current graphics state and the current shader program are not changed.
   void reset();
 
-  // Begins the internal vk::CommandBuffer.
-  void begin(vk::CommandBufferUsageFlagBits usage =
-                 vk::CommandBufferUsageFlagBits::eSimultaneousUse) const;
+  // Begins the internal vk::CommandBuffer. Use this for primary CommandBuffers.
+  void begin(
+      vk::CommandBufferUsageFlagBits usage = vk::CommandBufferUsageFlagBits::eOneTimeSubmit) const;
+
+  // Begins the internal vk::CommandBuffer. Use this for secondary CommandBuffers.
+  void begin(vk::CommandBufferInheritanceInfo info,
+      vk::CommandBufferUsageFlagBits          usage =
+          vk::CommandBufferUsageFlagBits::eRenderPassContinue) const;
 
   // Ends the internal vk::CommandBuffer.
   void end() const;
@@ -58,7 +63,9 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
   void waitIdle() const;
 
   // Stores and begins the given RenderPass.
-  void beginRenderPass(RenderPassPtr const& renderPass);
+  void beginRenderPass(RenderPassPtr const& renderPass,
+      std::vector<vk::ClearValue> const&    clearValues,
+      vk::SubpassContents                   contents = vk::SubpassContents::eInline);
 
   // Ends and releases the current RenderPass.
   void endRenderPass();

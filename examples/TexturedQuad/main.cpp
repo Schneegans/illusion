@@ -69,14 +69,17 @@ int main(int argc, char* argv[]) {
   renderPass->addAttachment(vk::Format::eR8G8B8A8Unorm);
   renderPass->setExtent(window->pExtent.get());
 
+  // The color our framebuffer attachment will be cleared to.
+  vk::ClearColorValue clearColor(std::array<float, 4>{{0.f, 0.f, 0.f, 0.f}});
+
   // And record our command buffer. The only difference to the Triangle example is that the texture
   // is bound to descriptor set 0 at binding location 0.
   auto cmd = Illusion::Graphics::CommandBuffer::create("CommandBuffer", device);
   cmd->graphicsState().addViewport({glm::vec2(window->pExtent.get())});
   cmd->bindingState().setTexture(texture, 0, 0);
-  cmd->begin();
+  cmd->begin(vk::CommandBufferUsageFlagBits::eSimultaneousUse);
   cmd->setShader(shader);
-  cmd->beginRenderPass(renderPass);
+  cmd->beginRenderPass(renderPass, {clearColor});
   cmd->draw(4);
   cmd->endRenderPass();
   cmd->end();
