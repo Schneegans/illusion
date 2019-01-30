@@ -67,6 +67,9 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
   void execute(CommandBufferPtr const& secondary);
   void execute(std::vector<CommandBufferPtr> const& secondaries);
 
+  // Begins the next sub pass
+  void nextSubpass(vk::SubpassContents contents);
+
   // state modification ----------------------------------------------------------------------------
 
   // Read and write access to the current GraphicsState. Changes will not directly affect the
