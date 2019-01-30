@@ -125,6 +125,7 @@ FrameGraph::LogicalPass& FrameGraph::LogicalPass::setName(std::string const& nam
 FrameGraph::LogicalPass& FrameGraph::LogicalPass::setProcessCallback(
     std::function<void(CommandBufferPtr)> const& callback) {
   mProcessCallback = callback;
+  mDirty           = true;
   return *this;
 }
 
@@ -290,7 +291,7 @@ void FrameGraph::process(ProcessingFlags flags) {
       // And create a PhysicalPass for it. We store the extent of the pass for easier later access.
       // Due to the previous graph validation we are sure that all resources have the same
       // resolution.
-      PhysicalPass physicalPass({{logicalPass}});
+      PhysicalPass physicalPass({{{logicalPass}}});
       for (auto const& resource : logicalPass->mLogicalResources) {
         physicalPass.mExtent = resource.first->getAbsoluteExtent(mOutputWindow->pExtent.get());
         break;
@@ -347,12 +348,12 @@ void FrameGraph::process(ProcessingFlags flags) {
               // all entries referencing the same pass.
               passQueue.remove(&(*previousPass));
               passQueue.push_back(&(*previousPass));
-              physicalPass.mDependencies.push_back(&(*previousPass));
+              physicalPass.mSubpasses[0].mDependencies.insert(&(*previousPass));
 
               Core::Logger::debug()
                   << "      is written by pass \"" + previousPass->mName + "\"." << std::endl;
             }
-          } else if (physicalPass.mDependencies.size() == 0) {
+          } else if (physicalPass.mSubpasses[0].mDependencies.size() == 0) {
             if (r.second.mAccess == ResourceAccess::eWriteOnly) {
               Core::Logger::debug() << "      is created by this pass." << std::endl;
             } else {
@@ -374,7 +375,7 @@ void FrameGraph::process(ProcessingFlags flags) {
     // Print some debugging information.
     Core::Logger::debug() << "  Logical pass execution order will be" << std::endl;
     for (auto const& p : perFrame.mPhysicalPasses) {
-      Core::Logger::debug() << "    Pass " << p.mSubPasses[0]->mName << std::endl;
+      Core::Logger::debug() << "    Pass " << p.mSubpasses[0].mLogicalPass->mName << std::endl;
     }
 
     // Merge adjacent PhysicalPasses which can be executed as sub passes ---------------------------
@@ -387,7 +388,7 @@ void FrameGraph::process(ProcessingFlags flags) {
 
       // Keep a reference to the current depth attachment. This may be nullptr, in this case we
       // accept any depth attachment of the candidates.
-      auto currentDepthAttachment = current->mSubPasses[0]->getDepthAttachment();
+      auto currentDepthAttachment = current->mSubpasses[0].mLogicalPass->getDepthAttachment();
 
       // Now look for merge candidates. We start with the next pass.
       auto candidate = current;
@@ -396,7 +397,7 @@ void FrameGraph::process(ProcessingFlags flags) {
       while (candidate != perFrame.mPhysicalPasses.end()) {
         // For each candidate, the depth attachment must be the same as the current passes depth
         // attachment. Or either may be nullptr.
-        auto candidateDepthAttachment = candidate->mSubPasses[0]->getDepthAttachment();
+        auto candidateDepthAttachment = candidate->mSubpasses[0].mLogicalPass->getDepthAttachment();
         bool sameDepthAttachment      = currentDepthAttachment == nullptr ||
                                    candidateDepthAttachment == nullptr ||
                                    candidateDepthAttachment == currentDepthAttachment;
@@ -405,17 +406,22 @@ void FrameGraph::process(ProcessingFlags flags) {
         bool extentMatches = candidate->mExtent == current->mExtent;
 
         // And all dependencies of the candidate must be satisfied. That means all dependencies of
-        // the candidate must either be dependencies of the current pass as well or they have to be
-        // sub passes of the current pass.
+        // the candidate must either be dependencies of the first sub-pass of the current physical
+        // pass or they must be a sub-pass of the current physical pass.
         bool dependenciesSatisfied = true;
-        for (auto const& dependency : candidate->mDependencies) {
-          bool isDependencyOfCurrent =
-              std::find(current->mDependencies.begin(), current->mDependencies.end(), dependency) !=
-              current->mDependencies.end();
-          bool isSubPassOfCurrent =
-              std::find(current->mSubPasses.begin(), current->mSubPasses.end(), dependency) !=
-              current->mSubPasses.end();
-          if (!isDependencyOfCurrent && !isSubPassOfCurrent) {
+
+        for (auto const& d : candidate->mSubpasses[0].mDependencies) {
+          bool isDependencyOfFirst = Core::Utils::contains(current->mSubpasses[0].mDependencies, d);
+
+          bool isSubpassOfCurrent = false;
+          for (auto const& subpass : current->mSubpasses) {
+            if (subpass.mLogicalPass == d) {
+              isSubpassOfCurrent = true;
+              break;
+            }
+          }
+
+          if (!isDependencyOfFirst && !isSubpassOfCurrent) {
             dependenciesSatisfied = false;
             break;
           }
@@ -425,7 +431,7 @@ void FrameGraph::process(ProcessingFlags flags) {
         // PhysicalPass. If the current depth attachment has been nullptr, we can now use the depth
         // attachment of the candidate for further candidate checks.
         if (extentMatches && sameDepthAttachment && dependenciesSatisfied) {
-          current->mSubPasses.push_back(candidate->mSubPasses[0]);
+          current->mSubpasses.push_back(candidate->mSubpasses[0]);
 
           if (!currentDepthAttachment) {
             currentDepthAttachment = candidateDepthAttachment;
@@ -447,13 +453,13 @@ void FrameGraph::process(ProcessingFlags flags) {
     // Assign a name to each PhysicalPass to allow for descriptive error / warning / debug output.
     uint32_t counter = 0;
     for (auto& pass : perFrame.mPhysicalPasses) {
-      std::vector<std::string> subPassNames;
-      for (auto const& subPass : pass.mSubPasses) {
-        subPassNames.push_back("\"" + subPass->mName + "\"");
+      std::vector<std::string> subpassNames;
+      for (auto const& subpass : pass.mSubpasses) {
+        subpassNames.push_back("\"" + subpass.mLogicalPass->mName + "\"");
       }
 
       pass.mName = "RenderPass " + std::to_string(counter++) + " (" +
-                   Core::Utils::joinStrings(subPassNames, ", ", " and ") + ")";
+                   Core::Utils::joinStrings(subpassNames, ", ", " and ") + ")";
     }
 
     // Print some debugging information.
@@ -464,31 +470,31 @@ void FrameGraph::process(ProcessingFlags flags) {
 
     // Identify resource usage per PhysicalPass ----------------------------------------------------
 
-    // For each physical pass we will collect information on how the individual resources are used.
-    // This information is stored in the mResourceUsage member of the PhysicalPass.
+    // For each sub-pass we will collect information on how the individual resources are used.
+    // This information is stored in the mResourceUsage member of the PhysicalPass::Subpass.
     for (auto& pass : perFrame.mPhysicalPasses) {
-      for (auto const& subPass : pass.mSubPasses) {
-        for (auto const& r : subPass->mLogicalResources) {
+      for (auto& subpass : pass.mSubpasses) {
+        for (auto const& r : subpass.mLogicalPass->mLogicalResources) {
           switch (r.second.mAccess) {
           case ResourceAccess::eReadOnly:
-            pass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eInputAttachment;
+            subpass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eInputAttachment;
             break;
           case ResourceAccess::eLoad:
           case ResourceAccess::eWriteOnly:
           case ResourceAccess::eLoadWrite:
             if (r.first->isColorResource()) {
-              pass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eColorAttachment;
+              subpass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eColorAttachment;
             } else if (r.first->isDepthResource()) {
-              pass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
+              subpass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
             }
             break;
           case ResourceAccess::eReadWrite:
           case ResourceAccess::eLoadReadWrite:
-            pass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eInputAttachment;
+            subpass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eInputAttachment;
             if (r.first->isColorResource()) {
-              pass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eColorAttachment;
+              subpass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eColorAttachment;
             } else if (r.first->isDepthResource()) {
-              pass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
+              subpass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
             }
             break;
           }
@@ -506,8 +512,10 @@ void FrameGraph::process(ProcessingFlags flags) {
     // For each resource we will accumulate the vk::ImageUsageFlagBits.
     std::unordered_map<LogicalResource const*, vk::ImageUsageFlags> resourceUsage;
     for (auto& pass : perFrame.mPhysicalPasses) {
-      for (auto const& resource : pass.mResourceUsage) {
-        resourceUsage[resource.first] |= resource.second;
+      for (auto& subpass : pass.mSubpasses) {
+        for (auto const& resource : subpass.mResourceUsage) {
+          resourceUsage[resource.first] |= resource.second;
+        }
       }
     }
 
@@ -550,32 +558,81 @@ void FrameGraph::process(ProcessingFlags flags) {
 
     // Create a RenderPass for each PhysicalPass ---------------------------------------------------
 
-    // For each PhysicalPass we will create a RenderPass, attach the PhysicalResources we cjust
-    // created and setup the sub passes.
+    // For each PhysicalPass we will create a RenderPass, attach the PhysicalResources we just
+    // created and setup the sub-passes.
     for (auto& pass : perFrame.mPhysicalPasses) {
 
       // First we have to create an "empty" RenderPass.
       pass.mRenderPass = RenderPass::create(pass.mName, mDevice);
 
-      // Then we have to collect all PhysicalResources which are required for this pass. We use a
-      // unordered_set here to remove duplicates.
-      std::unordered_set<PhysicalResource const*> passResources;
-      for (auto const& subPass : pass.mSubPasses) {
-        for (auto const& resource : subPass->mLogicalResources) {
-          passResources.insert(&perFrame.mPhysicalResources[resource.first]);
+      // Then we have to collect all PhysicalResources which are required for this pass. We could
+      // use a std::unordered_set here to remove duplicates, but we would like to have a predictable
+      // order of attachments so we rather go for a std::vector and check for duplicates ourselves.
+      std::vector<PhysicalResource const*> resources;
+
+      // At the same time we setup the SubpassInfo structures for the RenderPass. These contain
+      // information on the dependencies between sub-passes and their resource usage.
+      std::vector<RenderPass::SubpassInfo> subpassInfos;
+
+      for (auto const& subpass : pass.mSubpasses) {
+        RenderPass::SubpassInfo subpassInfo;
+
+        for (auto const& resource : subpass.mLogicalPass->mLogicalResources) {
+
+          // Add the resource to the resources vector. The content of the resources vector will be
+          // the order of attachments of our framebuffer in the end.
+          auto physicalResource = &perFrame.mPhysicalResources[resource.first];
+          auto resourceIt       = std::find(resources.begin(), resources.end(), physicalResource);
+          if (resourceIt == resources.end()) {
+            resources.push_back(physicalResource);
+            resourceIt = resources.end() - 1;
+          }
+
+          // We calculate the index of the current resource and, depending on the usage, add this
+          // index either as input attachment, as output attachment or as both to our SubpassInfo
+          // structure.
+          uint32_t resourceIdx = std::distance(resources.begin(), resourceIt);
+
+          if (resource.second.mAccess == ResourceAccess::eReadOnly ||
+              resource.second.mAccess == ResourceAccess::eReadWrite ||
+              resource.second.mAccess == ResourceAccess::eLoadReadWrite) {
+            subpassInfo.mInputAttachments.push_back(resourceIdx);
+          }
+
+          if (resource.second.mAccess == ResourceAccess::eWriteOnly ||
+              resource.second.mAccess == ResourceAccess::eReadWrite ||
+              resource.second.mAccess == ResourceAccess::eLoad ||
+              resource.second.mAccess == ResourceAccess::eLoadWrite ||
+              resource.second.mAccess == ResourceAccess::eLoadReadWrite) {
+            subpassInfo.mOutputAttachments.push_back(resourceIdx);
+          }
         }
+
+        // Now we have to setup the sub-pass dependencies for our RenderPass. That means for each
+        // dependency of the current sub-pass we will check whether this is actually part of the
+        // same RenderPass. If so, that dependency is a sub-pass dependency.
+        for (auto dependency : subpass.mDependencies) {
+          for (size_t i(0); i < pass.mSubpasses.size(); ++i) {
+            if (dependency == pass.mSubpasses[i].mLogicalPass) {
+              subpassInfo.mPreSubpasses.push_back(i);
+            }
+          }
+        }
+
+        subpassInfos.push_back(subpassInfo);
       }
 
-      // Then we can add those resources to our RenderPass.
+      // Then we can add the collected resources to our RenderPass as attachments.
       Core::Logger::debug() << "  Adding attachments to " << pass.mRenderPass->getName()
                             << std::endl;
 
-      for (auto passResource : passResources) {
+      for (auto passResource : resources) {
         Core::Logger::debug() << "    " << passResource->mImage->mName << std::endl;
         pass.mRenderPass->addAttachment(passResource->mImage);
       }
 
-      // Now we have to setup the sub passes.
+      // And set the sub-pass info structures.
+      pass.mRenderPass->setSubpasses(subpassInfos);
     }
 
     // Create a secondary CommandBuffer for each LogicalPass ---------------------------------------
@@ -583,9 +640,9 @@ void FrameGraph::process(ProcessingFlags flags) {
     // Since LogicalPasses can be recorded in parallel, we need separate secondary CommandBuffers
     // for each one.
     for (auto& pass : perFrame.mPhysicalPasses) {
-      for (auto const& subPass : pass.mSubPasses) {
-        pass.mSubPassCommandBuffers.push_back(CommandBuffer::create(
-            subPass->mName, mDevice, QueueType::eGeneric, vk::CommandBufferLevel::eSecondary));
+      for (auto& subpass : pass.mSubpasses) {
+        subpass.mSecondaryCommandBuffer = CommandBuffer::create(subpass.mLogicalPass->mName,
+            mDevice, QueueType::eGeneric, vk::CommandBufferLevel::eSecondary);
       }
     }
 
@@ -606,31 +663,31 @@ void FrameGraph::process(ProcessingFlags flags) {
     throw std::runtime_error("Parallel RenderPass recording is not implemented yet!");
   }
 
-  if (flags.has(ProcessingFlagBits::eParallelSubPassRecording)) {
+  if (flags.has(ProcessingFlagBits::eParallelSubpassRecording)) {
     mThreadPool.setThreadCount(0);
   } else {
     mThreadPool.setThreadCount(1);
   }
 
-  for (auto& physicalPass : perFrame.mPhysicalPasses) {
+  for (auto& pass : perFrame.mPhysicalPasses) {
 
-    perFrame.mPrimaryCommandBuffer->beginRenderPass(physicalPass.mRenderPass);
+    perFrame.mPrimaryCommandBuffer->beginRenderPass(pass.mRenderPass);
 
-    std::vector<CommandBufferPtr> secondaryCommandBuffers;
-
-    for (size_t i(0); i < physicalPass.mSubPasses.size(); ++i) {
-      auto logicalPass = physicalPass.mSubPasses[i];
-      if (logicalPass->mProcessCallback) {
-        auto commandBuffer = physicalPass.mSubPassCommandBuffers[i];
-        secondaryCommandBuffers.push_back(commandBuffer);
-        mThreadPool.enqueue(
-            [logicalPass, commandBuffer]() { logicalPass->mProcessCallback(commandBuffer); });
-      }
+    for (auto const& subpass : pass.mSubpasses) {
+      mThreadPool.enqueue(
+          [subpass]() { subpass.mLogicalPass->mProcessCallback(subpass.mSecondaryCommandBuffer); });
     }
 
     mThreadPool.waitIdle();
 
-    perFrame.mPrimaryCommandBuffer->execute(secondaryCommandBuffers);
+    uint32_t counter = 0;
+    for (auto const& subpass : pass.mSubpasses) {
+      perFrame.mPrimaryCommandBuffer->execute(subpass.mSecondaryCommandBuffer);
+
+      if (++counter < perFrame.mPhysicalPasses.size()) {
+        perFrame.mPrimaryCommandBuffer->nextSubpass(vk::SubpassContents::eSecondaryCommandBuffers);
+      }
+    }
 
     perFrame.mPrimaryCommandBuffer->endRenderPass();
   }
@@ -641,7 +698,7 @@ void FrameGraph::process(ProcessingFlags flags) {
 
   mOutputWindow->present(perFrame.mPhysicalResources[mOutputResource].mImage,
       perFrame.mRenderFinishedSemaphore, perFrame.mFrameFinishedFence);
-} // namespace Illusion::Graphics
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -758,6 +815,13 @@ void FrameGraph::validate() const {
         throw std::runtime_error(
             "Attachments of pass \"" + pass.mName + "\" do not have the same size!");
       }
+    }
+  }
+
+  // Check whether each pass actually has a process-callback.
+  for (auto const& pass : mLogicalPasses) {
+    if (!pass.mProcessCallback) {
+      throw std::runtime_error("Pass \"" + pass.mName + "\" has no process-callback set!");
     }
   }
 

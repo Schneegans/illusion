@@ -19,6 +19,7 @@
 #include <list>
 #include <optional>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace Illusion::Graphics {
 
@@ -43,7 +44,7 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
   enum class ProcessingFlagBits {
     eNone                        = 0,
     eParallelRenderPassRecording = 1 << 0,
-    eParallelSubPassRecording    = 1 << 1
+    eParallelSubpassRecording    = 1 << 1
   };
 
   typedef Core::Flags<ProcessingFlagBits> ProcessingFlags;
@@ -116,16 +117,17 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
   // -----------------------------------------------------------------------------------------------
 
   struct PhysicalPass {
-    std::vector<LogicalPass const*> mSubPasses;
-    std::vector<LogicalPass const*> mDependencies;
+    struct Subpass {
+      LogicalPass const*                                              mLogicalPass;
+      CommandBufferPtr                                                mSecondaryCommandBuffer;
+      std::unordered_set<LogicalPass const*>                          mDependencies;
+      std::unordered_map<LogicalResource const*, vk::ImageUsageFlags> mResourceUsage;
+    };
 
-    std::vector<CommandBufferPtr> mSubPassCommandBuffers;
-
-    std::unordered_map<LogicalResource const*, vk::ImageUsageFlags> mResourceUsage;
-
-    glm::uvec2    mExtent = glm::uvec2(0);
-    RenderPassPtr mRenderPass;
-    std::string   mName;
+    std::vector<Subpass> mSubpasses;
+    glm::uvec2           mExtent = glm::uvec2(0);
+    RenderPassPtr        mRenderPass;
+    std::string          mName;
   };
 
   // -----------------------------------------------------------------------------------------------
