@@ -49,9 +49,7 @@ int main(int argc, char* argv[]) {
     .assignResource(normal, clearColor)
     .assignResource(depth, clearDepth)
     .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
-      cmd->begin();
       Illusion::Core::Logger::message() << "Record gbuffer pass!" << std::endl;
-      cmd->end();
     });
 
   auto& lighting = graph->createPass()
@@ -61,9 +59,7 @@ int main(int argc, char* argv[]) {
     .assignResource(depth, Access::eReadOnly)
     .assignResource(hdr, Access::eWriteOnly)
     .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
-      cmd->begin();
       Illusion::Core::Logger::message() << "Record lighting pass!" << std::endl;
-      cmd->end();
     });
 
   auto& transparencies = graph->createPass()
@@ -71,18 +67,14 @@ int main(int argc, char* argv[]) {
     .assignResource(depth, Access::eLoad)
     .assignResource(hdr, Access::eLoadWrite)
     .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
-      cmd->begin();
       Illusion::Core::Logger::message() << "Record transparencies pass!" << std::endl;
-      cmd->end();
     });
 
   auto& tonemapping = graph->createPass()
     .setName("tonemapping")
     .assignResource(hdr, Access::eReadWrite)
     .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
-      cmd->begin();
       Illusion::Core::Logger::message() << "Record tonemapping pass!" << std::endl;
-      cmd->end();
     });
   // clang-format on
 
@@ -108,7 +100,8 @@ int main(int argc, char* argv[]) {
     index->step();
 
     try {
-      graph->process(Illusion::Graphics::FrameGraph::ProcessingFlagBits::eParallelSubpassRecording);
+      graph->process();
+      // graph->process(Illusion::Graphics::FrameGraph::ProcessingFlagBits::eParallelSubpassRecording);
     } catch (std::runtime_error const& e) {
       Illusion::Core::Logger::error() << e.what() << std::endl;
     }

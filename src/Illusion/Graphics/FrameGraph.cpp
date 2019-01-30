@@ -47,7 +47,7 @@ FrameGraph::LogicalResource& FrameGraph::LogicalResource::setSizing(ResourceSizi
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-FrameGraph::LogicalResource& FrameGraph::LogicalResource::setExtent(glm::uvec2 const& extent) {
+FrameGraph::LogicalResource& FrameGraph::LogicalResource::setExtent(glm::vec2 const& extent) {
   mExtent = extent;
   mDirty  = true;
   return *this;
@@ -87,14 +87,7 @@ bool FrameGraph::LogicalResource::isColorResource() const {
 
 FrameGraph::LogicalPass& FrameGraph::LogicalPass::assignResource(
     LogicalResource const& resource, ResourceAccess access) {
-
-  try {
-    assignResource(resource, access, {});
-  } catch (std::runtime_error const& e) {
-    throw std::runtime_error("Failed to add resource \"" + resource.mName +
-                             "\" to frame graph pass \"" + mName + "\": " + e.what());
-  }
-
+  assignResource(resource, access, {});
   return *this;
 }
 
@@ -102,14 +95,7 @@ FrameGraph::LogicalPass& FrameGraph::LogicalPass::assignResource(
 
 FrameGraph::LogicalPass& FrameGraph::LogicalPass::assignResource(
     LogicalResource const& resource, vk::ClearValue const& clear) {
-
-  try {
-    assignResource(resource, ResourceAccess::eWriteOnly, clear);
-  } catch (std::runtime_error const& e) {
-    throw std::runtime_error("Failed to add resource \"" + resource.mName +
-                             "\" to frame graph pass \"" + mName + "\": " + e.what());
-  }
-
+  assignResource(resource, ResourceAccess::eWriteOnly, clear);
   return *this;
 }
 
@@ -146,16 +132,25 @@ void FrameGraph::LogicalPass::assignResource(LogicalResource const& resource, Re
     std::optional<vk::ClearValue> const& clear) {
   // We cannot add the same resource twice.
   if (mLogicalResources.find(&resource) != mLogicalResources.end()) {
-    throw std::runtime_error("Resource has already been added to this pass!");
+    throw std::runtime_error("Failed to add resource \"" + resource.mName +
+                             "\" to frame graph pass \"" + mName +
+                             "\": Resource has already been added to this pass!");
   }
 
   // We cannot add multiple depth attachments.
   if (resource.isDepthResource() && getDepthAttachment() != nullptr) {
-    throw std::runtime_error("Pass already has a depth attachment!");
+    throw std::runtime_error("Failed to add resource \"" + resource.mName +
+                             "\" to frame graph pass \"" + mName +
+                             "\": Pass already has a depth attachment!");
   }
 
-  mLogicalResources[&resource] = {access, clear};
-  mDirty                       = true;
+  mLogicalResources[&resource] = access;
+
+  if (clear) {
+    mClearValues[&resource] = *clear;
+  }
+
+  mDirty = true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -334,13 +329,13 @@ void FrameGraph::process(ProcessingFlags flags) {
           //   * we use it as write-only: This is alright, we are "creating" the resource
           //   * we want to read from the resource. This is an error.
           if (previousPass != mLogicalPasses.rend()) {
-            if (r.second.mAccess == ResourceAccess::eWriteOnly) {
+            if (r.second == ResourceAccess::eWriteOnly) {
               throw std::runtime_error("Frame graph construction failed: Write-only output \"" +
                                        r.first->mName + "\" of pass \"" + logicalPass->mName +
                                        "\" is used by the preceding pass \"" + previousPass->mName +
                                        "\"!");
-            } else if (previousUse->second.mAccess == ResourceAccess::eReadOnly ||
-                       previousUse->second.mAccess == ResourceAccess::eLoad) {
+            } else if (previousUse->second == ResourceAccess::eReadOnly ||
+                       previousUse->second == ResourceAccess::eLoad) {
               Core::Logger::debug()
                   << "      is read-only in pass \"" + previousPass->mName + "\"." << std::endl;
             } else {
@@ -354,7 +349,7 @@ void FrameGraph::process(ProcessingFlags flags) {
                   << "      is written by pass \"" + previousPass->mName + "\"." << std::endl;
             }
           } else if (physicalPass.mSubpasses[0].mDependencies.size() == 0) {
-            if (r.second.mAccess == ResourceAccess::eWriteOnly) {
+            if (r.second == ResourceAccess::eWriteOnly) {
               Core::Logger::debug() << "      is created by this pass." << std::endl;
             } else {
               throw std::runtime_error("Frame graph construction failed: Input \"" +
@@ -475,7 +470,7 @@ void FrameGraph::process(ProcessingFlags flags) {
     for (auto& pass : perFrame.mPhysicalPasses) {
       for (auto& subpass : pass.mSubpasses) {
         for (auto const& r : subpass.mLogicalPass->mLogicalResources) {
-          switch (r.second.mAccess) {
+          switch (r.second) {
           case ResourceAccess::eReadOnly:
             subpass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eInputAttachment;
             break;
@@ -499,6 +494,15 @@ void FrameGraph::process(ProcessingFlags flags) {
             break;
           }
         }
+      }
+    }
+
+    // Similarly, we collect the clear-values for each resource. This information is required when
+    // we begin the RenderPass later.
+    for (auto& pass : perFrame.mPhysicalPasses) {
+      for (auto const& subpass : pass.mSubpasses) {
+        pass.mClearValues.insert(
+            subpass.mLogicalPass->mClearValues.begin(), subpass.mLogicalPass->mClearValues.end());
       }
     }
 
@@ -565,11 +569,10 @@ void FrameGraph::process(ProcessingFlags flags) {
       // First we have to create an "empty" RenderPass.
       pass.mRenderPass = RenderPass::create(pass.mName, mDevice);
 
-      // Then we have to collect all PhysicalResources which are required for this pass. We could
-      // use a std::unordered_set here to remove duplicates, but we would like to have a predictable
-      // order of attachments so we rather go for a std::vector and check for duplicates ourselves.
-      std::vector<PhysicalResource const*> resources;
-
+      // Then we have to collect all PhysicalResources which are required for this pass in the
+      // mAttachments vector of each PhysicalPass. We could use a std::unordered_set here to remove
+      // duplicates, but we would like to have a predictable order of attachments so we rather go
+      // for a std::vector and check for duplicates ourselves.
       // At the same time we setup the SubpassInfo structures for the RenderPass. These contain
       // information on the dependencies between sub-passes and their resource usage.
       std::vector<RenderPass::SubpassInfo> subpassInfos;
@@ -581,29 +584,29 @@ void FrameGraph::process(ProcessingFlags flags) {
 
           // Add the resource to the resources vector. The content of the resources vector will be
           // the order of attachments of our framebuffer in the end.
-          auto physicalResource = &perFrame.mPhysicalResources[resource.first];
-          auto resourceIt       = std::find(resources.begin(), resources.end(), physicalResource);
-          if (resourceIt == resources.end()) {
-            resources.push_back(physicalResource);
-            resourceIt = resources.end() - 1;
+          auto resourceIt =
+              std::find(pass.mAttachments.begin(), pass.mAttachments.end(), resource.first);
+          if (resourceIt == pass.mAttachments.end()) {
+            pass.mAttachments.push_back(resource.first);
+            resourceIt = pass.mAttachments.end() - 1;
           }
 
           // We calculate the index of the current resource and, depending on the usage, add this
           // index either as input attachment, as output attachment or as both to our SubpassInfo
           // structure.
-          uint32_t resourceIdx = std::distance(resources.begin(), resourceIt);
+          uint32_t resourceIdx = std::distance(pass.mAttachments.begin(), resourceIt);
 
-          if (resource.second.mAccess == ResourceAccess::eReadOnly ||
-              resource.second.mAccess == ResourceAccess::eReadWrite ||
-              resource.second.mAccess == ResourceAccess::eLoadReadWrite) {
+          if (resource.second == ResourceAccess::eReadOnly ||
+              resource.second == ResourceAccess::eReadWrite ||
+              resource.second == ResourceAccess::eLoadReadWrite) {
             subpassInfo.mInputAttachments.push_back(resourceIdx);
           }
 
-          if (resource.second.mAccess == ResourceAccess::eWriteOnly ||
-              resource.second.mAccess == ResourceAccess::eReadWrite ||
-              resource.second.mAccess == ResourceAccess::eLoad ||
-              resource.second.mAccess == ResourceAccess::eLoadWrite ||
-              resource.second.mAccess == ResourceAccess::eLoadReadWrite) {
+          if (resource.second == ResourceAccess::eWriteOnly ||
+              resource.second == ResourceAccess::eReadWrite ||
+              resource.second == ResourceAccess::eLoad ||
+              resource.second == ResourceAccess::eLoadWrite ||
+              resource.second == ResourceAccess::eLoadReadWrite) {
             subpassInfo.mOutputAttachments.push_back(resourceIdx);
           }
         }
@@ -626,9 +629,10 @@ void FrameGraph::process(ProcessingFlags flags) {
       Core::Logger::debug() << "  Adding attachments to " << pass.mRenderPass->getName()
                             << std::endl;
 
-      for (auto passResource : resources) {
-        Core::Logger::debug() << "    " << passResource->mImage->mName << std::endl;
-        pass.mRenderPass->addAttachment(passResource->mImage);
+      for (auto passResource : pass.mAttachments) {
+        auto physicalResource = &perFrame.mPhysicalResources[passResource];
+        Core::Logger::debug() << "    " << physicalResource->mImage->mName << std::endl;
+        pass.mRenderPass->addAttachment(physicalResource->mImage);
       }
 
       // And set the sub-pass info structures.
@@ -669,22 +673,41 @@ void FrameGraph::process(ProcessingFlags flags) {
     mThreadPool.setThreadCount(1);
   }
 
-  for (auto& pass : perFrame.mPhysicalPasses) {
+  for (auto const& pass : perFrame.mPhysicalPasses) {
 
-    perFrame.mPrimaryCommandBuffer->beginRenderPass(pass.mRenderPass);
+    std::vector<vk::ClearValue> clearValues;
+    for (auto attachment : pass.mAttachments) {
+      if (pass.mClearValues.find(attachment) != pass.mClearValues.end()) {
+        clearValues.push_back(pass.mClearValues.at(attachment));
+      } else {
+        clearValues.push_back({});
+      }
+    }
 
+    perFrame.mPrimaryCommandBuffer->beginRenderPass(
+        pass.mRenderPass, clearValues, vk::SubpassContents::eSecondaryCommandBuffers);
+
+    uint32_t subpassCounter = 0;
     for (auto const& subpass : pass.mSubpasses) {
-      mThreadPool.enqueue(
-          [subpass]() { subpass.mLogicalPass->mProcessCallback(subpass.mSecondaryCommandBuffer); });
+      mThreadPool.enqueue([pass, subpass, subpassCounter]() {
+        vk::CommandBufferInheritanceInfo info;
+        info.subpass     = subpassCounter;
+        info.renderPass  = *pass.mRenderPass->getHandle();
+        info.framebuffer = *pass.mRenderPass->getFramebuffer();
+        subpass.mSecondaryCommandBuffer->begin(info);
+        subpass.mLogicalPass->mProcessCallback(subpass.mSecondaryCommandBuffer);
+        subpass.mSecondaryCommandBuffer->end();
+      });
+      ++subpassCounter;
     }
 
     mThreadPool.waitIdle();
 
-    uint32_t counter = 0;
+    subpassCounter = 0;
     for (auto const& subpass : pass.mSubpasses) {
       perFrame.mPrimaryCommandBuffer->execute(subpass.mSecondaryCommandBuffer);
 
-      if (++counter < perFrame.mPhysicalPasses.size()) {
+      if (++subpassCounter < pass.mSubpasses.size()) {
         perFrame.mPrimaryCommandBuffer->nextSubpass(vk::SubpassContents::eSecondaryCommandBuffers);
       }
     }

@@ -28,8 +28,6 @@ namespace Illusion::Graphics {
 
 class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObject {
  public:
-  // -----------------------------------------------------------------------------------------------
-
   enum class ResourceSizing { eAbsolute, eRelative };
 
   enum class ResourceAccess {
@@ -56,7 +54,7 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
     LogicalResource& setName(std::string const& name);
     LogicalResource& setFormat(vk::Format format);
     LogicalResource& setSizing(ResourceSizing sizing);
-    LogicalResource& setExtent(glm::uvec2 const& extent);
+    LogicalResource& setExtent(glm::vec2 const& extent);
     LogicalResource& setSamples(vk::SampleCountFlagBits const& samples);
 
     glm::uvec2 getAbsoluteExtent(glm::uvec2 const& windowExtent) const;
@@ -95,39 +93,13 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
     void assignResource(LogicalResource const& resource, ResourceAccess access,
         std::optional<vk::ClearValue> const& clear);
 
-    struct Info {
-      ResourceAccess                mAccess;
-      std::optional<vk::ClearValue> mClear;
-    };
-
-    std::unordered_map<LogicalResource const*, Info> mLogicalResources;
-    std::string                                      mName = "Unnamed Pass";
-    std::function<void(CommandBufferPtr)>            mProcessCallback;
+    std::unordered_map<LogicalResource const*, ResourceAccess> mLogicalResources;
+    std::unordered_map<LogicalResource const*, vk::ClearValue> mClearValues;
+    std::function<void(CommandBufferPtr)>                      mProcessCallback;
+    std::string                                                mName = "Unnamed Pass";
 
     // this is directly accessed by the FrameGraph
     bool mDirty = true;
-  };
-
-  // -----------------------------------------------------------------------------------------------
-
-  struct PhysicalResource {
-    BackedImagePtr mImage;
-  };
-
-  // -----------------------------------------------------------------------------------------------
-
-  struct PhysicalPass {
-    struct Subpass {
-      LogicalPass const*                                              mLogicalPass;
-      CommandBufferPtr                                                mSecondaryCommandBuffer;
-      std::unordered_set<LogicalPass const*>                          mDependencies;
-      std::unordered_map<LogicalResource const*, vk::ImageUsageFlags> mResourceUsage;
-    };
-
-    std::vector<Subpass> mSubpasses;
-    glm::uvec2           mExtent = glm::uvec2(0);
-    RenderPassPtr        mRenderPass;
-    std::string          mName;
   };
 
   // -----------------------------------------------------------------------------------------------
@@ -142,9 +114,30 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
   void process(ProcessingFlags flags = ProcessingFlagBits::eNone);
 
  private:
-  bool isDirty() const;
-  void clearDirty();
-  void validate() const;
+  // -----------------------------------------------------------------------------------------------
+  struct PhysicalResource {
+    BackedImagePtr mImage;
+  };
+
+  // -----------------------------------------------------------------------------------------------
+
+  struct PhysicalPass {
+    struct Subpass {
+      LogicalPass const*                                              mLogicalPass;
+      CommandBufferPtr                                                mSecondaryCommandBuffer;
+      std::unordered_set<LogicalPass const*>                          mDependencies;
+      std::unordered_map<LogicalResource const*, vk::ImageUsageFlags> mResourceUsage;
+    };
+
+    std::vector<Subpass>                                       mSubpasses;
+    std::vector<LogicalResource const*>                        mAttachments;
+    std::unordered_map<LogicalResource const*, vk::ClearValue> mClearValues;
+    glm::uvec2                                                 mExtent = glm::uvec2(0);
+    RenderPassPtr                                              mRenderPass;
+    std::string                                                mName;
+  };
+
+  // -----------------------------------------------------------------------------------------------
 
   struct PerFrame {
     CommandBufferPtr mPrimaryCommandBuffer;
@@ -156,17 +149,24 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
     bool                                                         mDirty = true;
   };
 
-  DevicePtr mDevice;
+  // -----------------------------------------------------------------------------------------------
 
-  WindowPtr              mOutputWindow;
-  LogicalPass const*     mOutputPass     = nullptr;
-  LogicalResource const* mOutputResource = nullptr;
+  bool isDirty() const;
+  void clearDirty();
+  void validate() const;
+
+  DevicePtr               mDevice;
+  WindowPtr               mOutputWindow;
+  Core::ThreadPool        mThreadPool;
+  FrameResource<PerFrame> mPerFrame;
 
   std::list<LogicalResource> mLogicalResources;
-  std::list<LogicalPass>     mLogicalPasses;
-  Core::ThreadPool           mThreadPool;
-  FrameResource<PerFrame>    mPerFrame;
-  bool                       mDirty = true;
+  LogicalResource const*     mOutputResource = nullptr;
+
+  std::list<LogicalPass> mLogicalPasses;
+  LogicalPass const*     mOutputPass = nullptr;
+
+  bool mDirty = true;
 };
 
 } // namespace Illusion::Graphics
