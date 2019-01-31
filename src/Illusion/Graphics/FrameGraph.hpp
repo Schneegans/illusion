@@ -28,17 +28,6 @@ namespace Illusion::Graphics {
 
 class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObject {
  public:
-  enum class ResourceSizing { eAbsolute, eRelative };
-
-  enum class ResourceAccess {
-    eReadOnly,
-    eWriteOnly,
-    eReadWrite,
-    eLoad,
-    eLoadWrite,
-    eLoadReadWrite
-  };
-
   enum class ProcessingFlagBits {
     eNone                        = 0,
     eParallelRenderPassRecording = 1 << 0,
@@ -47,15 +36,19 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
 
   typedef Core::Flags<ProcessingFlagBits> ProcessingFlags;
 
-  // -----------------------------------------------------------------------------------------------
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////
 
-  class LogicalResource {
+  class Resource {
    public:
-    LogicalResource& setName(std::string const& name);
-    LogicalResource& setFormat(vk::Format format);
-    LogicalResource& setSizing(ResourceSizing sizing);
-    LogicalResource& setExtent(glm::vec2 const& extent);
-    LogicalResource& setSamples(vk::SampleCountFlagBits const& samples);
+    enum class Sizing { eAbsolute, eRelative };
+    enum class Access { eReadOnly, eWriteOnly, eReadWrite, eLoad, eLoadWrite, eLoadReadWrite };
+
+    Resource& setName(std::string const& name);
+    Resource& setFormat(vk::Format format);
+    Resource& setSizing(Sizing sizing);
+    Resource& setExtent(glm::vec2 const& extent);
+    Resource& setSamples(vk::SampleCountFlagBits const& samples);
 
     glm::uvec2 getAbsoluteExtent(glm::uvec2 const& windowExtent) const;
     bool       isDepthResource() const;
@@ -66,75 +59,70 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
    private:
     std::string             mName    = "Unnamed Resource";
     vk::Format              mFormat  = vk::Format::eR8G8B8A8Unorm;
-    ResourceSizing          mSizing  = ResourceSizing::eRelative;
+    Sizing                  mSizing  = Sizing::eRelative;
     glm::vec2               mExtent  = glm::vec2(1.f, 1.f);
     vk::SampleCountFlagBits mSamples = vk::SampleCountFlagBits::e1;
 
-    // this is directly accessed by the FrameGraph
+    // This is directly accessed by the FrameGraph.
     bool mDirty = true;
   };
 
-  // -----------------------------------------------------------------------------------------------
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////
 
-  class LogicalPass {
+  class Pass {
    public:
-    LogicalPass& setName(std::string const& name);
+    Pass& setName(std::string const& name);
 
-    LogicalPass& assignResource(LogicalResource const& resource, ResourceAccess access);
-    LogicalPass& assignResource(LogicalResource const& resource, vk::ClearValue const& clear);
+    Pass& assignResource(Resource const& resource, Resource::Access access);
+    Pass& assignResource(Resource const& resource, vk::ClearValue const& clear);
 
-    LogicalPass& setProcessCallback(std::function<void(CommandBufferPtr)> const& callback);
+    Pass& setProcessCallback(std::function<void(CommandBufferPtr)> const& callback);
 
-    LogicalResource const* getDepthAttachment() const;
+    Resource const* getDepthAttachment() const;
 
     friend class FrameGraph;
 
    private:
-    void assignResource(LogicalResource const& resource, ResourceAccess access,
+    void assignResource(Resource const& resource, Resource::Access access,
         std::optional<vk::ClearValue> const& clear);
 
-    std::unordered_map<LogicalResource const*, ResourceAccess> mLogicalResources;
-    std::unordered_map<LogicalResource const*, vk::ClearValue> mClearValues;
-    std::function<void(CommandBufferPtr)>                      mProcessCallback;
-    std::string                                                mName = "Unnamed Pass";
+    std::unordered_map<Resource const*, Resource::Access> mResources;
+    std::unordered_map<Resource const*, vk::ClearValue>   mClearValues;
+    std::function<void(CommandBufferPtr)>                 mProcessCallback;
+    std::string                                           mName = "Unnamed Pass";
 
-    // this is directly accessed by the FrameGraph
+    // This is directly accessed by the FrameGraph.
     bool mDirty = true;
   };
 
   // -----------------------------------------------------------------------------------------------
 
-  FrameGraph(
-      std::string const& name, DevicePtr const& device, FrameResourceIndexPtr const& frameIndex);
+  FrameGraph(std::string const& name, DevicePtr const& device, FrameResourceIndexPtr const& index);
 
-  LogicalResource& createResource();
-  LogicalPass&     createPass();
+  Resource& createResource();
+  Pass&     createPass();
 
-  void setOutput(WindowPtr const& window, LogicalPass const& pass, LogicalResource const& resource);
+  void setOutput(WindowPtr const& window, Pass const& pass, Resource const& resource);
   void process(ProcessingFlags flags = ProcessingFlagBits::eNone);
 
  private:
   // -----------------------------------------------------------------------------------------------
-  struct PhysicalResource {
-    BackedImagePtr mImage;
-  };
 
-  // -----------------------------------------------------------------------------------------------
-
-  struct PhysicalPass {
-    struct Subpass {
-      LogicalPass const*                                              mLogicalPass;
-      CommandBufferPtr                                                mSecondaryCommandBuffer;
-      std::unordered_set<LogicalPass const*>                          mDependencies;
-      std::unordered_map<LogicalResource const*, vk::ImageUsageFlags> mResourceUsage;
+  struct RenderPassInfo {
+    struct SubpassInfo {
+      Pass const*                                              mLogicalPass;
+      CommandBufferPtr                                         mSecondaryCommandBuffer;
+      std::unordered_set<Pass const*>                          mDependencies;
+      std::unordered_map<Resource const*, vk::ImageUsageFlags> mResourceUsage;
     };
 
-    std::vector<Subpass>                                       mSubpasses;
-    std::vector<LogicalResource const*>                        mAttachments;
-    std::unordered_map<LogicalResource const*, vk::ClearValue> mClearValues;
-    glm::uvec2                                                 mExtent = glm::uvec2(0);
-    RenderPassPtr                                              mRenderPass;
-    std::string                                                mName;
+    std::vector<SubpassInfo>                            mSubpasses;
+    std::vector<Resource const*>                        mAttachments;
+    std::unordered_map<Resource const*, vk::ClearValue> mClearValues;
+    glm::uvec2                                          mExtent = glm::uvec2(0);
+    RenderPassPtr                                       mPhysicalPass;
+    std::string                                         mName;
   };
 
   // -----------------------------------------------------------------------------------------------
@@ -144,9 +132,9 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
     vk::SemaphorePtr mRenderFinishedSemaphore;
     vk::FencePtr     mFrameFinishedFence;
 
-    std::unordered_map<LogicalResource const*, PhysicalResource> mPhysicalResources;
-    std::list<PhysicalPass>                                      mPhysicalPasses;
-    bool                                                         mDirty = true;
+    std::unordered_map<Resource const*, BackedImagePtr> mAllAttachments;
+    std::list<RenderPassInfo>                           mRenderPasses;
+    bool                                                mDirty = true;
   };
 
   // -----------------------------------------------------------------------------------------------
@@ -156,15 +144,15 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
   void validate() const;
 
   DevicePtr               mDevice;
-  WindowPtr               mOutputWindow;
   Core::ThreadPool        mThreadPool;
   FrameResource<PerFrame> mPerFrame;
 
-  std::list<LogicalResource> mLogicalResources;
-  LogicalResource const*     mOutputResource = nullptr;
+  std::list<Resource> mResources;
+  std::list<Pass>     mPasses;
 
-  std::list<LogicalPass> mLogicalPasses;
-  LogicalPass const*     mOutputPass = nullptr;
+  WindowPtr       mOutputWindow;
+  Resource const* mOutputAttachment = nullptr;
+  Pass const*     mOutputPass       = nullptr;
 
   bool mDirty = true;
 };

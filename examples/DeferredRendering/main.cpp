@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
   auto& hdr    = graph->createResource().setName("hdr").setFormat(vk::Format::eR32G32B32A32Sfloat);
 
   // create passes ---------------------------------------------------------------------------------
-  using Access = Illusion::Graphics::FrameGraph::ResourceAccess;
+  using Access = Illusion::Graphics::FrameGraph::Resource::Access;
 
   auto clearColor = vk::ClearColorValue(std::array<float, 4>{{0.f, 0.f, 0.f, 0.f}});
   auto clearDepth = vk::ClearDepthStencilValue(1.f, 0u);

@@ -61,7 +61,7 @@ void RenderPass::addAttachment(BackedImagePtr const& image) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void RenderPass::setSubpasses(std::vector<SubpassInfo> const& subpasses) {
+void RenderPass::setSubpasses(std::vector<Subpass> const& subpasses) {
   mSubpasses        = subpasses;
   mAttachmentsDirty = true;
 }
