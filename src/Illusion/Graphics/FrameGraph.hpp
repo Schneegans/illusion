@@ -24,15 +24,15 @@
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// In Illusion, the FrameGraph is used to configure your render passes, framebuffer attachments   //
+// and all dependencies between the passes. It automatically create RenderPasses and merges them  //
+// into subpasses as often as possible. It actively supports parallel CommandBuffer recording by  //
+// using secondary CommandBuffers for each subpass.                                               //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObject {
  public:
-  enum class ProcessingFlagBits {
-    eNone                        = 0,
-    eParallelRenderPassRecording = 1 << 0,
-    eParallelSubpassRecording    = 1 << 1
-  };
+  enum class ProcessingFlagBits { eNone = 0, eParallelSubpassRecording = 1 << 0 };
 
   typedef Core::Flags<ProcessingFlagBits> ProcessingFlags;
 

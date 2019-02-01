@@ -663,22 +663,25 @@ void FrameGraph::process(ProcessingFlags flags) {
   // ------------------------------------ recording phase --------------------------------------- //
   // -------------------------------------------------------------------------------------------- //
 
-  // Now we can finally start recording our command buffer.
+  // Now we can finally start recording our command buffer. First we reset and begin our primary
+  // CommandBuffer. At the very beginning of this process() method we waited for the
+  // FrameFinishedFence, so we are sure that the CommandBuffer is not in use anymore.
   perFrame.mPrimaryCommandBuffer->reset();
   perFrame.mPrimaryCommandBuffer->begin();
 
-  if (flags.has(ProcessingFlagBits::eParallelRenderPassRecording)) {
-    throw std::runtime_error("Parallel RenderPass recording is not implemented yet!");
-  }
-
+  // A thread count of zero will make use of all available cores.
   if (flags.has(ProcessingFlagBits::eParallelSubpassRecording)) {
     mThreadPool.setThreadCount(0);
   } else {
     mThreadPool.setThreadCount(1);
   }
 
+  // We loop through all RenderPasses. First, we will collect the clear values for each attachment
+  // and begin our RenderPass. For each subpass of each RenderPass we record the secondary
+  // CommandBuffer either in parallel or sequentially.
   for (auto const& pass : perFrame.mRenderPasses) {
 
+    // Collect clear value for each attachment.
     std::vector<vk::ClearValue> clearValues;
     for (auto attachment : pass.mAttachments) {
       if (pass.mClearValues.find(attachment) != pass.mClearValues.end()) {
@@ -688,9 +691,11 @@ void FrameGraph::process(ProcessingFlags flags) {
       }
     }
 
+    // Begin the RenderPass.
     perFrame.mPrimaryCommandBuffer->beginRenderPass(
         pass.mPhysicalPass, clearValues, vk::SubpassContents::eSecondaryCommandBuffers);
 
+    // Record the subpasses using the thread(s) of the ThreadPool.
     uint32_t subpassCounter = 0;
     for (auto const& subpass : pass.mSubpasses) {
       mThreadPool.enqueue([pass, subpass, subpassCounter]() {
@@ -705,8 +710,10 @@ void FrameGraph::process(ProcessingFlags flags) {
       ++subpassCounter;
     }
 
+    // Wait until all passes are recorded.
     mThreadPool.waitIdle();
 
+    // Execute all passes in our primary CommandBuffer.
     subpassCounter = 0;
     for (auto const& subpass : pass.mSubpasses) {
       perFrame.mPrimaryCommandBuffer->execute(subpass.mSecondaryCommandBuffer);
@@ -716,13 +723,16 @@ void FrameGraph::process(ProcessingFlags flags) {
       }
     }
 
+    // End this RenderPass.
     perFrame.mPrimaryCommandBuffer->endRenderPass();
   }
 
+  // End and submit our primary CommandBuffer.
   perFrame.mPrimaryCommandBuffer->end();
-
   perFrame.mPrimaryCommandBuffer->submit({}, {}, {perFrame.mRenderFinishedSemaphore});
 
+  // And finally present the output attachment on the output window as soon as the
+  // mRenderFinishedSemaphore gets signaled.
   mOutputWindow->present(perFrame.mAllAttachments[mOutputAttachment],
       perFrame.mRenderFinishedSemaphore, perFrame.mFrameFinishedFence);
 }
