@@ -342,7 +342,7 @@ int main(int argc, char* argv[]) {
 
     res.mCmd->submit({}, {}, {res.mRenderFinishedSemaphore});
 
-    window->present(res.mRenderPass->getAttachments()[0], res.mRenderFinishedSemaphore,
+    window->present(res.mRenderPass->getAttachments()[0].mImage, res.mRenderFinishedSemaphore,
         res.mRenderFinishedFence);
 
     std::this_thread::sleep_for(std::chrono::milliseconds(5));

@@ -26,8 +26,8 @@ LazyRenderPass::~LazyRenderPass() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void LazyRenderPass::init() {
-  if (mAttachmentsDirty) {
-    mImageStore.clear();
+  if (mDirty) {
+    clearAttachments();
     createImages();
 
     RenderPass::init();
@@ -38,33 +38,16 @@ void LazyRenderPass::init() {
 
 void LazyRenderPass::addAttachment(vk::Format format) {
   mAttachmentFormats.push_back(format);
-  mAttachmentsDirty = true;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool LazyRenderPass::hasDepthAttachment() const {
-  for (auto format : mAttachmentFormats) {
-    if (Utils::isDepthFormat(format))
-      return true;
-  }
-
-  return false;
+  mDirty = true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void LazyRenderPass::setExtent(glm::uvec2 const& extent) {
   if (mExtent != extent) {
-    mExtent           = extent;
-    mAttachmentsDirty = true;
+    mExtent = extent;
+    mDirty  = true;
   }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-glm::uvec2 LazyRenderPass::getExtent() const {
-  return mExtent;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -111,11 +94,20 @@ void LazyRenderPass::createImages() {
     imageInfo.sharingMode   = vk::SharingMode::eExclusive;
     imageInfo.initialLayout = vk::ImageLayout::eUndefined;
 
-    auto image = mDevice->createBackedImage("Attachment " + std::to_string(i) + " of " + getName(),
-        imageInfo, vk::ImageViewType::e2D, aspect, vk::MemoryPropertyFlagBits::eDeviceLocal,
-        layout);
+    Attachment attachment;
+    attachment.mInitialLayout = layout;
+    attachment.mFinalLayout   = layout;
+    attachment.mLoadOp        = vk::AttachmentLoadOp::eClear;
+    attachment.mStoreOp       = vk::AttachmentStoreOp::eStore;
+    attachment.mImage         = mDevice->createBackedImage(
+        "Attachment " + std::to_string(i) + " of " + getName(), imageInfo, vk::ImageViewType::e2D,
+        aspect, vk::MemoryPropertyFlagBits::eDeviceLocal, layout);
 
-    mImageStore.push_back(image);
+    if (Utils::isColorFormat(mAttachmentFormats[i])) {
+      addColorAttachment(attachment);
+    } else {
+      addDepthAttachment(attachment);
+    }
   }
 }
 

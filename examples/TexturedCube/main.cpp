@@ -244,7 +244,7 @@ int main() {
     // Present the color attachment of the render pass on the window. This operation will wait for
     // the renderFinishedSemaphore and signal the frameFinishedFence so that we know when to start
     // the next frame.
-    window->present(res.mRenderPass->getAttachments()[0], res.mRenderFinishedSemaphore,
+    window->present(res.mRenderPass->getAttachments()[0].mImage, res.mRenderFinishedSemaphore,
         res.mFrameFinishedFence);
 
     // Prevent the GPU from over-heating :)

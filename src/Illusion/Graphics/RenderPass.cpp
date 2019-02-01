@@ -34,7 +34,7 @@ RenderPass::~RenderPass() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void RenderPass::init() {
-  if (mAttachmentsDirty) {
+  if (mDirty) {
     mDevice->waitIdle();
 
     mFramebuffer.reset();
@@ -43,44 +43,79 @@ void RenderPass::init() {
     createRenderPass();
     createFramebuffer();
 
-    mAttachmentsDirty = false;
+    mDirty = false;
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void RenderPass::addAttachment(BackedImagePtr const& image) {
+void RenderPass::addColorAttachment(Attachment const& attachment) {
   // Make sure that extent is the same.
-  if (mImageStore.size() > 0 && image->mImageInfo.extent != mImageStore[0]->mImageInfo.extent) {
+  if (mAttachments.size() > 0 &&
+      attachment.mImage->mImageInfo.extent != mAttachments[0].mImage->mImageInfo.extent) {
     throw std::runtime_error("Failed to add attachment to RenderPass \"" + getName() +
                              "\": Extent does not match previously added attachment!");
   }
 
-  mImageStore.push_back(image);
+  mAttachments.push_back(attachment);
+  mDirty = true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void RenderPass::addDepthAttachment(Attachment const& attachment) {
+  if (hasDepthAttachment()) {
+    throw std::runtime_error("Failed to add attachment to RenderPass \"" + getName() +
+                             "\": RenderPass already has a depth attachment!");
+  }
+
+  addColorAttachment(attachment);
+
+  mDepthAttachment = mAttachments.size() - 1;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void RenderPass::clearAttachments() {
+  mDepthAttachment = -1;
+  mAttachments.clear();
+  mDirty = true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool RenderPass::hasDepthAttachment() const {
+  return mDepthAttachment >= 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::vector<RenderPass::Attachment> const& RenderPass::getAttachments() const {
+  return mAttachments;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void RenderPass::setSubpasses(std::vector<Subpass> const& subpasses) {
-  mSubpasses        = subpasses;
-  mAttachmentsDirty = true;
+  mSubpasses = subpasses;
+  mDirty     = true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+std::vector<RenderPass::Subpass> const& RenderPass::getSubpasses() {
+  return mSubpasses;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 glm::uvec2 RenderPass::getExtent() const {
-  if (mImageStore.size() > 0) {
-    return glm::uvec2(
-        mImageStore[0]->mImageInfo.extent.width, mImageStore[0]->mImageInfo.extent.height);
+  if (mAttachments.size() > 0) {
+    return glm::uvec2(mAttachments[0].mImage->mImageInfo.extent.width,
+        mAttachments[0].mImage->mImageInfo.extent.height);
   }
 
   return glm::uvec2(0);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-std::vector<BackedImagePtr> const& RenderPass::getAttachments() const {
-  return mImageStore;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -97,114 +132,70 @@ vk::RenderPassPtr const& RenderPass::getHandle() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool RenderPass::hasDepthAttachment() const {
-  for (auto image : mImageStore) {
-    if (Utils::isDepthFormat(image->mImageInfo.format))
-      return true;
-  }
-
-  return false;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
 void RenderPass::createRenderPass() {
 
   std::vector<vk::AttachmentDescription> attachments;
   std::vector<vk::AttachmentReference>   attachmentRefs;
-  int                                    depthStencilAttachmentRef(-1);
 
-  for (auto const& image : mImageStore) {
+  for (auto const& a : mAttachments) {
+
     vk::AttachmentDescription attachment;
-    vk::AttachmentReference   attachmentRef;
+    attachment.format        = a.mImage->mImageInfo.format;
+    attachment.samples       = a.mImage->mImageInfo.samples;
+    attachment.initialLayout = a.mInitialLayout;
+    attachment.finalLayout   = a.mFinalLayout;
+    attachment.loadOp        = a.mLoadOp;
+    attachment.storeOp       = a.mStoreOp;
 
-    attachment.format        = image->mImageInfo.format;
-    attachment.samples       = image->mImageInfo.samples;
-    attachment.initialLayout = vk::ImageLayout::eUndefined;
-    attachment.loadOp        = vk::AttachmentLoadOp::eClear;
-    attachment.storeOp       = vk::AttachmentStoreOp::eStore;
-
-    if (Utils::isColorFormat(attachment.format)) {
-      attachment.stencilLoadOp  = vk::AttachmentLoadOp::eDontCare;
-      attachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-      attachment.finalLayout    = vk::ImageLayout::eColorAttachmentOptimal;
-    } else if (Utils::isDepthOnlyFormat(attachment.format)) {
-      attachment.stencilLoadOp  = vk::AttachmentLoadOp::eDontCare;
-      attachment.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-      attachment.finalLayout    = vk::ImageLayout::eDepthStencilAttachmentOptimal;
-    } else {
-      attachment.stencilLoadOp  = vk::AttachmentLoadOp::eClear;
-      attachment.stencilStoreOp = vk::AttachmentStoreOp::eStore;
-      attachment.finalLayout    = vk::ImageLayout::eDepthStencilAttachmentOptimal;
-    }
-
-    attachmentRef.layout     = attachment.finalLayout;
+    vk::AttachmentReference attachmentRef;
+    attachmentRef.layout     = a.mFinalLayout;
     attachmentRef.attachment = static_cast<uint32_t>(attachments.size());
 
     attachments.emplace_back(attachment);
     attachmentRefs.emplace_back(attachmentRef);
-
-    if (Utils::isDepthFormat(attachment.format)) {
-      depthStencilAttachmentRef = attachmentRef.attachment;
-    }
   }
+
+  auto& subpasses = mSubpasses;
 
   // create default subpass if none are specified
-  if (mSubpasses.size() == 0) {
-    std::vector<vk::AttachmentReference> colorAttachmentRefs;
-    for (size_t i(0); i < attachmentRefs.size(); ++i) {
-      if ((int)i != depthStencilAttachmentRef) {
-        colorAttachmentRefs.push_back(attachmentRefs[i]);
-      }
+  std::vector<Subpass> defaultSubpass(1);
+
+  if (subpasses.size() == 0) {
+    for (size_t i(0); i < attachments.size(); ++i) {
+      defaultSubpass[0].mOutputAttachments.push_back(i);
     }
 
-    vk::SubpassDescription subpass;
-    subpass.pipelineBindPoint    = vk::PipelineBindPoint::eGraphics;
-    subpass.colorAttachmentCount = static_cast<uint32_t>(colorAttachmentRefs.size());
-    subpass.pColorAttachments    = colorAttachmentRefs.data();
-
-    if (depthStencilAttachmentRef >= 0) {
-      subpass.pDepthStencilAttachment = &attachmentRefs[depthStencilAttachmentRef];
-    }
-
-    vk::RenderPassCreateInfo info;
-    info.attachmentCount = static_cast<uint32_t>(attachments.size());
-    info.pAttachments    = attachments.data();
-    info.subpassCount    = 1;
-    info.pSubpasses      = &subpass;
-
-    mRenderPass = mDevice->createRenderPass(getName(), info);
-    return;
+    subpasses = defaultSubpass;
   }
 
-  std::vector<vk::SubpassDescription>               subpasses(mSubpasses.size());
-  std::vector<std::vector<vk::AttachmentReference>> inputAttachmentRefs(mSubpasses.size());
-  std::vector<std::vector<vk::AttachmentReference>> outputAttachmentRefs(mSubpasses.size());
+  std::vector<vk::SubpassDescription>               subpassInfos(subpasses.size());
+  std::vector<std::vector<vk::AttachmentReference>> inputAttachmentRefs(subpasses.size());
+  std::vector<std::vector<vk::AttachmentReference>> outputAttachmentRefs(subpasses.size());
 
-  for (size_t i(0); i < mSubpasses.size(); ++i) {
+  for (size_t i(0); i < subpasses.size(); ++i) {
 
-    for (uint32_t attachment : mSubpasses[i].mInputAttachments) {
+    for (uint32_t attachment : subpasses[i].mInputAttachments) {
       inputAttachmentRefs[i].push_back(attachmentRefs[attachment]);
     }
 
-    for (auto attachment : mSubpasses[i].mOutputAttachments) {
-      if ((int)attachment == depthStencilAttachmentRef) {
-        subpasses[i].pDepthStencilAttachment = &attachmentRefs[depthStencilAttachmentRef];
+    for (auto attachment : subpasses[i].mOutputAttachments) {
+      if (int32_t(attachment) == mDepthAttachment) {
+        subpassInfos[i].pDepthStencilAttachment = &attachmentRefs[mDepthAttachment];
       } else {
         outputAttachmentRefs[i].push_back(attachmentRefs[attachment]);
       }
     }
 
-    subpasses[i].pipelineBindPoint    = vk::PipelineBindPoint::eGraphics;
-    subpasses[i].inputAttachmentCount = static_cast<uint32_t>(inputAttachmentRefs[i].size());
-    subpasses[i].pInputAttachments    = inputAttachmentRefs[i].data();
-    subpasses[i].colorAttachmentCount = static_cast<uint32_t>(outputAttachmentRefs[i].size());
-    subpasses[i].pColorAttachments    = outputAttachmentRefs[i].data();
+    subpassInfos[i].pipelineBindPoint    = vk::PipelineBindPoint::eGraphics;
+    subpassInfos[i].inputAttachmentCount = static_cast<uint32_t>(inputAttachmentRefs[i].size());
+    subpassInfos[i].pInputAttachments    = inputAttachmentRefs[i].data();
+    subpassInfos[i].colorAttachmentCount = static_cast<uint32_t>(outputAttachmentRefs[i].size());
+    subpassInfos[i].pColorAttachments    = outputAttachmentRefs[i].data();
   }
 
   std::vector<vk::SubpassDependency> dependencies;
-  for (size_t dst(0); dst < mSubpasses.size(); ++dst) {
-    for (auto src : mSubpasses[dst].mPreSubpasses) {
+  for (size_t dst(0); dst < subpasses.size(); ++dst) {
+    for (auto src : subpasses[dst].mPreSubpasses) {
       vk::SubpassDependency dependency;
       dependency.srcSubpass    = src;
       dependency.dstSubpass    = static_cast<uint32_t>(dst);
@@ -220,8 +211,8 @@ void RenderPass::createRenderPass() {
   vk::RenderPassCreateInfo info;
   info.attachmentCount = static_cast<uint32_t>(attachments.size());
   info.pAttachments    = attachments.data();
-  info.subpassCount    = static_cast<uint32_t>(subpasses.size());
-  info.pSubpasses      = subpasses.data();
+  info.subpassCount    = static_cast<uint32_t>(subpassInfos.size());
+  info.pSubpasses      = subpassInfos.data();
   info.dependencyCount = static_cast<uint32_t>(dependencies.size());
   info.pDependencies   = dependencies.data();
 
@@ -232,18 +223,18 @@ void RenderPass::createRenderPass() {
 
 void RenderPass::createFramebuffer() {
 
-  std::vector<vk::ImageView> imageViews(mImageStore.size());
+  std::vector<vk::ImageView> imageViews(mAttachments.size());
 
-  for (size_t i(0); i < mImageStore.size(); ++i) {
-    imageViews[i] = *mImageStore[i]->mView;
+  for (size_t i(0); i < mAttachments.size(); ++i) {
+    imageViews[i] = *mAttachments[i].mImage->mView;
   }
 
   vk::FramebufferCreateInfo info;
   info.renderPass      = *mRenderPass;
   info.attachmentCount = static_cast<uint32_t>(imageViews.size());
   info.pAttachments    = imageViews.data();
-  info.width           = mImageStore[0]->mImageInfo.extent.width;
-  info.height          = mImageStore[0]->mImageInfo.extent.height;
+  info.width           = mAttachments[0].mImage->mImageInfo.extent.width;
+  info.height          = mAttachments[0].mImage->mImageInfo.extent.height;
   info.layers          = 1;
 
   mFramebuffer = mDevice->createFramebuffer(getName(), info);

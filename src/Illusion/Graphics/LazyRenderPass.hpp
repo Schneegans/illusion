@@ -26,10 +26,7 @@ class LazyRenderPass : public RenderPass, public Core::StaticCreate<LazyRenderPa
 
   void init() override;
   void addAttachment(vk::Format format);
-  bool hasDepthAttachment() const override;
-
-  void       setExtent(glm::uvec2 const& extent);
-  glm::uvec2 getExtent() const override;
+  void setExtent(glm::uvec2 const& extent);
 
  private:
   void createImages();

@@ -29,35 +29,48 @@ class RenderPass : public Core::StaticCreate<RenderPass>, public Core::NamedObje
     std::vector<uint32_t> mOutputAttachments;
   };
 
+  struct Attachment {
+    BackedImagePtr        mImage;
+    vk::ImageLayout       mInitialLayout;
+    vk::ImageLayout       mFinalLayout;
+    vk::AttachmentLoadOp  mLoadOp;
+    vk::AttachmentStoreOp mStoreOp;
+  };
+
   RenderPass(std::string const& name, DevicePtr const& device);
   virtual ~RenderPass();
 
   virtual void init();
 
-  void addAttachment(BackedImagePtr const& image);
+  void addColorAttachment(Attachment const& attachment);
+  void addDepthAttachment(Attachment const& attachment);
 
-  virtual bool hasDepthAttachment() const;
+  void clearAttachments();
 
-  void setSubpasses(std::vector<Subpass> const& subpasses);
+  bool                           hasDepthAttachment() const;
+  std::vector<Attachment> const& getAttachments() const;
 
-  virtual glm::uvec2 getExtent() const;
+  void                        setSubpasses(std::vector<Subpass> const& subpasses);
+  std::vector<Subpass> const& getSubpasses();
 
-  std::vector<BackedImagePtr> const& getAttachments() const;
-  vk::FramebufferPtr const&          getFramebuffer() const;
-  vk::RenderPassPtr const&           getHandle() const;
+  glm::uvec2                getExtent() const;
+  vk::FramebufferPtr const& getFramebuffer() const;
+  vk::RenderPassPtr const&  getHandle() const;
 
  protected:
-  DevicePtr                   mDevice;
-  std::vector<BackedImagePtr> mImageStore;
-  bool                        mAttachmentsDirty = true;
+  DevicePtr mDevice;
+  bool      mDirty = true;
 
  private:
   void createRenderPass();
   void createFramebuffer();
 
-  vk::RenderPassPtr    mRenderPass;
-  vk::FramebufferPtr   mFramebuffer;
-  std::vector<Subpass> mSubpasses;
+  vk::RenderPassPtr       mRenderPass;
+  vk::FramebufferPtr      mFramebuffer;
+  std::vector<Attachment> mAttachments;
+  std::vector<Subpass>    mSubpasses;
+
+  int32_t mDepthAttachment = -1;
 };
 
 } // namespace Illusion::Graphics

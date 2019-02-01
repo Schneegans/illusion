@@ -636,7 +636,14 @@ void FrameGraph::process(ProcessingFlags flags) {
       for (auto passAttachment : pass.mAttachments) {
         auto attachment = perFrame.mAllAttachments[passAttachment];
         Core::Logger::debug() << "    " << attachment->mName << std::endl;
-        pass.mPhysicalPass->addAttachment(attachment);
+
+        RenderPass::Attachment attachmentInfo;
+        attachmentInfo.mInitialLayout = vk::ImageLayout::eUndefined;
+        attachmentInfo.mFinalLayout   = vk::ImageLayout::eGeneral;
+        attachmentInfo.mLoadOp        = vk::AttachmentLoadOp::eClear;
+        attachmentInfo.mStoreOp       = vk::AttachmentStoreOp::eStore;
+        attachmentInfo.mImage         = attachment;
+        pass.mPhysicalPass->addColorAttachment(attachmentInfo);
       }
 
       // And set the subpass info structures.
