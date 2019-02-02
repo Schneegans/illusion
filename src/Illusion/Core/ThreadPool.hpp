@@ -37,7 +37,7 @@ class ThreadPool {
   // well, only one thread will be launched. This method will block until all tasks which are
   // currently processed are finished. Any tasks which are queued and not yet in processing, will be
   // executed afterwards.
-  void setThreadCount(uint32_t count);
+  void setThreadCount(uint32_t threadCount);
 
   // You can use getThreadCount() to check how many threads have been launched.
   uint32_t getThreadCount() const;
