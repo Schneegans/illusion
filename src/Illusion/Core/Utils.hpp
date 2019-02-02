@@ -10,7 +10,9 @@
 #define ILLUSION_CORE_UTILS_HPP
 
 #include <algorithm>
+#include <map>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 namespace Illusion::Core::Utils {
@@ -28,6 +30,16 @@ std::unique_ptr<T> makeUnique(Args&&... args) {
 template <typename T>
 bool contains(T const& container, typename T::value_type const& item) {
   return std::find(std::begin(container), std::end(container), item) != std::end(container);
+}
+
+template <typename K, typename V>
+bool contains(std::map<K, V> const& map, K const& key) {
+  return map.find(key) != map.end();
+}
+
+template <typename K, typename V>
+bool contains(std::unordered_map<K, V> const& map, K const& key) {
+  return map.find(key) != map.end();
 }
 
 // -------------------------------------------------------------------------------------------------
