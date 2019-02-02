@@ -43,6 +43,7 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
    public:
     enum class Sizing { eAbsolute, eRelative };
     enum class Access { eReadOnly, eWriteOnly, eReadWrite, eLoad, eLoadWrite, eLoadReadWrite };
+    enum class Usage { eColorAttachment, eDepthAttachment };
 
     Resource& setName(std::string const& name);
     Resource& setFormat(vk::Format format);
@@ -51,8 +52,8 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
     Resource& setSamples(vk::SampleCountFlagBits const& samples);
 
     glm::uvec2 getAbsoluteExtent(glm::uvec2 const& windowExtent) const;
-    bool       isDepthResource() const;
-    bool       isColorResource() const;
+    // bool       isDepthResource() const;
+    // bool       isColorResource() const;
 
     friend class FrameGraph;
 
@@ -74,23 +75,28 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
    public:
     Pass& setName(std::string const& name);
 
-    Pass& assignResource(Resource const& resource, Resource::Access access);
-    Pass& assignResource(Resource const& resource, vk::ClearValue const& clear);
+    Pass& addColorAttachment(Resource const& resource, Resource::Access access);
+    Pass& addColorAttachment(Resource const& resource, vk::ClearColorValue const& clear);
+
+    Pass& addDepthAttachment(Resource const& resource, Resource::Access access);
+    Pass& addDepthAttachment(Resource const& resource, vk::ClearDepthStencilValue const& clear);
 
     Pass& setProcessCallback(std::function<void(CommandBufferPtr)> const& callback);
 
-    Resource const* getDepthAttachment() const;
+    // Resource const* getDepthAttachment() const;
 
     friend class FrameGraph;
 
    private:
-    void assignResource(Resource const& resource, Resource::Access access,
-        std::optional<vk::ClearValue> const& clear);
+    struct ResourceInfo {
+      Resource::Access              mAccess;
+      Resource::Usage               mUsage;
+      std::optional<vk::ClearValue> mClear;
+    };
 
-    std::unordered_map<Resource const*, Resource::Access> mResources;
-    std::unordered_map<Resource const*, vk::ClearValue>   mClearValues;
-    std::function<void(CommandBufferPtr)>                 mProcessCallback;
-    std::string                                           mName = "Unnamed Pass";
+    std::unordered_map<Resource const*, ResourceInfo> mResources;
+    std::function<void(CommandBufferPtr)>             mProcessCallback;
+    std::string                                       mName = "Unnamed Pass";
 
     // This is directly accessed by the FrameGraph.
     bool mDirty = true;

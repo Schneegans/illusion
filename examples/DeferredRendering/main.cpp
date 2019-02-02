@@ -45,34 +45,34 @@ int main(int argc, char* argv[]) {
   // clang-format off
   auto& gbuffer = graph->createPass()
     .setName("gbuffer")
-    .assignResource(albedo, clearColor)
-    .assignResource(normal, clearColor)
-    .assignResource(depth, clearDepth)
+    .addColorAttachment(albedo, clearColor)
+    .addColorAttachment(normal, clearColor)
+    .addDepthAttachment(depth, clearDepth)
     .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
       Illusion::Core::Logger::message() << "Record gbuffer pass!" << std::endl;
     });
 
   auto& lighting = graph->createPass()
     .setName("lighting")
-    .assignResource(albedo, Access::eReadOnly)
-    .assignResource(normal, Access::eReadOnly)
-    .assignResource(depth, Access::eReadOnly)
-    .assignResource(hdr, Access::eWriteOnly)
+    .addColorAttachment(albedo, Access::eReadOnly)
+    .addColorAttachment(normal, Access::eReadOnly)
+    .addColorAttachment(depth, Access::eReadOnly)
+    .addColorAttachment(hdr, Access::eWriteOnly)
     .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
       Illusion::Core::Logger::message() << "Record lighting pass!" << std::endl;
     });
 
   auto& transparencies = graph->createPass()
     .setName("transparencies")
-    .assignResource(depth, Access::eLoad)
-    .assignResource(hdr, Access::eLoadWrite)
+    .addDepthAttachment(depth, Access::eLoad)
+    .addColorAttachment(hdr, Access::eLoadWrite)
     .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
       Illusion::Core::Logger::message() << "Record transparencies pass!" << std::endl;
     });
 
   auto& tonemapping = graph->createPass()
     .setName("tonemapping")
-    .assignResource(hdr, Access::eReadWrite)
+    .addColorAttachment(hdr, Access::eReadWrite)
     .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
       Illusion::Core::Logger::message() << "Record tonemapping pass!" << std::endl;
     });

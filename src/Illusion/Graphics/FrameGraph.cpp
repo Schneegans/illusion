@@ -70,31 +70,112 @@ glm::uvec2 FrameGraph::Resource::getAbsoluteExtent(glm::uvec2 const& windowExten
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool FrameGraph::Resource::isDepthResource() const {
-  return Utils::isDepthFormat(mFormat);
-}
+// bool FrameGraph::Resource::isDepthResource() const {
+//   return Utils::isDepthFormat(mFormat);
+// }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool FrameGraph::Resource::isColorResource() const {
-  return Utils::isColorFormat(mFormat);
-}
+// bool FrameGraph::Resource::isColorResource() const {
+//   return Utils::isColorFormat(mFormat);
+// }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-FrameGraph::Pass& FrameGraph::Pass::assignResource(
+FrameGraph::Pass& FrameGraph::Pass::addColorAttachment(
     Resource const& resource, Resource::Access access) {
-  assignResource(resource, access, {});
+
+  // We cannot add the same resource twice.
+  if (Core::Utils::contains(mResources, &resource)) {
+    throw std::runtime_error("Failed to add resource \"" + resource.mName +
+                             "\" to frame graph pass \"" + mName +
+                             "\": Resource has already been added to this pass!");
+  }
+
+  mResources[&resource] = {access, Resource::Usage::eColorAttachment, {}};
+
+  mDirty = true;
   return *this;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-FrameGraph::Pass& FrameGraph::Pass::assignResource(
-    Resource const& resource, vk::ClearValue const& clear) {
-  assignResource(resource, Resource::Access::eWriteOnly, clear);
+FrameGraph::Pass& FrameGraph::Pass::addColorAttachment(
+    Resource const& resource, vk::ClearColorValue const& clear) {
+
+  // We cannot add the same resource twice.
+  if (Core::Utils::contains(mResources, &resource)) {
+    throw std::runtime_error("Failed to add resource \"" + resource.mName +
+                             "\" to frame graph pass \"" + mName +
+                             "\": Resource has already been added to this pass!");
+  }
+
+  mResources[&resource] = {Resource::Access::eWriteOnly, Resource::Usage::eColorAttachment, clear};
+
+  mDirty = true;
+  return *this;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+FrameGraph::Pass& FrameGraph::Pass::addDepthAttachment(
+    Resource const& resource, Resource::Access access) {
+
+  // Validate resource access.
+  if (access != Resource::Access::eLoad && access != Resource::Access::eLoadWrite) {
+    throw std::runtime_error(
+        "Failed to add resource \"" + resource.mName + "\" to frame graph pass \"" + mName +
+        "\": Depth attachments may only have access mode eLoad or eLoadWrite!");
+  }
+
+  // We cannot add the same resource twice.
+  if (Core::Utils::contains(mResources, &resource)) {
+    throw std::runtime_error("Failed to add resource \"" + resource.mName +
+                             "\" to frame graph pass \"" + mName +
+                             "\": Resource has already been added to this pass!");
+  }
+
+  // We cannot add multiple depth attachments.
+  for (auto const& r : mResources) {
+    if (r.second.mUsage == Resource::Usage::eDepthAttachment) {
+      throw std::runtime_error("Failed to add resource \"" + resource.mName +
+                               "\" to frame graph pass \"" + mName +
+                               "\": Pass already has a depth attachment!");
+    }
+  }
+
+  mResources[&resource] = {access, Resource::Usage::eDepthAttachment, {}};
+
+  mDirty = true;
+  return *this;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+FrameGraph::Pass& FrameGraph::Pass::addDepthAttachment(
+    Resource const& resource, vk::ClearDepthStencilValue const& clear) {
+
+  // We cannot add the same resource twice.
+  if (Core::Utils::contains(mResources, &resource)) {
+    throw std::runtime_error("Failed to add resource \"" + resource.mName +
+                             "\" to frame graph pass \"" + mName +
+                             "\": Resource has already been added to this pass!");
+  }
+
+  // We cannot add multiple depth attachments.
+  for (auto const& r : mResources) {
+    if (r.second.mUsage == Resource::Usage::eDepthAttachment) {
+      throw std::runtime_error("Failed to add resource \"" + resource.mName +
+                               "\" to frame graph pass \"" + mName +
+                               "\": Pass already has a depth attachment!");
+    }
+  }
+
+  mResources[&resource] = {Resource::Access::eWriteOnly, Resource::Usage::eDepthAttachment, clear};
+
+  mDirty = true;
   return *this;
 }
 
@@ -116,42 +197,14 @@ FrameGraph::Pass& FrameGraph::Pass::setProcessCallback(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-FrameGraph::Resource const* FrameGraph::Pass::getDepthAttachment() const {
-  for (auto const& r : mResources) {
-    if (r.first->isDepthResource()) {
-      return r.first;
-    }
-  }
-  return nullptr;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void FrameGraph::Pass::assignResource(
-    Resource const& resource, Resource::Access access, std::optional<vk::ClearValue> const& clear) {
-
-  // We cannot add the same resource twice.
-  if (mResources.find(&resource) != mResources.end()) {
-    throw std::runtime_error("Failed to add resource \"" + resource.mName +
-                             "\" to frame graph pass \"" + mName +
-                             "\": Resource has already been added to this pass!");
-  }
-
-  // We cannot add multiple depth attachments.
-  if (resource.isDepthResource() && getDepthAttachment() != nullptr) {
-    throw std::runtime_error("Failed to add resource \"" + resource.mName +
-                             "\" to frame graph pass \"" + mName +
-                             "\": Pass already has a depth attachment!");
-  }
-
-  mResources[&resource] = access;
-
-  if (clear) {
-    mClearValues[&resource] = *clear;
-  }
-
-  mDirty = true;
-}
+// FrameGraph::Resource const* FrameGraph::Pass::getDepthAttachment() const {
+//   for (auto const& r : mResources) {
+//     if (r.first->isDepthResource()) {
+//       return r.first;
+//     }
+//   }
+//   return nullptr;
+// }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -328,13 +381,13 @@ void FrameGraph::process(ProcessingFlags flags) {
           //   * we use it as write-only: This is alright, we are "creating" the resource
           //   * we want to read from the resource. This is an error.
           if (previousPass != mPasses.rend()) {
-            if (r.second == Resource::Access::eWriteOnly) {
+            if (r.second.mAccess == Resource::Access::eWriteOnly) {
               throw std::runtime_error("Frame graph construction failed: Write-only output \"" +
                                        r.first->mName + "\" of pass \"" + pass->mName +
                                        "\" is used by the preceding pass \"" + previousPass->mName +
                                        "\"!");
-            } else if (previousUse->second == Resource::Access::eReadOnly ||
-                       previousUse->second == Resource::Access::eLoad) {
+            } else if (previousUse->second.mAccess == Resource::Access::eReadOnly ||
+                       previousUse->second.mAccess == Resource::Access::eLoad) {
               Core::Logger::debug()
                   << "        is read-only in pass \"" + previousPass->mName + "\"." << std::endl;
             } else {
@@ -348,7 +401,7 @@ void FrameGraph::process(ProcessingFlags flags) {
                   << "        is written by pass \"" + previousPass->mName + "\"." << std::endl;
             }
           } else if (renderPass.mSubpasses[0].mDependencies.size() == 0) {
-            if (r.second == Resource::Access::eWriteOnly) {
+            if (r.second.mAccess == Resource::Access::eWriteOnly) {
               Core::Logger::debug() << "        is created by this pass." << std::endl;
             } else {
               throw std::runtime_error("Frame graph construction failed: Input \"" +
@@ -378,28 +431,17 @@ void FrameGraph::process(ProcessingFlags flags) {
 
     // Merge adjacent RenderPassInfos which can be executed as subpasses ---------------------------
 
-    // Now we can merge adjacent RenderPassInfos which have the same extent and share the same depth
-    // attachment. To do this, we traverse the list of RenderPassInfos front-to-back and for each
-    // pass we search for candidates sharing extent, depth attachment and dependencies.
+    // Now we can merge adjacent RenderPassInfos which have the same extent. To do this, we traverse
+    // the list of RenderPassInfos front-to-back and for each pass we search for candidates sharing
+    // extent, depth attachment and dependencies.
     auto current = perFrame.mRenderPasses.begin();
     while (current != perFrame.mRenderPasses.end()) {
-
-      // Keep a reference to the current depth attachment. This may be nullptr, in this case we
-      // accept any depth attachment of the candidates.
-      auto currentDepthAttachment = current->mSubpasses[0].mLogicalPass->getDepthAttachment();
 
       // Now look for merge candidates. We start with the next pass.
       auto candidate = current;
       ++candidate;
 
       while (candidate != perFrame.mRenderPasses.end()) {
-        // For each candidate, the depth attachment must be the same as the current passes depth
-        // attachment. Or either may be nullptr.
-        auto candidateDepthAttachment = candidate->mSubpasses[0].mLogicalPass->getDepthAttachment();
-
-        bool sameDepthAttachment = currentDepthAttachment == nullptr ||
-                                   candidateDepthAttachment == nullptr ||
-                                   candidateDepthAttachment == currentDepthAttachment;
 
         // They must share the same extent.
         bool extentMatches = candidate->mExtent == current->mExtent;
@@ -427,14 +469,9 @@ void FrameGraph::process(ProcessingFlags flags) {
         }
 
         // If all conditions are fulfilled, we can make the candidate a subpass of the current
-        // RenderPassInfo. If the current depth attachment has been nullptr, we can now use the
-        // depth attachment of the candidate for further candidate checks.
-        if (extentMatches && sameDepthAttachment && dependenciesSatisfied) {
+        // RenderPassInfo.
+        if (extentMatches && dependenciesSatisfied) {
           current->mSubpasses.push_back(candidate->mSubpasses[0]);
-
-          if (!currentDepthAttachment) {
-            currentDepthAttachment = candidateDepthAttachment;
-          }
 
           // Erase the candidate from the list of RenderPassInfos and look for more merge candidates
           // in the next iteration.
@@ -474,25 +511,25 @@ void FrameGraph::process(ProcessingFlags flags) {
     for (auto& pass : perFrame.mRenderPasses) {
       for (auto& subpass : pass.mSubpasses) {
         for (auto const& r : subpass.mLogicalPass->mResources) {
-          switch (r.second) {
+          switch (r.second.mAccess) {
           case Resource::Access::eReadOnly:
             subpass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eInputAttachment;
             break;
           case Resource::Access::eLoad:
           case Resource::Access::eWriteOnly:
           case Resource::Access::eLoadWrite:
-            if (r.first->isColorResource()) {
+            if (r.second.mUsage == Resource::Usage::eColorAttachment) {
               subpass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eColorAttachment;
-            } else if (r.first->isDepthResource()) {
+            } else if (r.second.mUsage == Resource::Usage::eDepthAttachment) {
               subpass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
             }
             break;
           case Resource::Access::eReadWrite:
           case Resource::Access::eLoadReadWrite:
             subpass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eInputAttachment;
-            if (r.first->isColorResource()) {
+            if (r.second.mUsage == Resource::Usage::eColorAttachment) {
               subpass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eColorAttachment;
-            } else if (r.first->isDepthResource()) {
+            } else if (r.second.mUsage == Resource::Usage::eDepthAttachment) {
               subpass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
             }
             break;
@@ -505,8 +542,11 @@ void FrameGraph::process(ProcessingFlags flags) {
     // we begin the RenderPass later.
     for (auto& pass : perFrame.mRenderPasses) {
       for (auto const& subpass : pass.mSubpasses) {
-        pass.mClearValues.insert(
-            subpass.mLogicalPass->mClearValues.begin(), subpass.mLogicalPass->mClearValues.end());
+        for (auto const& resource : subpass.mLogicalPass->mResources) {
+          if (resource.second.mClear) {
+            pass.mClearValues[resource.first] = *resource.second.mClear;
+          }
+        }
       }
     }
 
@@ -600,18 +640,23 @@ void FrameGraph::process(ProcessingFlags flags) {
           // structure.
           uint32_t resourceIdx = std::distance(pass.mAttachments.begin(), resourceIt);
 
-          if (resource.second == Resource::Access::eReadOnly ||
-              resource.second == Resource::Access::eReadWrite ||
-              resource.second == Resource::Access::eLoadReadWrite) {
+          if (resource.second.mAccess == Resource::Access::eReadOnly ||
+              resource.second.mAccess == Resource::Access::eReadWrite ||
+              resource.second.mAccess == Resource::Access::eLoadReadWrite) {
             subpass.mInputAttachments.push_back(resourceIdx);
           }
 
-          if (resource.second == Resource::Access::eWriteOnly ||
-              resource.second == Resource::Access::eReadWrite ||
-              resource.second == Resource::Access::eLoad ||
-              resource.second == Resource::Access::eLoadWrite ||
-              resource.second == Resource::Access::eLoadReadWrite) {
-            subpass.mOutputAttachments.push_back(resourceIdx);
+          if (resource.second.mAccess == Resource::Access::eWriteOnly ||
+              resource.second.mAccess == Resource::Access::eReadWrite ||
+              resource.second.mAccess == Resource::Access::eLoad ||
+              resource.second.mAccess == Resource::Access::eLoadWrite ||
+              resource.second.mAccess == Resource::Access::eLoadReadWrite) {
+
+            if (resource.second.mUsage == Resource::Usage::eColorAttachment) {
+              subpass.mColorAttachments.push_back(resourceIdx);
+            } else {
+              subpass.mDepthStencilAttachment = resourceIdx;
+            }
           }
         }
 
@@ -643,7 +688,7 @@ void FrameGraph::process(ProcessingFlags flags) {
         attachmentInfo.mLoadOp        = vk::AttachmentLoadOp::eClear;
         attachmentInfo.mStoreOp       = vk::AttachmentStoreOp::eStore;
         attachmentInfo.mImage         = attachment;
-        pass.mPhysicalPass->addColorAttachment(attachmentInfo);
+        pass.mPhysicalPass->addAttachment(attachmentInfo);
       }
 
       // And set the subpass info structures.

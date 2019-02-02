@@ -24,9 +24,10 @@ class RenderPass : public Core::StaticCreate<RenderPass>, public Core::NamedObje
 
  public:
   struct Subpass {
-    std::vector<uint32_t> mPreSubpasses;
-    std::vector<uint32_t> mInputAttachments;
-    std::vector<uint32_t> mOutputAttachments;
+    std::vector<uint32_t>   mPreSubpasses;
+    std::vector<uint32_t>   mInputAttachments;
+    std::vector<uint32_t>   mColorAttachments;
+    std::optional<uint32_t> mDepthStencilAttachment;
   };
 
   struct Attachment {
@@ -42,16 +43,15 @@ class RenderPass : public Core::StaticCreate<RenderPass>, public Core::NamedObje
 
   virtual void init();
 
-  void addColorAttachment(Attachment const& attachment);
-  void addDepthAttachment(Attachment const& attachment);
-
-  void clearAttachments();
-
-  bool                           hasDepthAttachment() const;
+  void                           addAttachment(Attachment const& attachment);
+  void                           setAttachments(std::vector<Attachment> const& attachments);
   std::vector<Attachment> const& getAttachments() const;
+  void                           clearAttachments();
 
+  void                        addSubpass(Subpass const& subpass);
   void                        setSubpasses(std::vector<Subpass> const& subpasses);
-  std::vector<Subpass> const& getSubpasses();
+  std::vector<Subpass> const& getSubpasses() const;
+  void                        clearSubpasses();
 
   glm::uvec2                getExtent() const;
   vk::FramebufferPtr const& getFramebuffer() const;
@@ -69,8 +69,6 @@ class RenderPass : public Core::StaticCreate<RenderPass>, public Core::NamedObje
   vk::FramebufferPtr      mFramebuffer;
   std::vector<Attachment> mAttachments;
   std::vector<Subpass>    mSubpasses;
-
-  int32_t mDepthAttachment = -1;
 };
 
 } // namespace Illusion::Graphics

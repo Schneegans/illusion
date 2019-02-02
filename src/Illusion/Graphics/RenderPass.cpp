@@ -49,7 +49,7 @@ void RenderPass::init() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void RenderPass::addColorAttachment(Attachment const& attachment) {
+void RenderPass::addAttachment(Attachment const& attachment) {
   // Make sure that extent is the same.
   if (mAttachments.size() > 0 &&
       attachment.mImage->mImageInfo.extent != mAttachments[0].mImage->mImageInfo.extent) {
@@ -63,29 +63,9 @@ void RenderPass::addColorAttachment(Attachment const& attachment) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void RenderPass::addDepthAttachment(Attachment const& attachment) {
-  if (hasDepthAttachment()) {
-    throw std::runtime_error("Failed to add attachment to RenderPass \"" + getName() +
-                             "\": RenderPass already has a depth attachment!");
-  }
-
-  addColorAttachment(attachment);
-
-  mDepthAttachment = mAttachments.size() - 1;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void RenderPass::clearAttachments() {
-  mDepthAttachment = -1;
-  mAttachments.clear();
-  mDirty = true;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-bool RenderPass::hasDepthAttachment() const {
-  return mDepthAttachment >= 0;
+void RenderPass::setAttachments(std::vector<Attachment> const& attachments) {
+  mAttachments = attachments;
+  mDirty       = true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -96,6 +76,19 @@ std::vector<RenderPass::Attachment> const& RenderPass::getAttachments() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void RenderPass::clearAttachments() {
+  mAttachments.clear();
+  mDirty = true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void RenderPass::addSubpass(Subpass const& subpass) {
+  mSubpasses.push_back(subpass);
+  mDirty = true;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 void RenderPass::setSubpasses(std::vector<Subpass> const& subpasses) {
   mSubpasses = subpasses;
   mDirty     = true;
@@ -103,8 +96,15 @@ void RenderPass::setSubpasses(std::vector<Subpass> const& subpasses) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<RenderPass::Subpass> const& RenderPass::getSubpasses() {
+std::vector<RenderPass::Subpass> const& RenderPass::getSubpasses() const {
   return mSubpasses;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void RenderPass::clearSubpasses() {
+  mSubpasses.clear();
+  mDirty = true;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -138,7 +138,6 @@ void RenderPass::createRenderPass() {
   std::vector<vk::AttachmentReference>   attachmentRefs;
 
   for (auto const& a : mAttachments) {
-
     vk::AttachmentDescription attachment;
     attachment.format        = a.mImage->mImageInfo.format;
     attachment.samples       = a.mImage->mImageInfo.samples;
@@ -162,7 +161,11 @@ void RenderPass::createRenderPass() {
 
   if (subpasses.size() == 0) {
     for (size_t i(0); i < attachments.size(); ++i) {
-      defaultSubpass[0].mOutputAttachments.push_back(i);
+      if (Utils::isColorFormat(attachments[i].format)) {
+        defaultSubpass[0].mColorAttachments.push_back(i);
+      } else {
+        defaultSubpass[0].mDepthStencilAttachment = i;
+      }
     }
 
     subpasses = defaultSubpass;
@@ -170,7 +173,7 @@ void RenderPass::createRenderPass() {
 
   std::vector<vk::SubpassDescription>               subpassInfos(subpasses.size());
   std::vector<std::vector<vk::AttachmentReference>> inputAttachmentRefs(subpasses.size());
-  std::vector<std::vector<vk::AttachmentReference>> outputAttachmentRefs(subpasses.size());
+  std::vector<std::vector<vk::AttachmentReference>> colorAttachmentRefs(subpasses.size());
 
   for (size_t i(0); i < subpasses.size(); ++i) {
 
@@ -178,19 +181,20 @@ void RenderPass::createRenderPass() {
       inputAttachmentRefs[i].push_back(attachmentRefs[attachment]);
     }
 
-    for (auto attachment : subpasses[i].mOutputAttachments) {
-      if (int32_t(attachment) == mDepthAttachment) {
-        subpassInfos[i].pDepthStencilAttachment = &attachmentRefs[mDepthAttachment];
-      } else {
-        outputAttachmentRefs[i].push_back(attachmentRefs[attachment]);
-      }
+    for (uint32_t attachment : subpasses[i].mColorAttachments) {
+      colorAttachmentRefs[i].push_back(attachmentRefs[attachment]);
+    }
+
+    if (subpasses[i].mDepthStencilAttachment) {
+      subpassInfos[i].pDepthStencilAttachment =
+          &attachmentRefs[*subpasses[i].mDepthStencilAttachment];
     }
 
     subpassInfos[i].pipelineBindPoint    = vk::PipelineBindPoint::eGraphics;
     subpassInfos[i].inputAttachmentCount = static_cast<uint32_t>(inputAttachmentRefs[i].size());
     subpassInfos[i].pInputAttachments    = inputAttachmentRefs[i].data();
-    subpassInfos[i].colorAttachmentCount = static_cast<uint32_t>(outputAttachmentRefs[i].size());
-    subpassInfos[i].pColorAttachments    = outputAttachmentRefs[i].data();
+    subpassInfos[i].colorAttachmentCount = static_cast<uint32_t>(colorAttachmentRefs[i].size());
+    subpassInfos[i].pColorAttachments    = colorAttachmentRefs[i].data();
   }
 
   std::vector<vk::SubpassDependency> dependencies;

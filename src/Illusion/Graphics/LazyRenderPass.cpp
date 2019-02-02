@@ -103,11 +103,7 @@ void LazyRenderPass::createImages() {
         "Attachment " + std::to_string(i) + " of " + getName(), imageInfo, vk::ImageViewType::e2D,
         aspect, vk::MemoryPropertyFlagBits::eDeviceLocal, layout);
 
-    if (Utils::isColorFormat(mAttachmentFormats[i])) {
-      addColorAttachment(attachment);
-    } else {
-      addDepthAttachment(attachment);
-    }
+    RenderPass::addAttachment(attachment);
   }
 }
 
