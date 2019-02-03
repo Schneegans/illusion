@@ -69,50 +69,42 @@ glm::uvec2 FrameGraph::Resource::getAbsoluteExtent(glm::uvec2 const& windowExten
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// bool FrameGraph::Resource::isDepthResource() const {
-//   return Utils::isDepthFormat(mFormat);
-// }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// bool FrameGraph::Resource::isColorResource() const {
-//   return Utils::isColorFormat(mFormat);
-// }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 FrameGraph::Pass& FrameGraph::Pass::addColorAttachment(
-    Resource const& resource, Resource::Access access) {
+    Resource const& resource, AccessFlags access, std::optional<vk::ClearColorValue> clear) {
 
   // We cannot add the same resource twice.
-  if (Core::Utils::contains(mResources, &resource)) {
+  if (Core::Utils::contains(mResourceAccess, &resource)) {
     throw std::runtime_error("Failed to add resource \"" + resource.mName +
                              "\" to frame graph pass \"" + mName +
                              "\": Resource has already been added to this pass!");
   }
 
-  mResources[&resource] = {access, Resource::Usage::eColorAttachment, {}};
-
-  mDirty = true;
-  return *this;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-FrameGraph::Pass& FrameGraph::Pass::addColorAttachment(
-    Resource const& resource, vk::ClearColorValue const& clear) {
-
-  // We cannot add the same resource twice.
-  if (Core::Utils::contains(mResources, &resource)) {
+  // Access for cleared attachments must be write-only.
+  if (clear && !access.containsOnly(AccessFlagBits::eWrite)) {
     throw std::runtime_error("Failed to add resource \"" + resource.mName +
                              "\" to frame graph pass \"" + mName +
-                             "\": Resource has already been added to this pass!");
+                             "\": Resource which are cleared must be write-only!");
   }
 
-  mResources[&resource] = {Resource::Access::eWriteOnly, Resource::Usage::eColorAttachment, clear};
+  vk::ImageUsageFlags usage;
+
+  if (access.contains(AccessFlagBits::eRead)) {
+    usage |= vk::ImageUsageFlagBits::eInputAttachment;
+  }
+
+  if (access.contains(AccessFlagBits::eWrite) || access.contains(AccessFlagBits::eLoad)) {
+    usage |= vk::ImageUsageFlagBits::eColorAttachment;
+  }
+
+  mResourceAccess[&resource] = access;
+  mResourceUsage[&resource]  = usage;
+
+  if (clear) {
+    mResourceClear[&resource] = *clear;
+  }
 
   mDirty = true;
   return *this;
@@ -121,59 +113,44 @@ FrameGraph::Pass& FrameGraph::Pass::addColorAttachment(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 FrameGraph::Pass& FrameGraph::Pass::addDepthAttachment(
-    Resource const& resource, Resource::Access access) {
+    Resource const& resource, AccessFlags access, std::optional<vk::ClearDepthStencilValue> clear) {
 
-  // Validate resource access.
-  if (access != Resource::Access::eLoad && access != Resource::Access::eLoadWrite) {
-    throw std::runtime_error(
-        "Failed to add resource \"" + resource.mName + "\" to frame graph pass \"" + mName +
-        "\": Depth attachments may only have access mode eLoad or eLoadWrite!");
+  // Depth attachments cannot be read.
+  if (access.contains(AccessFlagBits::eRead)) {
+    throw std::runtime_error("Failed to add resource \"" + resource.mName +
+                             "\" to frame graph pass \"" + mName +
+                             "\": Depth attachments can not be read!");
+  }
+
+  // Access for cleared attachments must be eWriteOnly.
+  if (clear && !access.containsOnly(AccessFlagBits::eWrite)) {
+    throw std::runtime_error("Failed to add resource \"" + resource.mName +
+                             "\" to frame graph pass \"" + mName +
+                             "\": Resource which are cleared must be eWriteOnly!");
   }
 
   // We cannot add the same resource twice.
-  if (Core::Utils::contains(mResources, &resource)) {
+  if (Core::Utils::contains(mResourceAccess, &resource)) {
     throw std::runtime_error("Failed to add resource \"" + resource.mName +
                              "\" to frame graph pass \"" + mName +
                              "\": Resource has already been added to this pass!");
   }
 
   // We cannot add multiple depth attachments.
-  for (auto const& r : mResources) {
-    if (r.second.mUsage == Resource::Usage::eDepthAttachment) {
+  for (auto const& usage : mResourceUsage) {
+    if (VkFlags(usage.second & vk::ImageUsageFlagBits::eDepthStencilAttachment) > 0) {
       throw std::runtime_error("Failed to add resource \"" + resource.mName +
                                "\" to frame graph pass \"" + mName +
                                "\": Pass already has a depth attachment!");
     }
   }
 
-  mResources[&resource] = {access, Resource::Usage::eDepthAttachment, {}};
+  mResourceAccess[&resource] = access;
+  mResourceUsage[&resource]  = vk::ImageUsageFlagBits::eDepthStencilAttachment;
 
-  mDirty = true;
-  return *this;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-FrameGraph::Pass& FrameGraph::Pass::addDepthAttachment(
-    Resource const& resource, vk::ClearDepthStencilValue const& clear) {
-
-  // We cannot add the same resource twice.
-  if (Core::Utils::contains(mResources, &resource)) {
-    throw std::runtime_error("Failed to add resource \"" + resource.mName +
-                             "\" to frame graph pass \"" + mName +
-                             "\": Resource has already been added to this pass!");
+  if (clear) {
+    mResourceClear[&resource] = *clear;
   }
-
-  // We cannot add multiple depth attachments.
-  for (auto const& r : mResources) {
-    if (r.second.mUsage == Resource::Usage::eDepthAttachment) {
-      throw std::runtime_error("Failed to add resource \"" + resource.mName +
-                               "\" to frame graph pass \"" + mName +
-                               "\": Pass already has a depth attachment!");
-    }
-  }
-
-  mResources[&resource] = {Resource::Access::eWriteOnly, Resource::Usage::eDepthAttachment, clear};
 
   mDirty = true;
   return *this;
@@ -194,17 +171,6 @@ FrameGraph::Pass& FrameGraph::Pass::setProcessCallback(
   mDirty           = true;
   return *this;
 }
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// FrameGraph::Resource const* FrameGraph::Pass::getDepthAttachment() const {
-//   for (auto const& r : mResources) {
-//     if (r.first->isDepthResource()) {
-//       return r.first;
-//     }
-//   }
-//   return nullptr;
-// }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -328,7 +294,7 @@ void FrameGraph::process(ProcessingFlags flags) {
       passQueue.pop_front();
 
       // Skip passes without any resources.
-      if (pass->mResources.size() == 0) {
+      if (pass->mResourceAccess.size() == 0) {
         Core::Logger::debug() << "    Skipping pass \"" + pass->mName +
                                      "\" because it has no resources assigned."
                               << std::endl;
@@ -338,8 +304,9 @@ void FrameGraph::process(ProcessingFlags flags) {
       // And create a RenderPassInfo for it. We store the extent of the pass for easier later
       // access. Due to the previous graph validation we are sure that all resources have the same
       // resolution.
-      RenderPassInfo renderPass({{{pass}}});
-      for (auto const& resource : pass->mResources) {
+      RenderPassInfo renderPass;
+      renderPass.mSubpasses.push_back({pass});
+      for (auto const& resource : pass->mResourceAccess) {
         renderPass.mExtent = resource.first->getAbsoluteExtent(mOutputWindow->pExtent.get());
         break;
       }
@@ -355,19 +322,19 @@ void FrameGraph::process(ProcessingFlags flags) {
 
       // Now we have to find the passes which are in front of the current pass in the mPasses list
       // of the FrameGraph and write to to the resources of the current pass.
-      for (auto r : pass->mResources) {
+      for (auto r : pass->mResourceAccess) {
         Core::Logger::debug() << "      resource \"" + r.first->mName + "\"" << std::endl;
 
         // Step backwards through all Passes, collecting all passes writing to this resource.
         auto previousPass = currentPass;
-        auto previousUse  = previousPass->mResources.find(r.first);
+        auto previousUse  = previousPass->mResourceAccess.find(r.first);
 
         while (previousPass != mPasses.rend()) {
           do {
             ++previousPass;
           } while (previousPass != mPasses.rend() &&
-                   (previousUse = previousPass->mResources.find(r.first)) ==
-                       previousPass->mResources.end());
+                   (previousUse = previousPass->mResourceAccess.find(r.first)) ==
+                       previousPass->mResourceAccess.end());
 
           // Now there are several cases:
           // * There is a preceding use of this resource and ...
@@ -381,13 +348,12 @@ void FrameGraph::process(ProcessingFlags flags) {
           //   * we use it as write-only: This is alright, we are "creating" the resource
           //   * we want to read from the resource. This is an error.
           if (previousPass != mPasses.rend()) {
-            if (r.second.mAccess == Resource::Access::eWriteOnly) {
+            if (r.second.containsOnly(AccessFlagBits::eWrite)) {
               throw std::runtime_error("Frame graph construction failed: Write-only output \"" +
                                        r.first->mName + "\" of pass \"" + pass->mName +
                                        "\" is used by the preceding pass \"" + previousPass->mName +
                                        "\"!");
-            } else if (previousUse->second.mAccess == Resource::Access::eReadOnly ||
-                       previousUse->second.mAccess == Resource::Access::eLoad) {
+            } else if (!previousUse->second.contains(AccessFlagBits::eWrite)) {
               Core::Logger::debug()
                   << "        is read-only in pass \"" + previousPass->mName + "\"." << std::endl;
             } else {
@@ -401,7 +367,7 @@ void FrameGraph::process(ProcessingFlags flags) {
                   << "        is written by pass \"" + previousPass->mName + "\"." << std::endl;
             }
           } else if (renderPass.mSubpasses[0].mDependencies.size() == 0) {
-            if (r.second.mAccess == Resource::Access::eWriteOnly) {
+            if (r.second.containsOnly(AccessFlagBits::eWrite)) {
               Core::Logger::debug() << "        is created by this pass." << std::endl;
             } else {
               throw std::runtime_error("Frame graph construction failed: Input \"" +
@@ -425,8 +391,8 @@ void FrameGraph::process(ProcessingFlags flags) {
     Core::Logger::debug() << "  Logical pass execution order will be:" << std::endl;
     uint32_t counter = 0;
     for (auto const& p : perFrame.mRenderPasses) {
-      Core::Logger::debug() << "    Pass " << counter++ << " (\""
-                            << p.mSubpasses[0].mLogicalPass->mName << "\")" << std::endl;
+      Core::Logger::debug() << "    Pass " << counter++ << " (\"" << p.mSubpasses[0].mPass->mName
+                            << "\")" << std::endl;
     }
 
     // Merge adjacent RenderPassInfos which can be executed as subpasses ---------------------------
@@ -456,7 +422,7 @@ void FrameGraph::process(ProcessingFlags flags) {
 
           bool isSubpassOfCurrent = false;
           for (auto const& subpass : current->mSubpasses) {
-            if (subpass.mLogicalPass == d) {
+            if (subpass.mPass == d) {
               isSubpassOfCurrent = true;
               break;
             }
@@ -491,7 +457,7 @@ void FrameGraph::process(ProcessingFlags flags) {
     for (auto& pass : perFrame.mRenderPasses) {
       std::vector<std::string> subpassNames;
       for (auto const& subpass : pass.mSubpasses) {
-        subpassNames.push_back("\"" + subpass.mLogicalPass->mName + "\"");
+        subpassNames.push_back("\"" + subpass.mPass->mName + "\"");
       }
 
       pass.mName = "RenderPass " + std::to_string(counter++) + " (" +
@@ -506,112 +472,50 @@ void FrameGraph::process(ProcessingFlags flags) {
 
     // Identify resource usage per RenderPassInfo --------------------------------------------------
 
-    // For each subpass we will collect information on how the individual resources are used.
-    // This information is stored in the mResourceUsage member of the SubpassInfo.
+    // For each subpass we will collect information on how the individual resources are used on what
+    // level. This information is stored in the mResourceUsage and mResourceAccess members of the
+    // SubpassInfo and the RenderPassInfo. Similarly, we collect the clear-values for each resource.
+    // This information is required when we begin the RenderPass later.
     for (auto& pass : perFrame.mRenderPasses) {
       for (auto& subpass : pass.mSubpasses) {
-        for (auto const& r : subpass.mLogicalPass->mResources) {
-          switch (r.second.mAccess) {
-          case Resource::Access::eReadOnly:
-            subpass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eInputAttachment;
-            break;
-          case Resource::Access::eLoad:
-          case Resource::Access::eWriteOnly:
-          case Resource::Access::eLoadWrite:
-            if (r.second.mUsage == Resource::Usage::eColorAttachment) {
-              subpass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eColorAttachment;
-            } else if (r.second.mUsage == Resource::Usage::eDepthAttachment) {
-              subpass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
-            }
-            break;
-          case Resource::Access::eReadWrite:
-          case Resource::Access::eLoadReadWrite:
-            subpass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eInputAttachment;
-            if (r.second.mUsage == Resource::Usage::eColorAttachment) {
-              subpass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eColorAttachment;
-            } else if (r.second.mUsage == Resource::Usage::eDepthAttachment) {
-              subpass.mResourceUsage[r.first] |= vk::ImageUsageFlagBits::eDepthStencilAttachment;
-            }
-            break;
-          }
+        for (auto const& r : subpass.mPass->mResourceAccess) {
+          pass.mResourceAccess[r.first] |= r.second;
+        }
+        for (auto const& r : subpass.mPass->mResourceUsage) {
+          pass.mResourceUsage[r.first] |= r.second;
+        }
+        for (auto const& resource : subpass.mPass->mResourceClear) {
+          pass.mResourceClear[resource.first] = resource.second;
         }
       }
     }
 
-    // Similarly, we collect the clear-values for each resource. This information is required when
-    // we begin the RenderPass later.
-    for (auto& pass : perFrame.mRenderPasses) {
-      for (auto const& subpass : pass.mSubpasses) {
-        for (auto const& resource : subpass.mLogicalPass->mResources) {
-          if (resource.second.mClear) {
-            pass.mClearValues[resource.first] = *resource.second.mClear;
-          }
-        }
-      }
-    }
-
-    // Create a BackedImage for each Resource ------------------------------------------------------
-
-    // Now we will create actual physical resources. We will create everything from scratch here.
-    // This can definitely be optimized, but for now frequent graph changes are not planned anyways.
-    perFrame.mAllAttachments.clear();
-
-    // First we will create a map of resources which are actually used by the passes we collected.
-    // For each resource we will accumulate the vk::ImageUsageFlagBits.
-    std::unordered_map<Resource const*, vk::ImageUsageFlags> resourceUsage;
-    for (auto& pass : perFrame.mRenderPasses) {
-      for (auto& subpass : pass.mSubpasses) {
-        for (auto const& resource : subpass.mResourceUsage) {
-          resourceUsage[resource.first] |= resource.second;
-        }
+    // We will also create a map of resources which are actually used by all the passes we
+    // collected. For each resource we will accumulate the vk::ImageUsageFlagBits.
+    std::unordered_map<Resource const*, vk::ImageUsageFlags> overallResourceUsage;
+    for (auto const& pass : perFrame.mRenderPasses) {
+      for (auto const& resource : pass.mResourceUsage) {
+        overallResourceUsage[resource.first] |= resource.second;
       }
     }
 
     // For the final output resource we will need eTransferSrc as it will be blitted to the
     // swapchain images.
-    resourceUsage[mOutputAttachment] |= vk::ImageUsageFlagBits::eTransferSrc;
+    overallResourceUsage[mOutputAttachment] |= vk::ImageUsageFlagBits::eTransferSrc;
 
-    // Now we will create a BackedImage for each Resource.
-    for (auto resource : resourceUsage) {
-      vk::ImageAspectFlags aspect;
+    // Create a RenderPass for each RenderPassInfo and BackedImages for each Resource --------------
 
-      if (Utils::isDepthOnlyFormat(resource.first->mFormat)) {
-        aspect |= vk::ImageAspectFlagBits::eDepth;
-      } else if (Utils::isDepthStencilFormat(resource.first->mFormat)) {
-        aspect |= vk::ImageAspectFlagBits::eDepth;
-        aspect |= vk::ImageAspectFlagBits::eStencil;
-      } else {
-        aspect |= vk::ImageAspectFlagBits::eColor;
-      }
-
-      vk::ImageCreateInfo imageInfo;
-      imageInfo.imageType     = vk::ImageType::e2D;
-      imageInfo.format        = resource.first->mFormat;
-      imageInfo.extent.width  = resource.first->mExtent.x;
-      imageInfo.extent.height = resource.first->mExtent.y;
-      imageInfo.extent.depth  = 1;
-      imageInfo.mipLevels     = 1;
-      imageInfo.arrayLayers   = 1;
-      imageInfo.samples       = resource.first->mSamples;
-      imageInfo.tiling        = vk::ImageTiling::eOptimal;
-      imageInfo.usage         = resource.second;
-      imageInfo.sharingMode   = vk::SharingMode::eExclusive;
-      imageInfo.initialLayout = vk::ImageLayout::eUndefined;
-
-      perFrame.mAllAttachments[resource.first] =
-          mDevice->createBackedImage("Resource \"" + resource.first->mName + "\" of " + getName(),
-              imageInfo, vk::ImageViewType::e2D, aspect, vk::MemoryPropertyFlagBits::eDeviceLocal,
-              vk::ImageLayout::eUndefined);
-    }
-
-    // Create a RenderPass for each RenderPassInfo -------------------------------------------------
+    // Now we will create actual physical resources. We will create everything from scratch here.
+    // This can definitely be optimized, but for now frequent graph changes are not planned anyways.
+    perFrame.mAllAttachments.clear();
 
     // For each RenderPassInfo we will create a RenderPass, attach the physical resources we just
     // created and setup the subpasses.
-    for (auto& pass : perFrame.mRenderPasses) {
+    for (auto passIt = perFrame.mRenderPasses.begin(); passIt != perFrame.mRenderPasses.end();
+         ++passIt) {
 
       // First we have to create an "empty" RenderPass.
-      pass.mPhysicalPass = RenderPass::create(pass.mName, mDevice);
+      passIt->mRenderPass = RenderPass::create(passIt->mName, mDevice);
 
       // Then we have to collect all physical resources which are required for this pass in the
       // mAttachments vector of each RenderPassInfo. We could use a std::unordered_set here to
@@ -621,41 +525,36 @@ void FrameGraph::process(ProcessingFlags flags) {
       // information on the dependencies between subpasses and their resource usage.
       std::vector<RenderPass::Subpass> subpasses;
 
-      for (auto const& subpassInfo : pass.mSubpasses) {
+      for (auto const& subpassInfo : passIt->mSubpasses) {
         RenderPass::Subpass subpass;
 
-        for (auto const& resource : subpassInfo.mLogicalPass->mResources) {
+        for (auto const& resource : subpassInfo.mPass->mResourceAccess) {
 
           // Add the resource to the resources vector. The content of the resources vector will be
           // the order of attachments of our framebuffer in the end.
           auto resourceIt =
-              std::find(pass.mAttachments.begin(), pass.mAttachments.end(), resource.first);
-          if (resourceIt == pass.mAttachments.end()) {
-            pass.mAttachments.push_back(resource.first);
-            resourceIt = pass.mAttachments.end() - 1;
+              std::find(passIt->mAttachments.begin(), passIt->mAttachments.end(), resource.first);
+          if (resourceIt == passIt->mAttachments.end()) {
+            passIt->mAttachments.push_back(resource.first);
+            resourceIt = passIt->mAttachments.end() - 1;
           }
 
           // We calculate the index of the current resource and, depending on the usage, add this
           // index either as input attachment, as output attachment or as both to our Subpass
           // structure.
-          uint32_t resourceIdx = std::distance(pass.mAttachments.begin(), resourceIt);
+          uint32_t resourceIdx = std::distance(passIt->mAttachments.begin(), resourceIt);
 
-          if (resource.second.mAccess == Resource::Access::eReadOnly ||
-              resource.second.mAccess == Resource::Access::eReadWrite ||
-              resource.second.mAccess == Resource::Access::eLoadReadWrite) {
+          if (resource.second.contains(AccessFlagBits::eRead)) {
             subpass.mInputAttachments.push_back(resourceIdx);
           }
 
-          if (resource.second.mAccess == Resource::Access::eWriteOnly ||
-              resource.second.mAccess == Resource::Access::eReadWrite ||
-              resource.second.mAccess == Resource::Access::eLoad ||
-              resource.second.mAccess == Resource::Access::eLoadWrite ||
-              resource.second.mAccess == Resource::Access::eLoadReadWrite) {
-
-            if (resource.second.mUsage == Resource::Usage::eColorAttachment) {
-              subpass.mColorAttachments.push_back(resourceIdx);
-            } else {
+          if (resource.second.contains(AccessFlagBits::eWrite) ||
+              resource.second.contains(AccessFlagBits::eLoad)) {
+            if (VkFlags(subpassInfo.mPass->mResourceUsage.at(resource.first) &
+                        vk::ImageUsageFlagBits::eDepthStencilAttachment) > 0) {
               subpass.mDepthStencilAttachment = resourceIdx;
+            } else {
+              subpass.mColorAttachments.push_back(resourceIdx);
             }
           }
         }
@@ -664,8 +563,8 @@ void FrameGraph::process(ProcessingFlags flags) {
         // dependency of the current subpass we will check whether this is actually part of the
         // same RenderPass. If so, that dependency is a subpass dependency.
         for (auto dependency : subpassInfo.mDependencies) {
-          for (size_t i(0); i < pass.mSubpasses.size(); ++i) {
-            if (dependency == pass.mSubpasses[i].mLogicalPass) {
+          for (size_t i(0); i < passIt->mSubpasses.size(); ++i) {
+            if (dependency == passIt->mSubpasses[i].mPass) {
               subpass.mPreSubpasses.push_back(i);
             }
           }
@@ -675,24 +574,134 @@ void FrameGraph::process(ProcessingFlags flags) {
       }
 
       // Then we can add the collected resources to our RenderPass as attachments.
-      Core::Logger::debug() << "  Adding attachments to " << pass.mPhysicalPass->getName()
+      Core::Logger::debug() << "  Adding attachments to " << passIt->mRenderPass->getName()
                             << std::endl;
 
-      for (auto passAttachment : pass.mAttachments) {
-        auto attachment = perFrame.mAllAttachments[passAttachment];
-        Core::Logger::debug() << "    " << attachment->mName << std::endl;
+      for (auto attachment : passIt->mAttachments) {
 
         RenderPass::Attachment attachmentInfo;
         attachmentInfo.mInitialLayout = vk::ImageLayout::eUndefined;
-        attachmentInfo.mFinalLayout   = vk::ImageLayout::eGeneral;
-        attachmentInfo.mLoadOp        = vk::AttachmentLoadOp::eClear;
-        attachmentInfo.mStoreOp       = vk::AttachmentStoreOp::eStore;
-        attachmentInfo.mImage         = attachment;
-        pass.mPhysicalPass->addAttachment(attachmentInfo);
+        attachmentInfo.mFinalLayout   = vk::ImageLayout::eUndefined;
+        attachmentInfo.mLoadOp        = vk::AttachmentLoadOp::eDontCare;
+        attachmentInfo.mStoreOp       = vk::AttachmentStoreOp::eDontCare;
+
+        // The mInitialLayout should match our usage and access flags.
+        auto getLayout = [](vk::ImageUsageFlags usage, AccessFlags access) {
+          if (usage == vk::ImageUsageFlagBits::eColorAttachment) {
+            return vk::ImageLayout::eColorAttachmentOptimal;
+          }
+
+          if (usage == vk::ImageUsageFlagBits::eInputAttachment) {
+            return vk::ImageLayout::eShaderReadOnlyOptimal;
+          }
+
+          if (usage == vk::ImageUsageFlagBits::eDepthStencilAttachment) {
+            if (access.containsOnly(AccessFlagBits::eLoad)) {
+              return vk::ImageLayout::eDepthStencilReadOnlyOptimal;
+            }
+            return vk::ImageLayout::eDepthStencilAttachmentOptimal;
+          }
+
+          return vk::ImageLayout::eGeneral;
+        };
+
+        attachmentInfo.mInitialLayout = attachmentInfo.mFinalLayout = getLayout(
+            passIt->mResourceUsage.at(attachment), passIt->mResourceAccess.at(attachment));
+
+        // If there is a clear value for this resource, the AttachmentLoadOp should be eClear.
+        if (Core::Utils::contains(passIt->mResourceClear, attachment)) {
+          attachmentInfo.mLoadOp = vk::AttachmentLoadOp::eClear;
+        } else {
+
+          // Else if the first subpass uses it not write-only, the AttachmentLoadOp should be eLoad.
+          // Else we can leave it to be eDontCare.
+          AccessFlags firstUse = AccessFlagBits::eNone;
+          for (auto const& subpass : passIt->mSubpasses) {
+            if (Core::Utils::contains(subpass.mPass->mResourceAccess, attachment)) {
+              firstUse = subpass.mPass->mResourceAccess.at(attachment);
+              break;
+            }
+          }
+
+          if (!firstUse.containsOnly(AccessFlagBits::eWrite)) {
+            attachmentInfo.mLoadOp = vk::AttachmentLoadOp::eLoad;
+          }
+        }
+
+        // If there is a later RenderPass which uses this resource, we have to make sure that the
+        // final layout matches the usage in this later pass. In this case, the AttachmentStoreOp
+        // should be eStore.
+        if (passIt != perFrame.mRenderPasses.end()) {
+          auto nextPass = passIt;
+          while (++nextPass != perFrame.mRenderPasses.end()) {
+            auto nextAccess = nextPass->mResourceAccess.find(attachment);
+            auto nextUsage  = nextPass->mResourceUsage.find(attachment);
+
+            if (nextAccess != nextPass->mResourceAccess.end()) {
+              attachmentInfo.mFinalLayout = getLayout(nextUsage->second, nextAccess->second);
+              attachmentInfo.mStoreOp     = vk::AttachmentStoreOp::eStore;
+            }
+          }
+        }
+
+        // If the resource is to be copied to the swapchain image, the final layout is expected to
+        // be eColorAttachmentOptimal. In this case, the AttachmentStoreOp should be eStore.
+        if (attachment == mOutputAttachment && passIt->mSubpasses.back().mPass == mOutputPass) {
+          attachmentInfo.mFinalLayout = vk::ImageLayout::eColorAttachmentOptimal;
+          attachmentInfo.mStoreOp     = vk::AttachmentStoreOp::eStore;
+        }
+
+        Core::Logger::debug() << "    \"" << attachment->mName << "\"" << std::endl;
+        Core::Logger::debug() << "      InitialLayout: "
+                              << vk::to_string(attachmentInfo.mInitialLayout) << std::endl;
+        Core::Logger::debug() << "      FinalLayout:   "
+                              << vk::to_string(attachmentInfo.mFinalLayout) << std::endl;
+        Core::Logger::debug() << "      LoadOp:        " << vk::to_string(attachmentInfo.mLoadOp)
+                              << std::endl;
+        Core::Logger::debug() << "      StoreOp:       " << vk::to_string(attachmentInfo.mStoreOp)
+                              << std::endl;
+
+        auto image = perFrame.mAllAttachments.find(attachment);
+        if (image == perFrame.mAllAttachments.end()) {
+          vk::ImageAspectFlags aspect;
+
+          if (Utils::isDepthOnlyFormat(attachment->mFormat)) {
+            aspect |= vk::ImageAspectFlagBits::eDepth;
+          } else if (Utils::isDepthStencilFormat(attachment->mFormat)) {
+            aspect |= vk::ImageAspectFlagBits::eDepth;
+            aspect |= vk::ImageAspectFlagBits::eStencil;
+          } else {
+            aspect |= vk::ImageAspectFlagBits::eColor;
+          }
+
+          vk::ImageCreateInfo imageInfo;
+          imageInfo.imageType     = vk::ImageType::e2D;
+          imageInfo.format        = attachment->mFormat;
+          imageInfo.extent.width  = attachment->mExtent.x;
+          imageInfo.extent.height = attachment->mExtent.y;
+          imageInfo.extent.depth  = 1;
+          imageInfo.mipLevels     = 1;
+          imageInfo.arrayLayers   = 1;
+          imageInfo.samples       = attachment->mSamples;
+          imageInfo.tiling        = vk::ImageTiling::eOptimal;
+          imageInfo.usage         = overallResourceUsage.at(attachment);
+          imageInfo.sharingMode   = vk::SharingMode::eExclusive;
+          imageInfo.initialLayout = vk::ImageLayout::eUndefined;
+
+          perFrame.mAllAttachments[attachment] =
+              mDevice->createBackedImage("Attachment \"" + attachment->mName + "\" of " + getName(),
+                  imageInfo, vk::ImageViewType::e2D, aspect,
+                  vk::MemoryPropertyFlagBits::eDeviceLocal, attachmentInfo.mInitialLayout);
+          image = perFrame.mAllAttachments.find(attachment);
+        }
+
+        attachmentInfo.mImage = image->second;
+
+        passIt->mRenderPass->addAttachment(attachmentInfo);
       }
 
       // And set the subpass info structures.
-      pass.mPhysicalPass->setSubpasses(subpasses);
+      passIt->mRenderPass->setSubpasses(subpasses);
     }
 
     // Create a secondary CommandBuffer for each RenderPass ----------------------------------------
@@ -701,8 +710,8 @@ void FrameGraph::process(ProcessingFlags flags) {
     // one.
     for (auto& pass : perFrame.mRenderPasses) {
       for (auto& subpass : pass.mSubpasses) {
-        subpass.mSecondaryCommandBuffer = CommandBuffer::create(subpass.mLogicalPass->mName,
-            mDevice, QueueType::eGeneric, vk::CommandBufferLevel::eSecondary);
+        subpass.mSecondaryCommandBuffer = CommandBuffer::create(
+            subpass.mPass->mName, mDevice, QueueType::eGeneric, vk::CommandBufferLevel::eSecondary);
       }
     }
 
@@ -722,7 +731,7 @@ void FrameGraph::process(ProcessingFlags flags) {
   perFrame.mPrimaryCommandBuffer->begin();
 
   // A thread count of zero will make use of all available cores.
-  if (flags.has(ProcessingFlagBits::eParallelSubpassRecording)) {
+  if (flags.contains(ProcessingFlagBits::eParallelSubpassRecording)) {
     mThreadPool.setThreadCount(0);
   } else {
     mThreadPool.setThreadCount(1);
@@ -736,8 +745,8 @@ void FrameGraph::process(ProcessingFlags flags) {
     // Collect clear value for each attachment.
     std::vector<vk::ClearValue> clearValues;
     for (auto attachment : pass.mAttachments) {
-      if (pass.mClearValues.find(attachment) != pass.mClearValues.end()) {
-        clearValues.push_back(pass.mClearValues.at(attachment));
+      if (pass.mResourceClear.find(attachment) != pass.mResourceClear.end()) {
+        clearValues.push_back(pass.mResourceClear.at(attachment));
       } else {
         clearValues.push_back({});
       }
@@ -745,7 +754,7 @@ void FrameGraph::process(ProcessingFlags flags) {
 
     // Begin the RenderPass.
     perFrame.mPrimaryCommandBuffer->beginRenderPass(
-        pass.mPhysicalPass, clearValues, vk::SubpassContents::eSecondaryCommandBuffers);
+        pass.mRenderPass, clearValues, vk::SubpassContents::eSecondaryCommandBuffers);
 
     // Record the subpasses using the thread(s) of the ThreadPool.
     uint32_t subpassCounter = 0;
@@ -753,10 +762,10 @@ void FrameGraph::process(ProcessingFlags flags) {
       mThreadPool.enqueue([pass, subpass, subpassCounter]() {
         vk::CommandBufferInheritanceInfo info;
         info.subpass     = subpassCounter;
-        info.renderPass  = *pass.mPhysicalPass->getHandle();
-        info.framebuffer = *pass.mPhysicalPass->getFramebuffer();
+        info.renderPass  = *pass.mRenderPass->getHandle();
+        info.framebuffer = *pass.mRenderPass->getFramebuffer();
         subpass.mSecondaryCommandBuffer->begin(info);
-        subpass.mLogicalPass->mProcessCallback(subpass.mSecondaryCommandBuffer);
+        subpass.mPass->mProcessCallback(subpass.mSecondaryCommandBuffer);
         subpass.mSecondaryCommandBuffer->end();
       });
       ++subpassCounter;
@@ -833,7 +842,7 @@ void FrameGraph::validate() const {
 
   // Check whether each resource of each pass was actually created by this frame graph.
   for (auto const& pass : mPasses) {
-    for (auto const& passResource : pass.mResources) {
+    for (auto const& passResource : pass.mResourceAccess) {
       bool ours = false;
       for (auto const& graphResource : mResources) {
         if (&graphResource == passResource.first) {
@@ -880,7 +889,7 @@ void FrameGraph::validate() const {
 
   // Check whether the output resource actually belongs to the output pass.
   bool isOurOutputResource = false;
-  for (auto const& resource : mOutputPass->mResources) {
+  for (auto const& resource : mOutputPass->mResourceAccess) {
     if (mOutputAttachment == resource.first) {
       isOurOutputResource = true;
       break;
@@ -896,7 +905,7 @@ void FrameGraph::validate() const {
   glm::ivec2 windowExtent = mOutputWindow->pExtent.get();
   for (auto const& pass : mPasses) {
     glm::ivec2 passExtent = glm::ivec2(-1);
-    for (auto const& resource : pass.mResources) {
+    for (auto const& resource : pass.mResourceAccess) {
       glm::ivec2 resourceExtent = resource.first->getAbsoluteExtent(windowExtent);
       if (passExtent == glm::ivec2(-1)) {
         passExtent = resourceExtent;
@@ -920,3 +929,21 @@ void FrameGraph::validate() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 } // namespace Illusion::Graphics
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Illusion::Graphics::FrameGraph::ProcessingFlags operator|(
+    Illusion::Graphics::FrameGraph::ProcessingFlagBits bit0,
+    Illusion::Graphics::FrameGraph::ProcessingFlagBits bit1) {
+  return Illusion::Graphics::FrameGraph::ProcessingFlags(bit0) | bit1;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Illusion::Graphics::FrameGraph::AccessFlags operator|(
+    Illusion::Graphics::FrameGraph::AccessFlagBits bit0,
+    Illusion::Graphics::FrameGraph::AccessFlagBits bit1) {
+  return Illusion::Graphics::FrameGraph::AccessFlags(bit0) | bit1;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////

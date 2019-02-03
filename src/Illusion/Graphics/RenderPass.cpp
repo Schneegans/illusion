@@ -203,11 +203,10 @@ void RenderPass::createRenderPass() {
       vk::SubpassDependency dependency;
       dependency.srcSubpass    = src;
       dependency.dstSubpass    = static_cast<uint32_t>(dst);
-      dependency.srcStageMask  = vk::PipelineStageFlagBits::eBottomOfPipe;
-      dependency.srcAccessMask = vk::AccessFlagBits::eMemoryRead;
-      dependency.dstStageMask  = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-      dependency.dstAccessMask =
-          vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
+      dependency.srcStageMask  = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+      dependency.srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+      dependency.dstStageMask  = vk::PipelineStageFlagBits::eFragmentShader;
+      dependency.dstAccessMask = vk::AccessFlagBits::eInputAttachmentRead;
       dependencies.emplace_back(dependency);
     }
   }

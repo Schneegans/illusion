@@ -33,8 +33,10 @@ namespace Illusion::Graphics {
 class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObject {
  public:
   enum class ProcessingFlagBits { eNone = 0, eParallelSubpassRecording = 1 << 0 };
-
   typedef Core::Flags<ProcessingFlagBits> ProcessingFlags;
+
+  enum class AccessFlagBits { eNone = 0, eRead = 1 << 0, eWrite = 1 << 1, eLoad = 1 << 2 };
+  typedef Core::Flags<AccessFlagBits> AccessFlags;
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42,8 +44,6 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
   class Resource {
    public:
     enum class Sizing { eAbsolute, eRelative };
-    enum class Access { eReadOnly, eWriteOnly, eReadWrite, eLoad, eLoadWrite, eLoadReadWrite };
-    enum class Usage { eColorAttachment, eDepthAttachment };
 
     Resource& setName(std::string const& name);
     Resource& setFormat(vk::Format format);
@@ -52,8 +52,6 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
     Resource& setSamples(vk::SampleCountFlagBits const& samples);
 
     glm::uvec2 getAbsoluteExtent(glm::uvec2 const& windowExtent) const;
-    // bool       isDepthResource() const;
-    // bool       isColorResource() const;
 
     friend class FrameGraph;
 
@@ -75,28 +73,22 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
    public:
     Pass& setName(std::string const& name);
 
-    Pass& addColorAttachment(Resource const& resource, Resource::Access access);
-    Pass& addColorAttachment(Resource const& resource, vk::ClearColorValue const& clear);
-
-    Pass& addDepthAttachment(Resource const& resource, Resource::Access access);
-    Pass& addDepthAttachment(Resource const& resource, vk::ClearDepthStencilValue const& clear);
+    Pass& addColorAttachment(Resource const& resource, AccessFlags access,
+        std::optional<vk::ClearColorValue> clear = {});
+    Pass& addDepthAttachment(Resource const& resource, AccessFlags access,
+        std::optional<vk::ClearDepthStencilValue> clear = {});
 
     Pass& setProcessCallback(std::function<void(CommandBufferPtr)> const& callback);
-
-    // Resource const* getDepthAttachment() const;
 
     friend class FrameGraph;
 
    private:
-    struct ResourceInfo {
-      Resource::Access              mAccess;
-      Resource::Usage               mUsage;
-      std::optional<vk::ClearValue> mClear;
-    };
+    std::unordered_map<Resource const*, AccessFlags>         mResourceAccess;
+    std::unordered_map<Resource const*, vk::ImageUsageFlags> mResourceUsage;
+    std::unordered_map<Resource const*, vk::ClearValue>      mResourceClear;
 
-    std::unordered_map<Resource const*, ResourceInfo> mResources;
-    std::function<void(CommandBufferPtr)>             mProcessCallback;
-    std::string                                       mName = "Unnamed Pass";
+    std::function<void(CommandBufferPtr)> mProcessCallback;
+    std::string                           mName = "Unnamed Pass";
 
     // This is directly accessed by the FrameGraph.
     bool mDirty = true;
@@ -117,18 +109,21 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
 
   struct RenderPassInfo {
     struct SubpassInfo {
-      Pass const*                                              mLogicalPass;
-      CommandBufferPtr                                         mSecondaryCommandBuffer;
-      std::unordered_set<Pass const*>                          mDependencies;
-      std::unordered_map<Resource const*, vk::ImageUsageFlags> mResourceUsage;
+      Pass const*                     mPass;
+      CommandBufferPtr                mSecondaryCommandBuffer;
+      std::unordered_set<Pass const*> mDependencies;
     };
 
-    std::vector<SubpassInfo>                            mSubpasses;
-    std::vector<Resource const*>                        mAttachments;
-    std::unordered_map<Resource const*, vk::ClearValue> mClearValues;
-    glm::uvec2                                          mExtent = glm::uvec2(0);
-    RenderPassPtr                                       mPhysicalPass;
-    std::string                                         mName;
+    RenderPassPtr mRenderPass;
+    glm::uvec2    mExtent = glm::uvec2(0);
+    std::string   mName;
+
+    std::vector<SubpassInfo>     mSubpasses;
+    std::vector<Resource const*> mAttachments;
+
+    std::unordered_map<Resource const*, AccessFlags>         mResourceAccess;
+    std::unordered_map<Resource const*, vk::ImageUsageFlags> mResourceUsage;
+    std::unordered_map<Resource const*, vk::ClearValue>      mResourceClear;
   };
 
   // -----------------------------------------------------------------------------------------------
@@ -164,5 +159,13 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
 };
 
 } // namespace Illusion::Graphics
+
+Illusion::Graphics::FrameGraph::ProcessingFlags operator|(
+    Illusion::Graphics::FrameGraph::ProcessingFlagBits bit0,
+    Illusion::Graphics::FrameGraph::ProcessingFlagBits bit1);
+
+Illusion::Graphics::FrameGraph::AccessFlags operator|(
+    Illusion::Graphics::FrameGraph::AccessFlagBits bit0,
+    Illusion::Graphics::FrameGraph::AccessFlagBits bit1);
 
 #endif // ILLUSION_GRAPHICS_RENDER_GRAPH_HPP

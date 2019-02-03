@@ -43,8 +43,12 @@ class Flags {
       : mMask(flags) {
   }
 
-  bool has(Flags<BitType> const& flags) {
+  bool contains(Flags<BitType> const& flags) const {
     return (mMask & flags.mMask) == flags.mMask;
+  }
+
+  bool containsOnly(Flags<BitType> const& flags) const {
+    return contains(flags) && (mMask ^ flags.mMask) == 0;
   }
 
   Flags<BitType>& operator=(Flags<BitType> const& rhs) {
@@ -115,21 +119,21 @@ class Flags {
   MaskType mMask;
 };
 
+} // namespace Illusion::Core
+
 template <typename BitType>
-Flags<BitType> operator|(BitType bit, Flags<BitType> const& flags) {
+Illusion::Core::Flags<BitType> operator|(BitType bit, Illusion::Core::Flags<BitType> const& flags) {
   return flags | bit;
 }
 
 template <typename BitType>
-Flags<BitType> operator&(BitType bit, Flags<BitType> const& flags) {
+Illusion::Core::Flags<BitType> operator&(BitType bit, Illusion::Core::Flags<BitType> const& flags) {
   return flags & bit;
 }
 
 template <typename BitType>
-Flags<BitType> operator^(BitType bit, Flags<BitType> const& flags) {
+Illusion::Core::Flags<BitType> operator^(BitType bit, Illusion::Core::Flags<BitType> const& flags) {
   return flags ^ bit;
 }
-
-} // namespace Illusion::Core
 
 #endif // ILLUSION_CORE_FLAGS_HPP

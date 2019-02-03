@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
   auto& hdr    = graph->createResource().setName("hdr").setFormat(vk::Format::eR32G32B32A32Sfloat);
 
   // create passes ---------------------------------------------------------------------------------
-  using Access = Illusion::Graphics::FrameGraph::Resource::Access;
+  using Access = Illusion::Graphics::FrameGraph::AccessFlagBits;
 
   auto clearColor = vk::ClearColorValue(std::array<float, 4>{{0.f, 0.f, 0.f, 0.f}});
   auto clearDepth = vk::ClearDepthStencilValue(1.f, 0u);
@@ -45,19 +45,19 @@ int main(int argc, char* argv[]) {
   // clang-format off
   auto& gbuffer = graph->createPass()
     .setName("gbuffer")
-    .addColorAttachment(albedo, clearColor)
-    .addColorAttachment(normal, clearColor)
-    .addDepthAttachment(depth, clearDepth)
+    .addColorAttachment(albedo, Access::eWrite, clearColor)
+    .addColorAttachment(normal, Access::eWrite, clearColor)
+    .addDepthAttachment(depth, Access::eWrite, clearDepth)
     .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
       Illusion::Core::Logger::message() << "Record gbuffer pass!" << std::endl;
     });
 
   auto& lighting = graph->createPass()
     .setName("lighting")
-    .addColorAttachment(albedo, Access::eReadOnly)
-    .addColorAttachment(normal, Access::eReadOnly)
-    .addColorAttachment(depth, Access::eReadOnly)
-    .addColorAttachment(hdr, Access::eWriteOnly)
+    .addColorAttachment(albedo, Access::eRead)
+    .addColorAttachment(normal, Access::eRead)
+    .addColorAttachment(depth, Access::eRead)
+    .addColorAttachment(hdr, Access::eWrite)
     .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
       Illusion::Core::Logger::message() << "Record lighting pass!" << std::endl;
     });
@@ -65,14 +65,14 @@ int main(int argc, char* argv[]) {
   auto& transparencies = graph->createPass()
     .setName("transparencies")
     .addDepthAttachment(depth, Access::eLoad)
-    .addColorAttachment(hdr, Access::eLoadWrite)
+    .addColorAttachment(hdr, Access::eLoad | Access::eWrite)
     .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
       Illusion::Core::Logger::message() << "Record transparencies pass!" << std::endl;
     });
 
   auto& tonemapping = graph->createPass()
     .setName("tonemapping")
-    .addColorAttachment(hdr, Access::eReadWrite)
+    .addColorAttachment(hdr, Access::eRead | Access::eWrite)
     .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
       Illusion::Core::Logger::message() << "Record tonemapping pass!" << std::endl;
     });
