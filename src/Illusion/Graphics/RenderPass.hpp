@@ -13,6 +13,7 @@
 
 #include <functional>
 #include <glm/glm.hpp>
+#include <optional>
 #include <unordered_map>
 
 namespace Illusion::Graphics {
