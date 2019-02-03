@@ -13,7 +13,7 @@
 
 namespace Illusion::Graphics::Utils {
 
-// some helpers regarding vk::Format
+// Some helpers regarding vk::Format.
 bool    isColorFormat(vk::Format format);
 bool    isDepthFormat(vk::Format format);
 bool    isDepthOnlyFormat(vk::Format format);
