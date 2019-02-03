@@ -49,7 +49,10 @@ VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
       std::string hexHandle  = address.str();
       std::string objectName = "\"" + std::string(pCallbackData->pObjects[i].pObjectName) + "\"";
 
-      Core::Utils::replaceString(message, hexHandle, objectName);
+      if (Core::Utils::replaceString(message, hexHandle, objectName) == 0 &&
+          objectName.size() > 0) {
+        message += " [" + objectName + "]";
+      }
     }
   }
 
