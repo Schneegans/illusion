@@ -289,29 +289,9 @@ void CommandBuffer::dispatch(uint32_t groupCountX, uint32_t groupCountY, uint32_
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout,
-    vk::ImageLayout newLayout, vk::PipelineStageFlagBits srcStage,
-    vk::PipelineStageFlagBits dstStage, vk::ImageSubresourceRange range) const {
-
-  // clang-format off
-  static const std::unordered_map<vk::ImageLayout, vk::AccessFlags> accessMapping = {
-    {vk::ImageLayout::eUndefined,                     vk::AccessFlags()},
-    {vk::ImageLayout::eGeneral,                       vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite},
-    {vk::ImageLayout::eColorAttachmentOptimal,        vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite},
-    {vk::ImageLayout::eDepthStencilReadOnlyOptimal,   vk::AccessFlagBits::eDepthStencilAttachmentRead},
-    {vk::ImageLayout::eDepthStencilAttachmentOptimal, vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite},
-    {vk::ImageLayout::eShaderReadOnlyOptimal,         vk::AccessFlagBits::eShaderRead},
-    {vk::ImageLayout::eTransferDstOptimal,            vk::AccessFlagBits::eTransferWrite},
-    {vk::ImageLayout::eTransferSrcOptimal,            vk::AccessFlagBits::eTransferRead},
-    {vk::ImageLayout::ePresentSrcKHR,                 vk::AccessFlagBits::eMemoryRead}
-  };
-  // clang-format on
-
-  auto srcAccess = accessMapping.find(oldLayout);
-  auto dstAccess = accessMapping.find(newLayout);
-
-  if (srcAccess == accessMapping.end() || dstAccess == accessMapping.end()) {
-    throw std::runtime_error("Failed to transition image layout: Unsupported transition!");
-  }
+    vk::AccessFlags srcAccess, vk::PipelineStageFlagBits srcStage, vk::ImageLayout newLayout,
+    vk::AccessFlags dstAccess, vk::PipelineStageFlagBits dstStage,
+    vk::ImageSubresourceRange range) const {
 
   vk::ImageMemoryBarrier barrier;
   barrier.oldLayout           = oldLayout;
@@ -320,10 +300,114 @@ void CommandBuffer::transitionImageLayout(vk::Image image, vk::ImageLayout oldLa
   barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   barrier.image               = image;
   barrier.subresourceRange    = range;
-  barrier.srcAccessMask       = srcAccess->second;
-  barrier.dstAccessMask       = dstAccess->second;
+  barrier.srcAccessMask       = srcAccess;
+  barrier.dstAccessMask       = dstAccess;
+
+  // Core::Logger::message() << "Transition from: " << vk::to_string(barrier.oldLayout) << " to "
+  //                         << vk::to_string(barrier.newLayout)
+  //                         << " (srcAccess: " << vk::to_string(barrier.srcAccessMask) << " / "
+  //                         << vk::to_string(srcStage)
+  //                         << " dstAccess: " << vk::to_string(barrier.dstAccessMask) << " / "
+  //                         << vk::to_string(dstStage) << ")" << std::endl;
 
   mVkCmd->pipelineBarrier(srcStage, dstStage, vk::DependencyFlagBits(), nullptr, nullptr, barrier);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CommandBuffer::transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout,
+    vk::ImageLayout newLayout, vk::ImageSubresourceRange range) const {
+  // clang-format off
+  static const std::unordered_map<vk::ImageLayout, vk::PipelineStageFlagBits> srcStageMapping = {
+    {vk::ImageLayout::eUndefined,                     vk::PipelineStageFlagBits::eTopOfPipe},
+    {vk::ImageLayout::ePreinitialized,                vk::PipelineStageFlagBits::eTopOfPipe},
+    {vk::ImageLayout::eGeneral,                       vk::PipelineStageFlagBits::eColorAttachmentOutput},
+    {vk::ImageLayout::eColorAttachmentOptimal,        vk::PipelineStageFlagBits::eColorAttachmentOutput},
+    {vk::ImageLayout::eDepthStencilAttachmentOptimal, vk::PipelineStageFlagBits::eLateFragmentTests},
+    {vk::ImageLayout::eDepthStencilReadOnlyOptimal,   vk::PipelineStageFlagBits::eLateFragmentTests},
+    {vk::ImageLayout::eShaderReadOnlyOptimal,         vk::PipelineStageFlagBits::eFragmentShader},
+    {vk::ImageLayout::eTransferSrcOptimal,            vk::PipelineStageFlagBits::eTransfer},
+    {vk::ImageLayout::eTransferDstOptimal,            vk::PipelineStageFlagBits::eTransfer},
+    {vk::ImageLayout::ePresentSrcKHR,                 vk::PipelineStageFlagBits::eTransfer}
+  };
+
+  static const std::unordered_map<vk::ImageLayout, vk::PipelineStageFlagBits> dstStageMapping = {
+    {vk::ImageLayout::eGeneral,                       vk::PipelineStageFlagBits::eVertexShader},
+    {vk::ImageLayout::eColorAttachmentOptimal,        vk::PipelineStageFlagBits::eColorAttachmentOutput},
+    {vk::ImageLayout::eDepthStencilAttachmentOptimal, vk::PipelineStageFlagBits::eEarlyFragmentTests},
+    {vk::ImageLayout::eDepthStencilReadOnlyOptimal,   vk::PipelineStageFlagBits::eVertexShader},
+    {vk::ImageLayout::eShaderReadOnlyOptimal,         vk::PipelineStageFlagBits::eVertexShader},
+    {vk::ImageLayout::eTransferSrcOptimal,            vk::PipelineStageFlagBits::eTransfer},
+    {vk::ImageLayout::eTransferDstOptimal,            vk::PipelineStageFlagBits::eTransfer},
+    {vk::ImageLayout::ePresentSrcKHR,                 vk::PipelineStageFlagBits::eTransfer}
+  };
+
+  static const std::unordered_map<vk::ImageLayout, vk::AccessFlags> srcAccessMapping = {
+    {vk::ImageLayout::eUndefined,                     vk::AccessFlags()},
+    {vk::ImageLayout::ePreinitialized,                vk::AccessFlags()},
+    {vk::ImageLayout::eGeneral,                       vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite},
+    {vk::ImageLayout::eColorAttachmentOptimal,        vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite},
+    {vk::ImageLayout::eDepthStencilAttachmentOptimal, vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite},
+    {vk::ImageLayout::eDepthStencilReadOnlyOptimal,   vk::AccessFlagBits::eDepthStencilAttachmentRead},
+    {vk::ImageLayout::eShaderReadOnlyOptimal,         vk::AccessFlagBits::eInputAttachmentRead},
+    {vk::ImageLayout::eTransferSrcOptimal,            vk::AccessFlagBits::eTransferRead},
+    {vk::ImageLayout::eTransferDstOptimal,            vk::AccessFlagBits::eTransferWrite},
+    {vk::ImageLayout::ePresentSrcKHR,                 vk::AccessFlagBits::eMemoryRead}
+  };
+
+  static const std::unordered_map<vk::ImageLayout, vk::AccessFlags> dstAccessMapping = {
+    {vk::ImageLayout::eGeneral,                       vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite},
+    {vk::ImageLayout::eColorAttachmentOptimal,        vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite},
+    {vk::ImageLayout::eDepthStencilAttachmentOptimal, vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite},
+    {vk::ImageLayout::eDepthStencilReadOnlyOptimal,   vk::AccessFlagBits::eShaderRead},
+    {vk::ImageLayout::eShaderReadOnlyOptimal,         vk::AccessFlagBits::eShaderRead},
+    {vk::ImageLayout::eTransferSrcOptimal,            vk::AccessFlagBits::eTransferRead},
+    {vk::ImageLayout::eTransferDstOptimal,            vk::AccessFlagBits::eTransferWrite},
+    {vk::ImageLayout::ePresentSrcKHR,                 vk::AccessFlagBits::eMemoryRead}
+  };
+  // clang-format on
+
+  auto srcStage  = srcStageMapping.find(oldLayout);
+  auto srcAccess = srcAccessMapping.find(oldLayout);
+  auto dstStage  = dstStageMapping.find(newLayout);
+  auto dstAccess = dstAccessMapping.find(newLayout);
+
+  if (srcStage == srcStageMapping.end() || dstStage == dstStageMapping.end() ||
+      srcAccess == srcAccessMapping.end() || dstAccess == dstAccessMapping.end()) {
+    throw std::runtime_error("Failed to transition image layout: Unsupported transition!");
+  }
+
+  transitionImageLayout(image, oldLayout, srcAccess->second, srcStage->second, newLayout,
+      dstAccess->second, dstStage->second, range);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CommandBuffer::transitionImageLayout(BackedImagePtr image, vk::ImageLayout oldLayout,
+    vk::ImageLayout newLayout, vk::ImageSubresourceRange range) const {
+
+  transitionImageLayout(*image->mImage, oldLayout, newLayout, range);
+  image->mCurrentLayout = newLayout;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CommandBuffer::transitionImageLayout(
+    BackedImagePtr image, vk::ImageLayout newLayout, vk::ImageSubresourceRange range) const {
+  transitionImageLayout(image, image->mCurrentLayout, newLayout, range);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CommandBuffer::transitionImageLayout(
+    BackedImagePtr image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) const {
+  transitionImageLayout(image, oldLayout, newLayout, image->mViewInfo.subresourceRange);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void CommandBuffer::transitionImageLayout(BackedImagePtr image, vk::ImageLayout newLayout) const {
+  transitionImageLayout(image, image->mCurrentLayout, newLayout, image->mViewInfo.subresourceRange);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

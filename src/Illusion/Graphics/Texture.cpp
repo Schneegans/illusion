@@ -757,25 +757,23 @@ void Texture::updateMipmaps(DevicePtr const& device, TexturePtr const& texture) 
   uint32_t mipWidth  = texture->mImageInfo.extent.width;
   uint32_t mipHeight = texture->mImageInfo.extent.height;
 
-  cmd->transitionImageLayout(*texture->mImage, texture->mCurrentLayout,
-      vk::ImageLayout::eTransferSrcOptimal, vk::PipelineStageFlagBits::eFragmentShader,
-      vk::PipelineStageFlagBits::eTransfer, subresourceRange);
+  auto origLayout = texture->mCurrentLayout;
+  cmd->transitionImageLayout(
+      texture, origLayout, vk::ImageLayout::eTransferSrcOptimal, subresourceRange);
 
   for (uint32_t i = 1; i < texture->mImageInfo.mipLevels; ++i) {
 
     subresourceRange.baseMipLevel = i;
 
-    cmd->transitionImageLayout(*texture->mImage, texture->mCurrentLayout,
-        vk::ImageLayout::eTransferDstOptimal, vk::PipelineStageFlagBits::eFragmentShader,
-        vk::PipelineStageFlagBits::eTransfer, subresourceRange);
+    cmd->transitionImageLayout(
+        texture, origLayout, vk::ImageLayout::eTransferDstOptimal, subresourceRange);
 
     cmd->blitImage(*texture->mImage, i - 1, *texture->mImage, i, glm::uvec2(mipWidth, mipHeight),
         glm::uvec2(std::max(mipWidth / 2, 1u), std::max(mipHeight / 2, 1u)),
         subresourceRange.layerCount, vk::Filter::eLinear);
 
-    cmd->transitionImageLayout(*texture->mImage, vk::ImageLayout::eTransferDstOptimal,
-        vk::ImageLayout::eTransferSrcOptimal, vk::PipelineStageFlagBits::eTransfer,
-        vk::PipelineStageFlagBits::eTransfer, subresourceRange);
+    cmd->transitionImageLayout(texture, vk::ImageLayout::eTransferDstOptimal,
+        vk::ImageLayout::eTransferSrcOptimal, subresourceRange);
 
     mipWidth  = std::max(mipWidth / 2, 1u);
     mipHeight = std::max(mipHeight / 2, 1u);
@@ -784,11 +782,7 @@ void Texture::updateMipmaps(DevicePtr const& device, TexturePtr const& texture) 
   subresourceRange.levelCount   = texture->mImageInfo.mipLevels;
   subresourceRange.baseMipLevel = 0;
 
-  cmd->transitionImageLayout(*texture->mImage, vk::ImageLayout::eTransferSrcOptimal,
-      vk::ImageLayout::eShaderReadOnlyOptimal, vk::PipelineStageFlagBits::eTransfer,
-      vk::PipelineStageFlagBits::eFragmentShader, subresourceRange);
-
-  texture->mCurrentLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
+  cmd->transitionImageLayout(texture, origLayout);
 
   cmd->end();
   cmd->submit();

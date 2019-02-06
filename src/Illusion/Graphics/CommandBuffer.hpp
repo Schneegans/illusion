@@ -138,9 +138,25 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
   // convenience methods ---------------------------------------------------------------------------
 
   // This will throw a std::runtime_error when the layout transition is impossible.
+  void transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk::AccessFlags srcAccess,
+      vk::PipelineStageFlagBits srcStage, vk::ImageLayout newLayout, vk::AccessFlags dstAccess,
+      vk::PipelineStageFlagBits dstStage, vk::ImageSubresourceRange range) const;
+
   void transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout,
-      vk::PipelineStageFlagBits srcStage, vk::PipelineStageFlagBits dstStage,
-      vk::ImageSubresourceRange range = {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1}) const;
+      vk::ImageSubresourceRange range) const;
+
+  void transitionImageLayout(BackedImagePtr image, vk::ImageLayout oldLayout,
+      vk::ImageLayout newLayout, vk::ImageSubresourceRange range) const;
+
+  void transitionImageLayout(
+      BackedImagePtr image, vk::ImageLayout newLayout, vk::ImageSubresourceRange range) const;
+
+  void transitionImageLayout(
+      BackedImagePtr image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) const;
+
+  void transitionImageLayout(BackedImagePtr image, vk::ImageLayout newLayout) const;
+
+  // convenience methods ---------------------------------------------------------------------------
 
   void copyImage(vk::Image src, vk::Image dst, glm::uvec2 const& size) const;
 

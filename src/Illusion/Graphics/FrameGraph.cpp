@@ -503,11 +503,45 @@ void FrameGraph::process(ProcessingFlags flags) {
     // swapchain images.
     overallResourceUsage[mOutputAttachment] |= vk::ImageUsageFlagBits::eTransferSrc;
 
-    // Create a RenderPass for each RenderPassInfo and BackedImages for each Resource --------------
+    // Create a BackedImage for each Resource ------------------------------------------------------
 
     // Now we will create actual physical resources. We will create everything from scratch here.
     // This can definitely be optimized, but for now frequent graph changes are not planned anyways.
     perFrame.mAllAttachments.clear();
+
+    for (auto resource : overallResourceUsage) {
+      vk::ImageAspectFlags aspect;
+
+      if (Utils::isDepthOnlyFormat(resource.first->mFormat)) {
+        aspect |= vk::ImageAspectFlagBits::eDepth;
+      } else if (Utils::isDepthStencilFormat(resource.first->mFormat)) {
+        aspect |= vk::ImageAspectFlagBits::eDepth;
+        aspect |= vk::ImageAspectFlagBits::eStencil;
+      } else {
+        aspect |= vk::ImageAspectFlagBits::eColor;
+      }
+
+      vk::ImageCreateInfo imageInfo;
+      imageInfo.imageType     = vk::ImageType::e2D;
+      imageInfo.format        = resource.first->mFormat;
+      imageInfo.extent.width  = resource.first->mExtent.x;
+      imageInfo.extent.height = resource.first->mExtent.y;
+      imageInfo.extent.depth  = 1;
+      imageInfo.mipLevels     = 1;
+      imageInfo.arrayLayers   = 1;
+      imageInfo.samples       = resource.first->mSamples;
+      imageInfo.tiling        = vk::ImageTiling::eOptimal;
+      imageInfo.usage         = resource.second;
+      imageInfo.sharingMode   = vk::SharingMode::eExclusive;
+      imageInfo.initialLayout = vk::ImageLayout::eUndefined;
+
+      perFrame.mAllAttachments[resource.first] =
+          mDevice->createBackedImage("Attachment \"" + resource.first->mName + "\" of " + getName(),
+              imageInfo, vk::ImageViewType::e2D, aspect, vk::MemoryPropertyFlagBits::eDeviceLocal,
+              vk::ImageLayout::eUndefined);
+    }
+
+    // Create a RenderPass for each RenderPassInfo -------------------------------------------------
 
     // For each RenderPassInfo we will create a RenderPass, attach the physical resources we just
     // created and setup the subpasses.
@@ -584,6 +618,7 @@ void FrameGraph::process(ProcessingFlags flags) {
         attachmentInfo.mFinalLayout   = vk::ImageLayout::eUndefined;
         attachmentInfo.mLoadOp        = vk::AttachmentLoadOp::eDontCare;
         attachmentInfo.mStoreOp       = vk::AttachmentStoreOp::eDontCare;
+        attachmentInfo.mImage         = perFrame.mAllAttachments.at(attachment);
 
         // The mInitialLayout should match our usage and access flags.
         auto getLayout = [](vk::ImageUsageFlags usage, AccessFlags access) {
@@ -635,20 +670,30 @@ void FrameGraph::process(ProcessingFlags flags) {
           auto nextPass = passIt;
           while (++nextPass != perFrame.mRenderPasses.end()) {
             auto nextAccess = nextPass->mResourceAccess.find(attachment);
-            auto nextUsage  = nextPass->mResourceUsage.find(attachment);
 
             if (nextAccess != nextPass->mResourceAccess.end()) {
+              auto nextUsage              = nextPass->mResourceUsage.find(attachment);
               attachmentInfo.mFinalLayout = getLayout(nextUsage->second, nextAccess->second);
               attachmentInfo.mStoreOp     = vk::AttachmentStoreOp::eStore;
             }
           }
         }
 
-        // If the resource is to be copied to the swapchain image, the final layout is expected to
-        // be eColorAttachmentOptimal. In this case, the AttachmentStoreOp should be eStore.
+        // If we do not have decided on a final layout yet, we try to find the first usage of this
+        // attachment in the next frame and choose the layout according to its usage there.
+        for (auto const& nextPass : perFrame.mRenderPasses) {
+          auto nextAccess = nextPass.mResourceAccess.find(attachment);
+          if (nextAccess != nextPass.mResourceAccess.end()) {
+            auto nextUsage              = nextPass.mResourceUsage.find(attachment);
+            attachmentInfo.mFinalLayout = getLayout(nextUsage->second, nextAccess->second);
+            break;
+          }
+        }
+
+        // If the resource is to be copied to the swapchain image, the AttachmentStoreOp should be
+        // eStore.
         if (attachment == mOutputAttachment && passIt->mSubpasses.back().mPass == mOutputPass) {
-          attachmentInfo.mFinalLayout = vk::ImageLayout::eColorAttachmentOptimal;
-          attachmentInfo.mStoreOp     = vk::AttachmentStoreOp::eStore;
+          attachmentInfo.mStoreOp = vk::AttachmentStoreOp::eStore;
         }
 
         Core::Logger::debug() << "    \"" << attachment->mName << "\"" << std::endl;
@@ -660,42 +705,6 @@ void FrameGraph::process(ProcessingFlags flags) {
                               << std::endl;
         Core::Logger::debug() << "      StoreOp:       " << vk::to_string(attachmentInfo.mStoreOp)
                               << std::endl;
-
-        auto image = perFrame.mAllAttachments.find(attachment);
-        if (image == perFrame.mAllAttachments.end()) {
-          vk::ImageAspectFlags aspect;
-
-          if (Utils::isDepthOnlyFormat(attachment->mFormat)) {
-            aspect |= vk::ImageAspectFlagBits::eDepth;
-          } else if (Utils::isDepthStencilFormat(attachment->mFormat)) {
-            aspect |= vk::ImageAspectFlagBits::eDepth;
-            aspect |= vk::ImageAspectFlagBits::eStencil;
-          } else {
-            aspect |= vk::ImageAspectFlagBits::eColor;
-          }
-
-          vk::ImageCreateInfo imageInfo;
-          imageInfo.imageType     = vk::ImageType::e2D;
-          imageInfo.format        = attachment->mFormat;
-          imageInfo.extent.width  = attachment->mExtent.x;
-          imageInfo.extent.height = attachment->mExtent.y;
-          imageInfo.extent.depth  = 1;
-          imageInfo.mipLevels     = 1;
-          imageInfo.arrayLayers   = 1;
-          imageInfo.samples       = attachment->mSamples;
-          imageInfo.tiling        = vk::ImageTiling::eOptimal;
-          imageInfo.usage         = overallResourceUsage.at(attachment);
-          imageInfo.sharingMode   = vk::SharingMode::eExclusive;
-          imageInfo.initialLayout = vk::ImageLayout::eUndefined;
-
-          perFrame.mAllAttachments[attachment] =
-              mDevice->createBackedImage("Attachment \"" + attachment->mName + "\" of " + getName(),
-                  imageInfo, vk::ImageViewType::e2D, aspect,
-                  vk::MemoryPropertyFlagBits::eDeviceLocal, attachmentInfo.mInitialLayout);
-          image = perFrame.mAllAttachments.find(attachment);
-        }
-
-        attachmentInfo.mImage = image->second;
 
         passIt->mRenderPass->addAttachment(attachmentInfo);
       }
@@ -752,6 +761,15 @@ void FrameGraph::process(ProcessingFlags flags) {
       }
     }
 
+    // Make sure that the mCurrentLayout member of each attachment actually matches the initial
+    // layout required by this pass. If not, we have to transition the layout.
+    for (auto& attachment : pass.mRenderPass->getAttachments()) {
+      if (attachment.mImage->mCurrentLayout != attachment.mInitialLayout) {
+        perFrame.mPrimaryCommandBuffer->transitionImageLayout(
+            attachment.mImage, attachment.mInitialLayout);
+      }
+    }
+
     // Begin the RenderPass.
     perFrame.mPrimaryCommandBuffer->beginRenderPass(
         pass.mRenderPass, clearValues, vk::SubpassContents::eSecondaryCommandBuffers);
@@ -786,6 +804,12 @@ void FrameGraph::process(ProcessingFlags flags) {
 
     // End this RenderPass.
     perFrame.mPrimaryCommandBuffer->endRenderPass();
+
+    // As our attachments have been transitioned automatically to a final layout, we have to update
+    // the mCurrentLayout member of the attachment images accordingly.
+    for (auto& attachment : pass.mRenderPass->getAttachments()) {
+      attachment.mImage->mCurrentLayout = attachment.mFinalLayout;
+    }
   }
 
   // End and submit our primary CommandBuffer.

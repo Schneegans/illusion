@@ -111,22 +111,17 @@ void Swapchain::present(BackedImagePtr const& image,
     }
     // Else do an image blit.
     else {
-      cmd->transitionImageLayout(*image->mImage, vk::ImageLayout::eColorAttachmentOptimal,
-          vk::ImageLayout::eTransferSrcOptimal, vk::PipelineStageFlagBits::eColorAttachmentOutput,
-          vk::PipelineStageFlagBits::eTransfer);
+      vk::ImageLayout originalLayout = image->mCurrentLayout;
+      cmd->transitionImageLayout(image, vk::ImageLayout::eTransferSrcOptimal);
       cmd->transitionImageLayout(mImages[mCurrentImageIndex], vk::ImageLayout::ePresentSrcKHR,
-          vk::ImageLayout::eTransferDstOptimal, vk::PipelineStageFlagBits::eTransfer,
-          vk::PipelineStageFlagBits::eTransfer);
+          vk::ImageLayout::eTransferDstOptimal, {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
       vk::ImageBlit info;
       cmd->blitImage(*image->mImage, mImages[mCurrentImageIndex],
           {image->mImageInfo.extent.width, image->mImageInfo.extent.height}, mExtent,
           vk::Filter::eNearest);
-      cmd->transitionImageLayout(*image->mImage, vk::ImageLayout::eTransferSrcOptimal,
-          vk::ImageLayout::eColorAttachmentOptimal, vk::PipelineStageFlagBits::eTransfer,
-          vk::PipelineStageFlagBits::eColorAttachmentOutput);
+      cmd->transitionImageLayout(image, originalLayout);
       cmd->transitionImageLayout(mImages[mCurrentImageIndex], vk::ImageLayout::eTransferDstOptimal,
-          vk::ImageLayout::ePresentSrcKHR, vk::PipelineStageFlagBits::eTransfer,
-          vk::PipelineStageFlagBits::eTransfer);
+          vk::ImageLayout::ePresentSrcKHR, {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
     }
 
     cmd->end();
@@ -273,7 +268,7 @@ void Swapchain::recreate() {
   cmd->begin();
   for (auto const& image : mImages) {
     cmd->transitionImageLayout(image, vk::ImageLayout::eUndefined, vk::ImageLayout::ePresentSrcKHR,
-        vk::PipelineStageFlagBits::eTopOfPipe, vk::PipelineStageFlagBits::eTransfer);
+        {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
   }
   cmd->end();
   cmd->submit();
