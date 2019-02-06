@@ -18,22 +18,22 @@ struct MouseEvent {
   enum class Type { eMove, eScroll, ePress, eRelease, eLeave };
 
   MouseEvent();
-  MouseEvent(int x, int y);
-  MouseEvent(int scrollAmount);
-  MouseEvent(int button, bool press);
+  MouseEvent(int32_t x, int32_t y);
+  MouseEvent(int32_t scrollAmount);
+  MouseEvent(int32_t button, bool press);
 
   Type mType;
 
   union {
     // x-position for eMove, x-direction for eScroll
-    int mX;
+    int32_t mX;
 
     // only used for ePress and eRelease
     Button mButton;
   };
 
   // y-position for eMove, y-direction for eScroll
-  int mY;
+  int32_t mY;
 };
 
 std::ostream& operator<<(std::ostream& os, MouseEvent const& e);

@@ -230,7 +230,7 @@ bool Window::keyPressed(Input::Key key) const {
     return false;
   }
 
-  return glfwGetKey(mWindow, (int)key) == GLFW_PRESS;
+  return glfwGetKey(mWindow, Core::enumCast(key)) == GLFW_PRESS;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -240,12 +240,12 @@ bool Window::buttonPressed(Input::Button button) const {
     return false;
   }
 
-  return glfwGetMouseButton(mWindow, (int)button) == GLFW_PRESS;
+  return glfwGetMouseButton(mWindow, Core::enumCast(button)) == GLFW_PRESS;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-float Window::joyAxis(int joyStick, int axis) {
+float Window::joyAxis(uint32_t joyStick, uint32_t axis) {
   if (joyStick >= Core::enumCast(Input::JoystickId::eJoystickNum) ||
       axis >= Core::enumCast(Input::JoystickAxisId::eJoystickAxisNum)) {
     return 0;
@@ -281,14 +281,14 @@ void Window::updateJoysticks() {
   const float minThreshold(0.15f);
   const float maxThreshold(0.9f);
 
-  const int joystickNum(Core::enumCast(Input::JoystickId::eJoystickNum));
-  for (int joy(0); joy < joystickNum; ++joy) {
+  const int32_t joystickNum(Core::enumCast(Input::JoystickId::eJoystickNum));
+  for (int32_t joy(0); joy < joystickNum; ++joy) {
     if (glfwJoystickPresent(joy)) {
       Input::JoystickId joyId(static_cast<Input::JoystickId>(joy));
-      int               axesCount(0);
+      int32_t           axesCount(0);
       auto              axesArray(glfwGetJoystickAxes(joy, &axesCount));
 
-      for (int axis(0); axis < axesCount; ++axis) {
+      for (int32_t axis(0); axis < axesCount; ++axis) {
         float axisValue(axesArray[axis]);
 
 // XBOX controller left and right trigger are both mapped to axis 2 on windows.
@@ -305,7 +305,7 @@ void Window::updateJoysticks() {
         }
 #endif
 
-        int sign(axisValue < 0.f ? -1 : 1);
+        int32_t sign(axisValue < 0.f ? -1 : 1);
         axisValue = std::abs(axisValue);
 
         axisValue = (axisValue - minThreshold) / (maxThreshold - minThreshold);
@@ -322,11 +322,11 @@ void Window::updateJoysticks() {
         }
       }
 
-      int  buttonCount(0);
-      auto buttonArray(glfwGetJoystickButtons(joy, &buttonCount));
-      for (int button(0); button < buttonCount; ++button) {
+      int32_t buttonCount(0);
+      auto    buttonArray(glfwGetJoystickButtons(joy, &buttonCount));
+      for (int32_t button(0); button < buttonCount; ++button) {
         Input::JoystickButtonId buttonId(static_cast<Input::JoystickButtonId>(button));
-        int                     buttonValue(static_cast<int>(buttonArray[button]));
+        int32_t                 buttonValue(static_cast<int32_t>(buttonArray[button]));
 
         if (buttonValue != mJoystickButtonCache[joy][button]) {
 

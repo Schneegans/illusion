@@ -57,11 +57,11 @@ float Color::h() const {
     float mini = std::min(std::min(mVal.r, mVal.g), mVal.b);
 
     if (maxi == mVal.r)
-      return fmod(60.f * ((mVal.g - mVal.b) / (maxi - mini)) + 360.f, 360.f);
+      return std::fmod(60.f * ((mVal.g - mVal.b) / (maxi - mini)) + 360.f, 360.f);
     else if (maxi == mVal.g)
-      return fmod(60.f * (2 + (mVal.b - mVal.r) / (maxi - mini)) + 360.f, 360.f);
+      return std::fmod(60.f * (2 + (mVal.b - mVal.r) / (maxi - mini)) + 360.f, 360.f);
     else
-      return fmod(60.f * (4 + (mVal.r - mVal.g) / (maxi - mini)) + 360.f, 360.f);
+      return std::fmod(60.f * (4 + (mVal.r - mVal.g) / (maxi - mini)) + 360.f, 360.f);
   } else
     return 0.0f;
 }
@@ -139,10 +139,10 @@ void Color::setHsv(float hue, float saturation, float value) {
     mVal.b = value;
     return;
   }
-  hue = fmod(hue, 360.0f);
+  hue = std::fmod(hue, 360.0f);
   hue /= 60.0f;
-  int   i = int(floor(hue));
-  float f = hue - i;
+  int32_t i = int32_t(std::floor(hue));
+  float   f = hue - i;
 
   switch (i) {
   case 0:
@@ -217,8 +217,9 @@ glm::vec4 const& Color::vec4() const {
 
 std::string Color::htmlRgba() const {
   std::stringstream stream;
-  stream << "rgba(" << static_cast<int>(r() * 255.0f) << ", " << static_cast<int>(g() * 255.0f)
-         << ", " << static_cast<int>(b() * 255.0f) << ", " << a() << ")";
+  stream << "rgba(" << static_cast<int32_t>(r() * 255.0f) << ", "
+         << static_cast<int32_t>(g() * 255.0f) << ", " << static_cast<int32_t>(b() * 255.0f) << ", "
+         << a() << ")";
 
   return stream.str();
 }

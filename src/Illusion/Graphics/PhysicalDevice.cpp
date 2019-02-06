@@ -283,7 +283,7 @@ void PhysicalDevice::printInfo() {
 
   // format properties
   Core::Logger::message() << Core::Logger::PRINT_BOLD << "Format Properties " << Core::Logger::PRINT_RESET << std::endl;
-  for (int i(VK_FORMAT_BEGIN_RANGE+1); i<=VK_FORMAT_END_RANGE; ++i)
+  for (int32_t i(VK_FORMAT_BEGIN_RANGE+1); i<=VK_FORMAT_END_RANGE; ++i)
   {
     vk::FormatProperties props = getFormatProperties(vk::Format(i));
     std::stringstream sstr;

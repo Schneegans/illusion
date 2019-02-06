@@ -8,6 +8,8 @@
 
 #include "Enums.hpp"
 
+#include "../Core/EnumCast.hpp"
+
 #include <iostream>
 
 namespace Illusion::Input {
@@ -488,28 +490,28 @@ std::ostream& operator<<(std::ostream& os, Key key) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::ostream& operator<<(std::ostream& os, Button button) {
-  os << "BUTTON_" << (int)button;
+  os << "BUTTON_" << Core::enumCast(button);
   return os;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::ostream& operator<<(std::ostream& os, JoystickId id) {
-  os << "JOYSTICK_" << (int)id;
+  os << "JOYSTICK_" << Core::enumCast(id);
   return os;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::ostream& operator<<(std::ostream& os, JoystickAxisId axis) {
-  os << "JOYSTICK_AXIS_" << (int)axis;
+  os << "JOYSTICK_AXIS_" << Core::enumCast(axis);
   return os;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::ostream& operator<<(std::ostream& os, JoystickButtonId button) {
-  os << "JOYSTICK_BUTTON_" << (int)button;
+  os << "JOYSTICK_BUTTON_" << Core::enumCast(button);
   return os;
 }
 

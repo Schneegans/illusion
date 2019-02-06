@@ -410,13 +410,13 @@ KeyEvent::KeyEvent(unsigned int key, int mods) {
 
 void KeyEvent::SetMods(int mods) {
   if (mods & GLFW_MOD_SHIFT)
-    mModifiers |= (int)Modifier::eShift;
+    mModifiers |= Core::enumCast(Modifier::eShift);
   if (mods & GLFW_MOD_CONTROL)
-    mModifiers |= (int)Modifier::eControl;
+    mModifiers |= Core::enumCast(Modifier::eControl);
   if (mods & GLFW_MOD_ALT)
-    mModifiers |= (int)Modifier::eAlt;
+    mModifiers |= Core::enumCast(Modifier::eAlt);
   if (mods & GLFW_MOD_SUPER)
-    mModifiers |= (int)Modifier::eCommand;
+    mModifiers |= Core::enumCast(Modifier::eCommand);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

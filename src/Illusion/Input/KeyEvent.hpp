@@ -18,16 +18,16 @@ struct KeyEvent {
   enum class Type { ePress, eRelease, eRepeat, eCharacter };
 
   KeyEvent();
-  KeyEvent(int key, int scancode, int action, int mods);
-  KeyEvent(unsigned int key, int mods);
-  void SetMods(int mods);
+  KeyEvent(int32_t key, int32_t scancode, int32_t action, int32_t mods);
+  KeyEvent(uint32_t key, int32_t mods);
+  void SetMods(int32_t mods);
 
   Type mType;
 
   // bitwise or of any Modifier defined in InputEnums.hpp
   uint32_t mModifiers;
 
-  int mScancode;
+  int32_t mScancode;
 
   union {
     // only used for ePress, eRelease and eRepeat

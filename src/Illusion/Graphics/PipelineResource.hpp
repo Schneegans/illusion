@@ -29,7 +29,7 @@ namespace Illusion::Graphics {
 
 struct PipelineResource {
 
-  enum class BaseType : int {
+  enum class BaseType : uint16_t {
     eBool,
     eChar,
     eInt,
@@ -42,7 +42,7 @@ struct PipelineResource {
     eNone
   };
 
-  enum class ResourceType : int {
+  enum class ResourceType : uint16_t {
     eInput,
     eOutput,
     eSampler,

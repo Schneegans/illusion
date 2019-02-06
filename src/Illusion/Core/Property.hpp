@@ -153,7 +153,7 @@ class Property {
   Signal<T> mBeforeChange;
 
   Property<T> const* mConnection   = nullptr;
-  int                mConnectionId = -1;
+  uint32_t           mConnectionId = 0;
 };
 
 // stream operators

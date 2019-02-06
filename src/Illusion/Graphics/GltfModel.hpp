@@ -28,7 +28,7 @@ namespace Illusion::Graphics::Gltf {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // A bitwise combination of these flags can be passed to the constructor of the Model.
-enum class LoadOptionBits : int {
+enum class LoadOptionBits : int32_t {
   eNone       = 0,
   eAnimations = 1 << 0,
   eSkins      = 1 << 1,
@@ -177,7 +177,11 @@ struct Vertex {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct Primitive {
-  enum class VertexAttributeBits : int { eNormals = 1 << 0, eTexcoords = 1 << 1, eSkins = 1 << 2 };
+  enum class VertexAttributeBits : int32_t {
+    eNormals   = 1 << 0,
+    eTexcoords = 1 << 1,
+    eSkins     = 1 << 2
+  };
 
   Core::Flags<VertexAttributeBits> mVertexAttributes;
   MaterialPtr                      mMaterial;

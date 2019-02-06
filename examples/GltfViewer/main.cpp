@@ -36,7 +36,7 @@ struct PushConstants {
   float     mNormalScale;
   float     mOcclusionStrength;
   float     mAlphaCutoff;
-  int       mVertexAttributes;
+  int32_t   mVertexAttributes;
 };
 
 struct SkinUniforms {
@@ -115,7 +115,7 @@ void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::Gltf::Node>> cons
           pushConstants.mNormalScale                = p.mMaterial->mNormalScale;
           pushConstants.mOcclusionStrength          = p.mMaterial->mOcclusionStrength;
           pushConstants.mAlphaCutoff                = p.mMaterial->mAlphaCutoff;
-          pushConstants.mVertexAttributes           = (int)p.mVertexAttributes;
+          pushConstants.mVertexAttributes           = static_cast<int32_t>(p.mVertexAttributes);
           res.mCmd->pushConstants(pushConstants);
 
           res.mCmd->bindingState().setTexture(p.mMaterial->mAlbedoTexture, 3, 0);
@@ -142,7 +142,7 @@ int main(int argc, char* argv[]) {
     std::string mModelFile   = "data/GltfViewer/models/DamagedHelmet.glb";
     std::string mSkyboxFile  = "data/GltfViewer/textures/sunset_fairway_1k.hdr";
     std::string mTexChannels = "rgb";
-    int         mAnimation   = 0;
+    int32_t     mAnimation   = 0;
     bool        mNoSkins     = false;
     bool        mNoTextures  = false;
     bool        mPrintInfo   = false;
@@ -222,12 +222,12 @@ int main(int argc, char* argv[]) {
 
   window->sOnMouseEvent.connect([&cameraPolar, &window](Illusion::Input::MouseEvent const& e) {
     if (e.mType == Illusion::Input::MouseEvent::Type::eMove) {
-      static int lastX = e.mX;
-      static int lastY = e.mY;
+      static int32_t lastX = e.mX;
+      static int32_t lastY = e.mY;
 
       if (window->buttonPressed(Illusion::Input::Button::eButton1)) {
-        int dX = lastX - e.mX;
-        int dY = lastY - e.mY;
+        int32_t dX = lastX - e.mX;
+        int32_t dY = lastY - e.mY;
 
         cameraPolar.x += dX * 0.005f;
         cameraPolar.y += dY * 0.005f;

@@ -22,7 +22,7 @@ MouseEvent::MouseEvent()
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-MouseEvent::MouseEvent(int x, int y) {
+MouseEvent::MouseEvent(int32_t x, int32_t y) {
   mType = MouseEvent::Type::eMove;
   mX    = x;
   mY    = y;
@@ -30,14 +30,14 @@ MouseEvent::MouseEvent(int x, int y) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-MouseEvent::MouseEvent(int scrollAmount) {
+MouseEvent::MouseEvent(int32_t scrollAmount) {
   mType = MouseEvent::Type::eScroll;
   mY    = scrollAmount;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-MouseEvent::MouseEvent(int button, bool press) {
+MouseEvent::MouseEvent(int32_t button, bool press) {
   if (button == GLFW_MOUSE_BUTTON_LEFT)
     mButton = Button::eButton1;
   else if (button == GLFW_MOUSE_BUTTON_RIGHT)

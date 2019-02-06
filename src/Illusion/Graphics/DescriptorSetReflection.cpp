@@ -160,8 +160,8 @@ void DescriptorSetReflection::printInfo() const {
       {PipelineResource::ResourceType::ePushConstantBuffer, "push_constant_buffer"},
       {PipelineResource::ResourceType::eNone, "none"}};
 
-  std::function<void(PipelineResource::Member const&, int)> printMemberInfo =
-      [&printMemberInfo, &baseTypes](PipelineResource::Member const& m, int indent) {
+  std::function<void(PipelineResource::Member const&, int32_t)> printMemberInfo =
+      [&printMemberInfo, &baseTypes](PipelineResource::Member const& m, int32_t indent) {
 
         Core::Logger::message() << std::string(indent * 2, ' ') << "- \"" << m.mName
                                 << "\", type: " << baseTypes.find(m.mBaseType)->second

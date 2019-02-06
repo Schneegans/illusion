@@ -97,7 +97,7 @@ class Window : public Core::StaticCreate<Window>, public Core::NamedObject {
   bool buttonPressed(Input::Button button) const;
 
   // Returns the position of the given joystick axis.
-  float joyAxis(int joyStick, int axis);
+  float joyAxis(uint32_t joyStick, uint32_t axis);
 
   // Returns the current mouse pointer position.
   glm::vec2 getCursorPos() const;
@@ -123,7 +123,7 @@ class Window : public Core::StaticCreate<Window>, public Core::NamedObject {
       Core::enumCast(Input::JoystickId::eJoystickNum)>
       mJoystickAxisCache;
 
-  std::array<std::array<int, Core::enumCast(Input::JoystickButtonId::eJoystickButtonNum)>,
+  std::array<std::array<uint32_t, Core::enumCast(Input::JoystickButtonId::eJoystickButtonNum)>,
       Core::enumCast(Input::JoystickId::eJoystickNum)>
       mJoystickButtonCache;
 
