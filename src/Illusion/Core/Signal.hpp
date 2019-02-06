@@ -35,7 +35,7 @@ class Signal {
 
   // connects a member function of a given object to this Signal
   template <typename F, typename... Args>
-  int connectMember(F&& f, Args&&... a) const {
+  uint32_t connectMember(F&& f, Args&&... a) const {
     std::unique_lock<std::mutex> lock(mMutex);
     mCallbacks.insert(std::make_pair(++mCurrentId, std::bind(f, a...)));
     return mCurrentId;
@@ -43,14 +43,14 @@ class Signal {
 
   // connects a std::function to the signal. The returned value can be used to
   // disconnect the function again
-  int connect(std::function<bool(Parameters...)> const& callback) const {
+  uint32_t connect(std::function<bool(Parameters...)> const& callback) const {
     std::unique_lock<std::mutex> lock(mMutex);
     mCallbacks.insert(std::make_pair(++mCurrentId, callback));
     return mCurrentId;
   }
 
   // disconnects a previously connected function
-  void disconnect(int id) const {
+  void disconnect(uint32_t id) const {
     std::unique_lock<std::mutex> lock(mMutex);
     mCallbacks.erase(id);
   }
@@ -81,8 +81,8 @@ class Signal {
   }
 
  private:
-  mutable std::map<int, std::function<bool(Parameters...)>> mCallbacks;
-  mutable int                                               mCurrentId = 0;
+  mutable std::map<uint32_t, std::function<bool(Parameters...)>> mCallbacks;
+  mutable uint32_t                                               mCurrentId = 0;
 
   mutable std::mutex mMutex;
 };
