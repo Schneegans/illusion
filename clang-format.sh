@@ -12,5 +12,7 @@
 SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
 
 # run clang-format on all source files
-find src -iname *.hpp -o -iname *.cpp | xargs clang-format-5.0 -i
-find examples -iname *.hpp -o -iname *.cpp | xargs clang-format-5.0 -i
+find src examples -iname "*.hpp" -o -iname "*.cpp"|while read file; do
+  echo "Formatting ${file}..."
+  clang-format-7 -i $file
+done
