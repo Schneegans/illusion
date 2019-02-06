@@ -209,10 +209,20 @@ FrameGraph::Pass& FrameGraph::createPass() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void FrameGraph::setOutput(WindowPtr const& window, Pass const& pass, Resource const& resource) {
+
+  if (mOutputWindow) {
+    mOutputWindow->pExtent.onChange().disconnect(mOutputWindowExtentConnection);
+  }
+
   mOutputWindow     = window;
   mOutputPass       = &pass;
   mOutputAttachment = &resource;
   mDirty            = true;
+
+  mOutputWindowExtentConnection = mOutputWindow->pExtent.onChange().connect([this](glm::uvec2) {
+    mDirty = true;
+    return true;
+  });
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

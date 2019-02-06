@@ -152,8 +152,9 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
   std::list<Pass>     mPasses;
 
   WindowPtr       mOutputWindow;
-  Resource const* mOutputAttachment = nullptr;
-  Pass const*     mOutputPass       = nullptr;
+  Resource const* mOutputAttachment             = nullptr;
+  Pass const*     mOutputPass                   = nullptr;
+  uint32_t        mOutputWindowExtentConnection = 0;
 
   bool mDirty = true;
 };
