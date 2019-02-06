@@ -135,25 +135,69 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
       int32_t vertexOffset = 0, uint32_t firstInstance = 0);
   void dispatch(uint32_t groupCountX, uint32_t groupCountY = 1, uint32_t groupCountZ = 1);
 
-  // convenience methods ---------------------------------------------------------------------------
+  // image layout transitions ----------------------------------------------------------------------
 
-  // This will throw a std::runtime_error when the layout transition is impossible.
+  // This most explicit method adds a vk::ImageMemoryBarrier to the CommandBuffer with the given
+  // parameters. You have to make sure that the given access flags are supported by the given
+  // pipeline stage flags.
   void transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk::AccessFlags srcAccess,
       vk::PipelineStageFlagBits srcStage, vk::ImageLayout newLayout, vk::AccessFlags dstAccess,
       vk::PipelineStageFlagBits dstStage, vk::ImageSubresourceRange range) const;
 
+  // All of the methods below will try to best-guess the access flags, the pipeline stages, the
+  // subresource range and the old image layout. They will throw a std::runtime_error when this is
+  // impossible. The values for srcStage, srcAccess, dstStage and dstAccess are chosen according to
+  // the tables below.
+  // For the methods without an explicit oldLayout, the member mCurrentLayout of the given
+  // BackedImage will be used. This member is also updated to the new layout by the methods below.
+  // For now, this is not thread-safe and also only on a per-image basis (e.g. different layouts for
+  // different mipmap levels are not tracked). If this is required, you should use the methods which
+  // take an explicit old layout.
+  // For the methods which do not take a ImageSubresourceRange, the the mImageView member of the
+  // BackedImage is used (which is usually the entire image).
+
+  // -----------------------------------------------------------------------------------------------
+  // oldLayout                         srcStage                    srcAccess
+  // -----------------------------------------------------------------------------------------------
+  // Undefined                         TopOfPipe                   0
+  // Preinitialized                    TopOfPipe                   0
+  // General                           ColorAttachmentOutput       ColorAttachmentRead |
+  //                                                                  ColorAttachmentWrite
+  // ColorAttachmentOptimal            ColorAttachmentOutput       ColorAttachmentRead |
+  //                                                                  ColorAttachmentWrite
+  // DepthStencilAttachmentOptimal     LateFragmentTests           DepthStencilAttachmentRead |
+  //                                                                  DepthStencilAttachmentWrite
+  // DepthStencilReadOnlyOptimal       LateFragmentTests           DepthStencilAttachmentRead
+  // ShaderReadOnlyOptimal             FragmentShader              InputAttachmentRead
+  // TransferSrcOptimal                Transfer                    TransferRead
+  // TransferDstOptimal                Transfer                    TransferWrite
+  // PresentSrcKHR                     Transfer                    MemoryRead
+
+  // -----------------------------------------------------------------------------------------------
+  // newLayout                         dstStage                    dstAccess
+  // -----------------------------------------------------------------------------------------------
+  // Undefined                         n/a                         n/a
+  // Preinitialized                    n/a                         n/a
+  // General                           VertexShader                ShaderRead |
+  //                                                                  ShaderWrite
+  // ColorAttachmentOptimal            ColorAttachmentOutput       ColorAttachmentRead |
+  //                                                                  ColorAttachmentWrite
+  // DepthStencilAttachmentOptimal     EarlyFragmentTests          DepthStencilAttachmentRead |
+  //                                                                  DepthStencilAttachmentWrite
+  // DepthStencilReadOnlyOptimal       VertexShader                ShaderRead
+  // ShaderReadOnlyOptimal             VertexShader                ShaderRead
+  // TransferSrcOptimal                Transfer                    TransferRead
+  // TransferDstOptimal                Transfer                    TransferWrite
+  // PresentSrcKHR                     Transfer                    MemoryRead
+
   void transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout,
       vk::ImageSubresourceRange range) const;
-
   void transitionImageLayout(BackedImagePtr image, vk::ImageLayout oldLayout,
       vk::ImageLayout newLayout, vk::ImageSubresourceRange range) const;
-
   void transitionImageLayout(
       BackedImagePtr image, vk::ImageLayout newLayout, vk::ImageSubresourceRange range) const;
-
   void transitionImageLayout(
       BackedImagePtr image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) const;
-
   void transitionImageLayout(BackedImagePtr image, vk::ImageLayout newLayout) const;
 
   // convenience methods ---------------------------------------------------------------------------

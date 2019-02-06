@@ -303,13 +303,6 @@ void CommandBuffer::transitionImageLayout(vk::Image image, vk::ImageLayout oldLa
   barrier.srcAccessMask       = srcAccess;
   barrier.dstAccessMask       = dstAccess;
 
-  // Core::Logger::message() << "Transition from: " << vk::to_string(barrier.oldLayout) << " to "
-  //                         << vk::to_string(barrier.newLayout)
-  //                         << " (srcAccess: " << vk::to_string(barrier.srcAccessMask) << " / "
-  //                         << vk::to_string(srcStage)
-  //                         << " dstAccess: " << vk::to_string(barrier.dstAccessMask) << " / "
-  //                         << vk::to_string(dstStage) << ")" << std::endl;
-
   mVkCmd->pipelineBarrier(srcStage, dstStage, vk::DependencyFlagBits(), nullptr, nullptr, barrier);
 }
 
