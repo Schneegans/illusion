@@ -63,24 +63,24 @@ void Swapchain::present(BackedImagePtr const& image,
     mDirty = false;
   }
 
-  // Advance the index of our current presentation resources.
-  mCurrentPresentIndex = (mCurrentPresentIndex + 1) % mImages.size();
+  // We will try to acquire a new image for the next index of our current presentation resources.
+  uint32_t nextPresentIndex = (mCurrentPresentIndex + 1) % mImages.size();
 
   // Acquire a new swapchain image.
   auto result =
       mDevice->getHandle()->acquireNextImageKHR(*mSwapchain, std::numeric_limits<uint64_t>::max(),
-          *mImageAvailableSemaphores[mCurrentPresentIndex], nullptr, &mCurrentImageIndex);
+          *mImageAvailableSemaphores[nextPresentIndex], nullptr, &mCurrentImageIndex);
 
   // Mark as being dirty and call this method again if the swapchain is out-of-date.
-  if (result == vk::Result::eErrorOutOfDateKHR) {
+  if (result != vk::Result::eSuccess) {
     mDirty = true;
     present(image, renderFinishedSemaphore, signalFence);
+    return;
   }
 
-  // Warn about suboptimal swapchains.
-  if (result != vk::Result::eSuccess && result != vk::Result::eSuboptimalKHR) {
-    Core::Logger::error() << "Suboptimal swap chain!" << std::endl;
-  }
+  // We successfully acquired a new image, so we can advance the index of our current presentation
+  // resources.
+  mCurrentPresentIndex = nextPresentIndex;
 
   // Now copy the given image to the swapchain image.
   {
