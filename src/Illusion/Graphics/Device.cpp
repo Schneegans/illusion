@@ -21,6 +21,7 @@
 
 #include <iostream>
 #include <set>
+#include <utility>
 
 namespace Illusion::Graphics {
 
@@ -32,17 +33,17 @@ const std::vector<const char*> DEVICE_EXTENSIONS{VK_KHR_SWAPCHAIN_EXTENSION_NAME
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Device::Device(std::string const& name, PhysicalDevicePtr const& physicalDevice)
+Device::Device(std::string const& name, PhysicalDevicePtr physicalDevice)
     : Core::NamedObject(name)
-    , mPhysicalDevice(physicalDevice)
+    , mPhysicalDevice(std::move(physicalDevice))
     , mDevice(createDevice(name)) {
 
   mSetObjectNameFunc =
       PFN_vkSetDebugUtilsObjectNameEXT(mDevice->getProcAddr("vkSetDebugUtilsObjectNameEXT"));
 
   for (size_t i(0); i < 3; ++i) {
-    QueueType type = static_cast<QueueType>(i);
-    mQueues[i]     = mDevice->getQueue(mPhysicalDevice->getQueueFamily(type), 0);
+    auto type  = static_cast<QueueType>(i);
+    mQueues[i] = mDevice->getQueue(mPhysicalDevice->getQueueFamily(type), 0);
 
     vk::CommandPoolCreateInfo info;
     info.queueFamilyIndex = mPhysicalDevice->getQueueFamily(type);
@@ -56,21 +57,20 @@ Device::Device(std::string const& name, PhysicalDevicePtr const& physicalDevice)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Device::~Device() {
-}
+Device::~Device() = default;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 BackedImagePtr Device::createBackedImage(std::string const& name, vk::ImageCreateInfo imageInfo,
-    vk::ImageViewType viewType, vk::ImageAspectFlags imageAspectMask,
-    vk::MemoryPropertyFlags properties, vk::ImageLayout layout,
+    vk::ImageViewType viewType, const vk::ImageAspectFlags& imageAspectMask,
+    const vk::MemoryPropertyFlags& properties, vk::ImageLayout layout,
     vk::ComponentMapping const& componentMapping, vk::DeviceSize dataSize, const void* data) const {
 
   auto result   = std::make_shared<BackedImage>();
   result->mName = name;
 
   // make sure eTransferDst is set when we have data to upload
-  if (data) {
+  if (data != nullptr) {
     imageInfo.usage |= vk::ImageUsageFlagBits::eTransferDst;
   }
 
@@ -100,7 +100,7 @@ BackedImagePtr Device::createBackedImage(std::string const& name, vk::ImageCreat
 
   result->mView = createImageView("ImageView for " + name, result->mViewInfo);
 
-  if (data) {
+  if (data != nullptr) {
     auto cmd = allocateCommandBuffer("Upload to BackedImage");
     cmd->begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
 
@@ -213,8 +213,9 @@ BackedImagePtr Device::createBackedImage(std::string const& name, vk::ImageCreat
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BackedBufferPtr Device::createBackedBuffer(std::string const& name, vk::BufferUsageFlags usage,
-    vk::MemoryPropertyFlags properties, vk::DeviceSize dataSize, const void* data) const {
+BackedBufferPtr Device::createBackedBuffer(std::string const& name,
+    const vk::BufferUsageFlags& usage, const vk::MemoryPropertyFlags& properties,
+    vk::DeviceSize dataSize, const void* data) const {
 
   auto result   = std::make_shared<BackedBuffer>();
   result->mName = name;
@@ -224,8 +225,8 @@ BackedBufferPtr Device::createBackedBuffer(std::string const& name, vk::BufferUs
   result->mBufferInfo.sharingMode = vk::SharingMode::eExclusive;
 
   // if data upload will use a staging buffer, we need to make sure transferDst is set!
-  if (data && (!(properties & vk::MemoryPropertyFlagBits::eHostVisible) ||
-                  !(properties & vk::MemoryPropertyFlagBits::eHostCoherent))) {
+  if ((data != nullptr) && (!(properties & vk::MemoryPropertyFlagBits::eHostVisible) ||
+                               !(properties & vk::MemoryPropertyFlagBits::eHostCoherent))) {
     result->mBufferInfo.usage |= vk::BufferUsageFlagBits::eTransferDst;
   }
 
@@ -241,7 +242,7 @@ BackedBufferPtr Device::createBackedBuffer(std::string const& name, vk::BufferUs
 
   mDevice->bindBufferMemory(*result->mBuffer, *result->mMemory, 0);
 
-  if (data) {
+  if (data != nullptr) {
     // data was provided, we need to upload it!
     if ((properties & vk::MemoryPropertyFlagBits::eHostVisible) &&
         (properties & vk::MemoryPropertyFlagBits::eHostCoherent)) {
@@ -307,13 +308,13 @@ BackedBufferPtr Device::createUniformBuffer(std::string const& name, vk::DeviceS
 
 TexturePtr Device::createTexture(std::string const& name, vk::ImageCreateInfo imageInfo,
     vk::SamplerCreateInfo samplerInfo, vk::ImageViewType viewType,
-    vk::ImageAspectFlags imageAspectMask, vk::ImageLayout layout,
+    const vk::ImageAspectFlags& imageAspectMask, vk::ImageLayout layout,
     vk::ComponentMapping const& componentMapping, vk::DeviceSize dataSize, const void* data) const {
 
   auto result = std::make_shared<Texture>();
 
   // create backed image for texture
-  auto image = createBackedImage(name, imageInfo, viewType, imageAspectMask,
+  auto image = createBackedImage(name, std::move(imageInfo), viewType, imageAspectMask,
       vk::MemoryPropertyFlagBits::eDeviceLocal, layout, componentMapping, dataSize, data);
 
   result->mImage         = image->mImage;
@@ -325,7 +326,7 @@ TexturePtr Device::createTexture(std::string const& name, vk::ImageCreateInfo im
   result->mCurrentLayout = image->mCurrentLayout;
 
   // create sampler
-  result->mSamplerInfo = samplerInfo;
+  result->mSamplerInfo = std::move(samplerInfo);
   result->mSampler     = createSampler("Sampler for " + name, result->mSamplerInfo);
 
   return result;
@@ -712,11 +713,11 @@ void Device::waitForFences(
   for (size_t i(0); i < fences.size(); ++i) {
     tmp[i] = *fences[i];
   }
-  mDevice->waitForFences(tmp, waitAll, timeout);
+  mDevice->waitForFences(tmp, static_cast<vk::Bool32>(waitAll), timeout);
 }
 
 void Device::waitForFence(vk::FencePtr const& fence, uint64_t timeout) {
-  mDevice->waitForFences(*fence, true, timeout);
+  mDevice->waitForFences(*fence, 1u, timeout);
 }
 
 void Device::resetFences(std::vector<vk::FencePtr> const& fences) {
@@ -742,10 +743,9 @@ vk::DevicePtr Device::createDevice(std::string const& name) const {
   std::vector<vk::DeviceQueueCreateInfo> queueCreateInfos;
 
   const float              queuePriority = 1.0f;
-  const std::set<uint32_t> uniqueQueueFamilies{
-      (uint32_t)mPhysicalDevice->getQueueFamily(QueueType::eGeneric),
-      (uint32_t)mPhysicalDevice->getQueueFamily(QueueType::eCompute),
-      (uint32_t)mPhysicalDevice->getQueueFamily(QueueType::eTransfer)};
+  const std::set<uint32_t> uniqueQueueFamilies{mPhysicalDevice->getQueueFamily(QueueType::eGeneric),
+      mPhysicalDevice->getQueueFamily(QueueType::eCompute),
+      mPhysicalDevice->getQueueFamily(QueueType::eTransfer)};
 
   for (uint32_t queueFamily : uniqueQueueFamilies) {
     vk::DeviceQueueCreateInfo queueCreateInfo;
@@ -756,11 +756,11 @@ vk::DevicePtr Device::createDevice(std::string const& name) const {
   }
 
   vk::PhysicalDeviceFeatures deviceFeatures;
-  deviceFeatures.samplerAnisotropy = true;
+  deviceFeatures.samplerAnisotropy = 1u;
 
   vk::DeviceCreateInfo createInfo;
   createInfo.pQueueCreateInfos       = queueCreateInfos.data();
-  createInfo.queueCreateInfoCount    = (uint32_t)queueCreateInfos.size();
+  createInfo.queueCreateInfoCount    = static_cast<uint32_t>(queueCreateInfos.size());
   createInfo.pEnabledFeatures        = &deviceFeatures;
   createInfo.enabledExtensionCount   = static_cast<uint32_t>(DEVICE_EXTENSIONS.size());
   createInfo.ppEnabledExtensionNames = DEVICE_EXTENSIONS.data();
@@ -780,7 +780,7 @@ void Device::assignName(
   nameInfo.objectType   = objectType;
   nameInfo.objectHandle = vulkanHandle;
   nameInfo.pObjectName  = name.c_str();
-  mSetObjectNameFunc(*mDevice, (VkDebugUtilsObjectNameInfoEXT*)(&nameInfo));
+  mSetObjectNameFunc(*mDevice, reinterpret_cast<VkDebugUtilsObjectNameInfoEXT*>(&nameInfo));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

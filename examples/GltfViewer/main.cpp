@@ -86,7 +86,7 @@ void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::Gltf::Node>> cons
     glm::mat4 nodeMatrix = n->mGlobalTransform;
 
     if (n->mSkin) {
-      SkinUniforms skin;
+      SkinUniforms skin{};
       auto         jointMatrices = n->mSkin->getJointMatrices(nodeMatrix);
 
       for (size_t i(0); i < jointMatrices.size() && i < 256; ++i) {
@@ -106,7 +106,7 @@ void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::Gltf::Node>> cons
       for (auto const& p : n->mMesh->mPrimitives) {
 
         if (p.mMaterial->mDoAlphaBlending == doAlphaBlending) {
-          PushConstants pushConstants;
+          PushConstants pushConstants{};
           pushConstants.mModelMatrix                = modelMatrix * nodeMatrix;
           pushConstants.mAlbedoFactor               = p.mMaterial->mAlbedoFactor;
           pushConstants.mEmissiveFactor             = p.mMaterial->mEmissiveFactor;
@@ -258,8 +258,9 @@ int main(int argc, char* argv[]) {
 
     if (options.mAnimation >= 0 &&
         static_cast<size_t>(options.mAnimation) < model->getAnimations().size()) {
-      auto const& anim         = model->getAnimations()[options.mAnimation];
-      float modelAnimationTime = std::fmod((float)timer.getElapsed(), anim->mEnd - anim->mStart);
+      auto const& anim = model->getAnimations()[options.mAnimation];
+      float       modelAnimationTime =
+          std::fmod(static_cast<float>(timer.getElapsed()), anim->mEnd - anim->mStart);
       modelAnimationTime += anim->mStart;
       model->setAnimationTime(options.mAnimation, modelAnimationTime);
     }
@@ -275,7 +276,7 @@ int main(int argc, char* argv[]) {
     res.mRenderPass->setExtent(window->pExtent.get());
     res.mCmd->graphicsState().setViewports({{glm::vec2(window->pExtent.get())}});
 
-    CameraUniforms camera;
+    CameraUniforms camera{};
     camera.mProjectionMatrix = glm::perspectiveZO(glm::radians(50.f),
         static_cast<float>(window->pExtent.get().x) / static_cast<float>(window->pExtent.get().y),
         0.01f, 10.0f);
@@ -295,8 +296,8 @@ int main(int argc, char* argv[]) {
 
     // The color and depth our framebuffer attachments will be cleared to.
     std::vector<vk::ClearValue> clearValues;
-    clearValues.push_back(vk::ClearColorValue(std::array<float, 4>{{0.f, 0.f, 0.f, 0.f}}));
-    clearValues.push_back(vk::ClearDepthStencilValue(1.f, 0u));
+    clearValues.emplace_back(vk::ClearColorValue(std::array<float, 4>{{0.f, 0.f, 0.f, 0.f}}));
+    clearValues.emplace_back(vk::ClearDepthStencilValue(1.f, 0u));
 
     res.mCmd->beginRenderPass(res.mRenderPass, clearValues);
 
@@ -329,7 +330,7 @@ int main(int argc, char* argv[]) {
     res.mCmd->bindVertexBuffers(0, {model->getVertexBuffer()});
     res.mCmd->bindIndexBuffer(model->getIndexBuffer(), 0, vk::IndexType::eUint32);
 
-    SkinUniforms ubo;
+    SkinUniforms ubo{};
     uint32_t     emptySkinDynamicOffset = res.mUniformBuffer->addData(ubo);
 
     drawNodes(model->getRoot()->mChildren, camera.mViewMatrix, modelMatrix, false,

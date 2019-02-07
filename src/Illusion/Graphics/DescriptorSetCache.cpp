@@ -8,6 +8,8 @@
 
 #include "DescriptorSetCache.hpp"
 
+#include <utility>
+
 #include "DescriptorPool.hpp"
 #include "Device.hpp"
 
@@ -15,15 +17,14 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-DescriptorSetCache::DescriptorSetCache(std::string const& name, DevicePtr const& device)
+DescriptorSetCache::DescriptorSetCache(std::string const& name, DevicePtr device)
     : Core::NamedObject(name)
-    , mDevice(device) {
+    , mDevice(std::move(device)) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-DescriptorSetCache::~DescriptorSetCache() {
-}
+DescriptorSetCache::~DescriptorSetCache() = default;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -36,7 +37,7 @@ vk::DescriptorSetPtr DescriptorSetCache::acquireHandle(
   if (cacheEntry != mCache.end()) {
 
     // First case: we have a handle which has been acquired before; return it!
-    if (cacheEntry->second.mFreeHandels.size() > 0) {
+    if (!cacheEntry->second.mFreeHandels.empty()) {
       auto descriptorSet = *cacheEntry->second.mFreeHandels.begin();
       cacheEntry->second.mFreeHandels.erase(cacheEntry->second.mFreeHandels.begin());
       cacheEntry->second.mUsedHandels.insert(descriptorSet);

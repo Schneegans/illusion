@@ -73,7 +73,7 @@ glm::uvec2 FrameGraph::Resource::getAbsoluteExtent(glm::uvec2 const& windowExten
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 FrameGraph::Pass& FrameGraph::Pass::addColorAttachment(
-    Resource const& resource, AccessFlags access, std::optional<vk::ClearColorValue> clear) {
+    Resource const& resource, const AccessFlags& access, std::optional<vk::ClearColorValue> clear) {
 
   // We cannot add the same resource twice.
   if (Core::Utils::contains(mResourceAccess, &resource)) {
@@ -112,8 +112,8 @@ FrameGraph::Pass& FrameGraph::Pass::addColorAttachment(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-FrameGraph::Pass& FrameGraph::Pass::addDepthAttachment(
-    Resource const& resource, AccessFlags access, std::optional<vk::ClearDepthStencilValue> clear) {
+FrameGraph::Pass& FrameGraph::Pass::addDepthAttachment(Resource const& resource,
+    const AccessFlags& access, std::optional<vk::ClearDepthStencilValue> clear) {
 
   // Depth attachments cannot be read.
   if (access.contains(AccessFlagBits::eRead)) {
@@ -194,7 +194,7 @@ FrameGraph::FrameGraph(
 
 FrameGraph::Resource& FrameGraph::createResource() {
   mDirty = true;
-  mResources.push_back({});
+  mResources.emplace_back();
   return mResources.back();
 }
 
@@ -202,7 +202,7 @@ FrameGraph::Resource& FrameGraph::createResource() {
 
 FrameGraph::Pass& FrameGraph::createPass() {
   mDirty = true;
-  mPasses.push_back({});
+  mPasses.emplace_back();
   return mPasses.back();
 }
 
@@ -227,7 +227,7 @@ void FrameGraph::setOutput(WindowPtr const& window, Pass const& pass, Resource c
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void FrameGraph::process(ProcessingFlags flags) {
+void FrameGraph::process(const ProcessingFlags& flags) {
 
   // -------------------------------------------------------------------------------------------- //
   // ---------------------------------- graph validation phase ---------------------------------- //
@@ -241,7 +241,7 @@ void FrameGraph::process(ProcessingFlags flags) {
     // Resources in the Passes are valid.
     try {
       validate();
-    } catch (std::runtime_error e) {
+    } catch (std::runtime_error const& e) {
       throw std::runtime_error("Frame graph validation failed: " + std::string(e.what()));
     }
 
@@ -304,7 +304,7 @@ void FrameGraph::process(ProcessingFlags flags) {
       passQueue.pop_front();
 
       // Skip passes without any resources.
-      if (pass->mResourceAccess.size() == 0) {
+      if (pass->mResourceAccess.empty()) {
         Core::Logger::debug() << "    Skipping pass \"" + pass->mName +
                                      "\" because it has no resources assigned."
                               << std::endl;
@@ -315,7 +315,7 @@ void FrameGraph::process(ProcessingFlags flags) {
       // access. Due to the previous graph validation we are sure that all resources have the same
       // resolution.
       RenderPassInfo renderPass;
-      renderPass.mSubpasses.push_back({pass});
+      renderPass.mSubpasses.push_back({pass, nullptr, {}});
       for (auto const& resource : pass->mResourceAccess) {
         renderPass.mExtent = resource.first->getAbsoluteExtent(mOutputWindow->pExtent.get());
         break;
@@ -332,7 +332,7 @@ void FrameGraph::process(ProcessingFlags flags) {
 
       // Now we have to find the passes which are in front of the current pass in the mPasses list
       // of the FrameGraph and write to to the resources of the current pass.
-      for (auto r : pass->mResourceAccess) {
+      for (const auto& r : pass->mResourceAccess) {
         Core::Logger::debug() << "      resource \"" + r.first->mName + "\"" << std::endl;
 
         // Step backwards through all Passes, collecting all passes writing to this resource.
@@ -363,7 +363,8 @@ void FrameGraph::process(ProcessingFlags flags) {
                                        r.first->mName + "\" of pass \"" + pass->mName +
                                        "\" is used by the preceding pass \"" + previousPass->mName +
                                        "\"!");
-            } else if (!previousUse->second.contains(AccessFlagBits::eWrite)) {
+            }
+            if (!previousUse->second.contains(AccessFlagBits::eWrite)) {
               Core::Logger::debug()
                   << "        is read-only in pass \"" + previousPass->mName + "\"." << std::endl;
             } else {
@@ -376,7 +377,7 @@ void FrameGraph::process(ProcessingFlags flags) {
               Core::Logger::debug()
                   << "        is written by pass \"" + previousPass->mName + "\"." << std::endl;
             }
-          } else if (renderPass.mSubpasses[0].mDependencies.size() == 0) {
+          } else if (renderPass.mSubpasses[0].mDependencies.empty()) {
             if (r.second.containsOnly(AccessFlagBits::eWrite)) {
               Core::Logger::debug() << "        is created by this pass." << std::endl;
             } else {
@@ -519,7 +520,7 @@ void FrameGraph::process(ProcessingFlags flags) {
     // This can definitely be optimized, but for now frequent graph changes are not planned anyways.
     perFrame.mAllAttachments.clear();
 
-    for (auto resource : overallResourceUsage) {
+    for (const auto& resource : overallResourceUsage) {
       vk::ImageAspectFlags aspect;
 
       if (Utils::isDepthOnlyFormat(resource.first->mFormat)) {
@@ -531,11 +532,13 @@ void FrameGraph::process(ProcessingFlags flags) {
         aspect |= vk::ImageAspectFlagBits::eColor;
       }
 
+      auto extent = resource.first->getAbsoluteExtent(mOutputWindow->pExtent.get());
+
       vk::ImageCreateInfo imageInfo;
       imageInfo.imageType     = vk::ImageType::e2D;
       imageInfo.format        = resource.first->mFormat;
-      imageInfo.extent.width  = resource.first->mExtent.x;
-      imageInfo.extent.height = resource.first->mExtent.y;
+      imageInfo.extent.width  = extent.x;
+      imageInfo.extent.height = extent.y;
       imageInfo.extent.depth  = 1;
       imageInfo.mipLevels     = 1;
       imageInfo.arrayLayers   = 1;
@@ -767,7 +770,7 @@ void FrameGraph::process(ProcessingFlags flags) {
       if (pass.mResourceClear.find(attachment) != pass.mResourceClear.end()) {
         clearValues.push_back(pass.mResourceClear.at(attachment));
       } else {
-        clearValues.push_back({});
+        clearValues.emplace_back();
       }
     }
 
@@ -898,11 +901,11 @@ void FrameGraph::validate() const {
     throw std::runtime_error("There is no output window set!");
   }
 
-  if (!mOutputPass) {
+  if (mOutputPass == nullptr) {
     throw std::runtime_error("There is no output pass set!");
   }
 
-  if (!mOutputAttachment) {
+  if (mOutputAttachment == nullptr) {
     throw std::runtime_error("There is no output resource set!");
   }
 
@@ -938,7 +941,7 @@ void FrameGraph::validate() const {
   // Check whether the resolutions of all attachments of each pass are the same
   glm::ivec2 windowExtent = mOutputWindow->pExtent.get();
   for (auto const& pass : mPasses) {
-    glm::ivec2 passExtent = glm::ivec2(-1);
+    auto passExtent = glm::ivec2(-1);
     for (auto const& resource : pass.mResourceAccess) {
       glm::ivec2 resourceExtent = resource.first->getAbsoluteExtent(windowExtent);
       if (passExtent == glm::ivec2(-1)) {

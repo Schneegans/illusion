@@ -56,8 +56,8 @@ class Model : public Core::StaticCreate<Model>, public Core::NamedObject {
   // idea to give the object a descriptive name. There are several reasons why this could throw a
   // std::runtime_error. It is a good idea to catch those cases and report the error message to the
   // user.
-  Model(std::string const& name, DevicePtr const& device, std::string const& fileName,
-      LoadOptions options = LoadOptionBits::eAll);
+  Model(std::string const& name, DevicePtr device, std::string const& fileName,
+      const LoadOptions& options = LoadOptionBits::eAll);
 
   // Updates all transformations of all Nodes according to the given animation and time. The time is
   // automatically clamped to the start and end time of the animation and is usually provided in

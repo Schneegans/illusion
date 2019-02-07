@@ -39,7 +39,7 @@ class RenderPass : public Core::StaticCreate<RenderPass>, public Core::NamedObje
     vk::AttachmentStoreOp mStoreOp;
   };
 
-  RenderPass(std::string const& name, DevicePtr const& device);
+  RenderPass(std::string const& name, DevicePtr device);
   virtual ~RenderPass();
 
   virtual void init();

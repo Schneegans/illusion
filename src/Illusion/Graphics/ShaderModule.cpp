@@ -14,6 +14,7 @@
 
 #include <SPIRV/GLSL.std.450.h>
 #include <spirv_glsl.hpp>
+#include <utility>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // Parts of this code is based on Vulkan-EZ                                                       //
@@ -27,7 +28,7 @@ namespace {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 // Map spirv-types to Illusion's PipelineResource::BaseTypes.
-static std::unordered_map<spirv_cross::SPIRType::BaseType, PipelineResource::BaseType>
+std::unordered_map<spirv_cross::SPIRType::BaseType, PipelineResource::BaseType>
     spirvTypeToBaseType = {
         {spirv_cross::SPIRType::Boolean, PipelineResource::BaseType::eBool},
         {spirv_cross::SPIRType::Char, PipelineResource::BaseType::eChar},
@@ -41,7 +42,7 @@ static std::unordered_map<spirv_cross::SPIRType::BaseType, PipelineResource::Bas
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-static std::vector<PipelineResource::Member> parseMembers(
+std::vector<PipelineResource::Member> parseMembers(
     spirv_cross::CompilerGLSL& compiler, const spirv_cross::SPIRType& spirType) {
 
   std::vector<PipelineResource::Member> members;
@@ -49,8 +50,9 @@ static std::vector<PipelineResource::Member> parseMembers(
   for (size_t i(0); i < spirType.member_types.size(); ++i) {
     // Validate member is of a supported type.
     const auto& memberType = compiler.get_type(spirType.member_types[i]);
-    if (spirvTypeToBaseType.find(memberType.basetype) == spirvTypeToBaseType.end())
+    if (spirvTypeToBaseType.find(memberType.basetype) == spirvTypeToBaseType.end()) {
       continue;
+    }
 
     // Create a new PipelineResource::Member entry.
     PipelineResource::Member member;
@@ -59,7 +61,7 @@ static std::vector<PipelineResource::Member> parseMembers(
     member.mSize     = compiler.get_declared_struct_member_size(spirType, static_cast<uint32_t>(i));
     member.mVecSize  = memberType.vecsize;
     member.mColumns  = memberType.columns;
-    member.mArraySize = (memberType.array.size() == 0) ? 1 : memberType.array[0];
+    member.mArraySize = (memberType.array.empty()) ? 1 : memberType.array[0];
     member.mName      = compiler.get_member_name(spirType.self, static_cast<uint32_t>(i));
 
     // Recursively process members that are structs.
@@ -78,7 +80,7 @@ static std::vector<PipelineResource::Member> parseMembers(
 
 class CustomCompiler : public spirv_cross::CompilerGLSL {
  public:
-  CustomCompiler(const std::vector<uint32_t>& spirv)
+  explicit CustomCompiler(const std::vector<uint32_t>& spirv)
       : spirv_cross::CompilerGLSL(spirv) {
   }
 
@@ -89,18 +91,20 @@ class CustomCompiler : public spirv_cross::CompilerGLSL {
     // spirv_cross executable correctly outputs the attributes when converting spirv back to GLSL,
     // but it's own reflection code does not :-(
     auto all_members_flag_mask = spirv_cross::Bitset(~0ULL);
-    for (size_t i(0); i < type.member_types.size(); ++i)
+    for (size_t i(0); i < type.member_types.size(); ++i) {
       all_members_flag_mask.merge_and(
           get_member_decoration_bitset(type.self, static_cast<uint32_t>(i)));
+    }
 
     auto base_flags = ir.meta[type.self].decoration.decoration_flags;
     base_flags.merge_or(spirv_cross::Bitset(all_members_flag_mask));
 
     vk::AccessFlags access = vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite;
-    if (base_flags.get(spv::DecorationNonReadable))
+    if (base_flags.get(spv::DecorationNonReadable)) {
       access = vk::AccessFlagBits::eShaderWrite;
-    else if (base_flags.get(spv::DecorationNonWritable))
+    } else if (base_flags.get(spv::DecorationNonWritable)) {
       access = vk::AccessFlagBits::eShaderRead;
+    }
 
     return access;
   }
@@ -110,22 +114,20 @@ class CustomCompiler : public spirv_cross::CompilerGLSL {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ShaderModule::ShaderModule(std::string const& name, DevicePtr const& device,
-    ShaderSourcePtr const& source, vk::ShaderStageFlagBits stage,
-    std::set<std::string> const& dynamicBuffers)
+ShaderModule::ShaderModule(std::string const& name, DevicePtr device, ShaderSourcePtr source,
+    vk::ShaderStageFlagBits stage, std::set<std::string> dynamicBuffers)
     : Core::NamedObject(name)
-    , mDevice(device)
+    , mDevice(std::move(device))
     , mStage(stage)
-    , mSource(source)
-    , mDynamicBuffers(dynamicBuffers) {
+    , mSource(std::move(source))
+    , mDynamicBuffers(std::move(dynamicBuffers)) {
 
   reload();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ShaderModule::~ShaderModule() {
-}
+ShaderModule::~ShaderModule() = default;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -197,11 +199,12 @@ void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) {
     pipelineResource.mLocation     = compiler.get_decoration(resource.id, spv::DecorationLocation);
     pipelineResource.mVecSize      = spirType.vecsize;
     pipelineResource.mColumns      = spirType.columns;
-    pipelineResource.mArraySize    = (spirType.array.size() == 0) ? 1 : spirType.array[0];
+    pipelineResource.mArraySize    = (spirType.array.empty()) ? 1 : spirType.array[0];
 
     auto it = spirvTypeToBaseType.find(spirType.basetype);
-    if (it == spirvTypeToBaseType.end())
+    if (it == spirvTypeToBaseType.end()) {
       continue;
+    }
 
     pipelineResource.mBaseType = it->second;
     pipelineResource.mName     = resource.name;
@@ -219,11 +222,12 @@ void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) {
     pipelineResource.mLocation     = compiler.get_decoration(resource.id, spv::DecorationLocation);
     pipelineResource.mVecSize      = spirType.vecsize;
     pipelineResource.mColumns      = spirType.columns;
-    pipelineResource.mArraySize    = (spirType.array.size() == 0) ? 1 : spirType.array[0];
+    pipelineResource.mArraySize    = (spirType.array.empty()) ? 1 : spirType.array[0];
 
     auto it = spirvTypeToBaseType.find(spirType.basetype);
-    if (it == spirvTypeToBaseType.end())
+    if (it == spirvTypeToBaseType.end()) {
       continue;
+    }
 
     pipelineResource.mBaseType = it->second;
     pipelineResource.mName     = resource.name;
@@ -244,7 +248,7 @@ void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) {
     pipelineResource.mAccess  = vk::AccessFlagBits::eUniformRead;
     pipelineResource.mSet     = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
     pipelineResource.mBinding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-    pipelineResource.mArraySize = (spirType.array.size() == 0) ? 1 : spirType.array[0];
+    pipelineResource.mArraySize = (spirType.array.empty()) ? 1 : spirType.array[0];
     pipelineResource.mSize      = compiler.get_declared_struct_size(spirType);
     pipelineResource.mName      = resource.name;
     pipelineResource.mMembers   = parseMembers(compiler, spirType);
@@ -265,7 +269,7 @@ void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) {
     pipelineResource.mAccess  = compiler.get_access_flags(spirType);
     pipelineResource.mSet     = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
     pipelineResource.mBinding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-    pipelineResource.mArraySize = (spirType.array.size() == 0) ? 1 : spirType.array[0];
+    pipelineResource.mArraySize = (spirType.array.empty()) ? 1 : spirType.array[0];
     pipelineResource.mSize      = compiler.get_declared_struct_size(spirType);
     pipelineResource.mName      = resource.name;
     pipelineResource.mMembers   = parseMembers(compiler, spirType);
@@ -282,7 +286,7 @@ void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) {
     pipelineResource.mAccess       = vk::AccessFlagBits::eShaderRead;
     pipelineResource.mSet     = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
     pipelineResource.mBinding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-    pipelineResource.mArraySize = (spirType.array.size() == 0) ? 1 : spirType.array[0];
+    pipelineResource.mArraySize = (spirType.array.empty()) ? 1 : spirType.array[0];
     pipelineResource.mName      = resource.name;
     mResources.push_back(pipelineResource);
   }
@@ -299,7 +303,7 @@ void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) {
     pipelineResource.mAccess  = vk::AccessFlagBits::eShaderRead;
     pipelineResource.mSet     = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
     pipelineResource.mBinding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-    pipelineResource.mArraySize = (spirType.array.size() == 0) ? 1 : spirType.array[0];
+    pipelineResource.mArraySize = (spirType.array.empty()) ? 1 : spirType.array[0];
     pipelineResource.mName      = resource.name;
     mResources.push_back(pipelineResource);
   }
@@ -314,7 +318,7 @@ void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) {
     pipelineResource.mAccess       = vk::AccessFlagBits::eShaderRead;
     pipelineResource.mSet     = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
     pipelineResource.mBinding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-    pipelineResource.mArraySize = (spirType.array.size() == 0) ? 1 : spirType.array[0];
+    pipelineResource.mArraySize = (spirType.array.empty()) ? 1 : spirType.array[0];
     pipelineResource.mName      = resource.name;
 
     // Check if there is already a ResourceType::eSampler for this binding point and set. In this
@@ -340,10 +344,11 @@ void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) {
     auto            nonReadable  = compiler.get_decoration(resource.id, spv::DecorationNonReadable);
     auto            nonWriteable = compiler.get_decoration(resource.id, spv::DecorationNonWritable);
     vk::AccessFlags access = vk::AccessFlagBits::eShaderRead | vk::AccessFlagBits::eShaderWrite;
-    if (nonReadable)
+    if (nonReadable != 0u) {
       access = vk::AccessFlagBits::eShaderWrite;
-    else if (nonWriteable)
+    } else if (nonWriteable != 0u) {
       access = vk::AccessFlagBits::eShaderRead;
+    }
 
     const auto& spirType = compiler.get_type_from_variable(resource.id);
 
@@ -355,7 +360,7 @@ void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) {
     pipelineResource.mAccess  = access;
     pipelineResource.mSet     = compiler.get_decoration(resource.id, spv::DecorationDescriptorSet);
     pipelineResource.mBinding = compiler.get_decoration(resource.id, spv::DecorationBinding);
-    pipelineResource.mArraySize = (spirType.array.size() == 0) ? 1 : spirType.array[0];
+    pipelineResource.mArraySize = (spirType.array.empty()) ? 1 : spirType.array[0];
     pipelineResource.mName      = resource.name;
     mResources.push_back(pipelineResource);
   }
@@ -381,10 +386,9 @@ void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) {
 
     // Get the start offset of the push constant buffer since this will differ between shader
     // stages.
-    uint32_t offset = ~0;
+    uint32_t offset = ~0u;
     for (size_t i(0); i < spirType.member_types.size(); ++i) {
-      auto memberType = compiler.get_type(spirType.member_types[i]);
-      offset          = std::min(offset, compiler.get_member_decoration(spirType.self,
+      offset = std::min(offset, compiler.get_member_decoration(spirType.self,
                                     static_cast<uint32_t>(i), spv::DecorationOffset));
     }
 

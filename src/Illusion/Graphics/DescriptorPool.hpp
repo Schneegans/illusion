@@ -31,8 +31,8 @@ class DescriptorPool : public Core::StaticCreate<DescriptorPool>, public Core::N
  public:
   // The allocated DescriptorSets are created according to the given reflection.  It is a good idea
   // to give the instance a object name.
-  DescriptorPool(std::string const& name, DevicePtr const& device,
-      DescriptorSetReflectionPtr const& reflection);
+  DescriptorPool(
+      std::string const& name, DevicePtr device, DescriptorSetReflectionPtr const& reflection);
   virtual ~DescriptorPool();
 
   // Allocates a fresh vk::DescriptorSet, may create a vk::DescriptorPool if no free pool is

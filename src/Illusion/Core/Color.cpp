@@ -56,23 +56,24 @@ float Color::h() const {
     float maxi = std::max(std::max(mVal.r, mVal.g), mVal.b);
     float mini = std::min(std::min(mVal.r, mVal.g), mVal.b);
 
-    if (maxi == mVal.r)
+    if (maxi == mVal.r) {
       return std::fmod(60.f * ((mVal.g - mVal.b) / (maxi - mini)) + 360.f, 360.f);
-    else if (maxi == mVal.g)
+    }
+    if (maxi == mVal.g) {
       return std::fmod(60.f * (2 + (mVal.b - mVal.r) / (maxi - mini)) + 360.f, 360.f);
-    else
-      return std::fmod(60.f * (4 + (mVal.r - mVal.g) / (maxi - mini)) + 360.f, 360.f);
-  } else
-    return 0.0f;
+    }
+    return std::fmod(60.f * (4 + (mVal.r - mVal.g) / (maxi - mini)) + 360.f, 360.f);
+  }
+  return 0.0f;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 float Color::s() const {
-  if (v() == 0)
+  if (v() == 0) {
     return 0;
-  else
-    return ((v() - std::min(std::min(mVal.r, mVal.g), mVal.b)) / v());
+  }
+  { return ((v() - std::min(std::min(mVal.r, mVal.g), mVal.b)) / v()); }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -141,8 +142,8 @@ void Color::setHsv(float hue, float saturation, float value) {
   }
   hue = std::fmod(hue, 360.0f);
   hue /= 60.0f;
-  int32_t i = int32_t(std::floor(hue));
-  float   f = hue - i;
+  auto  i = int32_t(std::floor(hue));
+  float f = hue - i;
 
   switch (i) {
   case 0:
@@ -184,8 +185,9 @@ Color Color::inverted() const {
 
   Color inverted(*this);
   inverted.h(inverted.h() + 180.0f);
-  if (v() < 0.5f)
+  if (v() < 0.5f) {
     inverted.v(1.0f - inverted.v());
+  }
   return inverted;
 }
 
@@ -194,10 +196,12 @@ Color Color::inverted() const {
 Color Color::brightened() const {
 
   Color brightened(*this);
-  if (brightened.v() < 0.5f)
+  if (brightened.v() < 0.5f) {
     brightened.v(0.5f);
-  if (brightened.s() < 0.5f)
+  }
+  if (brightened.s() < 0.5f) {
     brightened.s(0.5f);
+  }
   return brightened;
 }
 
@@ -227,8 +231,8 @@ std::string Color::htmlRgba() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Color::htmlRgba(std::string const& val) {
-  std::string str(val);
-  std::string cropped = str.substr(str.find_first_of("(") + 1, str.find_first_of(")") - 1);
+  const std::string& str(val);
+  std::string        cropped = str.substr(str.find_first_of('(') + 1, str.find_first_of(')') - 1);
 
   std::stringstream stream(cropped);
   std::string       comma;

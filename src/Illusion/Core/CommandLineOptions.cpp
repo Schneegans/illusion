@@ -15,13 +15,14 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <utility>
 
 namespace Illusion::Core {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-CommandLineOptions::CommandLineOptions(std::string const& description)
-    : mDescription(description) {
+CommandLineOptions::CommandLineOptions(std::string description)
+    : mDescription(std::move(description)) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -29,7 +30,7 @@ CommandLineOptions::CommandLineOptions(std::string const& description)
 void CommandLineOptions::addOption(
     std::vector<std::string> const& optionNames, OptionValue value, std::string const& help) {
 
-  mOptions.emplace_back(Option{optionNames, value, help});
+  mOptions.emplace_back(Option{optionNames, std::move(value), help});
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -118,13 +119,13 @@ void CommandLineOptions::parse(int argc, char* argv[]) const {
         // In the case of booleans, there must not be a value present. So if the value is neither
         // 'true' nor 'false' it is considered to be the next argument
         if (std::holds_alternative<bool*>(option.mValue)) {
-          if (value.size() > 0 && value != "true" && value != "false") {
+          if (!value.empty() && value != "true" && value != "false") {
             valueIsSeperate = false;
           }
           *std::get<bool*>(option.mValue) = (value != "false");
         }
         // In all other cases there must be a value
-        else if (value == "") {
+        else if (value.empty()) {
           throw std::runtime_error(
               "Failed to parse command line arguments: Missing value for option \"" + name + "\"!");
         }

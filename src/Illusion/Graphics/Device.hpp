@@ -31,7 +31,7 @@ class Device : public Core::StaticCreate<Device>, public Core::NamedObject {
  public:
   // The device needs the physical device it should be created for. You can get one from your
   // Instance. It is a good idea to give the object a descriptive name.
-  explicit Device(std::string const& name, PhysicalDevicePtr const& physicalDevice);
+  explicit Device(std::string const& name, PhysicalDevicePtr physicalDevice);
   virtual ~Device();
 
   // high-level create methods ---------------------------------------------------------------------
@@ -41,15 +41,15 @@ class Device : public Core::StaticCreate<Device>, public Core::NamedObject {
   // Creates a BackedImage and optionally uploads data to the GPU. This uses a BackedBuffer as
   // staging buffer.
   BackedImagePtr createBackedImage(std::string const& name, vk::ImageCreateInfo info,
-      vk::ImageViewType viewType, vk::ImageAspectFlags imageAspectMask,
-      vk::MemoryPropertyFlags properties, vk::ImageLayout layout,
+      vk::ImageViewType viewType, const vk::ImageAspectFlags& imageAspectMask,
+      const vk::MemoryPropertyFlags& properties, vk::ImageLayout layout,
       vk::ComponentMapping const& componentMapping = vk::ComponentMapping(),
       vk::DeviceSize dataSize = 0, const void* data = nullptr) const;
 
   // Creates a BackedBuffer and optionally uploads data to the GPU. If the memory is eHostVisible
   // and eHostCoherent, the data will be uploaded by mapping. Else a staging buffer will be used.
-  BackedBufferPtr createBackedBuffer(std::string const& name, vk::BufferUsageFlags usage,
-      vk::MemoryPropertyFlags properties, vk::DeviceSize dataSize,
+  BackedBufferPtr createBackedBuffer(std::string const& name, const vk::BufferUsageFlags& usage,
+      const vk::MemoryPropertyFlags& properties, vk::DeviceSize dataSize,
       const void* data = nullptr) const;
 
   // Creates a device-local BackedBuffer with vk::BufferUsageFlagBits::eVertexBuffer and uploads the
@@ -80,7 +80,7 @@ class Device : public Core::StaticCreate<Device>, public Core::NamedObject {
 
   TexturePtr createTexture(std::string const& name, vk::ImageCreateInfo imageInfo,
       vk::SamplerCreateInfo samplerInfo, vk::ImageViewType viewType,
-      vk::ImageAspectFlags imageAspectMask, vk::ImageLayout layout,
+      const vk::ImageAspectFlags& imageAspectMask, vk::ImageLayout layout,
       vk::ComponentMapping const& componentMapping = vk::ComponentMapping(),
       vk::DeviceSize dataSize = 0, const void* data = nullptr) const;
 

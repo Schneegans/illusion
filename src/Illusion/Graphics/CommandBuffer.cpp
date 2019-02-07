@@ -18,6 +18,7 @@
 #include "Texture.hpp"
 
 #include <iostream>
+#include <utility>
 
 namespace Illusion::Graphics {
 
@@ -289,8 +290,8 @@ void CommandBuffer::dispatch(uint32_t groupCountX, uint32_t groupCountY, uint32_
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout,
-    vk::AccessFlags srcAccess, vk::PipelineStageFlagBits srcStage, vk::ImageLayout newLayout,
-    vk::AccessFlags dstAccess, vk::PipelineStageFlagBits dstStage,
+    const vk::AccessFlags& srcAccess, vk::PipelineStageFlagBits srcStage, vk::ImageLayout newLayout,
+    const vk::AccessFlags& dstAccess, vk::PipelineStageFlagBits dstStage,
     vk::ImageSubresourceRange range) const {
 
   vk::ImageMemoryBarrier barrier;
@@ -299,7 +300,7 @@ void CommandBuffer::transitionImageLayout(vk::Image image, vk::ImageLayout oldLa
   barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
   barrier.image               = image;
-  barrier.subresourceRange    = range;
+  barrier.subresourceRange    = std::move(range);
   barrier.srcAccessMask       = srcAccess;
   barrier.dstAccessMask       = dstAccess;
 
@@ -371,35 +372,36 @@ void CommandBuffer::transitionImageLayout(vk::Image image, vk::ImageLayout oldLa
   }
 
   transitionImageLayout(image, oldLayout, srcAccess->second, srcStage->second, newLayout,
-      dstAccess->second, dstStage->second, range);
+      dstAccess->second, dstStage->second, std::move(range));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::transitionImageLayout(BackedImagePtr image, vk::ImageLayout oldLayout,
+void CommandBuffer::transitionImageLayout(const BackedImagePtr& image, vk::ImageLayout oldLayout,
     vk::ImageLayout newLayout, vk::ImageSubresourceRange range) const {
 
-  transitionImageLayout(*image->mImage, oldLayout, newLayout, range);
+  transitionImageLayout(*image->mImage, oldLayout, newLayout, std::move(range));
   image->mCurrentLayout = newLayout;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::transitionImageLayout(
-    BackedImagePtr image, vk::ImageLayout newLayout, vk::ImageSubresourceRange range) const {
-  transitionImageLayout(image, image->mCurrentLayout, newLayout, range);
+    const BackedImagePtr& image, vk::ImageLayout newLayout, vk::ImageSubresourceRange range) const {
+  transitionImageLayout(image, image->mCurrentLayout, newLayout, std::move(range));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::transitionImageLayout(
-    BackedImagePtr image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) const {
+    const BackedImagePtr& image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) const {
   transitionImageLayout(image, oldLayout, newLayout, image->mViewInfo.subresourceRange);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::transitionImageLayout(BackedImagePtr image, vk::ImageLayout newLayout) const {
+void CommandBuffer::transitionImageLayout(
+    const BackedImagePtr& image, vk::ImageLayout newLayout) const {
   transitionImageLayout(image, image->mCurrentLayout, newLayout, image->mViewInfo.subresourceRange);
 }
 
@@ -459,7 +461,7 @@ void CommandBuffer::blitImage(vk::Image src, uint32_t srcMipmapLevel, vk::Image 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::resolveImage(vk::Image src, vk::ImageLayout srcLayout, vk::Image dst,
-    vk::ImageLayout dstLayout, vk::ImageResolve region) const {
+    vk::ImageLayout dstLayout, const vk::ImageResolve& region) const {
   mVkCmd->resolveImage(src, srcLayout, dst, dstLayout, region);
 }
 
@@ -517,13 +519,13 @@ void CommandBuffer::flush() {
   for (uint32_t setNum = 0; setNum < setReflections.size(); ++setNum) {
 
     // Ignore empty DescriptorSets.
-    if (setReflections[setNum]->getResources().size() == 0) {
+    if (setReflections[setNum]->getResources().empty()) {
       continue;
     }
 
     // There is nothing to bind, most likely the user forgot to bind something - but it may also be
     // on purpose when the current program actually does not need this set.
-    if (mBindingState.getBindings(setNum).size() == 0) {
+    if (mBindingState.getBindings(setNum).empty()) {
       continue;
     }
 
@@ -736,10 +738,10 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
   std::vector<vk::VertexInputBindingDescription>   vertexInputBindingDescriptions;
   std::vector<vk::VertexInputAttributeDescription> vertexInputAttributeDescriptions;
   for (auto const& i : mGraphicsState.getVertexInputBindings()) {
-    vertexInputBindingDescriptions.push_back({i.binding, i.stride, i.inputRate});
+    vertexInputBindingDescriptions.emplace_back(i.binding, i.stride, i.inputRate);
   }
   for (auto const& i : mGraphicsState.getVertexInputAttributes()) {
-    vertexInputAttributeDescriptions.push_back({i.location, i.binding, i.format, i.offset});
+    vertexInputAttributeDescriptions.emplace_back(i.location, i.binding, i.format, i.offset);
   }
   vertexInputStateInfo.vertexBindingDescriptionCount =
       static_cast<uint32_t>(vertexInputBindingDescriptions.size());
@@ -750,8 +752,9 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
 
   // -----------------------------------------------------------------------------------------------
   vk::PipelineInputAssemblyStateCreateInfo inputAssemblyStateInfo;
-  inputAssemblyStateInfo.topology               = mGraphicsState.getTopology();
-  inputAssemblyStateInfo.primitiveRestartEnable = mGraphicsState.getPrimitiveRestartEnable();
+  inputAssemblyStateInfo.topology = mGraphicsState.getTopology();
+  inputAssemblyStateInfo.primitiveRestartEnable =
+      static_cast<vk::Bool32>(mGraphicsState.getPrimitiveRestartEnable());
 
   // -----------------------------------------------------------------------------------------------
   vk::PipelineTessellationStateCreateInfo tessellationStateInfo;
@@ -762,19 +765,19 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
   std::vector<vk::Viewport>           viewports;
   std::vector<vk::Rect2D>             scissors;
   for (auto const& i : mGraphicsState.getViewports()) {
-    viewports.push_back(
-        {i.mOffset[0], i.mOffset[1], i.mExtend[0], i.mExtend[1], i.mMinDepth, i.mMaxDepth});
+    viewports.emplace_back(
+        i.mOffset[0], i.mOffset[1], i.mExtend[0], i.mExtend[1], i.mMinDepth, i.mMaxDepth);
   }
 
   // use viewport as scissors if no scissors are defined
-  if (mGraphicsState.getScissors().size() > 0) {
+  if (!mGraphicsState.getScissors().empty()) {
     for (auto const& i : mGraphicsState.getScissors()) {
       scissors.push_back({{i.mOffset[0], i.mOffset[1]}, {i.mExtend[0], i.mExtend[1]}});
     }
   } else {
     for (auto const& i : mGraphicsState.getViewports()) {
-      scissors.push_back({{(int32_t)i.mOffset[0], (int32_t)i.mOffset[1]},
-          {(uint32_t)i.mExtend[0], (uint32_t)i.mExtend[1]}});
+      scissors.push_back({{static_cast<int32_t>(i.mOffset[0]), static_cast<int32_t>(i.mOffset[1])},
+          {static_cast<uint32_t>(i.mExtend[0]), static_cast<uint32_t>(i.mExtend[1])}});
     }
   }
   viewportStateInfo.viewportCount = static_cast<uint32_t>(viewports.size());
@@ -784,12 +787,15 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
 
   // -----------------------------------------------------------------------------------------------
   vk::PipelineRasterizationStateCreateInfo rasterizationStateInfo;
-  rasterizationStateInfo.depthClampEnable        = mGraphicsState.getDepthClampEnable();
-  rasterizationStateInfo.rasterizerDiscardEnable = mGraphicsState.getRasterizerDiscardEnable();
-  rasterizationStateInfo.polygonMode             = mGraphicsState.getPolygonMode();
-  rasterizationStateInfo.cullMode                = mGraphicsState.getCullMode();
-  rasterizationStateInfo.frontFace               = mGraphicsState.getFrontFace();
-  rasterizationStateInfo.depthBiasEnable         = mGraphicsState.getDepthBiasEnable();
+  rasterizationStateInfo.depthClampEnable =
+      static_cast<vk::Bool32>(mGraphicsState.getDepthClampEnable());
+  rasterizationStateInfo.rasterizerDiscardEnable =
+      static_cast<vk::Bool32>(mGraphicsState.getRasterizerDiscardEnable());
+  rasterizationStateInfo.polygonMode = mGraphicsState.getPolygonMode();
+  rasterizationStateInfo.cullMode    = mGraphicsState.getCullMode();
+  rasterizationStateInfo.frontFace   = mGraphicsState.getFrontFace();
+  rasterizationStateInfo.depthBiasEnable =
+      static_cast<vk::Bool32>(mGraphicsState.getDepthBiasEnable());
   rasterizationStateInfo.depthBiasConstantFactor = mGraphicsState.getDepthBiasConstantFactor();
   rasterizationStateInfo.depthBiasClamp          = mGraphicsState.getDepthBiasClamp();
   rasterizationStateInfo.depthBiasSlopeFactor    = mGraphicsState.getDepthBiasSlopeFactor();
@@ -797,57 +803,65 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
 
   // -----------------------------------------------------------------------------------------------
   vk::PipelineMultisampleStateCreateInfo multisampleStateInfo;
-  multisampleStateInfo.rasterizationSamples  = mGraphicsState.getRasterizationSamples();
-  multisampleStateInfo.sampleShadingEnable   = mGraphicsState.getSampleShadingEnable();
-  multisampleStateInfo.minSampleShading      = mGraphicsState.getMinSampleShading();
-  multisampleStateInfo.pSampleMask           = mGraphicsState.getSampleMask().data();
-  multisampleStateInfo.alphaToCoverageEnable = mGraphicsState.getAlphaToCoverageEnable();
-  multisampleStateInfo.alphaToOneEnable      = mGraphicsState.getAlphaToOneEnable();
+  multisampleStateInfo.rasterizationSamples = mGraphicsState.getRasterizationSamples();
+  multisampleStateInfo.sampleShadingEnable =
+      static_cast<vk::Bool32>(mGraphicsState.getSampleShadingEnable());
+  multisampleStateInfo.minSampleShading = mGraphicsState.getMinSampleShading();
+  multisampleStateInfo.pSampleMask      = mGraphicsState.getSampleMask().data();
+  multisampleStateInfo.alphaToCoverageEnable =
+      static_cast<vk::Bool32>(mGraphicsState.getAlphaToCoverageEnable());
+  multisampleStateInfo.alphaToOneEnable =
+      static_cast<vk::Bool32>(mGraphicsState.getAlphaToOneEnable());
 
   // -----------------------------------------------------------------------------------------------
   vk::PipelineDepthStencilStateCreateInfo depthStencilStateInfo;
-  depthStencilStateInfo.depthTestEnable       = mGraphicsState.getDepthTestEnable();
-  depthStencilStateInfo.depthWriteEnable      = mGraphicsState.getDepthWriteEnable();
-  depthStencilStateInfo.depthCompareOp        = mGraphicsState.getDepthCompareOp();
-  depthStencilStateInfo.depthBoundsTestEnable = mGraphicsState.getDepthBoundsTestEnable();
-  depthStencilStateInfo.stencilTestEnable     = mGraphicsState.getStencilTestEnable();
-  depthStencilStateInfo.front                 = {mGraphicsState.getStencilFrontFailOp(),
+  depthStencilStateInfo.depthTestEnable =
+      static_cast<vk::Bool32>(mGraphicsState.getDepthTestEnable());
+  depthStencilStateInfo.depthWriteEnable =
+      static_cast<vk::Bool32>(mGraphicsState.getDepthWriteEnable());
+  depthStencilStateInfo.depthCompareOp = mGraphicsState.getDepthCompareOp();
+  depthStencilStateInfo.depthBoundsTestEnable =
+      static_cast<vk::Bool32>(mGraphicsState.getDepthBoundsTestEnable());
+  depthStencilStateInfo.stencilTestEnable =
+      static_cast<vk::Bool32>(mGraphicsState.getStencilTestEnable());
+  depthStencilStateInfo.front          = {mGraphicsState.getStencilFrontFailOp(),
       mGraphicsState.getStencilFrontPassOp(), mGraphicsState.getStencilFrontDepthFailOp(),
       mGraphicsState.getStencilFrontCompareOp(), mGraphicsState.getStencilFrontCompareMask(),
       mGraphicsState.getStencilFrontWriteMask(), mGraphicsState.getStencilFrontReference()};
-  depthStencilStateInfo.back                  = {mGraphicsState.getStencilBackFailOp(),
+  depthStencilStateInfo.back           = {mGraphicsState.getStencilBackFailOp(),
       mGraphicsState.getStencilBackPassOp(), mGraphicsState.getStencilBackDepthFailOp(),
       mGraphicsState.getStencilBackCompareOp(), mGraphicsState.getStencilBackCompareMask(),
       mGraphicsState.getStencilBackWriteMask(), mGraphicsState.getStencilBackReference()};
-  depthStencilStateInfo.minDepthBounds        = mGraphicsState.getMinDepthBounds();
-  depthStencilStateInfo.maxDepthBounds        = mGraphicsState.getMaxDepthBounds();
+  depthStencilStateInfo.minDepthBounds = mGraphicsState.getMinDepthBounds();
+  depthStencilStateInfo.maxDepthBounds = mGraphicsState.getMaxDepthBounds();
 
   // -----------------------------------------------------------------------------------------------
   vk::PipelineColorBlendStateCreateInfo              colorBlendStateInfo;
   std::vector<vk::PipelineColorBlendAttachmentState> pipelineColorBlendAttachments;
 
   // use default blend attachments if none are defined
-  if (mGraphicsState.getBlendAttachments().size() == 0) {
-    int32_t attachmentCount = int32_t(mCurrentRenderPass->getAttachments().size());
+  if (mGraphicsState.getBlendAttachments().empty()) {
+    auto attachmentCount = int32_t(mCurrentRenderPass->getAttachments().size());
     if (mCurrentRenderPass->getSubpasses()[mCurrentSubPass].mDepthStencilAttachment) {
       attachmentCount = std::max(0, attachmentCount - 1);
     }
 
     for (int32_t i(0); i < attachmentCount; ++i) {
       GraphicsState::BlendAttachment a;
-      pipelineColorBlendAttachments.push_back(
-          {a.mBlendEnable, a.mSrcColorBlendFactor, a.mDstColorBlendFactor, a.mColorBlendOp,
-              a.mSrcAlphaBlendFactor, a.mDstAlphaBlendFactor, a.mAlphaBlendOp, a.mColorWriteMask});
+      pipelineColorBlendAttachments.emplace_back(static_cast<vk::Bool32>(a.mBlendEnable),
+          a.mSrcColorBlendFactor, a.mDstColorBlendFactor, a.mColorBlendOp, a.mSrcAlphaBlendFactor,
+          a.mDstAlphaBlendFactor, a.mAlphaBlendOp, a.mColorWriteMask);
     }
 
   } else {
     for (auto const& i : mGraphicsState.getBlendAttachments()) {
-      pipelineColorBlendAttachments.push_back(
-          {i.mBlendEnable, i.mSrcColorBlendFactor, i.mDstColorBlendFactor, i.mColorBlendOp,
-              i.mSrcAlphaBlendFactor, i.mDstAlphaBlendFactor, i.mAlphaBlendOp, i.mColorWriteMask});
+      pipelineColorBlendAttachments.emplace_back(static_cast<vk::Bool32>(i.mBlendEnable),
+          i.mSrcColorBlendFactor, i.mDstColorBlendFactor, i.mColorBlendOp, i.mSrcAlphaBlendFactor,
+          i.mDstAlphaBlendFactor, i.mAlphaBlendOp, i.mColorWriteMask);
     }
   }
-  colorBlendStateInfo.logicOpEnable   = mGraphicsState.getBlendLogicOpEnable();
+  colorBlendStateInfo.logicOpEnable =
+      static_cast<vk::Bool32>(mGraphicsState.getBlendLogicOpEnable());
   colorBlendStateInfo.logicOp         = mGraphicsState.getBlendLogicOp();
   colorBlendStateInfo.attachmentCount = static_cast<uint32_t>(pipelineColorBlendAttachments.size());
   colorBlendStateInfo.pAttachments    = pipelineColorBlendAttachments.data();
@@ -875,7 +889,7 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
   info.pMultisampleState   = &multisampleStateInfo;
   info.pDepthStencilState  = &depthStencilStateInfo;
   info.pColorBlendState    = &colorBlendStateInfo;
-  if (mGraphicsState.getDynamicState().size() > 0) {
+  if (!mGraphicsState.getDynamicState().empty()) {
     info.pDynamicState = &dynamicStateInfo;
   }
   info.renderPass = *mCurrentRenderPass->getHandle();

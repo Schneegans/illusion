@@ -30,7 +30,7 @@ class DescriptorSetReflection : public Core::StaticCreate<DescriptorSetReflectio
  public:
   // Initially, the DescriptorSetReflection is empty. Resources can be added with addResource(). It
   // is a good idea to give the object a descriptive name.
-  DescriptorSetReflection(std::string const& name, DevicePtr const& device, uint32_t set);
+  DescriptorSetReflection(std::string const& name, DevicePtr device, uint32_t set);
   virtual ~DescriptorSetReflection();
 
   // Adds a new resource to this DescriptorSetReflection. The mName of the resource is used as a key

@@ -13,20 +13,20 @@
 
 #include <functional>
 #include <iostream>
+#include <utility>
 
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-PipelineReflection::PipelineReflection(std::string const& name, DevicePtr const& device)
+PipelineReflection::PipelineReflection(std::string const& name, DevicePtr device)
     : Core::NamedObject(name)
-    , mDevice(device) {
+    , mDevice(std::move(device)) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-PipelineReflection::~PipelineReflection() {
-}
+PipelineReflection::~PipelineReflection() = default;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -92,9 +92,11 @@ std::map<std::string, PipelineResource> PipelineReflection::getResources(
 
   if (type == PipelineResource::ResourceType::eInput) {
     return mInputs;
-  } else if (type == PipelineResource::ResourceType::eOutput) {
+  }
+  if (type == PipelineResource::ResourceType::eOutput) {
     return mOutputs;
-  } else if (type == PipelineResource::ResourceType::ePushConstantBuffer) {
+  }
+  if (type == PipelineResource::ResourceType::ePushConstantBuffer) {
     return mPushConstantBuffers;
   }
 
@@ -138,8 +140,8 @@ vk::PipelineLayoutPtr const& PipelineReflection::getLayout() const {
     std::vector<vk::PushConstantRange> pushConstantRanges;
     for (auto const& r : mPushConstantBuffers) {
       if (r.second.mStages) {
-        pushConstantRanges.push_back(
-            {r.second.mStages, r.second.mOffset, static_cast<uint32_t>(r.second.mSize)});
+        pushConstantRanges.emplace_back(
+            r.second.mStages, r.second.mOffset, static_cast<uint32_t>(r.second.mSize));
       }
     }
 

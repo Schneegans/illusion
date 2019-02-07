@@ -44,7 +44,7 @@ class CommandLineOptions {
   typedef std::variant<int32_t*, double*, float*, bool*, std::string*> OptionValue;
 
   // The description is printed as part of the help message.
-  explicit CommandLineOptions(std::string const& description);
+  explicit CommandLineOptions(std::string description);
 
   // Adds a possible option. A typical call would be like this:
   // bool printHelp = false;

@@ -64,7 +64,7 @@ TexturePtr Texture::createFromFile(std::string const& name, DevicePtr const& dev
           "Failed to load texture " + fileName + ": Unsupported texture target!");
     }
 
-    vk::Format format(static_cast<vk::Format>(texture.format()));
+    auto format(static_cast<vk::Format>(texture.format()));
 
     if (format == vk::Format::eR8G8B8Unorm && !formatSupportsLinearSampling(device, format)) {
       format  = vk::Format::eR8G8B8A8Unorm;
@@ -111,7 +111,7 @@ TexturePtr Texture::createFromFile(std::string const& name, DevicePtr const& dev
   int   width, height, components, bytes;
   void* data;
 
-  if (stbi_is_hdr(fileName.c_str())) {
+  if (stbi_is_hdr(fileName.c_str()) != 0) {
     data  = stbi_loadf(fileName.c_str(), &width, &height, &components, 4);
     bytes = 4;
   } else {
@@ -119,14 +119,15 @@ TexturePtr Texture::createFromFile(std::string const& name, DevicePtr const& dev
     bytes = 1;
   }
 
-  if (data) {
+  if (data != nullptr) {
     uint64_t size = width * height * bytes * 4;
 
     vk::Format format;
-    if (bytes == 1)
+    if (bytes == 1) {
       format = vk::Format::eR8G8B8A8Unorm;
-    else
+    } else {
       format = vk::Format::eR32G32B32A32Sfloat;
+    }
 
     vk::ImageCreateInfo imageInfo;
     imageInfo.imageType     = vk::ImageType::e2D;
@@ -260,7 +261,7 @@ TexturePtr Texture::createCubemapFrom360PanoramaFile(std::string const& name,
   cmd->begin();
   cmd->setShader(shader);
 
-  uint32_t groupCount = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / 16.f));
+  auto groupCount = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / 16.f));
   cmd->dispatch(groupCount, groupCount, 6);
   cmd->end();
   cmd->submit();
@@ -382,7 +383,7 @@ TexturePtr Texture::createPrefilteredIrradianceCubemap(std::string const& name,
   cmd->begin();
   cmd->setShader(shader);
 
-  uint32_t groupCount = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / 16.f));
+  auto groupCount = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / 16.f));
   cmd->dispatch(groupCount, groupCount, 6);
   cmd->end();
   cmd->submit();
@@ -568,14 +569,14 @@ TexturePtr Texture::createPrefilteredReflectionCubemap(std::string const& name,
   std::vector<vk::ImageViewPtr> mipViews;
 
   for (uint32_t i(0); i < mipLevels; ++i) {
-    uint32_t groupCount = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / 16.f));
+    auto groupCount = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / 16.f));
 
     auto mipViewInfo                          = outputCubemap->mViewInfo;
     mipViewInfo.subresourceRange.baseMipLevel = i;
     mipViewInfo.subresourceRange.levelCount   = 1;
     auto mipView = device->createImageView("ImageView for " + name, mipViewInfo);
 
-    cmd->pushConstants((float)i);
+    cmd->pushConstants(static_cast<float>(i));
     cmd->bindingState().setStorageImage(outputCubemap, mipView, 0, 1);
     cmd->dispatch(groupCount, groupCount, 6);
 
@@ -726,7 +727,7 @@ TexturePtr Texture::createBRDFLuT(std::string const& name, DevicePtr const& devi
   cmd->begin();
   cmd->setShader(shader);
 
-  uint32_t groupCount = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / 16.f));
+  auto groupCount = static_cast<uint32_t>(std::ceil(static_cast<float>(size) / 16.f));
   cmd->dispatch(groupCount, groupCount, 1);
   cmd->end();
   cmd->submit();

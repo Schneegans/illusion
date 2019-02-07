@@ -11,12 +11,13 @@
 #include "filesystem.hpp"
 
 #include <sstream>
+#include <utility>
 #include <vector>
 
 namespace Illusion::Core {
 
-File::File(std::string const& fileName)
-    : mPath(fileName) {
+File::File(std::string fileName)
+    : mPath(std::move(fileName)) {
 
   resetChangedOnDisc();
 }

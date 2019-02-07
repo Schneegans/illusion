@@ -73,9 +73,8 @@ std::ostream devNull(&nullBuffer);
 std::ostream& print(bool enable, std::string const& header, std::string const& color) {
   if (enable) {
     return std::cout << color << header << Logger::PRINT_RESET << " ";
-  } else {
-    return devNull;
   }
+  return devNull;
 }
 } // namespace
 
@@ -114,7 +113,7 @@ std::ostream& Logger::error() {
 void Logger::traceCreation(std::string const& object, std::string const& name) {
   if (enableTrace) {
     trace() << PRINT_GREEN << "[create] " << PRINT_RESET << std::left << std::setw(20) << object
-            << ((name.size() > 0) ? " (" + name + ")" : "") << std::endl;
+            << ((!name.empty()) ? " (" + name + ")" : "") << std::endl;
   }
 }
 

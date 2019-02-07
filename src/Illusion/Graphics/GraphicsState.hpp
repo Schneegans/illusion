@@ -63,7 +63,7 @@ class GraphicsState {
 
   // -----------------------------------------------------------------------------------------------
 
-  GraphicsState(DevicePtr const& device);
+  GraphicsState(DevicePtr device);
 
   void reset();
 
@@ -144,7 +144,7 @@ class GraphicsState {
   bool                                getAlphaToCoverageEnable() const;
   void                                setAlphaToOneEnable(bool val);
   bool                                getAlphaToOneEnable() const;
-  void                                setSampleMask(std::vector<uint32_t> val);
+  void                                setSampleMask(const std::vector<uint32_t>& val);
   std::vector<uint32_t>               getSampleMask() const;
 
   // Rasterization State ---------------------------------------------------------------------------
@@ -154,7 +154,7 @@ class GraphicsState {
   bool                                getRasterizerDiscardEnable() const;
   void                                setPolygonMode(vk::PolygonMode val);
   vk::PolygonMode                     getPolygonMode() const;
-  void                                setCullMode(vk::CullModeFlags val);
+  void                                setCullMode(const vk::CullModeFlags& val);
   vk::CullModeFlags                   getCullMode() const;
   void                                setFrontFace(vk::FrontFace val);
   vk::FrontFace                       getFrontFace() const;

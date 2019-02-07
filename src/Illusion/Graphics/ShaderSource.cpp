@@ -20,6 +20,8 @@
 #include <glslang/OSDependent/osinclude.h>
 #include <glslang/Public/ShaderLang.h>
 
+#include <utility>
+
 namespace Illusion::Graphics {
 
 namespace {
@@ -36,22 +38,22 @@ const std::unordered_map<vk::ShaderStageFlagBits, EShLanguage> shaderStageMappin
 
 class Includer : public DirStackFileIncluder {
  public:
-  virtual IncludeResult* includeLocal(
+  IncludeResult* includeLocal(
       const char* headerName, const char* includerName, size_t inclusionDepth) override {
 
     auto result = DirStackFileIncluder::includeLocal(headerName, includerName, inclusionDepth);
-    if (!result) {
+    if (result == nullptr) {
       throw std::runtime_error(
           "Failed to find shader include \"" + std::string(headerName) + "\"!");
     }
 
-    mIncludedFiles.push_back(result->headerName);
+    mIncludedFiles.emplace_back(result->headerName);
 
     return result;
   }
 
-  virtual IncludeResult* includeSystem(
-      const char* headerName, const char* includerName, size_t inclusionDepth) override {
+  IncludeResult* includeSystem(const char* /*headerName*/, const char* /*includerName*/,
+      size_t /*inclusionDepth*/) override {
     throw std::runtime_error("System shader includes are not supported yet!");
   }
 
@@ -103,7 +105,7 @@ std::vector<uint32_t> compile(std::string const& code, std::string const& fileNa
 
   // Translate to SPIRV.
   std::vector<uint32_t> spirv;
-  if (program.getIntermediate(stage)) {
+  if (program.getIntermediate(stage) != nullptr) {
     spv::SpvBuildLogger logger;
     glslang::GlslangToSpv(*program.getIntermediate(stage), spirv, &logger);
   }
@@ -151,9 +153,9 @@ void ShaderFile::resetReloadingRequired() {
 
 // -------------------------------------------------------------------------------------------------
 
-ShaderCode::ShaderCode(std::string const& code, std::string const& name)
-    : mCode(code)
-    , mName(name) {
+ShaderCode::ShaderCode(std::string code, std::string name)
+    : mCode(std::move(code))
+    , mName(std::move(name)) {
 }
 
 bool ShaderCode::requiresReload() const {
@@ -226,21 +228,21 @@ SpirvFile::SpirvFile(std::string const& fileName, bool reloadOnChanges)
     : ShaderFile(fileName, reloadOnChanges) {
 }
 
-std::vector<uint32_t> SpirvFile::getSpirv(vk::ShaderStageFlagBits stage) {
+std::vector<uint32_t> SpirvFile::getSpirv(vk::ShaderStageFlagBits /*stage*/) {
   return mFile.getContent<std::vector<uint32_t>>();
 }
 
 // -------------------------------------------------------------------------------------------------
 
-SpirvCode::SpirvCode(std::vector<uint32_t> const& code)
-    : mCode(code) {
+SpirvCode::SpirvCode(std::vector<uint32_t> code)
+    : mCode(std::move(code)) {
 }
 
 bool SpirvCode::requiresReload() const {
   return false;
 }
 
-std::vector<uint32_t> SpirvCode::getSpirv(vk::ShaderStageFlagBits stage) {
+std::vector<uint32_t> SpirvCode::getSpirv(vk::ShaderStageFlagBits /*stage*/) {
   return mCode;
 }
 

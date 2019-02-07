@@ -26,8 +26,8 @@ namespace {
 
 void printCap(std::string const& name, vk::Bool32 cap) {
   Core::Logger::message() << std::left << std::setw(50) << std::setfill('.') << (name + " ")
-                          << (cap ? Core::Logger::PRINT_GREEN + " yes"
-                                  : Core::Logger::PRINT_RED + " no")
+                          << (cap != 0u ? Core::Logger::PRINT_GREEN + " yes"
+                                        : Core::Logger::PRINT_RED + " no")
                           << Core::Logger::PRINT_RESET << std::endl;
 }
 
@@ -53,10 +53,11 @@ template <typename S, typename T>
 std::string printMin(S val, T ref) {
   std::string color = Core::Logger::PRINT_RED;
 
-  if (val == ref)
+  if (val == ref) {
     color = Core::Logger::PRINT_YELLOW;
-  else if (val > ref)
+  } else if (val > ref) {
     color = Core::Logger::PRINT_GREEN;
+  }
 
   return color + std::to_string(val) + Core::Logger::PRINT_RESET + " (" + std::to_string(ref) + ")";
 }
@@ -67,10 +68,11 @@ template <typename S, typename T>
 std::string printMax(S val, T ref) {
   std::string color = Core::Logger::PRINT_RED;
 
-  if (val == ref)
+  if (val == ref) {
     color = Core::Logger::PRINT_YELLOW;
-  else if (val < ref)
+  } else if (val < ref) {
     color = Core::Logger::PRINT_GREEN;
+  }
 
   return color + std::to_string(val) + Core::Logger::PRINT_RESET + " (" + std::to_string(ref) + ")";
 }
@@ -92,7 +94,8 @@ PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice 
         vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute | vk::QueueFlagBits::eTransfer);
 
     if (available[i].queueCount > 0 && (available[i].queueFlags & required) == required &&
-        glfwGetPhysicalDevicePresentationSupport(instance, *this, static_cast<uint32_t>(i))) {
+        (glfwGetPhysicalDevicePresentationSupport(instance, *this, static_cast<uint32_t>(i)) !=
+            0)) {
 
       mQueueFamilies[Core::enumCast(QueueType::eGeneric)] = static_cast<uint32_t>(i);
       foundQueue[Core::enumCast(QueueType::eGeneric)]     = true;
@@ -166,12 +169,12 @@ PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 uint32_t PhysicalDevice::findMemoryType(
-    uint32_t typeFilter, vk::MemoryPropertyFlags properties) const {
+    uint32_t typeFilter, const vk::MemoryPropertyFlags& properties) const {
 
   auto memProperties = getMemoryProperties();
 
   for (uint32_t i(0); i < memProperties.memoryTypeCount; i++) {
-    if ((typeFilter & (1 << i)) &&
+    if (((typeFilter & (1u << i)) != 0u) &&
         (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
       return i;
     }
@@ -204,7 +207,7 @@ void PhysicalDevice::printInfo() {
   printVal("vendorID", {std::to_string(properties.vendorID)});
   printVal("deviceID", {std::to_string(properties.deviceID)});
   printVal("deviceType", {vk::to_string(properties.deviceType)});
-  printVal("deviceName", {properties.deviceName});
+  printVal("deviceName", {std::string(properties.deviceName)});
 
   // memory information
   vk::PhysicalDeviceMemoryProperties memoryProperties = getMemoryProperties();
@@ -328,12 +331,12 @@ void PhysicalDevice::printInfo() {
   printVal("maxImageArrayLayers",                             {printMin(limits.maxImageArrayLayers, 256u)});
   printVal("maxTexelBufferElements",                          {printMin(limits.maxTexelBufferElements, 65536u)});
   printVal("maxUniformBufferRange",                           {printMin(limits.maxUniformBufferRange, 16384u)});
-  printVal("maxStorageBufferRange",                           {printMin(limits.maxStorageBufferRange, (unsigned)std::pow(2, 27))});
+  printVal("maxStorageBufferRange",                           {printMin(limits.maxStorageBufferRange, static_cast<unsigned>(std::pow(2, 27)))});
   printVal("maxPushConstantsSize",                            {printMin(limits.maxPushConstantsSize, 128u)});
   printVal("maxMemoryAllocationCount",                        {printMin(limits.maxMemoryAllocationCount, 4096u)});
   printVal("maxSamplerAllocationCount",                       {printMin(limits.maxSamplerAllocationCount, 4000u)});
   printVal("bufferImageGranularity",                          {printMax(limits.bufferImageGranularity, 131072u)});
-  printVal("sparseAddressSpaceSize",                          {printMin(limits.sparseAddressSpaceSize, (unsigned)std::pow(2, 31))});
+  printVal("sparseAddressSpaceSize",                          {printMin(limits.sparseAddressSpaceSize, static_cast<unsigned>(std::pow(2, 31)))});
   printVal("maxBoundDescriptorSets",                          {printMin(limits.maxBoundDescriptorSets, 4u)});
   printVal("maxPerStageDescriptorSamplers",                   {printMin(limits.maxPerStageDescriptorSamplers, 16u)});
   printVal("maxPerStageDescriptorUniformBuffers",             {printMin(limits.maxPerStageDescriptorUniformBuffers, 12u)});
@@ -379,8 +382,8 @@ void PhysicalDevice::printInfo() {
   printVal("subPixelPrecisionBits",                           {printMin(limits.subPixelPrecisionBits, 4u)});
   printVal("subTexelPrecisionBits",                           {printMin(limits.subTexelPrecisionBits, 4u)});
   printVal("mipmapPrecisionBits",                             {printMin(limits.mipmapPrecisionBits, 4u)});
-  printVal("maxDrawIndexedIndexValue",                        {printMin(limits.maxDrawIndexedIndexValue, (unsigned)(std::pow(2, 32) - 1))});
-  printVal("maxDrawIndirectCount",                            {printMin(limits.maxDrawIndirectCount, (unsigned)(std::pow(2, 16) - 1))});
+  printVal("maxDrawIndexedIndexValue",                        {printMin(limits.maxDrawIndexedIndexValue, static_cast<unsigned>(std::pow(2, 32) - 1))});
+  printVal("maxDrawIndirectCount",                            {printMin(limits.maxDrawIndirectCount, static_cast<unsigned>(std::pow(2, 16) - 1))});
   printVal("maxSamplerLodBias",                               {printMin(limits.maxSamplerLodBias, 2)});
   printVal("maxSamplerAnisotropy",                            {printMin(limits.maxSamplerAnisotropy, 16)});
   printVal("maxViewports",                                    {printMin(limits.maxViewports, 16u)});

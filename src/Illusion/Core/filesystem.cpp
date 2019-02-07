@@ -20,7 +20,7 @@ time_t getLastWriteTime(std::string const& filename) {
   struct _stat result;
   if (_stat(filename.c_str(), &result) == 0) {
 #else
-  struct stat result;
+  struct stat result {};
   if (stat(filename.c_str(), &result) == 0) {
 #endif
     return result.st_mtime;

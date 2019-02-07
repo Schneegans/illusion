@@ -33,7 +33,7 @@ class File {
   File() = default;
 
   // This constructs a File for a given name.
-  File(std::string const& fileName);
+  File(std::string fileName);
 
   // Returns if the given file is valid.
   bool isValid() const;
@@ -99,7 +99,7 @@ class File {
 
  private:
   std::string    mPath;
-  mutable time_t mLastWriteTime;
+  mutable time_t mLastWriteTime{};
 };
 
 } // namespace Illusion::Core

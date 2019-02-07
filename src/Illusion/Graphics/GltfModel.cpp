@@ -22,6 +22,7 @@
 
 #include <functional>
 #include <unordered_set>
+#include <utility>
 
 namespace Illusion::Graphics::Gltf {
 
@@ -107,9 +108,9 @@ vk::PrimitiveTopology convertPrimitiveTopology(int value) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Model::Model(
-    std::string const& name, DevicePtr const& device, std::string const& file, LoadOptions options)
+    std::string const& name, DevicePtr device, std::string const& file, const LoadOptions& options)
     : Core::NamedObject(name)
-    , mDevice(device)
+    , mDevice(std::move(device))
     , mRootNode(std::make_shared<Node>()) {
 
   // load the file ---------------------------------------------------------------------------------
@@ -167,11 +168,11 @@ Model::Model(
         samplerInfo.addressModeU            = convertSamplerAddressMode(sampler.wrapS);
         samplerInfo.addressModeV            = convertSamplerAddressMode(sampler.wrapT);
         samplerInfo.addressModeW            = vk::SamplerAddressMode::eRepeat;
-        samplerInfo.anisotropyEnable        = true;
+        samplerInfo.anisotropyEnable        = 1u;
         samplerInfo.maxAnisotropy           = 16;
         samplerInfo.borderColor             = vk::BorderColor::eIntOpaqueBlack;
-        samplerInfo.unnormalizedCoordinates = false;
-        samplerInfo.compareEnable           = false;
+        samplerInfo.unnormalizedCoordinates = 0u;
+        samplerInfo.compareEnable           = 0u;
         samplerInfo.compareOp               = vk::CompareOp::eAlways;
         samplerInfo.mipmapMode              = convertSamplerMipmapMode(sampler.minFilter);
         samplerInfo.mipLodBias              = 0.f;
@@ -179,39 +180,38 @@ Model::Model(
         samplerInfo.maxLod =
             static_cast<float>(Texture::getMaxMipmapLevels(image.width, image.height));
 
-        // TODO: if no image data has been loaded, try loading it on our own
+        // TODO(simon): if no image data has been loaded, try loading it on our own
         if (image.image.empty()) {
           throw std::runtime_error(
               "Failed to load GLTF model: Non-tinygltf texture loading is not implemented yet!");
-        } else {
-          // if there is image data, create an appropriate texture object for it
-          vk::ImageCreateInfo imageInfo;
-          imageInfo.imageType = vk::ImageType::e2D;
-          imageInfo.format =
-              image.component == 3 ? vk::Format::eR8G8B8Unorm : vk::Format::eR8G8B8A8Unorm;
-          imageInfo.extent.width  = image.width;
-          imageInfo.extent.height = image.height;
-          imageInfo.extent.depth  = 1;
-          imageInfo.mipLevels     = static_cast<uint32_t>(samplerInfo.maxLod);
-          imageInfo.arrayLayers   = 1;
-          imageInfo.samples       = vk::SampleCountFlagBits::e1;
-          imageInfo.tiling        = vk::ImageTiling::eOptimal;
-          imageInfo.usage         = vk::ImageUsageFlagBits::eSampled |
-                            vk::ImageUsageFlagBits::eTransferSrc |
-                            vk::ImageUsageFlagBits::eTransferDst;
-          imageInfo.sharingMode   = vk::SharingMode::eExclusive;
-          imageInfo.initialLayout = vk::ImageLayout::eUndefined;
-
-          // create the texture
-          auto texture = mDevice->createTexture("Texture " + std::to_string(i) + " of " + getName(),
-              imageInfo, samplerInfo, vk::ImageViewType::e2D, vk::ImageAspectFlagBits::eColor,
-              vk::ImageLayout::eShaderReadOnlyOptimal, vk::ComponentMapping(), image.image.size(),
-              (void*)image.image.data());
-
-          Texture::updateMipmaps(mDevice, texture);
-
-          mTextures.push_back(texture);
         }
+
+        // if there is image data, create an appropriate texture object for it
+        vk::ImageCreateInfo imageInfo;
+        imageInfo.imageType = vk::ImageType::e2D;
+        imageInfo.format =
+            image.component == 3 ? vk::Format::eR8G8B8Unorm : vk::Format::eR8G8B8A8Unorm;
+        imageInfo.extent.width  = image.width;
+        imageInfo.extent.height = image.height;
+        imageInfo.extent.depth  = 1;
+        imageInfo.mipLevels     = static_cast<uint32_t>(samplerInfo.maxLod);
+        imageInfo.arrayLayers   = 1;
+        imageInfo.samples       = vk::SampleCountFlagBits::e1;
+        imageInfo.tiling        = vk::ImageTiling::eOptimal;
+        imageInfo.usage = vk::ImageUsageFlagBits::eSampled | vk::ImageUsageFlagBits::eTransferSrc |
+                          vk::ImageUsageFlagBits::eTransferDst;
+        imageInfo.sharingMode   = vk::SharingMode::eExclusive;
+        imageInfo.initialLayout = vk::ImageLayout::eUndefined;
+
+        // create the texture
+        auto texture = mDevice->createTexture("Texture " + std::to_string(i) + " of " + getName(),
+            imageInfo, samplerInfo, vk::ImageViewType::e2D, vk::ImageAspectFlagBits::eColor,
+            vk::ImageLayout::eShaderReadOnlyOptimal, vk::ComponentMapping(), image.image.size(),
+            (void*)image.image.data());
+
+        Texture::updateMipmaps(mDevice, texture);
+
+        mTextures.push_back(texture);
       }
     }
   }
@@ -219,7 +219,7 @@ Model::Model(
   // create materials ------------------------------------------------------------------------------
   {
     // create default material if necessary
-    if (model.materials.size() == 0) {
+    if (model.materials.empty()) {
       auto m = std::make_shared<Material>();
 
       m->mAlbedoTexture            = mDevice->getSinglePixelTexture({255, 255, 255, 255});
@@ -652,18 +652,18 @@ Model::Model(
   for (size_t i(0); i < model.nodes.size(); ++i) {
     mNodes[i]->mName = model.nodes[i].name;
 
-    if (model.nodes[i].matrix.size() > 0) {
+    if (!model.nodes[i].matrix.empty()) {
       mNodes[i]->mTransform = glm::make_mat4(model.nodes[i].matrix.data());
     } else {
-      if (model.nodes[i].translation.size() > 0) {
+      if (!model.nodes[i].translation.empty()) {
         mNodes[i]->mRestTranslation = glm::make_vec3(model.nodes[i].translation.data());
         mNodes[i]->mTranslation     = mNodes[i]->mRestTranslation;
       }
-      if (model.nodes[i].rotation.size() > 0) {
+      if (!model.nodes[i].rotation.empty()) {
         mNodes[i]->mRestRotation = glm::make_quat(model.nodes[i].rotation.data());
         mNodes[i]->mRotation     = mNodes[i]->mRestRotation;
       }
-      if (model.nodes[i].scale.size() > 0) {
+      if (!model.nodes[i].scale.empty()) {
         mNodes[i]->mRestScale = glm::make_vec3(model.nodes[i].scale.data());
         mNodes[i]->mScale     = mNodes[i]->mRestScale;
       }
@@ -818,7 +818,7 @@ void Model::setAnimationTime(uint32_t animationIndex, float time) {
       continue;
     }
 
-    if (sampler.mKeyFrames.size() == 0) {
+    if (sampler.mKeyFrames.empty()) {
       Core::Logger::warning()
           << "Failed to update GLTF animation: There must be at least one key frame!" << std::endl;
       continue;
@@ -986,7 +986,7 @@ void Model::printInfo() const {
       Core::Logger::message() << std::string(indent, ' ') << "    Mesh:        " << n.mMesh << std::endl;
     }
 
-    if (n.mChildren.size() > 0) {
+    if (!n.mChildren.empty()) {
       Core::Logger::message() << std::string(indent, ' ') << "    Children:" << std::endl;
       for (auto const& c : n.mChildren) {
         printNode(*c, indent+2);

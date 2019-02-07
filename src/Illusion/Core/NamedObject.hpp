@@ -22,7 +22,7 @@ namespace Illusion::Core {
 
 class NamedObject {
  public:
-  NamedObject(std::string const& name = "Unamed Object");
+  NamedObject(std::string name = "Unamed Object");
 
   // Returns the name of the NamedObject.
   std::string const& getName() const;

@@ -32,8 +32,8 @@ class ShaderModule : public Core::StaticCreate<ShaderModule>, public Core::Named
   // If there are any uniform and storage buffers defined in your shader source which should be
   // dynamic in the reflection, you should provide their names in the dynamicBuffers parameter. It
   // is a good idea to give the object a descriptive name.
-  ShaderModule(std::string const& name, DevicePtr const& device, ShaderSourcePtr const& source,
-      vk::ShaderStageFlagBits stage, std::set<std::string> const& dynamicBuffers = {});
+  ShaderModule(std::string const& name, DevicePtr device, ShaderSourcePtr source,
+      vk::ShaderStageFlagBits stage, std::set<std::string> dynamicBuffers = {});
 
   virtual ~ShaderModule();
 

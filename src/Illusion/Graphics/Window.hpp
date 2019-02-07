@@ -68,7 +68,7 @@ class Window : public Core::StaticCreate<Window>, public Core::NamedObject {
 
   // Once you created an Instance and a Device, you can start creating Windows. It is a good idea to
   // give the object a descriptive name.
-  Window(std::string const& name, InstancePtr const& instance, DevicePtr const& device);
+  Window(std::string const& name, InstancePtr instance, DevicePtr device);
   virtual ~Window();
 
   // You should set up the Properties above (especially the pExtent) before calling this method
@@ -121,11 +121,11 @@ class Window : public Core::StaticCreate<Window>, public Core::NamedObject {
 
   std::array<std::array<float, Core::enumCast(Input::JoystickAxisId::eJoystickAxisNum)>,
       Core::enumCast(Input::JoystickId::eJoystickNum)>
-      mJoystickAxisCache;
+      mJoystickAxisCache{};
 
   std::array<std::array<uint32_t, Core::enumCast(Input::JoystickButtonId::eJoystickButtonNum)>,
       Core::enumCast(Input::JoystickId::eJoystickNum)>
-      mJoystickButtonCache;
+      mJoystickButtonCache{};
 
   // Stores position and size for restoring the window state after toggling full screen mode.
   glm::ivec2 mOrigSize = glm::ivec2(640, 480), mOrigPos = glm::ivec2(0, 0);

@@ -37,13 +37,13 @@ class Shader : public Core::StaticCreate<Shader>, public Core::NamedObject {
   // .comp / .cs: Compute Shader
   // This will throw a std::runtime_error when none of the above extensions is detected.
   static ShaderPtr createFromFiles(std::string const& name, DevicePtr const& device,
-      std::vector<std::string> const& fileNames, std::set<std::string> dynamicBuffers = {},
+      std::vector<std::string> const& fileNames, const std::set<std::string>& dynamicBuffers = {},
       bool reloadOnChanges = true);
 
   // Creates an "empty" shader program with no modules attached to. Use the method addModule() to
   // add modules for each required shader stage. It is a good idea to give the object a descriptive
   // name.
-  Shader(std::string const& name, DevicePtr const& device);
+  Shader(std::string const& name, DevicePtr device);
   virtual ~Shader();
 
   // Adds a shader module to this Shader. No Vulkan resources are allocated by this call, only an

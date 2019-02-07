@@ -13,6 +13,7 @@
 #include "ShaderModule.hpp"
 
 #include <iostream>
+#include <utility>
 
 namespace Illusion::Graphics {
 
@@ -42,8 +43,8 @@ bool GraphicsState::Scissor::operator==(GraphicsState::Scissor const& other) con
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-GraphicsState::GraphicsState(DevicePtr const& device)
-    : mDevice(device) {
+GraphicsState::GraphicsState(DevicePtr device)
+    : mDevice(std::move(device)) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -541,7 +542,7 @@ bool GraphicsState::getAlphaToOneEnable() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void GraphicsState::setSampleMask(std::vector<uint32_t> val) {
+void GraphicsState::setSampleMask(const std::vector<uint32_t>& val) {
   if (mSampleMask != val) {
     mSampleMask = val;
     mDirty      = true;
@@ -601,7 +602,7 @@ vk::PolygonMode GraphicsState::getPolygonMode() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void GraphicsState::setCullMode(vk::CullModeFlags val) {
+void GraphicsState::setCullMode(const vk::CullModeFlags& val) {
   if (mCullMode != val) {
     mCullMode = val;
     mDirty    = true;
@@ -863,7 +864,7 @@ Core::BitHash GraphicsState::getHash() const {
       mHash.push<3>(attachmentState.mAlphaBlendOp);
       mHash.push<4>(attachmentState.mColorWriteMask);
     }
-    if (!getDynamicState().count(vk::DynamicState::eBlendConstants)) {
+    if (getDynamicState().count(vk::DynamicState::eBlendConstants) == 0u) {
       mHash.push<32>(mBlendConstants[0]);
       mHash.push<32>(mBlendConstants[1]);
       mHash.push<32>(mBlendConstants[2]);
@@ -879,29 +880,29 @@ Core::BitHash GraphicsState::getHash() const {
     mHash.push<3>(mStencilFrontPassOp);
     mHash.push<3>(mStencilFrontDepthFailOp);
     mHash.push<3>(mStencilFrontCompareOp);
-    if (!getDynamicState().count(vk::DynamicState::eStencilCompareMask)) {
+    if (getDynamicState().count(vk::DynamicState::eStencilCompareMask) == 0u) {
       mHash.push<32>(mStencilFrontCompareMask);
     }
-    if (!getDynamicState().count(vk::DynamicState::eStencilWriteMask)) {
+    if (getDynamicState().count(vk::DynamicState::eStencilWriteMask) == 0u) {
       mHash.push<32>(mStencilFrontWriteMask);
     }
-    if (!getDynamicState().count(vk::DynamicState::eStencilReference)) {
+    if (getDynamicState().count(vk::DynamicState::eStencilReference) == 0u) {
       mHash.push<32>(mStencilFrontReference);
     }
     mHash.push<3>(mStencilBackFailOp);
     mHash.push<3>(mStencilBackPassOp);
     mHash.push<3>(mStencilBackDepthFailOp);
     mHash.push<3>(mStencilBackCompareOp);
-    if (!getDynamicState().count(vk::DynamicState::eStencilCompareMask)) {
+    if (getDynamicState().count(vk::DynamicState::eStencilCompareMask) == 0u) {
       mHash.push<32>(mStencilBackCompareMask);
     }
-    if (!getDynamicState().count(vk::DynamicState::eStencilWriteMask)) {
+    if (getDynamicState().count(vk::DynamicState::eStencilWriteMask) == 0u) {
       mHash.push<32>(mStencilBackWriteMask);
     }
-    if (!getDynamicState().count(vk::DynamicState::eStencilReference)) {
+    if (getDynamicState().count(vk::DynamicState::eStencilReference) == 0u) {
       mHash.push<32>(mStencilBackReference);
     }
-    if (!getDynamicState().count(vk::DynamicState::eDepthBounds)) {
+    if (getDynamicState().count(vk::DynamicState::eDepthBounds) == 0u) {
       mHash.push<32>(mMinDepthBounds);
       mHash.push<32>(mMaxDepthBounds);
     }
@@ -928,12 +929,12 @@ Core::BitHash GraphicsState::getHash() const {
     mHash.push<2>(mCullMode);
     mHash.push<1>(mFrontFace);
     mHash.push<1>(mDepthBiasEnable);
-    if (!getDynamicState().count(vk::DynamicState::eDepthBias)) {
+    if (getDynamicState().count(vk::DynamicState::eDepthBias) == 0u) {
       mHash.push<32>(mDepthBiasConstantFactor);
       mHash.push<32>(mDepthBiasClamp);
       mHash.push<32>(mDepthBiasSlopeFactor);
     }
-    if (!getDynamicState().count(vk::DynamicState::eLineWidth)) {
+    if (getDynamicState().count(vk::DynamicState::eLineWidth) == 0u) {
       mHash.push<32>(mLineWidth);
     }
 
@@ -951,7 +952,7 @@ Core::BitHash GraphicsState::getHash() const {
       mHash.push<32>(attribute.offset);
     }
 
-    if (getDynamicState().count(vk::DynamicState::eViewport)) {
+    if (getDynamicState().count(vk::DynamicState::eViewport) != 0u) {
       mHash.push<32>(mViewports.size());
     } else {
       for (auto const& viewport : mViewports) {
@@ -963,7 +964,7 @@ Core::BitHash GraphicsState::getHash() const {
         mHash.push<32>(viewport.mMaxDepth);
       }
     }
-    if (getDynamicState().count(vk::DynamicState::eScissor)) {
+    if (getDynamicState().count(vk::DynamicState::eScissor) != 0u) {
       mHash.push<32>(mScissors.size());
     } else {
       for (auto const& scissor : mScissors) {

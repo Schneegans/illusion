@@ -33,8 +33,8 @@ bool glfwInitialized = false;
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-    VkDebugUtilsMessageTypeFlagsEXT                           messageType,
-    const VkDebugUtilsMessengerCallbackDataEXT*               pCallbackData, void* /*pUserData*/) {
+    VkDebugUtilsMessageTypeFlagsEXT /*messageType*/,
+    const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* /*pUserData*/) {
 
   // In the error message, Vulkan objects are referred to by a hex-string of their handle. In order
   // to improve the readability, we will try to replace each mention of a Vulkan object with the
@@ -42,15 +42,14 @@ VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
   std::string message(pCallbackData->pMessage);
 
   for (uint32_t i(0); i < pCallbackData->objectCount; ++i) {
-    if (pCallbackData->pObjects[i].pObjectName) {
+    if (pCallbackData->pObjects[i].pObjectName != nullptr) {
       std::ostringstream address;
       address << (void const*)pCallbackData->pObjects[i].objectHandle;
 
       std::string hexHandle  = address.str();
       std::string objectName = "\"" + std::string(pCallbackData->pObjects[i].pObjectName) + "\"";
 
-      if (Core::Utils::replaceString(message, hexHandle, objectName) == 0 &&
-          objectName.size() > 0) {
+      if (Core::Utils::replaceString(message, hexHandle, objectName) == 0 && !objectName.empty()) {
         message += " [" + objectName + "]";
       }
     }
@@ -66,7 +65,7 @@ VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
     Core::Logger::error() << message << std::endl;
   }
 
-  return false;
+  return 0u;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -128,8 +127,7 @@ Instance::Instance(std::string const& name, bool debugMode)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Instance::~Instance() {
-}
+Instance::~Instance() = default;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -186,7 +184,7 @@ vk::InstancePtr Instance::getHandle() const {
 vk::InstancePtr Instance::createInstance(std::string const& engine, std::string const& app) const {
 
   if (!glfwInitialized) {
-    if (!glfwInit()) {
+    if (glfwInit() == 0) {
       throw std::runtime_error("Failed to initialize GLFW.");
     }
 
@@ -241,8 +239,8 @@ vk::DebugUtilsMessengerEXTPtr Instance::createDebugCallback() const {
     return nullptr;
   }
 
-  auto createCallback{
-      (PFN_vkCreateDebugUtilsMessengerEXT)mInstance->getProcAddr("vkCreateDebugUtilsMessengerEXT")};
+  auto createCallback{reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
+      mInstance->getProcAddr("vkCreateDebugUtilsMessengerEXT"))};
 
   vk::DebugUtilsMessengerCreateInfoEXT info;
   info.messageSeverity = vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose |
@@ -254,7 +252,8 @@ vk::DebugUtilsMessengerEXTPtr Instance::createDebugCallback() const {
   info.pfnUserCallback = debugCallback;
 
   VkDebugUtilsMessengerEXT tmp;
-  if (createCallback(*mInstance, (VkDebugUtilsMessengerCreateInfoEXT*)&info, nullptr, &tmp)) {
+  if (createCallback(*mInstance, reinterpret_cast<VkDebugUtilsMessengerCreateInfoEXT*>(&info),
+          nullptr, &tmp) != 0) {
     throw std::runtime_error("Failed to set up debug callback!");
   }
 
@@ -263,8 +262,8 @@ vk::DebugUtilsMessengerEXTPtr Instance::createDebugCallback() const {
   auto instance = mInstance;
   return VulkanPtr::create(
       vk::DebugUtilsMessengerEXT(tmp), [instance, name](vk::DebugUtilsMessengerEXT* obj) {
-        auto destroyCallback = (PFN_vkDestroyDebugUtilsMessengerEXT)instance->getProcAddr(
-            "vkDestroyDebugUtilsMessengerEXT");
+        auto destroyCallback = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
+            instance->getProcAddr("vkDestroyDebugUtilsMessengerEXT"));
         Core::Logger::traceDeletion("vk::DebugUtilsMessengerEXT", name);
         destroyCallback(*instance, *obj, nullptr);
         delete obj;

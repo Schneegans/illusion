@@ -16,6 +16,7 @@
 
 #include <iostream>
 #include <unordered_map>
+#include <utility>
 
 namespace Illusion::Graphics {
 
@@ -42,9 +43,9 @@ const std::unordered_map<PipelineResource::ResourceType, vk::DescriptorType> res
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 DescriptorPool::DescriptorPool(
-    std::string const& name, DevicePtr const& device, DescriptorSetReflectionPtr const& reflection)
+    std::string const& name, DevicePtr device, DescriptorSetReflectionPtr const& reflection)
     : Core::NamedObject(name)
-    , mDevice(device)
+    , mDevice(std::move(device))
     , mReflection(reflection) {
 
   // Get the number of descriptors for each DescriptorType.
@@ -65,15 +66,14 @@ DescriptorPool::DescriptorPool(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-DescriptorPool::~DescriptorPool() {
-}
+DescriptorPool::~DescriptorPool() = default;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 vk::DescriptorSetPtr DescriptorPool::allocateDescriptorSet() {
 
   // Throw error when there is no resource in this descriptor set.
-  if (mPoolSizes.size() == 0) {
+  if (mPoolSizes.empty()) {
     throw std::runtime_error(
         "Cannot allocated DescriptorSet: Set does not contain any active resources!");
   }
@@ -104,12 +104,12 @@ vk::DescriptorSetPtr DescriptorPool::allocateDescriptorSet() {
   }
 
   // Now allocate the descriptor set from this pool.
-  vk::DescriptorSetLayout descriptorSetLayouts[] = {*mReflection->getLayout()};
+  vk::DescriptorSetLayout descriptorSetLayout = *mReflection->getLayout();
 
   vk::DescriptorSetAllocateInfo info;
   info.descriptorPool     = *pool->mPool;
   info.descriptorSetCount = 1;
-  info.pSetLayouts        = descriptorSetLayouts;
+  info.pSetLayouts        = &descriptorSetLayout;
 
   Core::Logger::traceCreation("vk::DescriptorSet", "DescriptorSet from " + getName());
 

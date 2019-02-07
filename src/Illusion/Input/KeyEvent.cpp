@@ -15,21 +15,19 @@ namespace Illusion::Input {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 KeyEvent::KeyEvent()
-    : mType(Type::ePress)
-    , mModifiers(0)
-    , mScancode(0)
-    , mKey(Key::eUnknown) {
+    : mType(Type::ePress) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-KeyEvent::KeyEvent(int key, int scancode, int action, int mods) {
-  if (action == GLFW_RELEASE)
+KeyEvent::KeyEvent(int32_t key, int32_t scancode, int32_t action, uint32_t mods) {
+  if (action == GLFW_RELEASE) {
     mType = KeyEvent::Type::eRelease;
-  else if (action == GLFW_REPEAT)
+  } else if (action == GLFW_REPEAT) {
     mType = KeyEvent::Type::eRepeat;
-  else
+  } else {
     mType = KeyEvent::Type::ePress;
+  }
 
   mScancode = scancode;
 
@@ -400,7 +398,7 @@ KeyEvent::KeyEvent(int key, int scancode, int action, int mods) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-KeyEvent::KeyEvent(unsigned int key, int mods) {
+KeyEvent::KeyEvent(uint32_t key, uint32_t mods) {
   mType      = KeyEvent::Type::eCharacter;
   mCharacter = key;
   SetMods(mods);
@@ -408,15 +406,19 @@ KeyEvent::KeyEvent(unsigned int key, int mods) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void KeyEvent::SetMods(int mods) {
-  if (mods & GLFW_MOD_SHIFT)
+void KeyEvent::SetMods(uint32_t mods) {
+  if ((mods & static_cast<uint32_t>(GLFW_MOD_SHIFT)) != 0) {
     mModifiers |= Core::enumCast(Modifier::eShift);
-  if (mods & GLFW_MOD_CONTROL)
+  }
+  if ((mods & static_cast<uint32_t>(GLFW_MOD_CONTROL)) != 0) {
     mModifiers |= Core::enumCast(Modifier::eControl);
-  if (mods & GLFW_MOD_ALT)
+  }
+  if ((mods & static_cast<uint32_t>(GLFW_MOD_ALT)) != 0) {
     mModifiers |= Core::enumCast(Modifier::eAlt);
-  if (mods & GLFW_MOD_SUPER)
+  }
+  if ((mods & static_cast<uint32_t>(GLFW_MOD_SUPER)) != 0) {
     mModifiers |= Core::enumCast(Modifier::eCommand);
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

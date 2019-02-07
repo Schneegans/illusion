@@ -15,7 +15,7 @@
 
 namespace Illusion::Input {
 
-enum class JoystickId {
+enum class JoystickId : uint16_t {
   eJoystick0   = 0,
   eJoystick1   = 1,
   eJoystick2   = 2,
@@ -35,7 +35,7 @@ enum class JoystickId {
   eJoystickNum = 16
 };
 
-enum class JoystickAxisId {
+enum class JoystickAxisId : uint16_t {
   eJoystickAxis0   = 0,
   eJoystickAxis1   = 1,
   eJoystickAxis2   = 2,
@@ -71,7 +71,7 @@ enum class JoystickAxisId {
   eJoystickAxisNum = 32
 };
 
-enum class JoystickButtonId {
+enum class JoystickButtonId : uint16_t {
   eJoystickButton0   = 0,
   eJoystickButton1   = 1,
   eJoystickButton2   = 2,
@@ -107,7 +107,7 @@ enum class JoystickButtonId {
   eJoystickButtonNum = 32
 };
 
-enum class Xbox360ControllerButton {
+enum class Xbox360ControllerButton : uint16_t {
   eXboxA                = Core::enumCast(JoystickButtonId::eJoystickButton0),
   eXboxB                = Core::enumCast(JoystickButtonId::eJoystickButton1),
   eXboxX                = Core::enumCast(JoystickButtonId::eJoystickButton2),
@@ -125,7 +125,7 @@ enum class Xbox360ControllerButton {
   eXboxPadLeft          = Core::enumCast(JoystickButtonId::eJoystickButton14)
 };
 
-enum class Xbox360ControllerAxis {
+enum class Xbox360ControllerAxis : uint16_t {
   eXboxLeftStickX   = Core::enumCast(JoystickAxisId::eJoystickAxis0),
   eXboxLeftStickY   = Core::enumCast(JoystickAxisId::eJoystickAxis1),
   eXboxLeftTrigger  = Core::enumCast(JoystickAxisId::eJoystickAxis2),
@@ -134,18 +134,19 @@ enum class Xbox360ControllerAxis {
   eXboxRightTrigger = Core::enumCast(JoystickAxisId::eJoystickAxis5)
 };
 
-enum class Button {
-  eButton1 = 0,
-  eButton2 = 1,
-  eButton3 = 2,
-  eButton4 = 3,
-  eButton5 = 4,
-  eButton6 = 5,
-  eButton7 = 6,
-  eButton8 = 7
+enum class Button : uint16_t {
+  eNone    = 0,
+  eButton1 = 1,
+  eButton2 = 2,
+  eButton3 = 3,
+  eButton4 = 4,
+  eButton5 = 5,
+  eButton6 = 6,
+  eButton7 = 7,
+  eButton8 = 8
 };
 
-enum class Modifier {
+enum class Modifier : uint16_t {
   eNone         = 0,
   eCapsLock     = 1 << 0,
   eShift        = 1 << 1,
@@ -163,7 +164,7 @@ enum class Modifier {
 
 // codes based on the chromium keys at
 // https://github.com/adobe/webkit/blob/master/Source/WebCore/platform/WindowsKeyboardCodes.h
-enum class Key {
+enum class Key : uint32_t {
   eUnknown                = 0,
   eBackspace              = 0x08,
   eTab                    = 0x09,

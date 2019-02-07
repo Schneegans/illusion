@@ -24,8 +24,8 @@ CoherentUniformBuffer::CoherentUniformBuffer(
           size))
     , mAlignment(alignment) {
 
-  mMappedData = (uint8_t*)mDevice->getHandle()->mapMemory(
-      *mBuffer->mMemory, 0, mBuffer->mMemoryInfo.allocationSize);
+  mMappedData = reinterpret_cast<uint8_t*>(
+      mDevice->getHandle()->mapMemory(*mBuffer->mMemory, 0, mBuffer->mMemoryInfo.allocationSize));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

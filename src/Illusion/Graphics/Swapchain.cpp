@@ -15,22 +15,21 @@
 #include "Window.hpp"
 
 #include <iostream>
+#include <utility>
 
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Swapchain::Swapchain(
-    std::string const& name, DevicePtr const& device, vk::SurfaceKHRPtr const& surface)
+Swapchain::Swapchain(std::string const& name, DevicePtr device, vk::SurfaceKHRPtr surface)
     : Core::NamedObject(name)
-    , mDevice(device)
-    , mSurface(surface) {
+    , mDevice(std::move(device))
+    , mSurface(std::move(surface)) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Swapchain::~Swapchain() {
-}
+Swapchain::~Swapchain() = default;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -135,14 +134,14 @@ void Swapchain::present(BackedImagePtr const& image,
 
   // Finally we can present the swapchain image on our mOutputWindow.
   {
-    vk::SwapchainKHR swapChains[]     = {*mSwapchain};
-    vk::Semaphore    waitSemaphores[] = {*mCopyFinishedSemaphores[mCurrentPresentIndex]};
+    vk::SwapchainKHR swapChain     = *mSwapchain;
+    vk::Semaphore    waitSemaphore = *mCopyFinishedSemaphores[mCurrentPresentIndex];
 
     vk::PresentInfoKHR presentInfo;
     presentInfo.waitSemaphoreCount = 1;
-    presentInfo.pWaitSemaphores    = waitSemaphores;
+    presentInfo.pWaitSemaphores    = &waitSemaphore;
     presentInfo.swapchainCount     = 1;
-    presentInfo.pSwapchains        = swapChains;
+    presentInfo.pSwapchains        = &swapChain;
     presentInfo.pImageIndices      = &mCurrentImageIndex;
 
     try {
@@ -246,15 +245,15 @@ void Swapchain::recreate() {
   info.preTransform     = capabilities.currentTransform;
   info.compositeAlpha   = vk::CompositeAlphaFlagBitsKHR::eOpaque;
   info.presentMode      = presentMode;
-  info.clipped          = true;
+  info.clipped          = 1u;
   info.oldSwapchain     = nullptr; // this could be optimized
   info.imageSharingMode = vk::SharingMode::eExclusive;
 
   // this check should not be neccessary, but the validation layers complain
   // when only glfwGetPhysicalDevicePresentationSupport was used to check for
   // presentation support
-  if (!mDevice->getPhysicalDevice()->getSurfaceSupportKHR(
-          mDevice->getPhysicalDevice()->getQueueFamily(QueueType::eGeneric), *mSurface)) {
+  if (mDevice->getPhysicalDevice()->getSurfaceSupportKHR(
+          mDevice->getPhysicalDevice()->getQueueFamily(QueueType::eGeneric), *mSurface) == 0u) {
     Core::Logger::error() << "The selected queue family does not "
                           << "support presentation!" << std::endl;
   }

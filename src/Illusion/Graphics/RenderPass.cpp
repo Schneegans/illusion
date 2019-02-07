@@ -16,20 +16,20 @@
 #include "Window.hpp"
 
 #include <iostream>
+#include <utility>
 
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-RenderPass::RenderPass(std::string const& name, DevicePtr const& device)
+RenderPass::RenderPass(std::string const& name, DevicePtr device)
     : Core::NamedObject(name)
-    , mDevice(device) {
+    , mDevice(std::move(device)) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-RenderPass::~RenderPass() {
-}
+RenderPass::~RenderPass() = default;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -51,7 +51,7 @@ void RenderPass::init() {
 
 void RenderPass::addAttachment(Attachment const& attachment) {
   // Make sure that extent is the same.
-  if (mAttachments.size() > 0 &&
+  if (!mAttachments.empty() &&
       attachment.mImage->mImageInfo.extent != mAttachments[0].mImage->mImageInfo.extent) {
     throw std::runtime_error("Failed to add attachment to RenderPass \"" + getName() +
                              "\": Extent does not match previously added attachment!");
@@ -110,7 +110,7 @@ void RenderPass::clearSubpasses() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 glm::uvec2 RenderPass::getExtent() const {
-  if (mAttachments.size() > 0) {
+  if (!mAttachments.empty()) {
     return glm::uvec2(mAttachments[0].mImage->mImageInfo.extent.width,
         mAttachments[0].mImage->mImageInfo.extent.height);
   }
@@ -159,7 +159,7 @@ void RenderPass::createRenderPass() {
   // create default subpass if none are specified
   std::vector<Subpass> defaultSubpass(1);
 
-  if (subpasses.size() == 0) {
+  if (subpasses.empty()) {
     for (size_t i(0); i < attachments.size(); ++i) {
       if (Utils::isColorFormat(attachments[i].format)) {
         defaultSubpass[0].mColorAttachments.push_back(i);

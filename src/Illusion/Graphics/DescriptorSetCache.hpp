@@ -24,7 +24,7 @@ namespace Illusion::Graphics {
 class DescriptorSetCache : public Core::NamedObject {
  public:
   // Creates a new DescriptorSetCache. It is a good idea to give the object a descriptive name.
-  DescriptorSetCache(std::string const& name, DevicePtr const& device);
+  DescriptorSetCache(std::string const& name, DevicePtr device);
   virtual ~DescriptorSetCache();
 
   // A reference to the acquired vk::DescriptorSet is also stored in the internal cache of this

@@ -15,19 +15,20 @@
 #include <GLFW/glfw3.h>
 
 #include <iostream>
+#include <utility>
 
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Window::Window(std::string const& name, InstancePtr const& instance, DevicePtr const& device)
+Window::Window(std::string const& name, InstancePtr instance, DevicePtr device)
     : Core::NamedObject(name)
-    , mInstance(instance)
-    , mDevice(device) {
+    , mInstance(std::move(instance))
+    , mDevice(std::move(device)) {
 
   // Change the mouse pointer when pCursor is changed.
   pCursor.onChange().connect([this](Cursor cursor) {
-    if (mCursor) {
+    if (mCursor != nullptr) {
       glfwDestroyCursor(mCursor);
     }
 
@@ -52,7 +53,7 @@ Window::Window(std::string const& name, InstancePtr const& instance, DevicePtr c
       break;
     }
 
-    if (mWindow) {
+    if (mWindow != nullptr) {
       glfwSetCursor(mWindow, mCursor);
     }
 
@@ -61,7 +62,7 @@ Window::Window(std::string const& name, InstancePtr const& instance, DevicePtr c
 
   // Lock / unlock window's aspecti ratio when requested.
   pLockAspect.onChange().connect([this](bool val) {
-    if (mWindow) {
+    if (mWindow != nullptr) {
       if (val) {
         glfwSetWindowAspectRatio(mWindow, pExtent().x, pExtent().y);
       } else {
@@ -75,7 +76,7 @@ Window::Window(std::string const& name, InstancePtr const& instance, DevicePtr c
   // is stored in mOrigPos and mOrigSize so that the original window state can be restored when
   // leaving fullscreen mode.
   pFullscreen.onChange().connect([this](bool fullscreen) {
-    if (mWindow) {
+    if (mWindow != nullptr) {
       if (fullscreen) {
         const GLFWvidmode* mode = glfwGetVideoMode(glfwGetPrimaryMonitor());
         glfwGetWindowPos(mWindow, &mOrigPos.x, &mOrigPos.y);
@@ -100,7 +101,7 @@ Window::Window(std::string const& name, InstancePtr const& instance, DevicePtr c
 
   // Set the window's title when the pTitle property changes.
   pTitle.onChange().connect([this](std::string const& title) {
-    if (mWindow) {
+    if (mWindow != nullptr) {
       glfwSetWindowTitle(mWindow, title.c_str());
     }
     return true;
@@ -108,7 +109,7 @@ Window::Window(std::string const& name, InstancePtr const& instance, DevicePtr c
 
   // Optionally hide the mouse pointer when it is over the window.
   pHideCursor.onChange().connect([this](bool hide) {
-    if (mWindow) {
+    if (mWindow != nullptr) {
       glfwSetInputMode(mWindow, GLFW_CURSOR, hide ? GLFW_CURSOR_HIDDEN : GLFW_CURSOR_NORMAL);
     }
     return true;
@@ -118,7 +119,7 @@ Window::Window(std::string const& name, InstancePtr const& instance, DevicePtr c
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Window::~Window() {
-  if (mCursor) {
+  if (mCursor != nullptr) {
     glfwDestroyCursor(mCursor);
   }
 
@@ -129,7 +130,7 @@ Window::~Window() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Window::open() {
-  if (!mWindow) {
+  if (mWindow == nullptr) {
 
     // We will use Vulkan, no context is required.
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
@@ -202,7 +203,7 @@ void Window::open() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Window::close() {
-  if (mWindow) {
+  if (mWindow != nullptr) {
     glfwDestroyWindow(mWindow);
     mWindow = nullptr;
   }
@@ -211,13 +212,13 @@ void Window::close() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool Window::shouldClose() const {
-  return glfwWindowShouldClose(mWindow);
+  return glfwWindowShouldClose(mWindow) != 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Window::update() {
-  if (mWindow) {
+  if (mWindow != nullptr) {
     glfwPollEvents();
     updateJoysticks();
   }
@@ -226,7 +227,7 @@ void Window::update() {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool Window::keyPressed(Input::Key key) const {
-  if (!mWindow) {
+  if (mWindow == nullptr) {
     return false;
   }
 
@@ -236,11 +237,15 @@ bool Window::keyPressed(Input::Key key) const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 bool Window::buttonPressed(Input::Button button) const {
-  if (!mWindow) {
+  if (mWindow == nullptr) {
     return false;
   }
 
-  return glfwGetMouseButton(mWindow, Core::enumCast(button)) == GLFW_PRESS;
+  if (button == Input::Button::eNone) {
+    return false;
+  }
+
+  return glfwGetMouseButton(mWindow, Core::enumCast(button) - 1) == GLFW_PRESS;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -250,7 +255,7 @@ float Window::joyAxis(uint32_t joyStick, uint32_t axis) {
       axis >= Core::enumCast(Input::JoystickAxisId::eJoystickAxisNum)) {
     return 0;
   }
-  if (!glfwJoystickPresent(joyStick)) {
+  if (glfwJoystickPresent(joyStick) == 0) {
     return 0;
   }
   return mJoystickAxisCache[joyStick][axis];
@@ -259,7 +264,7 @@ float Window::joyAxis(uint32_t joyStick, uint32_t axis) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 glm::vec2 Window::getCursorPos() const {
-  if (!mWindow) {
+  if (mWindow == nullptr) {
     return glm::vec2(0.f, 0.f);
   }
   double x, y;
@@ -283,10 +288,10 @@ void Window::updateJoysticks() {
 
   const int32_t joystickNum(Core::enumCast(Input::JoystickId::eJoystickNum));
   for (int32_t joy(0); joy < joystickNum; ++joy) {
-    if (glfwJoystickPresent(joy)) {
-      Input::JoystickId joyId(static_cast<Input::JoystickId>(joy));
-      int32_t           axesCount(0);
-      auto              axesArray(glfwGetJoystickAxes(joy, &axesCount));
+    if (glfwJoystickPresent(joy) != 0) {
+      auto    joyId(static_cast<Input::JoystickId>(joy));
+      int32_t axesCount(0);
+      auto    axesArray(glfwGetJoystickAxes(joy, &axesCount));
 
       for (int32_t axis(0); axis < axesCount; ++axis) {
         float axisValue(axesArray[axis]);
@@ -316,7 +321,7 @@ void Window::updateJoysticks() {
         }
 
         if (std::abs(axisValue - mJoystickAxisCache[joy][axis]) > changedThreshold) {
-          Input::JoystickAxisId axisId(static_cast<Input::JoystickAxisId>(axis));
+          auto axisId(static_cast<Input::JoystickAxisId>(axis));
           sOnJoystickAxisChanged.emit(joyId, axisId, axisValue);
           mJoystickAxisCache[joy][axis] = axisValue;
         }
@@ -325,8 +330,8 @@ void Window::updateJoysticks() {
       int32_t buttonCount(0);
       auto    buttonArray(glfwGetJoystickButtons(joy, &buttonCount));
       for (int32_t button(0); button < buttonCount; ++button) {
-        Input::JoystickButtonId buttonId(static_cast<Input::JoystickButtonId>(button));
-        int32_t                 buttonValue(static_cast<int32_t>(buttonArray[button]));
+        auto buttonId(static_cast<Input::JoystickButtonId>(button));
+        auto buttonValue(static_cast<uint32_t>(buttonArray[button]));
 
         if (buttonValue != mJoystickButtonCache[joy][button]) {
 

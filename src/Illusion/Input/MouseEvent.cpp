@@ -15,9 +15,7 @@ namespace Illusion::Input {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 MouseEvent::MouseEvent()
-    : mType(Type::eMove)
-    , mX(0)
-    , mY(0) {
+    : mType(Type::eMove) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -38,19 +36,21 @@ MouseEvent::MouseEvent(int32_t scrollAmount) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 MouseEvent::MouseEvent(int32_t button, bool press) {
-  if (button == GLFW_MOUSE_BUTTON_LEFT)
+  if (button == GLFW_MOUSE_BUTTON_LEFT) {
     mButton = Button::eButton1;
-  else if (button == GLFW_MOUSE_BUTTON_RIGHT)
+  } else if (button == GLFW_MOUSE_BUTTON_RIGHT) {
     mButton = Button::eButton2;
-  else if (button == GLFW_MOUSE_BUTTON_MIDDLE)
+  } else if (button == GLFW_MOUSE_BUTTON_MIDDLE) {
     mButton = Button::eButton3;
-  else
-    mButton = (Button)button;
+  } else {
+    mButton = static_cast<Button>(button + 1);
+  }
 
-  if (press)
+  if (press) {
     mType = MouseEvent::Type::ePress;
-  else
+  } else {
     mType = MouseEvent::Type::eRelease;
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

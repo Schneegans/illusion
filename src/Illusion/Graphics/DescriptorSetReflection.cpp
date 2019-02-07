@@ -13,6 +13,7 @@
 
 #include <functional>
 #include <iostream>
+#include <utility>
 
 namespace Illusion::Graphics {
 
@@ -38,16 +39,15 @@ const std::unordered_map<PipelineResource::ResourceType, vk::DescriptorType> res
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 DescriptorSetReflection::DescriptorSetReflection(
-    std::string const& name, DevicePtr const& device, uint32_t set)
+    std::string const& name, DevicePtr device, uint32_t set)
     : Core::NamedObject(name)
-    , mDevice(device)
+    , mDevice(std::move(device))
     , mSet(set) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-DescriptorSetReflection::~DescriptorSetReflection() {
-}
+DescriptorSetReflection::~DescriptorSetReflection() = default;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -117,8 +117,8 @@ vk::DescriptorSetLayoutPtr DescriptorSetReflection::getLayout() const {
 
     for (auto const& r : mResources) {
       auto t = r.second.mResourceType;
-      bindings.push_back(
-          {r.second.mBinding, resourceTypeMapping.at(t), r.second.mArraySize, r.second.mStages});
+      bindings.emplace_back(
+          r.second.mBinding, resourceTypeMapping.at(t), r.second.mArraySize, r.second.mStages);
     }
 
     vk::DescriptorSetLayoutCreateInfo descriptorSetLayoutInfo;
@@ -162,7 +162,6 @@ void DescriptorSetReflection::printInfo() const {
 
   std::function<void(PipelineResource::Member const&, int32_t)> printMemberInfo =
       [&printMemberInfo, &baseTypes](PipelineResource::Member const& m, int32_t indent) {
-
         Core::Logger::message() << std::string(indent * 2, ' ') << "- \"" << m.mName
                                 << "\", type: " << baseTypes.find(m.mBaseType)->second
                                 << ", dims: " << m.mColumns << "x" << m.mVecSize << "["
@@ -191,7 +190,7 @@ void DescriptorSetReflection::printInfo() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Core::BitHash const& DescriptorSetReflection::getHash() const {
-  if (mHash.size() == 0) {
+  if (mHash.empty()) {
     mHash.push<16>(mSet);
 
     for (auto const& r : mResources) {

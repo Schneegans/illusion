@@ -24,16 +24,14 @@ struct MouseEvent {
 
   Type mType;
 
-  union {
-    // x-position for eMove, x-direction for eScroll
-    int32_t mX;
+  // only used for ePress and eRelease
+  Button mButton = Button::eNone;
 
-    // only used for ePress and eRelease
-    Button mButton;
-  };
+  // x-position for eMove, x-direction for eScroll
+  int32_t mX = 0;
 
   // y-position for eMove, y-direction for eScroll
-  int32_t mY;
+  int32_t mY = 0;
 };
 
 std::ostream& operator<<(std::ostream& os, MouseEvent const& e);

@@ -28,7 +28,7 @@ class PipelineReflection : public Core::StaticCreate<PipelineReflection>, public
  public:
   // Initially, the PipelineReflection is empty. Resources can be added with addResource(). It is a
   // good idea to give the object a descriptive name.
-  PipelineReflection(std::string const& name, DevicePtr const& device);
+  PipelineReflection(std::string const& name, DevicePtr device);
   virtual ~PipelineReflection();
 
   // Adds a new resource to this PipelineReflection. If the mResourceType is eInput, eOutput or

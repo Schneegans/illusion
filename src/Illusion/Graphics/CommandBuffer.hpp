@@ -106,7 +106,7 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
 
   // Binds the given BackedBuffer as vertex buffer. This is directly recorded to the internal
   // vk::CommandBuffer.
-  void bindVertexBuffers(uint32_t firstBinding, std::vector<BackedBufferPtr> const& buffers) const;
+  void bindVertexBuffers(uint32_t firstBinding, std::vector<BackedBufferPtr> const& buffs) const;
 
   // Sets the given data (size in bytes) as push constant data. You have to make sure that there is
   // a shader program currently bound. This will throw a std::runtime_error when there is no active
@@ -140,8 +140,9 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
   // This most explicit method adds a vk::ImageMemoryBarrier to the CommandBuffer with the given
   // parameters. You have to make sure that the given access flags are supported by the given
   // pipeline stage flags.
-  void transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk::AccessFlags srcAccess,
-      vk::PipelineStageFlagBits srcStage, vk::ImageLayout newLayout, vk::AccessFlags dstAccess,
+  void transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout,
+      const vk::AccessFlags& srcAccess, vk::PipelineStageFlagBits srcStage,
+      vk::ImageLayout newLayout, const vk::AccessFlags& dstAccess,
       vk::PipelineStageFlagBits dstStage, vk::ImageSubresourceRange range) const;
 
   // All of the methods below will try to best-guess the access flags, the pipeline stages, the
@@ -192,13 +193,13 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
 
   void transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout,
       vk::ImageSubresourceRange range) const;
-  void transitionImageLayout(BackedImagePtr image, vk::ImageLayout oldLayout,
+  void transitionImageLayout(const BackedImagePtr& image, vk::ImageLayout oldLayout,
       vk::ImageLayout newLayout, vk::ImageSubresourceRange range) const;
+  void transitionImageLayout(const BackedImagePtr& image, vk::ImageLayout newLayout,
+      vk::ImageSubresourceRange range) const;
   void transitionImageLayout(
-      BackedImagePtr image, vk::ImageLayout newLayout, vk::ImageSubresourceRange range) const;
-  void transitionImageLayout(
-      BackedImagePtr image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) const;
-  void transitionImageLayout(BackedImagePtr image, vk::ImageLayout newLayout) const;
+      const BackedImagePtr& image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) const;
+  void transitionImageLayout(const BackedImagePtr& image, vk::ImageLayout newLayout) const;
 
   // convenience methods ---------------------------------------------------------------------------
 
@@ -212,7 +213,7 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
       vk::Filter filter) const;
 
   void resolveImage(vk::Image src, vk::ImageLayout srcLayout, vk::Image dst,
-      vk::ImageLayout dstLayout, vk::ImageResolve region) const;
+      vk::ImageLayout dstLayout, const vk::ImageResolve& region) const;
 
   void copyBuffer(vk::Buffer src, vk::Buffer dst, vk::DeviceSize size) const;
 

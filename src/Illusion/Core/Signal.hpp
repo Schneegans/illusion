@@ -30,7 +30,7 @@ class Signal {
   Signal() = default;
 
   // copy creates new signal
-  Signal(Signal const& other) {
+  Signal(Signal const&) {
   }
 
   // connects a member function of a given object to this Signal
@@ -76,7 +76,7 @@ class Signal {
   }
 
   // assignment creates new Signal
-  Signal& operator=(Signal const& other) {
+  Signal& operator=(Signal const&) {
     disconnectAll();
   }
 

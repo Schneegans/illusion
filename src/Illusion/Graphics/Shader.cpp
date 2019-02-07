@@ -16,6 +16,7 @@
 #include "Window.hpp"
 
 #include <spirv_glsl.hpp>
+#include <utility>
 
 namespace Illusion::Graphics {
 
@@ -46,7 +47,7 @@ const std::unordered_map<std::string, vk::ShaderStageFlagBits> hlslExtensionMapp
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ShaderPtr Shader::createFromFiles(std::string const& name, DevicePtr const& device,
-    std::vector<std::string> const& fileNames, std::set<std::string> dynamicBuffers,
+    std::vector<std::string> const& fileNames, const std::set<std::string>& dynamicBuffers,
     bool reloadOnChanges) {
 
   // First create a new Shader.
@@ -80,15 +81,14 @@ ShaderPtr Shader::createFromFiles(std::string const& name, DevicePtr const& devi
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Shader::Shader(std::string const& name, DevicePtr const& device)
+Shader::Shader(std::string const& name, DevicePtr device)
     : Core::NamedObject(name)
-    , mDevice(device) {
+    , mDevice(std::move(device)) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Shader::~Shader() {
-}
+Shader::~Shader() = default;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 

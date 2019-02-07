@@ -55,7 +55,7 @@ class ShaderFile : public ShaderSource {
 // always returns false.
 class ShaderCode : public ShaderSource {
  public:
-  ShaderCode(std::string const& code, std::string const& name);
+  ShaderCode(std::string code, std::string name);
   bool requiresReload() const override;
   void resetReloadingRequired() override;
 
@@ -113,7 +113,7 @@ class SpirvFile : public ShaderFile, public Core::StaticCreate<SpirvFile> {
 
 class SpirvCode : public ShaderSource, public Core::StaticCreate<SpirvCode> {
  public:
-  SpirvCode(std::vector<uint32_t> const& code);
+  SpirvCode(std::vector<uint32_t> code);
 
   bool                  requiresReload() const override;
   std::vector<uint32_t> getSpirv(vk::ShaderStageFlagBits stage) override;
