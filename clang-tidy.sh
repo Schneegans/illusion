@@ -24,14 +24,14 @@ FLAGS+="-I${SCRIPT_DIR}/externals/entt/src"
 
 CHECKS="modernize-*,"
 CHECKS+="bugprone-*,"
+CHECKS+="google-*,"
 CHECKS+="readability-*,"
 CHECKS+="performance-*,"
 CHECKS+="hicpp-*,"
 CHECKS+="misc-*,"
-CHECKS+="cppcoreguidelines-*,"
 
 # run clang-tidy on all source files
 find src examples -iname "*.cpp"|while read file; do
   echo "Tidying ${file}..."
-  clang-tidy-7 -checks=$CHECKS -quiet $file -- $FLAGS
+  clang-tidy-7 -checks=$CHECKS -fix -quiet $file -- $FLAGS
 done
