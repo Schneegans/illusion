@@ -220,6 +220,14 @@ int main(int argc, char* argv[]) {
 
   glm::vec3 cameraPolar(0.f, 0.f, 1.5f);
 
+  window->sOnKeyEvent.connect([&window](Illusion::Input::KeyEvent const& e) {
+    if (e.mType == Illusion::Input::KeyEvent::Type::ePress &&
+        e.mKey == Illusion::Input::Key::eF11) {
+      window->pFullscreen = !window->pFullscreen.get();
+    }
+    return true;
+  });
+
   window->sOnMouseEvent.connect([&cameraPolar, &window](Illusion::Input::MouseEvent const& e) {
     if (e.mType == Illusion::Input::MouseEvent::Type::eMove) {
       static int32_t lastX = e.mX;
