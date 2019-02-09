@@ -53,12 +53,8 @@ uint32_t ThreadPool::getRunningTasks() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 uint32_t ThreadPool::getPendingTasks() const {
-  uint32_t result;
-  {
-    std::unique_lock<std::mutex> lock(mMutex);
-    result = mTasks.size();
-  }
-  return result;
+  std::unique_lock<std::mutex> lock(mMutex);
+  return mTasks.size();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
