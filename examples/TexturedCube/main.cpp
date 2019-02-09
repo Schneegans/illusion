@@ -102,7 +102,8 @@ int main() {
     glm::vec3(-1, -1,  1), glm::vec3(-1,  1, -1), glm::vec3(-1, -1, -1), glm::vec3( 1, -1, -1),
     glm::vec3(-1,  1, -1), glm::vec3( 1,  1, -1), glm::vec3(-1, -1,  1), glm::vec3(-1,  1,  1),
     glm::vec3( 1,  1, -1), glm::vec3( 1,  1,  1), glm::vec3( 1, -1,  1), glm::vec3(-1,  1,  1),
-    glm::vec3(-1,  1,  1), glm::vec3(-1, -1, -1)};
+    glm::vec3(-1,  1,  1), glm::vec3(-1, -1, -1)
+  };
 
   const std::array<glm::vec3, 26> NORMALS = {
     glm::vec3( 0, -1,  0), glm::vec3( 0, -1,  0), glm::vec3( 0, -1,  0), glm::vec3( 0,  1,  0),
@@ -111,7 +112,8 @@ int main() {
     glm::vec3(-1,  0,  0), glm::vec3(-1,  0,  0), glm::vec3(-1,  0,  0), glm::vec3( 0,  0, -1),
     glm::vec3( 0,  0, -1), glm::vec3( 0,  0, -1), glm::vec3( 0, -1,  0), glm::vec3( 0,  1,  0),
     glm::vec3( 1,  0,  0), glm::vec3( 1,  0,  0), glm::vec3( 1,  0,  0), glm::vec3( 0,  0,  1),
-    glm::vec3(-1,  0,  0), glm::vec3( 0,  0, -1)};
+    glm::vec3(-1,  0,  0), glm::vec3( 0,  0, -1)
+  };
 
   const std::array<glm::vec2, 26> TEXCOORDS = {
     glm::vec2(1, 0), glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(1, 0), glm::vec2(0, 1),
@@ -119,7 +121,8 @@ int main() {
     glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(0, 0), glm::vec2(1, 1), glm::vec2(0, 1), 
     glm::vec2(1, 0), glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(1, 1), glm::vec2(1, 1), 
     glm::vec2(1, 0), glm::vec2(1, 1), glm::vec2(0, 1), glm::vec2(1, 1), glm::vec2(1, 0), 
-    glm::vec2(1, 1)};
+    glm::vec2(1, 1)
+  };
 
   const std::array<uint32_t, 36> INDICES = {
     0, 1,  2, 3, 4,  5, 6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17,
@@ -215,7 +218,7 @@ int main() {
     // Begin our render pass.
     res.mCmd->beginRenderPass(res.mRenderPass, clearValues);
 
-    // Compute a modelView matrix based on the simulation time (this makes th cube spin). Then
+    // Compute a modelView matrix based on the simulation time (this makes the cube spin). Then
     // upload this matrix via push constants.
     glm::mat4 modelView(1.f);
     modelView = glm::translate(modelView, glm::vec3(0, 0, -3));

@@ -158,7 +158,7 @@ int main(int argc, char* argv[]) {
   args.addOption({"-a",  "--animation"},   &options.mAnimation,  "Index of the animation to play. Default: 0, Use -1 to disable animations.");
   args.addOption({"-ns", "--no-skins"},    &options.mNoSkins,    "Disable loading of skins");
   args.addOption({"-nt", "--no-textures"}, &options.mNoTextures, "Disable loading of textures");
-  args.addOption({"-t",  "--trace"},        &Illusion::Core::Logger::enableTrace, "Print trace output");
+  args.addOption({"-t",  "--trace"},       &Illusion::Core::Logger::enableTrace, "Print trace output");
   // clang-format on
 
   args.parse(argc, argv);
