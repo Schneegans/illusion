@@ -790,7 +790,7 @@ void FrameGraph::process(const ProcessingFlags& flags) {
     // Record the subpasses using the thread(s) of the ThreadPool.
     uint32_t subpassCounter = 0;
     for (auto const& subpass : pass.mSubpasses) {
-      mThreadPool.enqueue([pass, subpass, subpassCounter]() {
+      mThreadPool.enqueue([&pass, &subpass, subpassCounter]() {
         subpass.mSecondaryCommandBuffer->reset();
         subpass.mSecondaryCommandBuffer->begin(pass.mRenderPass, subpassCounter);
         subpass.mSecondaryCommandBuffer->graphicsState().setViewports({{glm::vec2(pass.mExtent)}});
