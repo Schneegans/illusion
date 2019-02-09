@@ -12,7 +12,7 @@
 layout(location = 0) in vec3 inPosition;
 
 // uniforms
-layout(binding = 0, set = 0) uniform CameraUniforms {
+layout(binding = 0, set = 0) readonly buffer CameraUniforms {
   mat4 mModelViewProjection;
 }
 cameraUniforms;
@@ -27,5 +27,5 @@ pushConstants;
 // methods
 void main() {
   gl_Position = cameraUniforms.mModelViewProjection *
-                (pushConstants.mPosition + 0.05 * vec4(inPosition, 1.0));
+                (pushConstants.mPosition + 0.02 * vec4(inPosition, 1.0));
 }

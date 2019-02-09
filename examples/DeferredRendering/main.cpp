@@ -9,7 +9,7 @@
 #include <Illusion/Core/CommandLineOptions.hpp>
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Core/Timer.hpp>
-#include <Illusion/Graphics/CoherentUniformBuffer.hpp>
+#include <Illusion/Graphics/CoherentBuffer.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/Device.hpp>
 #include <Illusion/Graphics/FrameGraph.hpp>
@@ -57,10 +57,11 @@ int main(int argc, char* argv[]) {
   // create shaders --------------------------------------------------------------------------------
   Lights lights(device, options.mLightCount);
 
-  Illusion::Graphics::FrameResource<Illusion::Graphics::CoherentUniformBufferPtr> cameraUniforms(
+  Illusion::Graphics::FrameResource<Illusion::Graphics::CoherentBufferPtr> cameraUniforms(
       frameIndex, [=](uint32_t index) {
-        return Illusion::Graphics::CoherentUniformBuffer::create(
-            "CameraUniformBuffer " + std::to_string(index), device, sizeof(glm::mat4));
+        return Illusion::Graphics::CoherentBuffer::create(
+            "CameraUniformBuffer " + std::to_string(index), device, sizeof(glm::mat4),
+            vk::BufferUsageFlagBits::eStorageBuffer);
       });
 
   // create frame graph resources ------------------------------------------------------------------
@@ -82,7 +83,7 @@ int main(int argc, char* argv[]) {
     .addColorAttachment(normal, Access::eWrite, clearColor)
     .addDepthAttachment(depth, Access::eWrite, clearDepth)
     .setProcessCallback([&lights, &cameraUniforms](Illusion::Graphics::CommandBufferPtr const& cmd) {
-      cmd->bindingState().setUniformBuffer(
+      cmd->bindingState().setStorageBuffer(
         cameraUniforms.current()->getBuffer(), sizeof(glm::mat4), 0, 0, 0);
       lights.draw(cmd);
     });
@@ -154,12 +155,7 @@ int main(int argc, char* argv[]) {
     } catch (std::runtime_error const& e) {
       Illusion::Core::Logger::error() << e.what() << std::endl;
     }
-
-    // Prevent the GPU from over-heating :)
-    std::this_thread::sleep_for(std::chrono::milliseconds(5));
   }
-
-  Illusion::Core::Logger::message() << "bye" << std::endl;
 
   // The window has been closed. We wait for all pending operations and then all objects will be
   // deleted automatically in the correct order.
