@@ -8,6 +8,7 @@
 
 #include "Lights.hpp"
 
+#include <Illusion/Graphics/CoherentBuffer.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/Device.hpp>
 #include <Illusion/Graphics/Shader.hpp>
@@ -16,34 +17,40 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Lights::Lights(Illusion::Graphics::DevicePtr const& device, uint32_t count)
-    : mLights(count)
+Lights::Lights(Illusion::Graphics::DevicePtr const&  device,
+    Illusion::Graphics::FrameResourceIndexPtr const& frameIndex, uint32_t lightCount)
+    : mLights(lightCount)
     , mShader(Illusion::Graphics::Shader::createFromFiles("LightShader", device,
           {"data/DeferredRendering/shaders/Light.vert",
-              "data/DeferredRendering/shaders/Light.frag"})) {
+              "data/DeferredRendering/shaders/Light.frag"}))
+    , mLightBuffer(frameIndex, [=](uint32_t index) {
+      return Illusion::Graphics::CoherentBuffer::create(
+          "LightStorageBuffer " + std::to_string(index), device, sizeof(Light) * lightCount,
+          vk::BufferUsageFlagBits::eStorageBuffer);
+    }) {
 
   // clang-format off
-    const std::array<glm::vec3, 12> POSITIONS = {
-      glm::vec3( 0.000000, -1.000000,  0.000000), glm::vec3( 0.723600, -0.447215,  0.525720),
-      glm::vec3(-0.276385, -0.447215,  0.850640), glm::vec3(-0.894425, -0.447215,  0.000000),
-      glm::vec3(-0.276385, -0.447215, -0.850640), glm::vec3( 0.723600, -0.447215, -0.525720),
-      glm::vec3( 0.276385,  0.447215,  0.850640), glm::vec3(-0.723600,  0.447215,  0.525720),
-      glm::vec3(-0.723600,  0.447215, -0.525720), glm::vec3( 0.276385,  0.447215, -0.850640),
-      glm::vec3( 0.894425,  0.447215,  0.000000), glm::vec3( 0.000000,  1.000000,  0.000000)};
+  const std::array<glm::vec3, 12> POSITIONS = {
+    glm::vec3( 0.000000, -1.000000,  0.000000), glm::vec3( 0.723600, -0.447215,  0.525720),
+    glm::vec3(-0.276385, -0.447215,  0.850640), glm::vec3(-0.894425, -0.447215,  0.000000),
+    glm::vec3(-0.276385, -0.447215, -0.850640), glm::vec3( 0.723600, -0.447215, -0.525720),
+    glm::vec3( 0.276385,  0.447215,  0.850640), glm::vec3(-0.723600,  0.447215,  0.525720),
+    glm::vec3(-0.723600,  0.447215, -0.525720), glm::vec3( 0.276385,  0.447215, -0.850640),
+    glm::vec3( 0.894425,  0.447215,  0.000000), glm::vec3( 0.000000,  1.000000,  0.000000)};
 
-    const std::array<uint32_t, 60> INDICES = {
-      0, 1, 2, 1, 0, 5, 0, 2, 3, 0, 3, 4, 0, 4, 5, 1, 5, 10, 2, 1, 6,
-      3, 2, 7, 4, 3, 8, 5, 4, 9, 1, 10, 6, 2, 6, 7, 3, 7, 8, 4, 8, 9,
-      5, 9, 10, 6, 10, 11, 7, 6, 11, 8, 7, 11, 9, 8, 11, 10, 9, 11
-    };
+  const std::array<uint32_t, 60> INDICES = {
+    0, 1, 2, 1, 0, 5, 0, 2, 3, 0, 3, 4, 0, 4, 5, 1, 5, 10, 2, 1, 6,
+    3, 2, 7, 4, 3, 8, 5, 4, 9, 1, 10, 6, 2, 6, 7, 3, 7, 8, 4, 8, 9,
+    5, 9, 10, 6, 10, 11, 7, 6, 11, 8, 7, 11, 9, 8, 11, 10, 9, 11
+  };
   // clang-format on
 
-  mPositionBuffer = device->createVertexBuffer("CubePositions", POSITIONS);
-  mIndexBuffer    = device->createIndexBuffer("CubeIndices", INDICES);
+  mPositionBuffer = device->createVertexBuffer("SpherePositions", POSITIONS);
+  mIndexBuffer    = device->createIndexBuffer("SphereIndices", INDICES);
 
   std::default_random_engine            generator;
   std::uniform_real_distribution<float> position(-1.f, 1.f);
-  std::uniform_real_distribution<float> color(0.f, 1.f);
+  std::uniform_real_distribution<float> color(0.5f, 1.f);
 
   for (auto& light : mLights) {
     light.mPosition.x = position(generator);
@@ -59,10 +66,13 @@ Lights::Lights(Illusion::Graphics::DevicePtr const& device, uint32_t count)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Lights::update(float time) {
+void Lights::update(float time, glm::mat4 const& matMVP) {
+  mMatMVP = matMVP;
   for (size_t i(0); i < mLights.size(); ++i) {
     mLights[i].mPosition.y = std::sin(time + i);
   }
+
+  mLightBuffer.current()->updateData((uint8_t*)&mLights[0], sizeof(Light) * mLights.size(), 0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -83,13 +93,13 @@ void Lights::draw(Illusion::Graphics::CommandBufferPtr const& cmd) {
   cmd->bindVertexBuffers(0, {mPositionBuffer});
   cmd->bindIndexBuffer(mIndexBuffer, 0, vk::IndexType::eUint32);
 
-  cmd->setShader(mShader);
+  cmd->bindingState().setStorageBuffer(
+      mLightBuffer.current()->getBuffer(), sizeof(Light) * mLights.size(), 0, 0, 0);
 
-  for (auto const& light : mLights) {
-    // Do the actual drawing.
-    cmd->pushConstants(light);
-    cmd->drawIndexed(60, 1, 0, 0, 0);
-  }
+  cmd->setShader(mShader);
+  cmd->pushConstants(mMatMVP);
+
+  cmd->drawIndexed(60, mLights.size(), 0, 0, 0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

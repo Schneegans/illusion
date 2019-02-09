@@ -11,21 +11,29 @@
 // inputs
 layout(location = 0) in vec3 inPosition;
 
+struct Light {
+  vec4 mPosition;
+  vec4 mColor;
+};
+
 // uniforms
-layout(binding = 0, set = 0) readonly buffer CameraUniforms {
-  mat4 mModelViewProjection;
+layout(binding = 0, set = 0) readonly buffer LightBuffer {
+  Light lights[];
 }
-cameraUniforms;
+lightBuffer;
 
 // push constants
 layout(push_constant, std430) uniform PushConstants {
-  vec4 mPosition;
-  vec4 mColor;
+  mat4 mModelViewProjection;
 }
 pushConstants;
 
+// outputs
+layout(location = 0) out vec4 vColor;
+
 // methods
 void main() {
-  gl_Position = cameraUniforms.mModelViewProjection *
-                (pushConstants.mPosition + 0.02 * vec4(inPosition, 1.0));
+  vColor      = lightBuffer.lights[gl_InstanceIndex].mColor;
+  gl_Position = pushConstants.mModelViewProjection *
+                (lightBuffer.lights[gl_InstanceIndex].mPosition + 0.01 * vec4(inPosition, 1.0));
 }

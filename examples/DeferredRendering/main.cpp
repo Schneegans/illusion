@@ -9,7 +9,6 @@
 #include <Illusion/Core/CommandLineOptions.hpp>
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Core/Timer.hpp>
-#include <Illusion/Graphics/CoherentBuffer.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/Device.hpp>
 #include <Illusion/Graphics/FrameGraph.hpp>
@@ -55,14 +54,7 @@ int main(int argc, char* argv[]) {
   auto graph      = Illusion::Graphics::FrameGraph::create("FrameGraph", device, frameIndex);
 
   // create shaders --------------------------------------------------------------------------------
-  Lights lights(device, options.mLightCount);
-
-  Illusion::Graphics::FrameResource<Illusion::Graphics::CoherentBufferPtr> cameraUniforms(
-      frameIndex, [=](uint32_t index) {
-        return Illusion::Graphics::CoherentBuffer::create(
-            "CameraUniformBuffer " + std::to_string(index), device, sizeof(glm::mat4),
-            vk::BufferUsageFlagBits::eStorageBuffer);
-      });
+  Lights lights(device, frameIndex, options.mLightCount);
 
   // create frame graph resources ------------------------------------------------------------------
   auto& albedo = graph->createResource().setName("albedo").setFormat(vk::Format::eR8G8B8A8Unorm);
@@ -82,9 +74,7 @@ int main(int argc, char* argv[]) {
     .addColorAttachment(albedo, Access::eWrite, clearColor)
     .addColorAttachment(normal, Access::eWrite, clearColor)
     .addDepthAttachment(depth, Access::eWrite, clearDepth)
-    .setProcessCallback([&lights, &cameraUniforms](Illusion::Graphics::CommandBufferPtr const& cmd) {
-      cmd->bindingState().setStorageBuffer(
-        cameraUniforms.current()->getBuffer(), sizeof(glm::mat4), 0, 0, 0);
+    .setProcessCallback([&lights](Illusion::Graphics::CommandBufferPtr const& cmd) {
       lights.draw(cmd);
     });
 
@@ -144,11 +134,9 @@ int main(int argc, char* argv[]) {
     // upload this matrix via push constants.
     glm::mat4 modelView(1.f);
     modelView = glm::translate(modelView, glm::vec3(0, 0, -2));
-    modelView = glm::rotate(modelView, -time * 0.5f, glm::vec3(0, 1, 0));
+    modelView = glm::rotate(modelView, -time * 0.2f, glm::vec3(0, 1, 0));
 
-    cameraUniforms.current()->updateData(projection * modelView);
-
-    lights.update(time);
+    lights.update(time, projection * modelView);
 
     try {
       graph->process();

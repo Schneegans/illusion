@@ -8,12 +8,8 @@
 
 #version 450
 
-// push constants
-layout(push_constant, std430) uniform PushConstants {
-  vec4 mPosition;
-  vec4 mColor;
-}
-pushConstants;
+// inputs
+layout(location = 0) in vec4 vColor;
 
 // outputs
 layout(location = 0) out vec4 outColor;
@@ -21,6 +17,6 @@ layout(location = 1) out vec4 outNormal;
 
 // methods
 void main() {
-  outColor  = pushConstants.mColor;
+  outColor  = vColor;
   outNormal = vec4(1, 0, 0, 1);
 }
