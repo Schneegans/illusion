@@ -25,49 +25,13 @@
 // ways. On the one hand, we use actual vertex and index buffers, on the other, we use a set of   //
 // per-frame resources so that we can start recording the next frame while the last one is still  //
 // being processed.                                                                               //
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// clang-format off
-const std::array<glm::vec3, 26> POSITIONS = {
-  glm::vec3( 1, -1, 1),  glm::vec3(-1, -1, -1), glm::vec3( 1, -1, -1), glm::vec3(-1,  1, -1),
-  glm::vec3( 1,  1,  1), glm::vec3( 1,  1, -1), glm::vec3( 1,  1, -1), glm::vec3( 1, -1,  1),
-  glm::vec3( 1, -1, -1), glm::vec3( 1,  1,  1), glm::vec3(-1, -1,  1), glm::vec3( 1, -1,  1),
-  glm::vec3(-1, -1,  1), glm::vec3(-1,  1, -1), glm::vec3(-1, -1, -1), glm::vec3( 1, -1, -1),
-  glm::vec3(-1,  1, -1), glm::vec3( 1,  1, -1), glm::vec3(-1, -1,  1), glm::vec3(-1,  1,  1),
-  glm::vec3( 1,  1, -1), glm::vec3( 1,  1,  1), glm::vec3( 1, -1,  1), glm::vec3(-1,  1,  1),
-  glm::vec3(-1,  1,  1), glm::vec3(-1, -1, -1)};
-
-const std::array<glm::vec3, 26> NORMALS = {
-  glm::vec3( 0, -1,  0), glm::vec3( 0, -1,  0), glm::vec3( 0, -1,  0), glm::vec3( 0,  1,  0),
-  glm::vec3( 0,  1,  0), glm::vec3( 0,  1,  0), glm::vec3( 1,  0,  0), glm::vec3( 1,  0,  0),
-  glm::vec3( 1,  0,  0), glm::vec3( 0,  0,  1), glm::vec3( 0,  0,  1), glm::vec3( 0,  0,  1),
-  glm::vec3(-1,  0,  0), glm::vec3(-1,  0,  0), glm::vec3(-1,  0,  0), glm::vec3( 0,  0, -1),
-  glm::vec3( 0,  0, -1), glm::vec3( 0,  0, -1), glm::vec3( 0, -1,  0), glm::vec3( 0,  1,  0),
-  glm::vec3( 1,  0,  0), glm::vec3( 1,  0,  0), glm::vec3( 1,  0,  0), glm::vec3( 0,  0,  1),
-  glm::vec3(-1,  0,  0), glm::vec3( 0,  0, -1)};
-
-const std::array<glm::vec2, 26> TEXCOORDS = {
-  glm::vec2(1, 0), glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(1, 0), glm::vec2(0, 1),
-  glm::vec2(0, 0), glm::vec2(1, 0), glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(1, 0), 
-  glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(0, 0), glm::vec2(1, 1), glm::vec2(0, 1), 
-  glm::vec2(1, 0), glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(1, 1), glm::vec2(1, 1), 
-  glm::vec2(1, 0), glm::vec2(1, 1), glm::vec2(0, 1), glm::vec2(1, 1), glm::vec2(1, 0), 
-  glm::vec2(1, 1)};
-
-const std::array<uint32_t, 36> INDICES = {
-  0, 1,  2, 3, 4,  5, 6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17,
-  0, 18, 1, 3, 19, 4, 20, 21, 22, 9, 23, 10, 12, 24, 13, 15, 25, 16,
-};
-// clang-format on
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-// This struct contains all resources we will need for one frame. While one frame is processed by //
-// the GPU, we will acquire an instance of PerFrame and work with that one. We will store the     //
-// PerFrame in a ring-buffer and re-use older PerFrames after some time when the GPU is likely to //
-// be finished processing it anyways.                                                             //
+// The following struct contains all resources we will need for one frame. While one frame is     //
+// processed by the GPU, we will acquire an instance of PerFrame and work with that one. We will  //
+// store the PerFrame in a ring-buffer and re-use older PerFrames after some time when the GPU is //
+// likely to be finished processing it anyways.                                                   //
 // The PerFrame contains a command buffer, a render pass, a uniform buffer (for the projection    //
 // matrix), a semaphore indicating when rendering has finished (the frame buffer is ready for     //
-// presentation) and a fence telling us when the PerFrame are ready to be re-used.                //
+// presentation) and a fence telling us when the PerFrame is ready to be re-used.                 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct PerFrame {
@@ -130,6 +94,39 @@ int main() {
       {"data/TexturedCube/shaders/Cube.vert", "data/TexturedCube/shaders/Cube.frag"});
 
   // Here we create our three vertex buffers and one index buffer.
+  // clang-format off
+  const std::array<glm::vec3, 26> POSITIONS = {
+    glm::vec3( 1, -1, 1),  glm::vec3(-1, -1, -1), glm::vec3( 1, -1, -1), glm::vec3(-1,  1, -1),
+    glm::vec3( 1,  1,  1), glm::vec3( 1,  1, -1), glm::vec3( 1,  1, -1), glm::vec3( 1, -1,  1),
+    glm::vec3( 1, -1, -1), glm::vec3( 1,  1,  1), glm::vec3(-1, -1,  1), glm::vec3( 1, -1,  1),
+    glm::vec3(-1, -1,  1), glm::vec3(-1,  1, -1), glm::vec3(-1, -1, -1), glm::vec3( 1, -1, -1),
+    glm::vec3(-1,  1, -1), glm::vec3( 1,  1, -1), glm::vec3(-1, -1,  1), glm::vec3(-1,  1,  1),
+    glm::vec3( 1,  1, -1), glm::vec3( 1,  1,  1), glm::vec3( 1, -1,  1), glm::vec3(-1,  1,  1),
+    glm::vec3(-1,  1,  1), glm::vec3(-1, -1, -1)};
+
+  const std::array<glm::vec3, 26> NORMALS = {
+    glm::vec3( 0, -1,  0), glm::vec3( 0, -1,  0), glm::vec3( 0, -1,  0), glm::vec3( 0,  1,  0),
+    glm::vec3( 0,  1,  0), glm::vec3( 0,  1,  0), glm::vec3( 1,  0,  0), glm::vec3( 1,  0,  0),
+    glm::vec3( 1,  0,  0), glm::vec3( 0,  0,  1), glm::vec3( 0,  0,  1), glm::vec3( 0,  0,  1),
+    glm::vec3(-1,  0,  0), glm::vec3(-1,  0,  0), glm::vec3(-1,  0,  0), glm::vec3( 0,  0, -1),
+    glm::vec3( 0,  0, -1), glm::vec3( 0,  0, -1), glm::vec3( 0, -1,  0), glm::vec3( 0,  1,  0),
+    glm::vec3( 1,  0,  0), glm::vec3( 1,  0,  0), glm::vec3( 1,  0,  0), glm::vec3( 0,  0,  1),
+    glm::vec3(-1,  0,  0), glm::vec3( 0,  0, -1)};
+
+  const std::array<glm::vec2, 26> TEXCOORDS = {
+    glm::vec2(1, 0), glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(1, 0), glm::vec2(0, 1),
+    glm::vec2(0, 0), glm::vec2(1, 0), glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(1, 0), 
+    glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(0, 0), glm::vec2(1, 1), glm::vec2(0, 1), 
+    glm::vec2(1, 0), glm::vec2(0, 1), glm::vec2(0, 0), glm::vec2(1, 1), glm::vec2(1, 1), 
+    glm::vec2(1, 0), glm::vec2(1, 1), glm::vec2(0, 1), glm::vec2(1, 1), glm::vec2(1, 0), 
+    glm::vec2(1, 1)};
+
+  const std::array<uint32_t, 36> INDICES = {
+    0, 1,  2, 3, 4,  5, 6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17,
+    0, 18, 1, 3, 19, 4, 20, 21, 22, 9, 23, 10, 12, 24, 13, 15, 25, 16,
+  };
+  // clang-format on
+
   auto positionBuffer = device->createVertexBuffer("CubePositions", POSITIONS);
   auto normalBuffer   = device->createVertexBuffer("CubeNormals", NORMALS);
   auto texcoordBuffer = device->createVertexBuffer("CubeTexcoords", TEXCOORDS);
