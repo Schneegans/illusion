@@ -783,25 +783,25 @@ void FrameGraph::process(const ProcessingFlags& flags) {
       }
     }
 
-    // Begin the RenderPass.
-    perFrame.mPrimaryCommandBuffer->beginRenderPass(
-        pass.mRenderPass, clearValues, vk::SubpassContents::eSecondaryCommandBuffers);
-
     // Record the subpasses using the thread(s) of the ThreadPool.
     uint32_t subpassCounter = 0;
     for (auto const& subpass : pass.mSubpasses) {
-      mThreadPool.enqueue([&pass, &subpass, subpassCounter]() {
-        subpass.mSecondaryCommandBuffer->reset();
-        subpass.mSecondaryCommandBuffer->begin(pass.mRenderPass, subpassCounter);
-        subpass.mSecondaryCommandBuffer->graphicsState().setViewports({{glm::vec2(pass.mExtent)}});
-        subpass.mPass->mProcessCallback(subpass.mSecondaryCommandBuffer);
-        subpass.mSecondaryCommandBuffer->end();
-      });
+      // mThreadPool.enqueue([&pass, &subpass, subpassCounter]() {
+      subpass.mSecondaryCommandBuffer->reset();
+      subpass.mSecondaryCommandBuffer->begin(pass.mRenderPass, subpassCounter);
+      subpass.mSecondaryCommandBuffer->graphicsState().setViewports({{glm::vec2(pass.mExtent)}});
+      subpass.mPass->mProcessCallback(subpass.mSecondaryCommandBuffer);
+      subpass.mSecondaryCommandBuffer->end();
+      // });
       ++subpassCounter;
     }
 
     // Wait until all passes are recorded.
-    mThreadPool.waitIdle();
+    // mThreadPool.waitIdle();
+
+    // Begin the RenderPass.
+    perFrame.mPrimaryCommandBuffer->beginRenderPass(
+        pass.mRenderPass, clearValues, vk::SubpassContents::eSecondaryCommandBuffers);
 
     // Execute all passes in our primary CommandBuffer.
     subpassCounter = 0;
