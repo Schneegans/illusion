@@ -41,7 +41,7 @@ class CommandLineOptions {
   // a special way, all other values are parsed with a std::stringstream. This std::variant can be
   // easily extended if the stream operators are overloaded. If not, you have to add a special case
   // to the parse() method.
-  typedef std::variant<int32_t*, double*, float*, bool*, std::string*> OptionValue;
+  typedef std::variant<int32_t*, uint32_t*, double*, float*, bool*, std::string*> OptionValue;
 
   // The description is printed as part of the help message.
   explicit CommandLineOptions(std::string description);
