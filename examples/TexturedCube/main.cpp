@@ -8,7 +8,7 @@
 
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Core/Timer.hpp>
-#include <Illusion/Graphics/CoherentUniformBuffer.hpp>
+#include <Illusion/Graphics/CoherentBuffer.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/FrameResource.hpp>
 #include <Illusion/Graphics/Instance.hpp>
@@ -41,8 +41,9 @@ struct PerFrame {
             "CommandBuffer " + std::to_string(index), device))
       , mRenderPass(Illusion::Graphics::LazyRenderPass::create(
             "RenderPass " + std::to_string(index), device))
-      , mUniformBuffer(Illusion::Graphics::CoherentUniformBuffer::create(
-            "CoherentUniformBuffer " + std::to_string(index), device, sizeof(glm::mat4)))
+      , mUniformBuffer(
+            Illusion::Graphics::CoherentBuffer::create("CoherentBuffer " + std::to_string(index),
+                device, sizeof(glm::mat4), vk::BufferUsageFlagBits::eUniformBuffer))
       , mFrameFinishedFence(device->createFence("RenderFinished " + std::to_string(index)))
       , mRenderFinishedSemaphore(
             device->createSemaphore("FrameFinished " + std::to_string(index))) {
@@ -66,11 +67,11 @@ struct PerFrame {
         {1, 1, vk::Format::eR32G32B32Sfloat, 0}, {2, 2, vk::Format::eR32G32Sfloat, 0}});
   }
 
-  Illusion::Graphics::CommandBufferPtr         mCmd;
-  Illusion::Graphics::LazyRenderPassPtr        mRenderPass;
-  Illusion::Graphics::CoherentUniformBufferPtr mUniformBuffer;
-  vk::FencePtr                                 mFrameFinishedFence;
-  vk::SemaphorePtr                             mRenderFinishedSemaphore;
+  Illusion::Graphics::CommandBufferPtr  mCmd;
+  Illusion::Graphics::LazyRenderPassPtr mRenderPass;
+  Illusion::Graphics::CoherentBufferPtr mUniformBuffer;
+  vk::FencePtr                          mFrameFinishedFence;
+  vk::SemaphorePtr                      mRenderFinishedSemaphore;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

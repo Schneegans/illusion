@@ -19,7 +19,7 @@ struct BackedBuffer;
 struct BackedImage;
 struct Texture;
 
-class CoherentUniformBuffer;
+class CoherentBuffer;
 class CommandBuffer;
 class DescriptorPool;
 class DescriptorSetReflection;
@@ -41,7 +41,7 @@ typedef std::shared_ptr<BackedBuffer> BackedBufferPtr;
 typedef std::shared_ptr<BackedImage>  BackedImagePtr;
 typedef std::shared_ptr<Texture>      TexturePtr;
 
-typedef std::shared_ptr<CoherentUniformBuffer>   CoherentUniformBufferPtr;
+typedef std::shared_ptr<CoherentBuffer>          CoherentBufferPtr;
 typedef std::shared_ptr<CommandBuffer>           CommandBufferPtr;
 typedef std::shared_ptr<DescriptorPool>          DescriptorPoolPtr;
 typedef std::shared_ptr<DescriptorSetReflection> DescriptorSetReflectionPtr;

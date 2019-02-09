@@ -6,7 +6,7 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "CoherentUniformBuffer.hpp"
+#include "CoherentBuffer.hpp"
 
 #include "BackedBuffer.hpp"
 #include "Device.hpp"
@@ -15,11 +15,11 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-CoherentUniformBuffer::CoherentUniformBuffer(
-    std::string const& name, DevicePtr const& device, vk::DeviceSize size, vk::DeviceSize alignment)
+CoherentBuffer::CoherentBuffer(std::string const& name, DevicePtr const& device,
+    vk::DeviceSize size, vk::BufferUsageFlagBits usage, vk::DeviceSize alignment)
     : Core::NamedObject(name)
     , mDevice(device)
-    , mBuffer(device->createBackedBuffer(name, vk::BufferUsageFlagBits::eUniformBuffer,
+    , mBuffer(device->createBackedBuffer(name, usage,
           vk::MemoryPropertyFlagBits::eHostCoherent | vk::MemoryPropertyFlagBits::eHostVisible,
           size))
     , mAlignment(alignment) {
@@ -30,19 +30,19 @@ CoherentUniformBuffer::CoherentUniformBuffer(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-CoherentUniformBuffer::~CoherentUniformBuffer() {
+CoherentBuffer::~CoherentBuffer() {
   mDevice->getHandle()->unmapMemory(*mBuffer->mMemory);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CoherentUniformBuffer::reset() {
+void CoherentBuffer::reset() {
   mCurrentWriteOffset = 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-vk::DeviceSize CoherentUniformBuffer::addData(uint8_t const* data, vk::DeviceSize count) {
+vk::DeviceSize CoherentBuffer::addData(uint8_t const* data, vk::DeviceSize count) {
   vk::DeviceSize offset = mCurrentWriteOffset;
   updateData(data, count, offset);
   mCurrentWriteOffset += count;
@@ -56,8 +56,7 @@ vk::DeviceSize CoherentUniformBuffer::addData(uint8_t const* data, vk::DeviceSiz
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CoherentUniformBuffer::updateData(
-    uint8_t const* data, vk::DeviceSize count, vk::DeviceSize offset) {
+void CoherentBuffer::updateData(uint8_t const* data, vk::DeviceSize count, vk::DeviceSize offset) {
 
   if (offset + count > mBuffer->mMemoryInfo.allocationSize) {
     throw std::runtime_error("Failed to set uniform data: Preallocated memory exhausted!");
@@ -68,7 +67,7 @@ void CoherentUniformBuffer::updateData(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BackedBufferPtr const& CoherentUniformBuffer::getBuffer() const {
+BackedBufferPtr const& CoherentBuffer::getBuffer() const {
   return mBuffer;
 }
 

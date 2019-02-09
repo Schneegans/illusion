@@ -12,7 +12,7 @@
 #include <Illusion/Core/CommandLineOptions.hpp>
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Core/Timer.hpp>
-#include <Illusion/Graphics/CoherentUniformBuffer.hpp>
+#include <Illusion/Graphics/CoherentBuffer.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/FrameResource.hpp>
 #include <Illusion/Graphics/GltfModel.hpp>
@@ -57,9 +57,9 @@ struct PerFrame {
             "CommandBuffer " + std::to_string(index), device))
       , mRenderPass(Illusion::Graphics::LazyRenderPass::create(
             "RenderPass " + std::to_string(index), device))
-      , mUniformBuffer(Illusion::Graphics::CoherentUniformBuffer::create(
-            "CoherentUniformBuffer " + std::to_string(index), device, std::pow(2, 20),
-            uboAlignment))
+      , mUniformBuffer(
+            Illusion::Graphics::CoherentBuffer::create("CoherentBuffer " + std::to_string(index),
+                device, std::pow(2, 20), vk::BufferUsageFlagBits::eUniformBuffer, uboAlignment))
       , mRenderFinishedFence(device->createFence("RenderFinished " + std::to_string(index)))
       , mRenderFinishedSemaphore(
             device->createSemaphore("FrameFinished " + std::to_string(index))) {
@@ -68,11 +68,11 @@ struct PerFrame {
     mRenderPass->addAttachment(vk::Format::eD32Sfloat);
   }
 
-  Illusion::Graphics::CommandBufferPtr         mCmd;
-  Illusion::Graphics::LazyRenderPassPtr        mRenderPass;
-  Illusion::Graphics::CoherentUniformBufferPtr mUniformBuffer;
-  vk::FencePtr                                 mRenderFinishedFence;
-  vk::SemaphorePtr                             mRenderFinishedSemaphore;
+  Illusion::Graphics::CommandBufferPtr  mCmd;
+  Illusion::Graphics::LazyRenderPassPtr mRenderPass;
+  Illusion::Graphics::CoherentBufferPtr mUniformBuffer;
+  vk::FencePtr                          mRenderFinishedFence;
+  vk::SemaphorePtr                      mRenderFinishedSemaphore;
 };
 
 void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::Gltf::Node>> const& nodes,
