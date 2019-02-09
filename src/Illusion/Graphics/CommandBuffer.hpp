@@ -40,16 +40,14 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
   void reset();
 
   // Begins the internal vk::CommandBuffer. Use this for primary CommandBuffers.
-  void begin(
-      vk::CommandBufferUsageFlagBits usage = vk::CommandBufferUsageFlagBits::eOneTimeSubmit) const;
+  void begin(vk::CommandBufferUsageFlagBits usage = vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
 
   // Begins the internal vk::CommandBuffer. Use this for secondary CommandBuffers.
-  void begin(vk::CommandBufferInheritanceInfo info,
-      vk::CommandBufferUsageFlagBits          usage =
-          vk::CommandBufferUsageFlagBits::eRenderPassContinue) const;
+  void begin(RenderPassPtr const& currentRenderPass, uint32_t currentSubpass,
+      vk::CommandBufferUsageFlagBits usage = vk::CommandBufferUsageFlagBits::eRenderPassContinue);
 
   // Ends the internal vk::CommandBuffer.
-  void end() const;
+  void end();
 
   // Submits the internal vk::CommandBuffer to the Device's queue matching the QueueType given to
   // this CommandBuffer at construction time.
@@ -234,7 +232,7 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
 
   ShaderPtr     mCurrentShader;
   RenderPassPtr mCurrentRenderPass;
-  uint32_t      mCurrentSubPass = 0;
+  uint32_t      mCurrentSubpass = 0;
 
   std::map<Core::BitHash, vk::PipelinePtr> mPipelineCache;
 

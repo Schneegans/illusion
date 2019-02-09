@@ -44,7 +44,7 @@ void CommandBuffer::reset() {
   mCurrentDescriptorSets.clear();
   mDescriptorSetCache.releaseAll();
   mCurrentRenderPass.reset();
-  mCurrentSubPass = 0;
+  mCurrentSubpass = 0;
 
   // Then do the actual vk::CommandBuffer resetting.
   mVkCmd->reset({});
@@ -52,20 +52,31 @@ void CommandBuffer::reset() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::begin(vk::CommandBufferUsageFlagBits usage) const {
+void CommandBuffer::begin(vk::CommandBufferUsageFlagBits usage) {
   mVkCmd->begin({usage});
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::begin(
-    vk::CommandBufferInheritanceInfo info, vk::CommandBufferUsageFlagBits usage) const {
+void CommandBuffer::begin(RenderPassPtr const& currentRenderPass, uint32_t currentSubpass,
+    vk::CommandBufferUsageFlagBits usage) {
+
+  mCurrentRenderPass = currentRenderPass;
+  mCurrentSubpass    = currentSubpass;
+
+  vk::CommandBufferInheritanceInfo info;
+  info.subpass     = mCurrentSubpass;
+  info.renderPass  = *mCurrentRenderPass->getHandle();
+  info.framebuffer = *mCurrentRenderPass->getFramebuffer();
+
   mVkCmd->begin({usage, &info});
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::end() const {
+void CommandBuffer::end() {
+  mCurrentRenderPass.reset();
+  mCurrentSubpass = 0;
   mVkCmd->end();
 }
 
@@ -129,7 +140,7 @@ void CommandBuffer::beginRenderPass(RenderPassPtr const& renderPass,
   // Store a pointer to the currently active RenderPass. This is required for later construction of
   // the Pipelines.
   mCurrentRenderPass = renderPass;
-  mCurrentSubPass    = 0;
+  mCurrentSubpass    = 0;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -162,7 +173,7 @@ void CommandBuffer::execute(std::vector<CommandBufferPtr> const& secondaries) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::nextSubpass(vk::SubpassContents contents) {
-  ++mCurrentSubPass;
+  ++mCurrentSubpass;
   mVkCmd->nextSubpass(contents);
 }
 
@@ -712,7 +723,7 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
     hash.push<64>(m->getHandle().get());
   }
   hash.push<64>(mCurrentRenderPass.get());
-  hash.push<32>(mCurrentSubPass);
+  hash.push<32>(mCurrentSubpass);
 
   auto cached = mPipelineCache.find(hash);
   if (cached != mPipelineCache.end()) {
@@ -842,7 +853,7 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
   // use default blend attachments if none are defined
   if (mGraphicsState.getBlendAttachments().empty()) {
     auto attachmentCount = int32_t(mCurrentRenderPass->getAttachments().size());
-    if (mCurrentRenderPass->getSubpasses()[mCurrentSubPass].mDepthStencilAttachment) {
+    if (mCurrentRenderPass->getSubpasses()[mCurrentSubpass].mDepthStencilAttachment) {
       attachmentCount = std::max(0, attachmentCount - 1);
     }
 
@@ -893,7 +904,7 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
     info.pDynamicState = &dynamicStateInfo;
   }
   info.renderPass = *mCurrentRenderPass->getHandle();
-  info.subpass    = mCurrentSubPass;
+  info.subpass    = mCurrentSubpass;
 
   if (mCurrentShader) {
     info.layout = *mCurrentShader->getReflection()->getLayout();
