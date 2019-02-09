@@ -61,6 +61,8 @@ void CommandBuffer::begin(vk::CommandBufferUsageFlagBits usage) {
 void CommandBuffer::begin(RenderPassPtr const& currentRenderPass, uint32_t currentSubpass,
     vk::CommandBufferUsageFlagBits usage) {
 
+  currentRenderPass->init();
+
   mCurrentRenderPass = currentRenderPass;
   mCurrentSubpass    = currentSubpass;
 
