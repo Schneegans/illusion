@@ -14,9 +14,11 @@ layout(location = 0) in vec4 vColor;
 // outputs
 layout(location = 0) out vec4 outAlbedo;
 layout(location = 1) out vec4 outNormal;
+layout(location = 2) out vec4 outEmit;
 
 // methods
 void main() {
-  outAlbedo = vColor;
-  outNormal = vec4(1, 0, 0, 1);
+  outAlbedo = vec4(0);
+  outNormal = vec4(0);
+  outEmit   = vColor;
 }

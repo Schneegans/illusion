@@ -61,8 +61,9 @@ int main(int argc, char* argv[]) {
   // create frame graph resources ------------------------------------------------------------------
   auto& albedo = graph->createResource().setName("albedo").setFormat(vk::Format::eR8G8B8A8Unorm);
   auto& normal = graph->createResource().setName("normal").setFormat(vk::Format::eR8G8B8A8Unorm);
+  auto& emit   = graph->createResource().setName("emit").setFormat(vk::Format::eR16G16B16A16Sfloat);
   auto& depth  = graph->createResource().setName("depth").setFormat(vk::Format::eD32Sfloat);
-  auto& hdr    = graph->createResource().setName("hdr").setFormat(vk::Format::eR32G32B32A32Sfloat);
+  auto& hdr    = graph->createResource().setName("hdr").setFormat(vk::Format::eR16G16B16A16Sfloat);
 
   // create passes ---------------------------------------------------------------------------------
   using Access = Illusion::Graphics::FrameGraph::AccessFlagBits;
@@ -75,6 +76,7 @@ int main(int argc, char* argv[]) {
     .setName("gbuffer")
     .addColorAttachment(albedo, Access::eWrite, clearColor)
     .addColorAttachment(normal, Access::eWrite, clearColor)
+    .addColorAttachment(emit, Access::eWrite, clearColor)
     .addDepthAttachment(depth, Access::eWrite, clearDepth)
     .setProcessCallback([&lights, &floor](Illusion::Graphics::CommandBufferPtr const& cmd) {
       floor.draw(cmd);
