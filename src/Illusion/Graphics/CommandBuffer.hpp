@@ -12,6 +12,7 @@
 #include "BindingState.hpp"
 #include "DescriptorSetCache.hpp"
 #include "GraphicsState.hpp"
+#include "SpecialisationState.hpp"
 #include "fwd.hpp"
 
 #include <glm/glm.hpp>
@@ -86,6 +87,9 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
   // internal vk::CommandBuffer; they are flushed whenever a draw or dispatch command is issued.
   BindingState&       bindingState();
   BindingState const& bindingState() const;
+
+  SpecialisationState&       specialisationState();
+  SpecialisationState const& specialisationState() const;
 
   // Read and write access to the currently bound Shader. Changes will not directly affect
   // the internal vk::CommandBuffer; they are flushed whenever a draw or dispatch command is issued.
@@ -227,8 +231,9 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
   QueueType              mType;
   vk::CommandBufferLevel mLevel;
 
-  GraphicsState mGraphicsState;
-  BindingState  mBindingState;
+  GraphicsState       mGraphicsState;
+  BindingState        mBindingState;
+  SpecialisationState mSpecialisationState;
 
   ShaderPtr     mCurrentShader;
   RenderPassPtr mCurrentRenderPass;

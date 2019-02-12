@@ -41,6 +41,7 @@ void CommandBuffer::reset() {
 
   // First clear all state of the CommandBuffer. Except for the GraphicsState, this is kept.
   mBindingState.reset();
+  mSpecialisationState.reset();
   mCurrentDescriptorSets.clear();
   mDescriptorSetCache.releaseAll();
   mCurrentRenderPass.reset();
@@ -195,6 +196,15 @@ BindingState& CommandBuffer::bindingState() {
 }
 BindingState const& CommandBuffer::bindingState() const {
   return mBindingState;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+SpecialisationState& CommandBuffer::specialisationState() {
+  return mSpecialisationState;
+}
+SpecialisationState const& CommandBuffer::specialisationState() const {
+  return mSpecialisationState;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -692,6 +702,9 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
     Core::BitHash hash;
     hash.push<64>(mCurrentShader.get());
 
+    auto const& specialisationHash = mSpecialisationState.getHash();
+    hash.insert(hash.end(), specialisationHash.begin(), specialisationHash.end());
+
     auto cached = mPipelineCache.find(hash);
     if (cached != mPipelineCache.end()) {
       return cached->second;
@@ -707,7 +720,7 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
     info.stage.stage               = mCurrentShader->getModules()[0]->getStage();
     info.stage.module              = *mCurrentShader->getModules()[0]->getHandle();
     info.stage.pName               = "main";
-    info.stage.pSpecializationInfo = nullptr;
+    info.stage.pSpecializationInfo = mSpecialisationState.getInfo();
     info.layout                    = *mCurrentShader->getReflection()->getLayout();
 
     auto pipeline = mDevice->createComputePipeline("ComputePipeline of " + getName(), info);
@@ -727,6 +740,9 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
   hash.push<64>(mCurrentRenderPass.get());
   hash.push<32>(mCurrentSubpass);
 
+  auto const& specialisationHash = mSpecialisationState.getHash();
+  hash.insert(hash.end(), specialisationHash.begin(), specialisationHash.end());
+
   auto cached = mPipelineCache.find(hash);
   if (cached != mPipelineCache.end()) {
     return cached->second;
@@ -740,7 +756,7 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
       stageInfo.stage               = i->getStage();
       stageInfo.module              = *i->getHandle();
       stageInfo.pName               = "main";
-      stageInfo.pSpecializationInfo = nullptr;
+      stageInfo.pSpecializationInfo = mSpecialisationState.getInfo();
       stageInfos.push_back(stageInfo);
     }
   }
