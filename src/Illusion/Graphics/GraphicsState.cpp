@@ -847,7 +847,7 @@ std::set<vk::DynamicState> const& GraphicsState::getDynamicState() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Core::BitHash GraphicsState::getHash() const {
+Core::BitHash const& GraphicsState::getHash() const {
 
   if (mDirty) {
     mHash.clear();

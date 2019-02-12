@@ -202,7 +202,7 @@ class GraphicsState {
   // clang-format on
 
   // -----------------------------------------------------------------------------------------------
-  Core::BitHash getHash() const;
+  Core::BitHash const& getHash() const;
 
  private:
   DevicePtr mDevice;
