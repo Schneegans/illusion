@@ -20,6 +20,7 @@
 
 #include <thread>
 
+#include "Floor.hpp"
 #include "Lights.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -55,6 +56,7 @@ int main(int argc, char* argv[]) {
 
   // create shaders --------------------------------------------------------------------------------
   Lights lights(device, frameIndex, options.mLightCount);
+  Floor  floor(device);
 
   // create frame graph resources ------------------------------------------------------------------
   auto& albedo = graph->createResource().setName("albedo").setFormat(vk::Format::eR8G8B8A8Unorm);
@@ -74,7 +76,8 @@ int main(int argc, char* argv[]) {
     .addColorAttachment(albedo, Access::eWrite, clearColor)
     .addColorAttachment(normal, Access::eWrite, clearColor)
     .addDepthAttachment(depth, Access::eWrite, clearDepth)
-    .setProcessCallback([&lights](Illusion::Graphics::CommandBufferPtr const& cmd) {
+    .setProcessCallback([&lights, &floor](Illusion::Graphics::CommandBufferPtr const& cmd) {
+      floor.draw(cmd);
       lights.draw(cmd);
     });
 
@@ -133,10 +136,11 @@ int main(int argc, char* argv[]) {
     // Compute a modelView matrix based on the simulation time (this makes the scene spin). Then
     // upload this matrix via push constants.
     glm::mat4 modelView(1.f);
-    modelView = glm::translate(modelView, glm::vec3(0, 0, -2));
+    modelView = glm::translate(modelView, glm::vec3(0, 0, -3));
     modelView = glm::rotate(modelView, -time * 0.2f, glm::vec3(0, 1, 0));
 
     lights.update(time, projection * modelView);
+    floor.update(projection * modelView);
 
     try {
       graph->process();

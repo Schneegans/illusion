@@ -13,6 +13,7 @@
 #include <Illusion/Graphics/Device.hpp>
 #include <Illusion/Graphics/Shader.hpp>
 
+#include <glm/gtc/constants.hpp>
 #include <random>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -49,13 +50,15 @@ Lights::Lights(Illusion::Graphics::DevicePtr const&  device,
   mIndexBuffer    = device->createIndexBuffer("SphereIndices", INDICES);
 
   std::default_random_engine            generator;
-  std::uniform_real_distribution<float> position(-1.f, 1.f);
+  std::uniform_real_distribution<float> position(0.f, 2.f);
   std::uniform_real_distribution<float> color(0.5f, 1.f);
 
   for (auto& light : mLights) {
-    light.mPosition.x = position(generator);
+    float dir         = position(generator) * glm::pi<float>();
+    float dist        = position(generator);
+    light.mPosition.x = std::sin(dir) * dist;
     light.mPosition.y = 0.f;
-    light.mPosition.z = position(generator);
+    light.mPosition.z = std::cos(dir) * dist;
     light.mPosition.w = 1.f;
     light.mColor.r    = color(generator);
     light.mColor.g    = color(generator);
@@ -92,6 +95,8 @@ void Lights::draw(Illusion::Graphics::CommandBufferPtr const& cmd) {
   // Bind the three vertex buffers and the index buffer.
   cmd->bindVertexBuffers(0, {mPositionBuffer});
   cmd->bindIndexBuffer(mIndexBuffer, 0, vk::IndexType::eUint32);
+
+  cmd->bindingState().reset();
 
   cmd->bindingState().setStorageBuffer(
       mLightBuffer.current()->getBuffer(), sizeof(Light) * mLights.size(), 0, 0, 0);

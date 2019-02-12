@@ -9,14 +9,19 @@
 #version 450
 
 // inputs
-layout(location = 0) in vec4 vColor;
+layout(location = 0) in vec2 vTexcoords;
+
+// uniforms
+layout(binding = 0) uniform sampler2D texAlbedo;
+layout(binding = 1) uniform sampler2D texNormal;
 
 // outputs
 layout(location = 0) out vec4 outAlbedo;
 layout(location = 1) out vec4 outNormal;
 
-// methods
+// Very simple shader which just samples a texture. It is used in the TexturedQuad example, which
+// can also load HLSL code. See Quad.ps for the HLSL version of this shader.
 void main() {
-  outAlbedo = vColor;
-  outNormal = vec4(1, 0, 0, 1);
+  outNormal = texture(texNormal, vTexcoords);
+  outAlbedo = texture(texAlbedo, vTexcoords);
 }
