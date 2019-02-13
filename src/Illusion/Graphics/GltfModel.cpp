@@ -733,19 +733,19 @@ Model::Model(
             auto data = reinterpret_cast<const float*>(
                 &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
             for (size_t i(0); i < a.count; ++i) {
-              sampler.mValues.emplace_back(glm::vec4(data[i], 0.f, 0.f, 0.f));
+              sampler.mValues.emplace_back(data[i], 0.f, 0.f, 0.f);
             }
           } else if (a.type == TINYGLTF_TYPE_VEC2) {
             auto data = reinterpret_cast<const glm::vec2*>(
                 &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
             for (size_t i(0); i < a.count; ++i) {
-              sampler.mValues.emplace_back(glm::vec4(data[i], 0.f, 0.f));
+              sampler.mValues.emplace_back(data[i], 0.f, 0.f);
             }
           } else if (a.type == TINYGLTF_TYPE_VEC3) {
             auto data = reinterpret_cast<const glm::vec3*>(
                 &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
             for (size_t i(0); i < a.count; ++i) {
-              sampler.mValues.emplace_back(glm::vec4(data[i], 0.f));
+              sampler.mValues.emplace_back(data[i], 0.f);
             }
           } else if (a.type == TINYGLTF_TYPE_VEC4) {
             auto data = reinterpret_cast<const glm::vec4*>(
