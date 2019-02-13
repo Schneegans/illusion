@@ -8,13 +8,13 @@
 
 #version 450
 
-// inputs
+// The color is passed in from the vertex shader.
 layout(location = 0) in vec3 color;
 
-// outputs
+// And is directly written to the framebuffer.
 layout(location = 0) out vec4 outColor;
 
-// methods
+// In this very simple main method.
 void main() {
   outColor = vec4(color, 1);
 }

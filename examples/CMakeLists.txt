@@ -12,6 +12,7 @@ set(ENABLED_EXAMPLES
   "GltfViewer"
   "GPUInfo"
   "ShaderSandbox"
+  "SpecializationConstants"
   "TexturedCube"
   "TexturedQuad"
   "Triangle"
