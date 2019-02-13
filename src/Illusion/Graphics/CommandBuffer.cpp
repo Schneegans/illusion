@@ -37,6 +37,16 @@ CommandBuffer::CommandBuffer(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void CommandBuffer::setMaxPipelineAge(uint64_t value) {
+  mMaxPipelineAge = value;
+}
+
+uint64_t CommandBuffer::getMaxPipelineAge() const {
+  return mMaxPipelineAge;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void CommandBuffer::reset() {
 
   // First clear all state of the CommandBuffer. Except for the GraphicsState, this is kept.
@@ -46,6 +56,19 @@ void CommandBuffer::reset() {
   mDescriptorSetCache.releaseAll();
   mCurrentRenderPass.reset();
   mCurrentSubpass = 0;
+
+  // Increment our recording counter. This is used to track the life time of pipeline cache entries.
+  ++mRecordingID;
+
+  // Now delete all pipelines which are older than mMaxPipelineAge.
+  auto it = mPipelineCache.begin();
+  while (it != mPipelineCache.end()) {
+    if (mRecordingID - it->second.second > mMaxPipelineAge) {
+      it = mPipelineCache.erase(it);
+    } else {
+      ++it;
+    }
+  }
 
   // Then do the actual vk::CommandBuffer resetting.
   mVkCmd->reset({});
@@ -707,7 +730,8 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
 
     auto cached = mPipelineCache.find(hash);
     if (cached != mPipelineCache.end()) {
-      return cached->second;
+      cached->second.second = mRecordingID;
+      return cached->second.first;
     }
 
     vk::ComputePipelineCreateInfo info;
@@ -725,7 +749,7 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
 
     auto pipeline = mDevice->createComputePipeline("ComputePipeline of " + getName(), info);
 
-    mPipelineCache[hash] = pipeline;
+    mPipelineCache[hash] = {pipeline, mRecordingID};
 
     return pipeline;
   }
@@ -745,7 +769,8 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
 
   auto cached = mPipelineCache.find(hash);
   if (cached != mPipelineCache.end()) {
-    return cached->second;
+    cached->second.second = mRecordingID;
+    return cached->second.first;
   }
 
   // -----------------------------------------------------------------------------------------------
@@ -930,7 +955,7 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
 
   auto pipeline = mDevice->createGraphicsPipeline("GraphicsPipeline of " + getName(), info);
 
-  mPipelineCache[hash] = pipeline;
+  mPipelineCache[hash] = {pipeline, mRecordingID};
 
   return pipeline;
 }

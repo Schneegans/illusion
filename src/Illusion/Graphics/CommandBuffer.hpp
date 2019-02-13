@@ -21,9 +21,9 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // The CommandBuffer class encapsulates a vk::CommandBuffer. It tracks the bound shader program,  //
-// the current render-pass and sub-pass, the graphics and the binding state. This information is  //
-// used to create descriptor sets and pipelines on-the-fly. Both are cached and re-used when      //
-// possible.                                                                                      //
+// the current render-pass and sub-pass, the graphics, binding and the specialization state. This //
+// information is used to create descriptor sets and pipelines on-the-fly. Both are cached and    //
+// re-used when possible.                                                                         //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::NamedObject {
@@ -36,8 +36,18 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
 
   // basic operations ------------------------------------------------------------------------------
 
-  // Resets the vk::CommandBuffer and clears the current binding state.
-  // The current graphics state and the current shader program are not changed.
+  // Whenever reset() is called, old entries from the internal pipeline cache are deleted. When
+  // reset() is called "value" many times without a vk::Pipeline being used in the previous
+  // recording, it will be deleted. The default value is 2. So in a common setup, when a
+  // CommandBuffer is re-recorded per frame, a vk::Pipeline will be deleted when it wasn't used for
+  // two frames. When this value is set to zero, all pipelines will be re-created for every
+  // recording.
+  void     setMaxPipelineAge(uint64_t value);
+  uint64_t getMaxPipelineAge() const;
+
+  // Resets the vk::CommandBuffer, deletes old entries from the internal pipeline cache and clears
+  // the current binding state. The current graphics state and the current shader program are not
+  // changed.
   void reset();
 
   // Begins the internal vk::CommandBuffer. Use this for primary CommandBuffers.
@@ -241,7 +251,9 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
   RenderPassPtr mCurrentRenderPass;
   uint32_t      mCurrentSubpass = 0;
 
-  std::map<Core::BitHash, vk::PipelinePtr> mPipelineCache;
+  uint64_t                                                      mRecordingID    = 0;
+  uint64_t                                                      mMaxPipelineAge = 2;
+  std::map<Core::BitHash, std::pair<vk::PipelinePtr, uint64_t>> mPipelineCache;
 
   struct DescriptorSetState {
     vk::DescriptorSetPtr mSet;
