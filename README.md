@@ -24,6 +24,7 @@ I try to add as many comments to the source code as possible. The number of sour
   - [x] Very readable validation error messages since Illusion forces you to assign descriptive names to each and every Vulkan object (using `PFN_vkSetDebugUtilsObjectNameEXT`)
   - [x] Explicit graphics state per command buffer
   - [x] Explicit binding state per command buffer
+  - [x] Explicit specialization constants state per command buffer
   - [x] A ring-buffer for per-frame resources
   - [x] Per-frame resource count is independent from swapchain image count
   - [ ] Automatic image layout transitions
@@ -55,6 +56,22 @@ I try to add as many comments to the source code as possible. The number of sour
   - [ ] Sparse accessors
   - [ ] Multiple texture coordinates
   - [ ] Multiple scenes
+
+## Included Examples
+
+When compiled with the commands above, the examples will be located in `illusion/build/install/bin`. You can run them either by double-clicking or from the command line. For Linux, there is a shell script to start each example which sets the environment variables required for Vulkan.
+
+The list below is roughly sorted by complexity. So if you want to learn features of Illusion step-by-step you can have a look at the example's code in that order.
+
+Link | Description | Screenshot
+-----|-------------|-----------
+[GPUInfo](examples/GPUInfo) | This minimal example creates a Vulkan instance and prints a very verbose list of your Vulkan implementation's hardware and software capabilities. | ![screenshot](examples/GPUInfo/screenshot.jpg)
+[Triangle](examples/Triangle) | A simple triangle without vertex or index buffers that uses a pre-recorded command buffer and no per-frame resources. | ![screenshot](examples/Triangle/screenshot.jpg)
+[SpecializationConstants](examples/SpecializationConstants) | Similar to the Triangle example, but here three triangles are drawn with one shader program. For each triangle some specialization constants are set to different values. | ![screenshot](examples/SpecializationConstants/screenshot.jpg)
+[TexturedQuad](examples/TexturedQuad) | Similar to the triangle, in addition a texture is loaded and bound as fragment shader input. This example can either use GLSL or HLSL shaders. Use `TexturedQuad --help` to see the options. | ![screenshot](examples/TexturedQuad/screenshot.jpg)
+[ShaderSandbox](examples/ShaderSandbox) | An example similar to [ShaderToy](https://www.shadertoy.com). You can specify a fragment shader on the command line and it will be automatically reloaded when it changes on disc. Use `ShaderSandbox --help` to see the options. | ![screenshot](examples/ShaderSandbox/screenshot.jpg)
+[TexturedCube](examples/TexturedCube) | A more complex example using vertex buffers and an index buffer. Camera information is uploaded as uniform buffer, the cube's transformation is set via push constants. The command buffer is re-recorded every frame. The uniform buffer and the command buffer are per-frame resources. | ![screenshot](examples/TexturedCube/screenshot.jpg)
+[GltfViewer](examples/GltfViewer) | A viewer for glTF files. There are several command line options; have a look a `GltfViewer --help`. Most [glTFSample Models](https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0) are supported, including those with skinned animations. | ![screenshot](examples/GltfViewer/screenshot.jpg)
 
 ## Building Illusion
 
@@ -120,21 +137,6 @@ Then you can execute an example with:
 cd install\bin
 Triangle.exe
 ```
-## Included Examples
-
-When compiled with the commands above, the examples will be located in `illusion/build/install/bin`. You can run them either by double-clicking or from the command line. For Linux, there is a shell script to start each example which sets the environment variables required for Vulkan.
-
-The list below is roughly sorted by complexity. So if you want to learn features of Illusion step-by-step you can have a look at the example's code in that order.
-
-Link | Description | Screenshot
------|-------------|-----------
-[GPUInfo](examples/GPUInfo) | This minimal example creates a Vulkan instance and prints a very verbose list of your Vulkan implementation's hardware and software capabilities. | ![screenshot](examples/GPUInfo/screenshot.jpg)
-[Triangle](examples/Triangle) | A simple triangle without vertex or index buffers that uses a pre-recorded command buffer and no per-frame resources. | ![screenshot](examples/Triangle/screenshot.jpg)
-[SpecializationConstants](examples/SpecializationConstants) | Similar to the Triangle example, but here three triangles are drawn with one shader program. For each triangle some specialization constants are set to different values. | ![screenshot](examples/SpecializationConstants/screenshot.jpg)
-[TexturedQuad](examples/TexturedQuad) | Similar to the triangle, in addition a texture is loaded and bound as fragment shader input. This example can either use GLSL or HLSL shaders. Use `TexturedQuad --help` to see the options. | ![screenshot](examples/TexturedQuad/screenshot.jpg)
-[ShaderSandbox](examples/ShaderSandbox) | An example similar to [ShaderToy](https://www.shadertoy.com). You can specify a fragment shader on the command line and it will be automatically reloaded when it changes on disc. Use `ShaderSandbox --help` to see the options. | ![screenshot](examples/ShaderSandbox/screenshot.jpg)
-[TexturedCube](examples/TexturedCube) | A more complex example using vertex buffers and an index buffer. Camera information is uploaded as uniform buffer, the cube's transformation is set via push constants. The command buffer is re-recorded every frame. The uniform buffer and the command buffer are per-frame resources. | ![screenshot](examples/TexturedCube/screenshot.jpg)
-[GltfViewer](examples/GltfViewer) | A viewer for glTF files. There are several command line options; have a look a `GltfViewer --help`. Most [glTFSample Models](https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0) are supported, including those with skinned animations. | ![screenshot](examples/GltfViewer/screenshot.jpg)
 
 ## Documentation
 
