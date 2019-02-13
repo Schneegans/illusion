@@ -59,7 +59,7 @@ I try to add as many comments to the source code as possible. The number of sour
 
 ## Included Examples
 
-When compiled with the commands above, the examples will be located in `illusion/build/install/bin`. You can run them either by double-clicking or from the command line. For Linux, there is a shell script to start each example which sets the environment variables required for Vulkan.
+When compiled with [the commands below](#building-illusion), the examples will be located in `illusion/build/install/bin`. You can run them either by double-clicking or from the command line. For Linux, there is a shell script to start each example which sets the environment variables required for Vulkan.
 
 The list below is roughly sorted by complexity. So if you want to learn features of Illusion step-by-step you can have a look at the example's code in that order.
 
