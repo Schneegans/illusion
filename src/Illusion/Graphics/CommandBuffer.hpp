@@ -88,6 +88,8 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
   BindingState&       bindingState();
   BindingState const& bindingState() const;
 
+  // Read and write access to the current SpecialisationState. Changes will not directly affect the
+  // internal vk::CommandBuffer; they are flushed whenever a draw or dispatch command is issued.
   SpecialisationState&       specialisationState();
   SpecialisationState const& specialisationState() const;
 

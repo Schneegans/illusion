@@ -30,6 +30,16 @@ void SpecialisationState::setBoolConstant(uint32_t constantID, bool value) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void SpecialisationState::reset(uint32_t constantID) {
+  auto it = mValues.find(constantID);
+  if (it != mValues.end()) {
+    mValues.erase(it);
+    mDirty = true;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void SpecialisationState::reset() {
   if (mValues.size() > 0) {
     mValues.clear();
@@ -72,29 +82,34 @@ void SpecialisationState::set(uint32_t constantID, uint32_t value) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void SpecialisationState::update() const {
+  // Only do something if dirty flag is set.
   if (mDirty) {
 
+    // First clear the hash, the data vector and the vector of vk::SpecializationMapEntries.
     mHash.clear();
     mData.clear();
     mDataEntries.clear();
 
+    // Then update mData and mDataEntries with the values from mValues.
     for (auto const& value : mValues) {
       mDataEntries.emplace_back(
           value.first, mDataEntries.size() * sizeof(uint32_t), sizeof(uint32_t));
       mData.emplace_back(value.second);
     }
 
+    // Now we can update the members of the vk::SpecializationInfo struct.
     mInfo.mapEntryCount = mDataEntries.size();
     mInfo.pMapEntries   = mDataEntries.data();
     mInfo.dataSize      = mData.size() * sizeof(uint32_t);
     mInfo.pData         = mData.data();
 
-    // Update hash.
+    // And finally we update the hash.
     for (auto const& value : mValues) {
       mHash.push<32>(value.first);
       mHash.push<32>(value.second);
     }
 
+    // All done!
     mDirty = false;
   }
 }
