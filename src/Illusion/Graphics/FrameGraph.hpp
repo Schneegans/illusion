@@ -83,9 +83,10 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
     friend class FrameGraph;
 
    private:
-    std::unordered_map<Resource const*, AccessFlags>         mResourceAccess;
-    std::unordered_map<Resource const*, vk::ImageUsageFlags> mResourceUsage;
-    std::unordered_map<Resource const*, vk::ClearValue>      mResourceClear;
+    std::vector<Resource const*>                             mAttachments;
+    std::unordered_map<Resource const*, AccessFlags>         mAttachmentAccess;
+    std::unordered_map<Resource const*, vk::ImageUsageFlags> mAttachmentUsage;
+    std::unordered_map<Resource const*, vk::ClearValue>      mAttachmentClear;
 
     std::function<void(CommandBufferPtr)> mProcessCallback;
     std::string                           mName = "Unnamed Pass";
@@ -101,7 +102,7 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
   Resource& createResource();
   Pass&     createPass();
 
-  void setOutput(WindowPtr const& window, Pass const& pass, Resource const& resource);
+  void setOutput(WindowPtr const& window, Pass const& pass, Resource const& attachment);
   void process(const ProcessingFlags& flags = ProcessingFlagBits::eNone);
 
  private:
@@ -118,12 +119,12 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
     glm::uvec2    mExtent = glm::uvec2(0);
     std::string   mName;
 
-    std::vector<SubpassInfo>     mSubpasses;
-    std::vector<Resource const*> mAttachments;
+    std::vector<SubpassInfo> mSubpasses;
 
-    std::unordered_map<Resource const*, AccessFlags>         mResourceAccess;
-    std::unordered_map<Resource const*, vk::ImageUsageFlags> mResourceUsage;
-    std::unordered_map<Resource const*, vk::ClearValue>      mResourceClear;
+    std::vector<Resource const*>                             mAttachments;
+    std::unordered_map<Resource const*, AccessFlags>         mAttachmentAccess;
+    std::unordered_map<Resource const*, vk::ImageUsageFlags> mAttachmentUsage;
+    std::unordered_map<Resource const*, vk::ClearValue>      mAttachmentClear;
   };
 
   // -----------------------------------------------------------------------------------------------
