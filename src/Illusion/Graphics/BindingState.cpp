@@ -22,6 +22,13 @@ void BindingState::setBinding(BindingType const& value, uint32_t set, uint32_t b
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void BindingState::setInputAttachment(
+    BackedImagePtr const& attachment, uint32_t set, uint32_t binding) {
+  setBinding(InputAttachmentBinding{attachment}, set, binding);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void BindingState::setTexture(TexturePtr const& texture, uint32_t set, uint32_t binding) {
   setBinding(CombinedImageSamplerBinding{texture}, set, binding);
 }

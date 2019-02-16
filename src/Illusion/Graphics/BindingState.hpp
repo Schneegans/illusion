@@ -39,6 +39,9 @@ class BindingState {
   // explicit methods below are usually more convenient.
   void setBinding(BindingType const& value, uint32_t set, uint32_t binding);
 
+  // Stores the given Texture as InputAttachmentBinding.
+  void setInputAttachment(BackedImagePtr const& attachment, uint32_t set, uint32_t binding);
+
   // Stores the given Texture as CombinedImageSamplerBinding.
   void setTexture(TexturePtr const& texture, uint32_t set, uint32_t binding);
 

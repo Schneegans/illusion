@@ -614,7 +614,15 @@ void CommandBuffer::flush() {
 
         writeInfos[i].dstBinding = binding.first;
 
-        if (std::holds_alternative<CombinedImageSamplerBinding>(binding.second)) {
+        if (std::holds_alternative<InputAttachmentBinding>(binding.second)) {
+
+          auto value                   = std::get<InputAttachmentBinding>(binding.second);
+          imageInfos[i].imageLayout    = value.mAttachment->mCurrentLayout;
+          imageInfos[i].imageView      = *value.mAttachment->mView;
+          writeInfos[i].descriptorType = vk::DescriptorType::eInputAttachment;
+          writeInfos[i].pImageInfo     = &imageInfos[i];
+
+        } else if (std::holds_alternative<CombinedImageSamplerBinding>(binding.second)) {
 
           auto value                   = std::get<CombinedImageSamplerBinding>(binding.second);
           imageInfos[i].imageLayout    = value.mTexture->mCurrentLayout;

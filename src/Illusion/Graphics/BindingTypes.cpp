@@ -12,6 +12,16 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+bool InputAttachmentBinding::operator==(InputAttachmentBinding const& other) const {
+  return mAttachment == other.mAttachment;
+}
+
+bool InputAttachmentBinding::operator!=(InputAttachmentBinding const& other) const {
+  return !(*this == other);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 bool StorageImageBinding::operator==(StorageImageBinding const& other) const {
   return mImage == other.mImage && mView == other.mView;
 }

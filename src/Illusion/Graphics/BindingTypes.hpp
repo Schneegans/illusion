@@ -21,6 +21,15 @@ namespace Illusion::Graphics {
 // BindingType). See BindingState.hpp for details.                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+struct InputAttachmentBinding {
+  BackedImagePtr mAttachment;
+
+  bool operator==(InputAttachmentBinding const& other) const;
+  bool operator!=(InputAttachmentBinding const& other) const;
+};
+
+// -------------------------------------------------------------------------------------------------
+
 struct StorageImageBinding {
   TexturePtr       mImage;
   vk::ImageViewPtr mView;
@@ -82,8 +91,9 @@ struct DynamicStorageBufferBinding {
 
 // -------------------------------------------------------------------------------------------------
 
-typedef std::variant<StorageImageBinding, CombinedImageSamplerBinding, UniformBufferBinding,
-    DynamicUniformBufferBinding, StorageBufferBinding, DynamicStorageBufferBinding>
+typedef std::variant<InputAttachmentBinding, StorageImageBinding, CombinedImageSamplerBinding,
+    UniformBufferBinding, DynamicUniformBufferBinding, StorageBufferBinding,
+    DynamicStorageBufferBinding>
     BindingType;
 
 } // namespace Illusion::Graphics
