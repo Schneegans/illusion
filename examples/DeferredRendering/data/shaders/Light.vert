@@ -11,12 +11,12 @@
 // inputs
 layout(location = 0) in vec3 inPosition;
 
+// uniforms
 struct Light {
   vec4 mPosition;
   vec4 mColor;
 };
 
-// uniforms
 layout(binding = 0, set = 0) readonly buffer LightBuffer {
   Light lights[];
 }
@@ -24,7 +24,7 @@ lightBuffer;
 
 // push constants
 layout(push_constant, std430) uniform PushConstants {
-  mat4 mModelViewProjection;
+  mat4 mViewProjection;
 }
 pushConstants;
 
@@ -34,6 +34,6 @@ layout(location = 0) out vec4 vColor;
 // methods
 void main() {
   vColor      = lightBuffer.lights[gl_InstanceIndex].mColor;
-  gl_Position = pushConstants.mModelViewProjection *
+  gl_Position = pushConstants.mViewProjection *
                 (lightBuffer.lights[gl_InstanceIndex].mPosition + 0.01 * vec4(inPosition, 1.0));
 }

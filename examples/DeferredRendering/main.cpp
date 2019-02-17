@@ -22,6 +22,7 @@
 
 #include "Floor.hpp"
 #include "Lights.hpp"
+#include "ToneMapping.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -54,9 +55,10 @@ int main(int argc, char* argv[]) {
   auto frameIndex = Illusion::Graphics::FrameResourceIndex::create(3);
   auto graph      = Illusion::Graphics::FrameGraph::create("FrameGraph", device, frameIndex);
 
-  // create shaders --------------------------------------------------------------------------------
-  Lights lights(device, frameIndex, options.mLightCount);
-  Floor  floor(device);
+  // create shaders and other resources ------------------------------------------------------------
+  Lights      lights(device, frameIndex, options.mLightCount);
+  Floor       floor(device);
+  ToneMapping toneMapping(device);
 
   // create frame graph resources ------------------------------------------------------------------
   auto& albedo = graph->createResource().setName("albedo").setFormat(vk::Format::eR8G8B8A8Unorm);
@@ -71,42 +73,43 @@ int main(int argc, char* argv[]) {
   auto clearColor = vk::ClearColorValue(std::array<float, 4>{{0.f, 0.f, 0.f, 0.f}});
   auto clearDepth = vk::ClearDepthStencilValue(1.f, 0u);
 
-  // clang-format off
-  auto& gbuffer = graph->createPass()
-    .setName("gbuffer")
-    .addColorAttachment(albedo, Access::eWrite, clearColor)
-    .addColorAttachment(normal, Access::eWrite, clearColor)
-    .addColorAttachment(emit, Access::eWrite, clearColor)
-    .addDepthAttachment(depth, Access::eWrite, clearDepth)
-    .setProcessCallback([&lights, &floor](Illusion::Graphics::CommandBufferPtr const& cmd) {
-      floor.draw(cmd);
-      lights.draw(cmd);
-    });
+  auto& gbufferPass = graph->createPass();
+  gbufferPass.setName("gbuffer");
+  gbufferPass.addColorAttachment(albedo, Access::eWrite, clearColor);
+  gbufferPass.addColorAttachment(normal, Access::eWrite, clearColor);
+  gbufferPass.addColorAttachment(emit, Access::eWrite, clearColor);
+  gbufferPass.addDepthAttachment(depth, Access::eWrite, clearDepth);
+  gbufferPass.setProcessCallback([&lights, &floor](auto const& cmd, auto const&) {
+    floor.draw(cmd);
+    lights.draw(cmd);
+  });
 
-  auto& lighting = graph->createPass()
-    .setName("lighting")
-    .addColorAttachment(albedo, Access::eRead)
-    .addColorAttachment(normal, Access::eRead)
-    .addColorAttachment(depth, Access::eRead)
-    .addColorAttachment(hdr, Access::eWrite)
-    .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
-    });
+  auto& lightingPass = graph->createPass();
+  lightingPass.setName("lighting");
+  lightingPass.addColorAttachment(albedo, Access::eRead);
+  lightingPass.addColorAttachment(normal, Access::eRead);
+  lightingPass.addColorAttachment(emit, Access::eRead);
+  lightingPass.addColorAttachment(depth, Access::eRead);
+  lightingPass.addColorAttachment(hdr, Access::eWrite, clearColor);
+  lightingPass.setProcessCallback([&lights](auto const& cmd, auto const& inputAttachments) {
+    lights.doShading(cmd, inputAttachments);
+  });
 
-  auto& tonemapping = graph->createPass()
-    .setName("tonemapping")
-    .addColorAttachment(hdr, Access::eRead | Access::eWrite)
-    .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
-    });
+  auto& toneMappingPass = graph->createPass();
+  toneMappingPass.setName("toneMapping");
+  toneMappingPass.addColorAttachment(hdr, Access::eRead | Access::eWrite);
+  toneMappingPass.setProcessCallback([&toneMapping](auto const& cmd, auto const& inputAttachments) {
+    toneMapping.draw(cmd, inputAttachments);
+  });
 
-  // auto& gui = graph->createPass()
-  //   .setName("gui")
+  // auto& debug = graph->createPass()
+  //   .setName("debug")
   //   .addColorAttachment(hdr, Access::eLoad | Access::eWrite)
   //   .setProcessCallback([](Illusion::Graphics::CommandBufferPtr const& cmd) {
-  //     Illusion::Core::Logger::message() << "Record gui pass!" << std::endl;
+  //     Illusion::Core::Logger::message() << "Record debug pass!" << std::endl;
   //   });
-  // clang-format on
 
-  graph->setOutput(window, gbuffer, albedo);
+  graph->setOutput(window, toneMappingPass, hdr);
 
   // do one rendering step -------------------------------------------------------------------------
 
@@ -135,14 +138,14 @@ int main(int argc, char* argv[]) {
         0.1f, 100.0f);
     projection[1][1] *= -1; // flip for y-down
 
-    // Compute a modelView matrix based on the simulation time (this makes the scene spin). Then
+    // Compute a view matrix based on the simulation time (this makes the scene spin). Then
     // upload this matrix via push constants.
-    glm::mat4 modelView(1.f);
-    modelView = glm::translate(modelView, glm::vec3(0, 0, -3));
-    modelView = glm::rotate(modelView, -time * 0.2f, glm::vec3(0, 1, 0));
+    glm::mat4 view(1.f);
+    view = glm::translate(view, glm::vec3(0, 0, -3));
+    view = glm::rotate(view, -time * 0.5f, glm::vec3(0, 1, 0));
 
-    lights.update(time, projection * modelView);
-    floor.update(projection * modelView);
+    lights.update(time, projection * view);
+    floor.update(projection * view);
 
     try {
       graph->process();

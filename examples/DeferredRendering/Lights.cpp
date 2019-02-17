@@ -21,15 +21,17 @@
 Lights::Lights(Illusion::Graphics::DevicePtr const&  device,
     Illusion::Graphics::FrameResourceIndexPtr const& frameIndex, uint32_t lightCount)
     : mLights(lightCount)
-    , mShader(Illusion::Graphics::Shader::createFromFiles("LightShader", device,
+    , mDrawLights(Illusion::Graphics::Shader::createFromFiles("DrawLights", device,
           {"data/DeferredRendering/shaders/Light.vert",
               "data/DeferredRendering/shaders/Light.frag"}))
+    , mDoShading(Illusion::Graphics::Shader::createFromFiles("DoShading", device,
+          {"data/DeferredRendering/shaders/Quad.vert",
+              "data/DeferredRendering/shaders/Shading.frag"}))
     , mLightBuffer(frameIndex, [=](uint32_t index) {
       return Illusion::Graphics::CoherentBuffer::create(
           "LightStorageBuffer " + std::to_string(index), device, sizeof(Light) * lightCount,
           vk::BufferUsageFlagBits::eStorageBuffer);
     }) {
-
   // clang-format off
   const std::array<glm::vec3, 12> POSITIONS = {
     glm::vec3( 0.000000, -1.000000,  0.000000), glm::vec3( 0.723600, -0.447215,  0.525720),
@@ -55,7 +57,7 @@ Lights::Lights(Illusion::Graphics::DevicePtr const&  device,
 
   for (auto& light : mLights) {
     float dir         = position(generator) * glm::pi<float>();
-    float dist        = position(generator);
+    float dist        = position(generator) * 2;
     light.mPosition.x = std::sin(dir) * dist;
     light.mPosition.y = 0.f;
     light.mPosition.z = std::cos(dir) * dist;
@@ -70,7 +72,7 @@ Lights::Lights(Illusion::Graphics::DevicePtr const&  device,
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Lights::update(float time, glm::mat4 const& matMVP) {
-  mMatMVP = matMVP;
+  mMatVP = matMVP;
   for (size_t i(0); i < mLights.size(); ++i) {
     mLights[i].mPosition.y = std::sin(time + i);
   }
@@ -96,15 +98,37 @@ void Lights::draw(Illusion::Graphics::CommandBufferPtr const& cmd) {
   cmd->bindVertexBuffers(0, {mPositionBuffer});
   cmd->bindIndexBuffer(mIndexBuffer, 0, vk::IndexType::eUint32);
 
-  cmd->bindingState().reset();
-
   cmd->bindingState().setStorageBuffer(
       mLightBuffer.current()->getBuffer(), sizeof(Light) * mLights.size(), 0, 0, 0);
 
-  cmd->setShader(mShader);
-  cmd->pushConstants(mMatMVP);
+  cmd->setShader(mDrawLights);
+  cmd->pushConstants(mMatVP);
 
   cmd->drawIndexed(60, mLights.size(), 0, 0, 0);
+
+  cmd->bindingState().reset(0);
+  cmd->graphicsState().setVertexInputBindings({});
+  cmd->graphicsState().setVertexInputAttributes({});
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Lights::doShading(Illusion::Graphics::CommandBufferPtr const& cmd,
+    std::vector<Illusion::Graphics::BackedImagePtr> const&         inputAttachments) {
+  cmd->setShader(mDoShading);
+
+  for (size_t i(0); i < inputAttachments.size(); ++i) {
+    cmd->bindingState().setInputAttachment(inputAttachments[i], 0, i);
+  }
+
+  cmd->bindingState().setStorageBuffer(
+      mLightBuffer.current()->getBuffer(), sizeof(Light) * mLights.size(), 0, 1, 0);
+  cmd->specialisationState().setIntegerConstant(0, mLights.size());
+  cmd->pushConstants(glm::inverse(glm::inverse(mMatVP)));
+
+  cmd->draw(4);
+  cmd->bindingState().reset(0);
+  cmd->bindingState().reset(1);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

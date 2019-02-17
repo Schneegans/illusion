@@ -6,41 +6,23 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_EXAMPLES_DEFERRED_RENDERING_LIGHTS_HPP
-#define ILLUSION_EXAMPLES_DEFERRED_RENDERING_LIGHTS_HPP
+#ifndef ILLUSION_EXAMPLES_DEFERRED_RENDERING_TONEMAPPING_HPP
+#define ILLUSION_EXAMPLES_DEFERRED_RENDERING_TONEMAPPING_HPP
 
-#include <Illusion/Graphics/FrameResource.hpp>
 #include <Illusion/Graphics/fwd.hpp>
 
-#include <glm/glm.hpp>
-
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class Lights {
+class ToneMapping {
  public:
-  Lights(Illusion::Graphics::DevicePtr const&          device,
-      Illusion::Graphics::FrameResourceIndexPtr const& frameIndex, uint32_t lightCount);
+  ToneMapping(Illusion::Graphics::DevicePtr const& device);
 
-  void update(float time, glm::mat4 const& matVP);
-  void draw(Illusion::Graphics::CommandBufferPtr const& cmd);
-  void doShading(Illusion::Graphics::CommandBufferPtr const& cmd,
+  void draw(Illusion::Graphics::CommandBufferPtr const&      cmd,
       std::vector<Illusion::Graphics::BackedImagePtr> const& inputAttachments);
 
  private:
-  struct Light {
-    glm::vec4 mPosition;
-    glm::vec4 mColor;
-  };
-
-  std::vector<Light>                  mLights;
-  glm::mat4                           mMatVP;
-  Illusion::Graphics::BackedBufferPtr mPositionBuffer;
-  Illusion::Graphics::BackedBufferPtr mIndexBuffer;
-  Illusion::Graphics::ShaderPtr       mDrawLights;
-  Illusion::Graphics::ShaderPtr       mDoShading;
-
-  Illusion::Graphics::FrameResource<Illusion::Graphics::CoherentBufferPtr> mLightBuffer;
+  Illusion::Graphics::ShaderPtr mShader;
 };
 
-#endif // ILLUSION_EXAMPLES_DEFERRED_RENDERING_LIGHTS_HPP
+#endif // ILLUSION_EXAMPLES_DEFERRED_RENDERING_TONEMAPPING_HPP

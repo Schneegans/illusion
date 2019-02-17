@@ -13,7 +13,6 @@
 #include <Illusion/Graphics/Texture.hpp>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Floor::Floor(Illusion::Graphics::DevicePtr const& device)
     : mAlbedoTexture(Illusion::Graphics::Texture::createFromFile("FloorAlbedo", device,
@@ -29,22 +28,27 @@ Floor::Floor(Illusion::Graphics::DevicePtr const& device)
               "data/DeferredRendering/shaders/Floor.frag"})) {
 }
 
-void Floor::update(glm::mat4 const& matMVP) {
-  mMatMVP = matMVP;
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Floor::update(glm::mat4 const& matVP) {
+  mMatVP = matVP;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Floor::draw(Illusion::Graphics::CommandBufferPtr const& cmd) {
 
-  cmd->graphicsState().setVertexInputBindings({});
-  cmd->graphicsState().setVertexInputAttributes({});
-
-  cmd->bindingState().reset();
   cmd->bindingState().setTexture(mAlbedoTexture, 0, 0);
   cmd->bindingState().setTexture(mNormalTexture, 0, 1);
 
   // The indices are provided as a triangle strip
   cmd->setShader(mShader);
   cmd->graphicsState().setTopology(vk::PrimitiveTopology::eTriangleStrip);
-  cmd->pushConstants(mMatMVP);
+  cmd->pushConstants(mMatVP);
   cmd->draw(4);
+
+  cmd->bindingState().reset(0, 0);
+  cmd->bindingState().reset(0, 1);
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////

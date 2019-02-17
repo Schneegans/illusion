@@ -6,29 +6,31 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_EXAMPLES_DEFERRED_RENDERING_FLOOR_HPP
-#define ILLUSION_EXAMPLES_DEFERRED_RENDERING_FLOOR_HPP
+#include "ToneMapping.hpp"
 
-#include <Illusion/Graphics/FrameResource.hpp>
-#include <Illusion/Graphics/fwd.hpp>
-
-#include <glm/glm.hpp>
+#include <Illusion/Graphics/CommandBuffer.hpp>
+#include <Illusion/Graphics/Shader.hpp>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+ToneMapping::ToneMapping(Illusion::Graphics::DevicePtr const& device)
+    : mShader(Illusion::Graphics::Shader::createFromFiles("ToneMappingShader", device,
+          {"data/DeferredRendering/shaders/Quad.vert",
+              "data/DeferredRendering/shaders/ToneMapping.frag"})) {
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class Floor {
- public:
-  Floor(Illusion::Graphics::DevicePtr const& device);
+void ToneMapping::draw(Illusion::Graphics::CommandBufferPtr const& cmd,
+    std::vector<Illusion::Graphics::BackedImagePtr> const&         inputAttachments) {
 
-  void update(glm::mat4 const& matVP);
-  void draw(Illusion::Graphics::CommandBufferPtr const& cmd);
+  cmd->setShader(mShader);
 
- private:
-  glm::mat4                      mMatVP;
-  Illusion::Graphics::TexturePtr mAlbedoTexture;
-  Illusion::Graphics::TexturePtr mNormalTexture;
-  Illusion::Graphics::ShaderPtr  mShader;
-};
+  for (size_t i(0); i < inputAttachments.size(); ++i) {
+    cmd->bindingState().setInputAttachment(inputAttachments[i], 0, i);
+  }
 
-#endif // ILLUSION_EXAMPLES_DEFERRED_RENDERING_FLOOR_HPP
+  cmd->draw(4);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////

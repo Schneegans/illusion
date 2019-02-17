@@ -10,6 +10,7 @@
 
 // inputs
 layout(location = 0) in vec2 vTexcoords;
+layout(location = 1) in vec3 vPosition;
 
 // uniforms
 layout(binding = 0) uniform sampler2D texAlbedo;
@@ -25,5 +26,6 @@ layout(location = 2) out vec4 outEmit;
 void main() {
   outNormal = texture(texNormal, vTexcoords);
   outAlbedo = texture(texAlbedo, vTexcoords);
-  outEmit   = vec4(0, 0, 0, 1);
+  // outAlbedo = vec4(vPosition, 1);
+  outEmit = vec4(0, 0, 0, 1);
 }
