@@ -13,6 +13,7 @@
 #include "../Core/NamedObject.hpp"
 #include "../Core/ThreadPool.hpp"
 #include "FrameResource.hpp"
+#include "RenderPass.hpp"
 
 #include <functional>
 #include <glm/glm.hpp>
@@ -78,7 +79,9 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
     Pass& addDepthAttachment(Resource const& resource, const AccessFlags& access,
         std::optional<vk::ClearDepthStencilValue> clear = {});
 
-    Pass& setProcessCallback(std::function<void(CommandBufferPtr)> const& callback);
+    Pass& setProcessCallback(
+        std::function<void(CommandBufferPtr const&, std::vector<BackedImagePtr> const&)> const&
+            callback);
 
     friend class FrameGraph;
 
@@ -88,8 +91,9 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
     std::unordered_map<Resource const*, vk::ImageUsageFlags> mAttachmentUsage;
     std::unordered_map<Resource const*, vk::ClearValue>      mAttachmentClear;
 
-    std::function<void(CommandBufferPtr)> mProcessCallback;
-    std::string                           mName = "Unnamed Pass";
+    std::function<void(CommandBufferPtr const&, std::vector<BackedImagePtr> const&)>
+                mProcessCallback;
+    std::string mName = "Unnamed Pass";
 
     // This is directly accessed by the FrameGraph.
     bool mDirty = true;
@@ -109,7 +113,7 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
   // -----------------------------------------------------------------------------------------------
 
   struct RenderPassInfo {
-    struct SubpassInfo {
+    struct Subpass : public RenderPass::Subpass {
       Pass const*                     mPass;
       CommandBufferPtr                mSecondaryCommandBuffer;
       std::unordered_set<Pass const*> mDependencies;
@@ -119,7 +123,7 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
     glm::uvec2    mExtent = glm::uvec2(0);
     std::string   mName;
 
-    std::vector<SubpassInfo> mSubpasses;
+    std::vector<Subpass> mSubpasses;
 
     std::vector<Resource const*>                             mAttachments;
     std::unordered_map<Resource const*, AccessFlags>         mAttachmentAccess;

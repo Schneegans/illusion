@@ -170,7 +170,8 @@ FrameGraph::Pass& FrameGraph::Pass::setName(std::string const& name) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 FrameGraph::Pass& FrameGraph::Pass::setProcessCallback(
-    std::function<void(CommandBufferPtr)> const& callback) {
+    std::function<void(CommandBufferPtr const&, std::vector<BackedImagePtr> const&)> const&
+        callback) {
   mProcessCallback = callback;
   mDirty           = true;
   return *this;
@@ -316,11 +317,14 @@ void FrameGraph::process(const ProcessingFlags& flags) {
         continue;
       }
 
-      // And create a RenderPassInfo for it. We store the extent of the pass for easier later
-      // access. Due to the previous graph validation we are sure that all attachments have the same
-      // resolution.
+      // And create a RenderPassInfo with a default subpass for it. We store the extent of the pass
+      // for easier later access. Due to the previous graph validation we are sure that all
+      // attachments have the same resolution.
+      RenderPassInfo::Subpass defaultSubpass;
+      defaultSubpass.mPass = pass;
+
       RenderPassInfo renderPass;
-      renderPass.mSubpasses.push_back({pass, nullptr, {}});
+      renderPass.mSubpasses.push_back(defaultSubpass);
       for (auto const& attachment : pass->mAttachments) {
         renderPass.mExtent = attachment->getAbsoluteExtent(mOutputWindow->pExtent.get());
         break;
@@ -577,12 +581,9 @@ void FrameGraph::process(const ProcessingFlags& flags) {
       // rather go for a std::vector and check for duplicates ourselves.
       // At the same time we setup the Subpass structures for the RenderPass. These contain
       // information on the dependencies between subpasses and their resource usage.
-      std::vector<RenderPass::Subpass> subpasses;
+      for (auto& subpass : passIt->mSubpasses) {
 
-      for (auto const& subpassInfo : passIt->mSubpasses) {
-        RenderPass::Subpass subpass;
-
-        for (auto const& attachment : subpassInfo.mPass->mAttachments) {
+        for (auto const& attachment : subpass.mPass->mAttachments) {
 
           // Add the attachment to the attachments vector. The content of the attachments vector
           // will be the order of attachments of our framebuffer in the end.
@@ -598,14 +599,14 @@ void FrameGraph::process(const ProcessingFlags& flags) {
           // structure.
           uint32_t attachmentIdx = std::distance(passIt->mAttachments.begin(), attachmentIt);
 
-          auto access = subpassInfo.mPass->mAttachmentAccess.at(attachment);
+          auto access = subpass.mPass->mAttachmentAccess.at(attachment);
 
           if (access.contains(AccessFlagBits::eRead)) {
             subpass.mInputAttachments.push_back(attachmentIdx);
           }
 
           if (access.contains(AccessFlagBits::eWrite) || access.contains(AccessFlagBits::eLoad)) {
-            if (VkFlags(subpassInfo.mPass->mAttachmentUsage.at(attachment) &
+            if (VkFlags(subpass.mPass->mAttachmentUsage.at(attachment) &
                         vk::ImageUsageFlagBits::eDepthStencilAttachment) > 0) {
               subpass.mDepthStencilAttachment = attachmentIdx;
             } else {
@@ -617,15 +618,13 @@ void FrameGraph::process(const ProcessingFlags& flags) {
         // Now we have to setup the subpass dependencies for our RenderPass. That means for each
         // dependency of the current subpass we will check whether this is actually part of the
         // same RenderPass. If so, that dependency is a subpass dependency.
-        for (auto dependency : subpassInfo.mDependencies) {
+        for (auto dependency : subpass.mDependencies) {
           for (size_t i(0); i < passIt->mSubpasses.size(); ++i) {
             if (dependency == passIt->mSubpasses[i].mPass) {
               subpass.mPreSubpasses.push_back(i);
             }
           }
         }
-
-        subpasses.push_back(subpass);
       }
 
       // Then we can add the collected attachments to our RenderPass as attachments.
@@ -731,6 +730,10 @@ void FrameGraph::process(const ProcessingFlags& flags) {
       }
 
       // And set the subpass info structures.
+      std::vector<RenderPass::Subpass> subpasses;
+      for (auto const& subpass : passIt->mSubpasses) {
+        subpasses.push_back(subpass);
+      }
       passIt->mRenderPass->setSubpasses(subpasses);
     }
 
@@ -794,11 +797,18 @@ void FrameGraph::process(const ProcessingFlags& flags) {
     // Record the subpasses using the thread(s) of the ThreadPool.
     uint32_t subpassCounter = 0;
     for (auto const& subpass : pass.mSubpasses) {
+
       // mThreadPool.enqueue([&pass, &subpass, subpassCounter]() {
+
+      std::vector<BackedImagePtr> inputAttachments;
+      for (uint32_t i : subpass.mInputAttachments) {
+        inputAttachments.push_back(perFrame.mAllAttachments.at(pass.mAttachments[i]));
+      }
+
       subpass.mSecondaryCommandBuffer->reset();
       subpass.mSecondaryCommandBuffer->begin(pass.mRenderPass, subpassCounter);
       subpass.mSecondaryCommandBuffer->graphicsState().setViewports({{glm::vec2(pass.mExtent)}});
-      subpass.mPass->mProcessCallback(subpass.mSecondaryCommandBuffer);
+      subpass.mPass->mProcessCallback(subpass.mSecondaryCommandBuffer, inputAttachments);
       subpass.mSecondaryCommandBuffer->end();
       // });
       ++subpassCounter;
