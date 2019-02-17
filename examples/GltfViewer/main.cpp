@@ -9,13 +9,13 @@
 #define GLM_FORCE_SWIZZLE
 #define GLM_ENABLE_EXPERIMENTAL
 
+#include "GltfModel.hpp"
+
 #include <Illusion/Core/CommandLineOptions.hpp>
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Core/Timer.hpp>
 #include <Illusion/Graphics/CoherentBuffer.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
-#include <Illusion/Graphics/FrameResource.hpp>
-#include <Illusion/Graphics/GltfModel.hpp>
 #include <Illusion/Graphics/Instance.hpp>
 #include <Illusion/Graphics/LazyRenderPass.hpp>
 #include <Illusion/Graphics/PhysicalDevice.hpp>
@@ -27,21 +27,16 @@
 #include <glm/gtx/transform.hpp>
 #include <thread>
 
-struct PushConstants {
-  glm::mat4 mModelMatrix;
-  glm::vec4 mAlbedoFactor;
-  glm::vec3 mEmissiveFactor;
-  bool      mSpecularGlossinessWorkflow;
-  glm::vec3 mMetallicRoughnessFactor;
-  float     mNormalScale;
-  float     mOcclusionStrength;
-  float     mAlphaCutoff;
-  int32_t   mVertexAttributes;
-};
+////////////////////////////////////////////////////////////////////////////////////////////////////
+// This (rather complex) example loads a glTF-file and displays it using physically based         //
+// shading. Both, roughness-metallic and secular-glossiness workflows are supported. It also      //
+// loads animations and skins from the file. Most glTFSample Models                               //
+// (https://github.com/KhronosGroup/glTF-Sample-Models/tree/master/2.0) are supported, especially //
+// the feature-test models render fine.                                                           //
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-struct SkinUniforms {
-  glm::mat4 mJointMatrices[256];
-};
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct CameraUniforms {
   glm::vec4 mPosition;
@@ -49,17 +44,20 @@ struct CameraUniforms {
   glm::mat4 mProjectionMatrix;
 };
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 struct PerFrame {
   PerFrame() = default;
 
-  PerFrame(uint32_t index, Illusion::Graphics::DevicePtr const& device, vk::DeviceSize uboAlignment)
+  PerFrame(uint32_t index, Illusion::Graphics::DevicePtr const& device)
       : mCmd(Illusion::Graphics::CommandBuffer::create(
             "CommandBuffer " + std::to_string(index), device))
       , mRenderPass(Illusion::Graphics::LazyRenderPass::create(
             "RenderPass " + std::to_string(index), device))
-      , mUniformBuffer(
-            Illusion::Graphics::CoherentBuffer::create("CoherentBuffer " + std::to_string(index),
-                device, std::pow(2, 20), vk::BufferUsageFlagBits::eUniformBuffer, uboAlignment))
+      , mUniformBuffer(Illusion::Graphics::CoherentBuffer::create(
+            "CameraUniformBuffer " + std::to_string(index), device, sizeof(CameraUniforms),
+            vk::BufferUsageFlagBits::eUniformBuffer))
       , mRenderFinishedFence(device->createFence("RenderFinished " + std::to_string(index)))
       , mRenderFinishedSemaphore(
             device->createSemaphore("FrameFinished " + std::to_string(index))) {
@@ -75,84 +73,22 @@ struct PerFrame {
   vk::SemaphorePtr                      mRenderFinishedSemaphore;
 };
 
-void drawNodes(std::vector<std::shared_ptr<Illusion::Graphics::Gltf::Node>> const& nodes,
-    glm::mat4 const& viewMatrix, glm::mat4 const& modelMatrix, bool doAlphaBlending,
-    vk::DeviceSize emptySkinDynamicOffset, PerFrame const& res) {
-
-  res.mCmd->graphicsState().setBlendAttachments({{doAlphaBlending}});
-
-  for (auto const& n : nodes) {
-
-    glm::mat4 nodeMatrix = n->mGlobalTransform;
-
-    if (n->mSkin) {
-      SkinUniforms skin{};
-      auto         jointMatrices = n->mSkin->getJointMatrices(nodeMatrix);
-
-      for (size_t i(0); i < jointMatrices.size() && i < 256; ++i) {
-        skin.mJointMatrices[i] = jointMatrices[i];
-      }
-
-      auto skinDynamicOffset = res.mUniformBuffer->addData(skin);
-      res.mCmd->bindingState().setDynamicUniformBuffer(res.mUniformBuffer->getBuffer(),
-          sizeof(SkinUniforms), static_cast<uint32_t>(skinDynamicOffset), 2, 0);
-    } else {
-      res.mCmd->bindingState().setDynamicUniformBuffer(res.mUniformBuffer->getBuffer(),
-          sizeof(SkinUniforms), static_cast<uint32_t>(emptySkinDynamicOffset), 2, 0);
-    }
-
-    if (n->mMesh) {
-
-      for (auto const& p : n->mMesh->mPrimitives) {
-
-        if (p.mMaterial->mDoAlphaBlending == doAlphaBlending) {
-          PushConstants pushConstants{};
-          pushConstants.mModelMatrix                = modelMatrix * nodeMatrix;
-          pushConstants.mAlbedoFactor               = p.mMaterial->mAlbedoFactor;
-          pushConstants.mEmissiveFactor             = p.mMaterial->mEmissiveFactor;
-          pushConstants.mSpecularGlossinessWorkflow = p.mMaterial->mSpecularGlossinessWorkflow;
-          pushConstants.mMetallicRoughnessFactor    = p.mMaterial->mMetallicRoughnessFactor;
-          pushConstants.mNormalScale                = p.mMaterial->mNormalScale;
-          pushConstants.mOcclusionStrength          = p.mMaterial->mOcclusionStrength;
-          pushConstants.mAlphaCutoff                = p.mMaterial->mAlphaCutoff;
-          pushConstants.mVertexAttributes           = static_cast<int32_t>(p.mVertexAttributes);
-          res.mCmd->pushConstants(pushConstants);
-
-          res.mCmd->bindingState().setTexture(p.mMaterial->mAlbedoTexture, 3, 0);
-          res.mCmd->bindingState().setTexture(p.mMaterial->mMetallicRoughnessTexture, 3, 1);
-          res.mCmd->bindingState().setTexture(p.mMaterial->mNormalTexture, 3, 2);
-          res.mCmd->bindingState().setTexture(p.mMaterial->mOcclusionTexture, 3, 3);
-          res.mCmd->bindingState().setTexture(p.mMaterial->mEmissiveTexture, 3, 4);
-          res.mCmd->graphicsState().setTopology(p.mTopology);
-          res.mCmd->graphicsState().setCullMode(p.mMaterial->mDoubleSided
-                                                    ? vk::CullModeFlagBits::eNone
-                                                    : vk::CullModeFlagBits::eBack);
-          res.mCmd->drawIndexed(p.mIndexCount, 1, p.mIndexOffset, 0, 0);
-        }
-      }
-    }
-
-    drawNodes(n->mChildren, viewMatrix, modelMatrix, doAlphaBlending, emptySkinDynamicOffset, res);
-  }
-};
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char* argv[]) {
 
   struct {
-    std::string mModelFile   = "data/GltfViewer/models/DamagedHelmet.glb";
-    std::string mSkyboxFile  = "data/GltfViewer/textures/sunset_fairway_1k.hdr";
-    std::string mTexChannels = "rgb";
-    int32_t     mAnimation   = 0;
-    bool        mNoSkins     = false;
-    bool        mNoTextures  = false;
-    bool        mPrintInfo   = false;
-    bool        mPrintHelp   = false;
+    std::string mModelFile  = "data/GltfViewer/models/DamagedHelmet.glb";
+    std::string mSkyboxFile = "data/GltfViewer/textures/sunset_fairway_1k.hdr";
+    int32_t     mAnimation  = 0;
+    bool        mNoSkins    = false;
+    bool        mNoTextures = false;
+    bool        mPrintHelp  = false;
   } options;
 
   // clang-format off
   Illusion::Core::CommandLineOptions args("Simple viewer for GLTF files.");
   args.addOption({"-h",  "--help"},        &options.mPrintHelp,  "Print this help");
-  args.addOption({"-i",  "--info"},        &options.mPrintInfo,  "Print information on the loaded model");
   args.addOption({"-m",  "--model"},       &options.mModelFile,  "GLTF model (.gltf or .glb)");
   args.addOption({"-e",  "--environment"}, &options.mSkyboxFile, "Skybox image (in equirectangular projection)");
   args.addOption({"-a",  "--animation"},   &options.mAnimation,  "Index of the animation to play. Default: 0, Use -1 to disable animations.");
@@ -183,18 +119,9 @@ int main(int argc, char* argv[]) {
     loadOptions |= Illusion::Graphics::Gltf::LoadOptionBits::eTextures;
   }
 
-  auto model =
-      Illusion::Graphics::Gltf::Model::create("GltfModel", device, options.mModelFile, loadOptions);
+  auto frameIndex = Illusion::Graphics::FrameResourceIndex::create(2);
 
-  if (options.mPrintInfo) {
-    model->printInfo();
-  }
-
-  auto      modelBBox   = model->getRoot()->getBoundingBox();
-  float     modelSize   = glm::length(modelBBox.mMin - modelBBox.mMax);
-  glm::vec3 modelCenter = (modelBBox.mMin + modelBBox.mMax) * 0.5f;
-  glm::mat4 modelMatrix = glm::scale(glm::vec3(1.f / modelSize));
-  modelMatrix           = glm::translate(modelMatrix, -modelCenter);
+  auto model = GltfModel("GltfModel", device, options.mModelFile, loadOptions, frameIndex);
 
   auto brdflut = Illusion::Graphics::Texture::createBRDFLuT("BRDFLuT", device, 128);
   auto skybox  = Illusion::Graphics::Texture::createCubemapFrom360PanoramaFile(
@@ -204,19 +131,11 @@ int main(int argc, char* argv[]) {
   auto prefilteredReflection = Illusion::Graphics::Texture::createPrefilteredReflectionCubemap(
       "ReflectionTexture", device, 128, skybox);
 
-  auto pbrShader = Illusion::Graphics::Shader::createFromFiles("PBRShader", device,
-      {"data/GltfViewer/shaders/GltfShader.vert", "data/GltfViewer/shaders/GltfShader.frag"},
-      {"SkinUniforms"});
-
   auto skyShader = Illusion::Graphics::Shader::createFromFiles("SkyboxShader", device,
       {"data/GltfViewer/shaders/Skybox.vert", "data/GltfViewer/shaders/Skybox.frag"});
 
-  auto uboAlignment =
-      instance->getPhysicalDevice()->getProperties().limits.minUniformBufferOffsetAlignment;
-
-  auto frameIndex = Illusion::Graphics::FrameResourceIndex::create(2);
   Illusion::Graphics::FrameResource<PerFrame> perFrame(
-      frameIndex, [=](uint32_t index) { return PerFrame(index, device, uboAlignment); });
+      frameIndex, [=](uint32_t index) { return PerFrame(index, device); });
 
   glm::vec3 cameraPolar(0.f, 0.f, 1.5f);
 
@@ -264,14 +183,7 @@ int main(int argc, char* argv[]) {
 
     frameIndex->step();
 
-    if (options.mAnimation >= 0 &&
-        static_cast<size_t>(options.mAnimation) < model->getAnimations().size()) {
-      auto const& anim = model->getAnimations()[options.mAnimation];
-      float       modelAnimationTime =
-          std::fmod(static_cast<float>(timer.getElapsed()), anim->mEnd - anim->mStart);
-      modelAnimationTime += anim->mStart;
-      model->setAnimationTime(options.mAnimation, modelAnimationTime);
-    }
+    model.update(timer.getElapsed(), options.mAnimation);
 
     auto& res = perFrame.current();
 
@@ -296,11 +208,9 @@ int main(int argc, char* argv[]) {
                       cameraPolar.z,
             1.0);
 
-    res.mUniformBuffer->reset();
-
     camera.mViewMatrix =
         glm::lookAt(camera.mPosition.xyz(), glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
-    res.mUniformBuffer->addData(camera);
+    res.mUniformBuffer->updateData(camera);
 
     // The color and depth our framebuffer attachments will be cleared to.
     std::vector<vk::ClearValue> clearValues;
@@ -319,32 +229,15 @@ int main(int argc, char* argv[]) {
     res.mCmd->graphicsState().setTopology(vk::PrimitiveTopology::eTriangleStrip);
     res.mCmd->graphicsState().setVertexInputAttributes({});
     res.mCmd->graphicsState().setVertexInputBindings({});
-
     res.mCmd->draw(4);
 
     res.mCmd->bindingState().reset(1);
-
-    res.mCmd->setShader(pbrShader);
     res.mCmd->bindingState().setTexture(brdflut, 1, 0);
     res.mCmd->bindingState().setTexture(prefilteredIrradiance, 1, 1);
     res.mCmd->bindingState().setTexture(prefilteredReflection, 1, 2);
     res.mCmd->graphicsState().setDepthTestEnable(true);
     res.mCmd->graphicsState().setDepthWriteEnable(true);
-    res.mCmd->graphicsState().setVertexInputAttributes(
-        Illusion::Graphics::Gltf::Model::getVertexInputAttributes());
-    res.mCmd->graphicsState().setVertexInputBindings(
-        Illusion::Graphics::Gltf::Model::getVertexInputBindings());
-
-    res.mCmd->bindVertexBuffers(0, {model->getVertexBuffer()});
-    res.mCmd->bindIndexBuffer(model->getIndexBuffer(), 0, vk::IndexType::eUint32);
-
-    SkinUniforms ubo{};
-    uint32_t     emptySkinDynamicOffset = res.mUniformBuffer->addData(ubo);
-
-    drawNodes(model->getRoot()->mChildren, camera.mViewMatrix, modelMatrix, false,
-        emptySkinDynamicOffset, res);
-    drawNodes(model->getRoot()->mChildren, camera.mViewMatrix, modelMatrix, true,
-        emptySkinDynamicOffset, res);
+    model.draw(res.mCmd, camera.mViewMatrix);
 
     res.mCmd->endRenderPass();
     res.mCmd->end();
