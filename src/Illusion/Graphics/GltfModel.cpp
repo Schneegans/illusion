@@ -686,6 +686,19 @@ Model::Model(
     mRootNode->mChildren.push_back(mNodes[i]);
   }
 
+  // find root nodes of skins ----------------------------------------------------------------------
+  std::function<void(NodePtr)> visit = [&visit](NodePtr const& node) {
+    if (node->mSkin && !node->mSkin->mRoot) {
+      node->mSkin->mRoot = node;
+    }
+
+    for (auto child : node->mChildren) {
+      visit(child);
+    }
+  };
+
+  visit(mRootNode);
+
   // create animations -----------------------------------------------------------------------------
   if (options & LoadOptionBits::eAnimations) {
     for (auto const& a : model.animations) {
@@ -937,6 +950,12 @@ std::vector<AnimationPtr> const& Model::getAnimations() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+std::vector<SkinPtr> const& Model::getSkins() const {
+  return mSkins;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void Model::printInfo() const {
 
   // clang-format off
@@ -1118,10 +1137,10 @@ void Node::addMeshesToBoundingBox(BoundingBox& bbox, glm::mat4 const& parentTran
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<glm::mat4> Skin::getJointMatrices(glm::mat4 const& meshTransform) const {
+std::vector<glm::mat4> Skin::getJointMatrices() const {
   std::vector<glm::mat4> jointMatrices(mJoints.size());
 
-  glm::mat4 inverseMeshTransform = glm::inverse(meshTransform);
+  glm::mat4 inverseMeshTransform = glm::inverse(mRoot->mGlobalTransform);
 
   for (size_t i(0); i < mJoints.size(); i++) {
     jointMatrices[i] =

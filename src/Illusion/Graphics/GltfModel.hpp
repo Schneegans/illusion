@@ -57,7 +57,7 @@ class Model : public Core::StaticCreate<Model>, public Core::NamedObject {
   // std::runtime_error. It is a good idea to catch those cases and report the error message to the
   // user.
   Model(std::string const& name, DevicePtr device, std::string const& fileName,
-      const LoadOptions& options = LoadOptionBits::eAll);
+      LoadOptions const& options = LoadOptionBits::eAll);
 
   // Updates all transformations of all Nodes according to the given animation and time. The time is
   // automatically clamped to the start and end time of the animation and is usually provided in
@@ -82,6 +82,7 @@ class Model : public Core::StaticCreate<Model>, public Core::NamedObject {
   std::vector<MeshPtr> const&      getMeshes() const;
   std::vector<NodePtr> const&      getNodes() const;
   std::vector<AnimationPtr> const& getAnimations() const;
+  std::vector<SkinPtr> const&      getSkins() const;
 
   // For debugging purposes.
   void printInfo() const;
@@ -279,8 +280,9 @@ struct Skin {
   std::string            mName;
   std::vector<glm::mat4> mInverseBindMatrices;
   std::vector<NodePtr>   mJoints;
+  NodePtr                mRoot;
 
-  std::vector<glm::mat4> getJointMatrices(glm::mat4 const& meshTransform) const;
+  std::vector<glm::mat4> getJointMatrices() const;
 };
 
 } // namespace Illusion::Graphics::Gltf
