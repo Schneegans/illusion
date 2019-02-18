@@ -21,6 +21,16 @@
 // When compared to the Triangle example, this one is only a little bit more involved. Still, no  //
 // vertex data is used, however a texture is loaded. Furthermore, the CommandlineOptions class is //
 // used to allow the user to specify whether GLSL or HLSL shaders should be used for rendering.   //
+// Despite its name, this example actually draws a triangle as well. It is larger thant the       //
+// framebuffer inorder to cover the entire window. Like this:                                     //
+//                                                                                                //
+//  |\                                                                                            //
+//  |  \                                                                                          //
+//  |____\                                                                                        //
+//  |    | \                                                                                      //
+//  |    |   \                                                                                    //
+//  |____|_____\                                                                                  //
+//                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main(int argc, char* argv[]) {
@@ -80,7 +90,7 @@ int main(int argc, char* argv[]) {
   cmd->begin(vk::CommandBufferUsageFlagBits::eSimultaneousUse);
   cmd->setShader(shader);
   cmd->beginRenderPass(renderPass, {clearColor});
-  cmd->draw(4);
+  cmd->draw(3);
   cmd->endRenderPass();
   cmd->end();
 

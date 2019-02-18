@@ -126,7 +126,7 @@ void Lights::doShading(Illusion::Graphics::CommandBufferPtr const& cmd,
   cmd->specialisationState().setIntegerConstant(0, mLights.size());
   cmd->pushConstants(glm::inverse(mMatVP));
 
-  cmd->draw(4);
+  cmd->draw(3);
   cmd->bindingState().reset(0);
   cmd->bindingState().reset(1);
 }

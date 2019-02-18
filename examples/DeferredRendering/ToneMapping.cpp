@@ -30,7 +30,7 @@ void ToneMapping::draw(Illusion::Graphics::CommandBufferPtr const& cmd,
     cmd->bindingState().setInputAttachment(inputAttachments[i], 0, i);
   }
 
-  cmd->draw(4);
+  cmd->draw(3);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
