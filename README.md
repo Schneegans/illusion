@@ -9,7 +9,7 @@ Since everybody loves badges, here are some describing Illusion:
 [![Build Status](https://travis-ci.org/Simmesimme/illusion.svg?branch=develop)](https://travis-ci.org/Simmesimme/illusion/branches)
 ![license](https://img.shields.io/badge/license-MIT-blue.svg)
 ![code](https://img.shields.io/badge/code-C++17-orange.svg)
-![loc](https://img.shields.io/badge/loc-12.4k-green.svg)
+![loc](https://img.shields.io/badge/loc-12.7k-green.svg)
 ![code](https://img.shields.io/badge/comments-1.7k-green.svg)
 
 Illusion uses C++17 and can be build on Linux (gcc or clang), Windows (msvc) and OS X (xcode). Nearly all dependencies are included as [git submodules](externals), please refer to the section [Building Illusion](#building-illusion) in order to get started.
@@ -28,8 +28,15 @@ I try to add as many comments to the source code as possible. The number of sour
   - [x] A ring-buffer for per-frame resources
   - [x] Per-frame resource count is independent from swapchain image count
   - [ ] Automatic image layout transitions
-  - [ ] Parallel command buffer recording
-  - [ ] A frame or render-graph to automatically create renderpasses and subpasses with dependencies
+  - [ ] ...
+- [ ] Frame graph
+  - [x] Automatically create render passes and subpasses with dependencies
+  - [x] Automatically create framebuffer attachments
+  - [x] Automatic image layout transitions of the framebuffer attachments
+  - [ ] Texture input support
+  - [ ] Parallel render pass recording
+  - [ ] Parallel subpass recording
+  - [ ] In-depth testing :grimacing:
   - [ ] ...
 - [x] Window creation using [glfw](https://github.com/glfw/glfw)
 - [x] Mouse and joystick input using [glfw](https://github.com/glfw/glfw)
