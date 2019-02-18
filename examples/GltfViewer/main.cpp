@@ -6,10 +6,8 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define GLM_FORCE_SWIZZLE
-#define GLM_ENABLE_EXPERIMENTAL
-
 #include "GltfModel.hpp"
+#include "Turntable.hpp"
 
 #include <Illusion/Core/CommandLineOptions.hpp>
 #include <Illusion/Core/Logger.hpp>
@@ -23,8 +21,6 @@
 #include <Illusion/Graphics/Texture.hpp>
 #include <Illusion/Graphics/Window.hpp>
 
-#include <glm/gtx/io.hpp>
-#include <glm/gtx/transform.hpp>
 #include <thread>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -137,8 +133,6 @@ int main(int argc, char* argv[]) {
   Illusion::Graphics::FrameResource<PerFrame> perFrame(
       frameIndex, [=](uint32_t index) { return PerFrame(index, device); });
 
-  glm::vec3 cameraPolar(0.f, 0.f, 1.5f);
-
   window->sOnKeyEvent.connect([&window](Illusion::Input::KeyEvent const& e) {
     if (e.mType == Illusion::Input::KeyEvent::Type::ePress &&
         e.mKey == Illusion::Input::Key::eF11) {
@@ -147,31 +141,7 @@ int main(int argc, char* argv[]) {
     return true;
   });
 
-  window->sOnMouseEvent.connect([&cameraPolar, &window](Illusion::Input::MouseEvent const& e) {
-    if (e.mType == Illusion::Input::MouseEvent::Type::eMove) {
-      static int32_t lastX = e.mX;
-      static int32_t lastY = e.mY;
-
-      if (window->buttonPressed(Illusion::Input::Button::eButton1)) {
-        int32_t dX = lastX - e.mX;
-        int32_t dY = lastY - e.mY;
-
-        cameraPolar.x += dX * 0.005f;
-        cameraPolar.y += dY * 0.005f;
-
-        cameraPolar.y = glm::clamp(
-            cameraPolar.y, -glm::pi<float>() * 0.5f + 0.1f, glm::pi<float>() * 0.5f - 0.1f);
-      }
-
-      lastX = e.mX;
-      lastY = e.mY;
-    } else if (e.mType == Illusion::Input::MouseEvent::Type::eScroll) {
-      cameraPolar.z -= e.mY * 0.01;
-      cameraPolar.z = std::max(cameraPolar.z, 0.01f);
-    }
-
-    return true;
-  });
+  Turntable turntable(window);
 
   window->open();
 
@@ -202,14 +172,9 @@ int main(int argc, char* argv[]) {
         0.01f, 10.0f);
     camera.mProjectionMatrix[1][1] *= -1;
 
-    camera.mPosition =
-        glm::vec4(glm::vec3(std::cos(cameraPolar.y) * std::sin(cameraPolar.x),
-                      -std::sin(cameraPolar.y), std::cos(cameraPolar.y) * std::cos(cameraPolar.x)) *
-                      cameraPolar.z,
-            1.0);
+    camera.mPosition   = turntable.getCameraPosition();
+    camera.mViewMatrix = turntable.getViewMatrix();
 
-    camera.mViewMatrix =
-        glm::lookAt(camera.mPosition.xyz(), glm::vec3(0.f), glm::vec3(0.f, 1.f, 0.f));
     res.mUniformBuffer->updateData(camera);
 
     // The color and depth our framebuffer attachments will be cleared to.
