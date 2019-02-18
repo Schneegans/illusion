@@ -142,7 +142,7 @@ int main(int argc, char* argv[]) {
     // upload this matrix via push constants.
     glm::mat4 view(1.f);
     view = glm::translate(view, glm::vec3(0, 0, -3));
-    view = glm::rotate(view, -time * 0.5f, glm::vec3(0, 1, 0));
+    view = glm::rotate(view, -time * 0.1f, glm::vec3(0, 1, 0));
 
     lights.update(time, projection * view);
     floor.update(projection * view);

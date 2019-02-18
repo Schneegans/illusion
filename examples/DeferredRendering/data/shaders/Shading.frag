@@ -12,7 +12,7 @@
 layout(location = 0) in vec2 vTexcoords;
 
 // Specialization constants. These are set during command buffer recording.
-layout(constant_id = 0) const float cLightCount = 1;
+layout(constant_id = 0) const int cLightCount = 1;
 
 // uniforms
 struct Light {
@@ -43,17 +43,37 @@ layout(location = 0) out vec4 outHdr;
 // methods
 void main() {
   vec4  albedo = subpassLoad(inAlbedo);
-  vec4  normal = subpassLoad(inNormal);
   vec4  emit   = subpassLoad(inEmit);
+  vec4  normal = subpassLoad(inNormal);
   float depth  = subpassLoad(inDepth).r;
 
-  // vec4 position =
-  //     pushConstants.mInvViewProjection * vec4((vTexcoords * 2 - 1) * vec2(1, 1), -depth, 1);
+  vec4 position = pushConstants.mInvViewProjection * vec4((vTexcoords * 2 - 1), depth, 1);
+  position      = position / position.w;
 
-  // position = position / position.w;
-  // outHdr   = position;
-  outHdr   = albedo + emit;
-  outHdr.a = 1;
+  outHdr = vec4(0, 0, 0, 1);
+
+  vec4 cameraPosition = pushConstants.mInvViewProjection * vec4(0, 0, 0, 1);
+  cameraPosition /= cameraPosition.w;
+
+  for (int i = 0; i < cLightCount; ++i) {
+    vec3  lightDir = (lightBuffer.lights[i].mPosition - position).xyz;
+    float dist     = length(lightDir);
+
+    if (dist < 5) {
+      vec3  viewDir = normalize((cameraPosition - position).xyz);
+      float diffuse = 0.1 * max(0, dot(lightDir / dist, normal.xyz) / (dist * dist));
+      float specular =
+          2 * pow(max(0, dot(reflect(lightDir / dist, normal.xyz), -viewDir)), 50) / (dist * dist);
+
+      outHdr.rgb += lightBuffer.lights[i].mColor.rgb * (diffuse + specular);
+    }
+  }
+
+  outHdr.rgb *= albedo.rgb;
+  outHdr.rgb += emit.rgb;
+
+  // outHdr.rgb = normal.xyz;
+  // outHdr.a = 1;
   // outHdr = vec4(vec3(pow(depth, 10)), 1);
 
   // if (depth == 1) {

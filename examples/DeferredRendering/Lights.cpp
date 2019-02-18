@@ -74,7 +74,7 @@ Lights::Lights(Illusion::Graphics::DevicePtr const&  device,
 void Lights::update(float time, glm::mat4 const& matMVP) {
   mMatVP = matMVP;
   for (size_t i(0); i < mLights.size(); ++i) {
-    mLights[i].mPosition.y = std::sin(time + i);
+    mLights[i].mPosition.y = std::sin(time + i) * 0.9;
   }
 
   mLightBuffer.current()->updateData((uint8_t*)&mLights[0], sizeof(Light) * mLights.size(), 0);
@@ -124,7 +124,7 @@ void Lights::doShading(Illusion::Graphics::CommandBufferPtr const& cmd,
   cmd->bindingState().setStorageBuffer(
       mLightBuffer.current()->getBuffer(), sizeof(Light) * mLights.size(), 0, 1, 0);
   cmd->specialisationState().setIntegerConstant(0, mLights.size());
-  cmd->pushConstants(glm::inverse(glm::inverse(mMatVP)));
+  cmd->pushConstants(glm::inverse(mMatVP));
 
   cmd->draw(4);
   cmd->bindingState().reset(0);

@@ -44,8 +44,8 @@ vec4 sRGBtoLinear(vec4 color) {
 }
 
 void main() {
-  // const float exposure = 1;
-  // outColor             = vec4(Uncharted2Tonemap(subpassLoad(inHdr).rgb, exposure), 1);
+  const float exposure = 10;
+  outColor             = vec4(Uncharted2Tonemap(subpassLoad(inHdr).rgb, exposure), 1);
   // outColor             = linearToSRGB(outColor);
   outColor = subpassLoad(inHdr);
 }

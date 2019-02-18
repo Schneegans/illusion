@@ -35,5 +35,5 @@ layout(location = 0) out vec4 vColor;
 void main() {
   vColor      = lightBuffer.lights[gl_InstanceIndex].mColor;
   gl_Position = pushConstants.mViewProjection *
-                (lightBuffer.lights[gl_InstanceIndex].mPosition + 0.01 * vec4(inPosition, 1.0));
+                (lightBuffer.lights[gl_InstanceIndex].mPosition + 0.03 * vec4(inPosition, 1.0));
 }
