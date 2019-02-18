@@ -903,10 +903,8 @@ vk::PipelinePtr CommandBuffer::getPipelineHandle() {
 
   // use default blend attachments if none are defined
   if (mGraphicsState.getBlendAttachments().empty()) {
-    auto attachmentCount = int32_t(mCurrentRenderPass->getAttachments().size());
-    if (mCurrentRenderPass->getSubpasses()[mCurrentSubpass].mDepthStencilAttachment) {
-      attachmentCount = std::max(0, attachmentCount - 1);
-    }
+    auto attachmentCount =
+        int32_t(mCurrentRenderPass->getSubpasses()[mCurrentSubpass].mColorAttachments.size());
 
     for (int32_t i(0); i < attachmentCount; ++i) {
       GraphicsState::BlendAttachment a;
