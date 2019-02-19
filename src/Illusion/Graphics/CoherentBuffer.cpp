@@ -24,6 +24,7 @@ CoherentBuffer::CoherentBuffer(std::string const& name, DevicePtr const& device,
           size))
     , mAlignment(alignment) {
 
+  // Map the data. It will stay mapped until this object is deleted.
   mMappedData = reinterpret_cast<uint8_t*>(
       mDevice->getHandle()->mapMemory(*mBuffer->mMemory, 0, mBuffer->mMemoryInfo.allocationSize));
 }
@@ -31,6 +32,7 @@ CoherentBuffer::CoherentBuffer(std::string const& name, DevicePtr const& device,
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 CoherentBuffer::~CoherentBuffer() {
+  // Unmap the data again.
   mDevice->getHandle()->unmapMemory(*mBuffer->mMemory);
 }
 
@@ -47,6 +49,7 @@ vk::DeviceSize CoherentBuffer::addData(uint8_t const* data, vk::DeviceSize count
   updateData(data, count, offset);
   mCurrentWriteOffset += count;
 
+  // Add alignment based padding.
   if (mAlignment > 0) {
     mCurrentWriteOffset += mAlignment - mCurrentWriteOffset % mAlignment;
   }

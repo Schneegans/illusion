@@ -16,30 +16,49 @@
 namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// This class can be used to manage a block of coherently mapped video memory. Typical use case   //
+// include frequently updated uniform buffers (usage = vk::BufferUsageFlagBits::eUniformBuffer)   //
+// or frequently updated storage buffers (usage = vk::BufferUsageFlagBits::eStorageBuffer). There //
+// is no mechanism to ensure that the data is not currently read by the GPU. You have to          //
+// extrnally synchronize access somehow.                                                          //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CoherentBuffer : public Core::StaticCreate<CoherentBuffer>, public Core::NamedObject {
  public:
+  // The alignment value is used by the addData() method to add some spacing between adjacent memory
+  // blocks which may be required when used for dynamic uniform or storage buffers. You can use
+  // instance->getPhysicalDevice()->getProperties().limits.minUniformBufferOffsetAlignment to query
+  // the required value of your implementation.
   CoherentBuffer(std::string const& name, DevicePtr const& device, vk::DeviceSize size,
       vk::BufferUsageFlagBits usage, vk::DeviceSize alignment = 0);
   virtual ~CoherentBuffer();
 
+  // Resets the current write offset (not the actual data of the buffer). Preceding calls to
+  // addData() will start to write data to the beginning of the buffer again.
   void reset();
 
+  // Writes the given data to the buffer. Afterwards the current write offset is increased by
+  // "count" so that preceding calls to addData will append the data. If an alginment was specified
+  // at construction time, padding may be added to the write-offset as required.
   vk::DeviceSize addData(uint8_t const* data, vk::DeviceSize count);
 
+  // Convenience method for built-ins or simple structs which calls the method above.
   template <typename T>
   vk::DeviceSize addData(T const& data) {
     return addData((uint8_t*)&data, sizeof(data));
   }
 
+  // Directly writes data to the given offset. The current write offset and the alignment specified
+  // at construction time are ignored.
   void updateData(uint8_t const* data, vk::DeviceSize count, vk::DeviceSize offset);
 
+  // Convenience method for built-ins or simple structs which calls the method above.
   template <typename T>
   void updateData(T const& data, vk::DeviceSize offset = 0) {
     updateData((uint8_t*)&data, sizeof(data), offset);
   }
 
+  // Access to the internal buffer.
   BackedBufferPtr const& getBuffer() const;
 
  private:

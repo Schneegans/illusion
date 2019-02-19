@@ -10,7 +10,7 @@ Since everybody loves badges, here are some describing Illusion:
 ![license](https://img.shields.io/badge/license-MIT-blue.svg)
 ![code](https://img.shields.io/badge/code-C++17-orange.svg)
 ![loc](https://img.shields.io/badge/loc-12.7k-green.svg)
-![code](https://img.shields.io/badge/comments-1.8k-green.svg)
+![code](https://img.shields.io/badge/comments-1.9k-green.svg)
 
 Illusion uses C++17 and can be build on Linux (gcc or clang), Windows (msvc) and OS X (xcode). Nearly all dependencies are included as [git submodules](externals), please refer to the section [Building Illusion](#building-illusion) in order to get started.
 
