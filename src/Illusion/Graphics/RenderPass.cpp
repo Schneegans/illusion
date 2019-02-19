@@ -35,8 +35,6 @@ RenderPass::~RenderPass() = default;
 
 void RenderPass::init() {
   if (mDirty) {
-    mDevice->waitIdle();
-
     mFramebuffer.reset();
     mRenderPass.reset();
 
@@ -45,6 +43,29 @@ void RenderPass::init() {
 
     mDirty = false;
   }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+glm::uvec2 RenderPass::getExtent() const {
+  if (!mAttachments.empty()) {
+    return glm::uvec2(mAttachments[0].mImage->mImageInfo.extent.width,
+        mAttachments[0].mImage->mImageInfo.extent.height);
+  }
+
+  return glm::uvec2(0);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+vk::FramebufferPtr const& RenderPass::getFramebuffer() const {
+  return mFramebuffer;
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+vk::RenderPassPtr const& RenderPass::getHandle() const {
+  return mRenderPass;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -89,6 +110,7 @@ void RenderPass::addSubpass(Subpass const& subpass) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void RenderPass::setSubpasses(std::vector<Subpass> const& subpasses) {
   mSubpasses = subpasses;
   mDirty     = true;
@@ -105,29 +127,6 @@ std::vector<RenderPass::Subpass> const& RenderPass::getSubpasses() const {
 void RenderPass::clearSubpasses() {
   mSubpasses.clear();
   mDirty = true;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-glm::uvec2 RenderPass::getExtent() const {
-  if (!mAttachments.empty()) {
-    return glm::uvec2(mAttachments[0].mImage->mImageInfo.extent.width,
-        mAttachments[0].mImage->mImageInfo.extent.height);
-  }
-
-  return glm::uvec2(0);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-vk::FramebufferPtr const& RenderPass::getFramebuffer() const {
-  return mFramebuffer;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-vk::RenderPassPtr const& RenderPass::getHandle() const {
-  return mRenderPass;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
