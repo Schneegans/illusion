@@ -28,7 +28,7 @@ layout(set = 0, binding = 0) uniform CameraUniforms {
 }
 camera;
 
-// BRDF textures
+// BRDF textures.
 layout(set = 1, binding = 0) uniform sampler2D uBRDFLuT;
 layout(set = 1, binding = 1) uniform samplerCube uPrefilteredIrradiance;
 layout(set = 1, binding = 2) uniform samplerCube uPrefilteredReflection;

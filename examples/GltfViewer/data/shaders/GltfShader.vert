@@ -64,10 +64,10 @@ layout(location = 2) out vec2 vTexcoords;
 
 void main() {
 
-  // just forward the texture coordinates
+  // Just forward the texture coordinates.
   vTexcoords = inTexcoords;
 
-  // compute the skin matrix and multiply it with the model matrix if the model is skinned
+  // Compute the skin matrix and multiply it with the model matrix if the model is skinned.
   mat4 modelMatrix = pushConstants.mModelMatrix;
 
   if ((pushConstants.mVertexAttributes & HAS_SKINS) > 0) {
@@ -79,14 +79,14 @@ void main() {
     modelMatrix = modelMatrix * skinMat;
   }
 
-  // transform to world space
+  // Transform to world space.
   vPosition = (modelMatrix * vec4(inPosition, 1.0)).xyz;
 
-  // if there are normals, transform the to world space as well
+  // If there are normals, transform the to world space as well.
   if ((pushConstants.mVertexAttributes & HAS_NORMALS) > 0) {
     vNormal = inverse(transpose(mat3(modelMatrix))) * inNormal;
   }
 
-  // transform to projection space
+  // Transform to projection space.
   gl_Position = camera.mProjectionMatrix * camera.mViewMatrix * vec4(vPosition, 1.0);
 }

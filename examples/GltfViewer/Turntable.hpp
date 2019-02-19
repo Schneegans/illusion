@@ -14,10 +14,13 @@
 #include <glm/glm.hpp>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// This is a very simple class for adding a turntable-like navigation. It will connect to         //
+// mouse-move events of the window and can be queried for the current view matrix.                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Turntable {
  public:
+  // The class will connect some lambdas to the Signals of the window.
   Turntable(Illusion::Graphics::WindowPtr const& window);
 
   glm::vec4 getCameraPosition() const;

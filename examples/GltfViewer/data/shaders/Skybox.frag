@@ -28,18 +28,18 @@ layout(location = 0) out vec4 outColor;
 
 void main() {
 
-  // Un-project the current fragment's position to world space
+  // Un-project the current fragment's position to world space.
   vec4 farPos =
-      inverse(camera.mProjectionMatrix * camera.mViewMatrix) * vec4(vTexcoords * 2 - 1, -1, 1);
+      inverse(camera.mProjectionMatrix * camera.mViewMatrix) * vec4(vTexcoords * 2 - 1, 1, 1);
   farPos /= farPos.w;
 
   // Use the direction from the camera to the un-projected fragment position as lookup direction
-  // into the input cubemap
+  // into the input cubemap.
   outColor = texture(texEnvironmentMap, normalize((farPos - camera.mPosition).xyz));
 
-  // Tone mapping
+  // Tone mapping.
   outColor.rgb = Uncharted2Tonemap(outColor.rgb, 2);
 
-  // Gamma correction
+  // Gamma correction.
   outColor = linearToSRGB(outColor);
 }

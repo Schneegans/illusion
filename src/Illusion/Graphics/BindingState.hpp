@@ -21,7 +21,9 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // This class is used by the CommandBuffer to track the descriptor set binding state.             //
 // The BindingState stores what is bound to each descriptor set number. Whenever a binding        //
-// changes, a dirty flag is set. This can be used to trigger descriptor set updates.              //
+// changes, a dirty flag is set. This can be used to trigger descriptor set updates. This also    //
+// means that setting bindings is a fairly cheap operation as the actual vulkan commands are only //
+// executed when a draw-call is issued.                                                           //
 // In addition to to the bindings, dynamic offsets are be stored separately for each binding of   //
 // each set. This means when a dynamic binding changes only by its offset (dynamic uniform buffer //
 // or dynamic storage buffer), the corresponding set will not be flagged as dirty. Instead, the   //

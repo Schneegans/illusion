@@ -17,14 +17,16 @@
 #include <unordered_map>
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
+// While Illusion has a class for loading glTF models, we need to provide the rendering code on   //
+// the application side. This is what this class does.                                            //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class GltfModel {
  public:
-  ////////////////////////////////////////////////////////////////////////////////////////////////
-  // This struct is used as a push constant block in GltfShader.vert and GltfShader.frag. It     /
-  // requires 124 bit which is pretty close to the guaranteed minimum of 128 bit.                /
-  ////////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // This struct is used as a push constant block in GltfShader.vert and GltfShader.frag. It      //
+  // requires 124 bit which is pretty close to the guaranteed minimum of 128 bit.                 //
+  //////////////////////////////////////////////////////////////////////////////////////////////////
 
   struct PushConstants {
 
@@ -48,20 +50,29 @@ class GltfModel {
     int32_t mVertexAttributes;
   };
 
-  /////////////////////////////////////////////////////////////////////////////////////////////////
-  // In this example we support a maximum number of 256 joints per glTF model.
-  /////////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  // In this example we support a maximum number of 256 joints per glTF model. This requires      //
+  // exactly the guaranteed minimum uniform buffer size of 16 kiB. If we would need more, we      //
+  // should use storage buffers instead.                                                          //
+  //////////////////////////////////////////////////////////////////////////////////////////////////
 
   struct SkinUniforms {
     glm::mat4 mJointMatrices[256];
   };
 
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+
   GltfModel(std::string const& name, Illusion::Graphics::DevicePtr const& device,
       std::string const& fileName, Illusion::Graphics::Gltf::LoadOptions const& options,
       Illusion::Graphics::FrameResourceIndexPtr const& frameIndex);
 
+  // If animations were loaded,t this will update the animation state of all nodes of the model. If
+  // skins were loaded, those will get updated as well.
   void update(double time, int32_t animation);
 
+  // This will first draw all nodes with mDoAlphaBlending == false and then all nodes with
+  // mDoAlphaBlending == true in order to get correct composition order. In a more complete engine
+  // this should be done in different passes.
   void draw(Illusion::Graphics::CommandBufferPtr const& cmd, glm::mat4 const& viewMatrix);
 
  private:
@@ -73,10 +84,13 @@ class GltfModel {
   Illusion::Graphics::Gltf::ModelPtr mModel;
   Illusion::Graphics::ShaderPtr      mShader;
 
+  // For each skin a uniform buffer is created as a FrameResource.
   Illusion::Graphics::FrameResource<
       std::unordered_map<Illusion::Graphics::Gltf::SkinPtr, Illusion::Graphics::CoherentBufferPtr>>
       mSkinBuffers;
 
+  // As we need to bind something, we will bind this empty uniform buffer if the currently drawn
+  // node has no associated skin.
   Illusion::Graphics::CoherentBufferPtr mEmptySkinBuffer;
 
   glm::mat4 mModelMatrix;
