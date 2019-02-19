@@ -43,13 +43,13 @@ std::unordered_map<spirv_cross::SPIRType::BaseType, PipelineResource::BaseType>
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::vector<PipelineResource::Member> parseMembers(
-    spirv_cross::CompilerGLSL& compiler, const spirv_cross::SPIRType& spirType) {
+    spirv_cross::CompilerGLSL& compiler, spirv_cross::SPIRType const& spirType) {
 
   std::vector<PipelineResource::Member> members;
 
   for (size_t i(0); i < spirType.member_types.size(); ++i) {
     // Validate member is of a supported type.
-    const auto& memberType = compiler.get_type(spirType.member_types[i]);
+    auto const& memberType = compiler.get_type(spirType.member_types[i]);
     if (spirvTypeToBaseType.find(memberType.basetype) == spirvTypeToBaseType.end()) {
       continue;
     }
@@ -80,11 +80,11 @@ std::vector<PipelineResource::Member> parseMembers(
 
 class CustomCompiler : public spirv_cross::CompilerGLSL {
  public:
-  explicit CustomCompiler(const std::vector<uint32_t>& spirv)
+  explicit CustomCompiler(std::vector<uint32_t> const& spirv)
       : spirv_cross::CompilerGLSL(spirv) {
   }
 
-  vk::AccessFlags get_access_flags(const spirv_cross::SPIRType& type) {
+  vk::AccessFlags get_access_flags(spirv_cross::SPIRType const& type) {
     // SPIRV-Cross hack to get the correct readonly and writeonly attributes on ssbos.
     // This isn't working correctly via Compiler::get_decoration(id, spv::DecorationNonReadable) for
     // example. So the code below is extracted from private methods within spirv_cross.cpp. The
@@ -190,7 +190,7 @@ void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) {
 
   // Extract per stage inputs.
   for (auto& resource : resources.stage_inputs) {
-    const auto& spirType = compiler.get_type_from_variable(resource.id);
+    auto const& spirType = compiler.get_type_from_variable(resource.id);
 
     PipelineResource pipelineResource;
     pipelineResource.mStages       = mStage;
@@ -213,7 +213,7 @@ void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) {
 
   // Extract per stage outputs.
   for (auto& resource : resources.stage_outputs) {
-    const auto& spirType = compiler.get_type_from_variable(resource.id);
+    auto const& spirType = compiler.get_type_from_variable(resource.id);
 
     PipelineResource pipelineResource;
     pipelineResource.mStages       = mStage;
@@ -236,7 +236,7 @@ void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) {
 
   // Extract uniform buffers.
   for (auto& resource : resources.uniform_buffers) {
-    const auto& spirType = compiler.get_type_from_variable(resource.id);
+    auto const& spirType = compiler.get_type_from_variable(resource.id);
 
     bool isDynamic = mDynamicBuffers.find(resource.name) != mDynamicBuffers.end();
 
@@ -257,7 +257,7 @@ void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) {
 
   // Extract storage buffers.
   for (auto& resource : resources.storage_buffers) {
-    const auto& spirType = compiler.get_type_from_variable(resource.id);
+    auto const& spirType = compiler.get_type_from_variable(resource.id);
 
     bool isDynamic = mDynamicBuffers.find(resource.name) != mDynamicBuffers.end();
 
@@ -278,7 +278,7 @@ void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) {
 
   // Extract separate samplers.
   for (auto& resource : resources.separate_samplers) {
-    const auto& spirType = compiler.get_type_from_variable(resource.id);
+    auto const& spirType = compiler.get_type_from_variable(resource.id);
 
     PipelineResource pipelineResource;
     pipelineResource.mStages       = mStage;
@@ -293,7 +293,7 @@ void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) {
 
   // Extract sampled images (combined sampler + image or texture buffers).
   for (auto& resource : resources.sampled_images) {
-    const auto& spirType = compiler.get_type_from_variable(resource.id);
+    auto const& spirType = compiler.get_type_from_variable(resource.id);
 
     PipelineResource pipelineResource;
     pipelineResource.mStages       = mStage;
@@ -310,7 +310,7 @@ void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) {
 
   // Extract seperate images ('sampled' in vulkan terminology or no sampler attached).
   for (auto& resource : resources.separate_images) {
-    const auto& spirType = compiler.get_type_from_variable(resource.id);
+    auto const& spirType = compiler.get_type_from_variable(resource.id);
 
     PipelineResource pipelineResource;
     pipelineResource.mStages       = mStage;
@@ -350,7 +350,7 @@ void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) {
       access = vk::AccessFlagBits::eShaderRead;
     }
 
-    const auto& spirType = compiler.get_type_from_variable(resource.id);
+    auto const& spirType = compiler.get_type_from_variable(resource.id);
 
     PipelineResource pipelineResource;
     pipelineResource.mStages       = mStage;
@@ -382,7 +382,7 @@ void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) {
 
   // Extract push constants.
   for (auto& resource : resources.push_constant_buffers) {
-    const auto& spirType = compiler.get_type_from_variable(resource.id);
+    auto const& spirType = compiler.get_type_from_variable(resource.id);
 
     // Get the start offset of the push constant buffer since this will differ between shader
     // stages.

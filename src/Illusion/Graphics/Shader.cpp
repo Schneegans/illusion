@@ -47,7 +47,7 @@ const std::unordered_map<std::string, vk::ShaderStageFlagBits> hlslExtensionMapp
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ShaderPtr Shader::createFromFiles(std::string const& name, DevicePtr const& device,
-    std::vector<std::string> const& fileNames, const std::set<std::string>& dynamicBuffers,
+    std::vector<std::string> const& fileNames, std::set<std::string> const& dynamicBuffers,
     bool reloadOnChanges) {
 
   // First create a new Shader.

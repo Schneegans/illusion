@@ -542,7 +542,7 @@ bool GraphicsState::getAlphaToOneEnable() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void GraphicsState::setSampleMask(const std::vector<uint32_t>& val) {
+void GraphicsState::setSampleMask(std::vector<uint32_t> const& val) {
   if (mSampleMask != val) {
     mSampleMask = val;
     mDirty      = true;
@@ -602,7 +602,7 @@ vk::PolygonMode GraphicsState::getPolygonMode() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void GraphicsState::setCullMode(const vk::CullModeFlags& val) {
+void GraphicsState::setCullMode(vk::CullModeFlags const& val) {
   if (mCullMode != val) {
     mCullMode = val;
     mDirty    = true;

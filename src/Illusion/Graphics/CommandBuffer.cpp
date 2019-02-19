@@ -336,8 +336,8 @@ void CommandBuffer::dispatch(uint32_t groupCountX, uint32_t groupCountY, uint32_
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout,
-    const vk::AccessFlags& srcAccess, vk::PipelineStageFlagBits srcStage, vk::ImageLayout newLayout,
-    const vk::AccessFlags& dstAccess, vk::PipelineStageFlagBits dstStage,
+    vk::AccessFlags const& srcAccess, vk::PipelineStageFlagBits srcStage, vk::ImageLayout newLayout,
+    vk::AccessFlags const& dstAccess, vk::PipelineStageFlagBits dstStage,
     vk::ImageSubresourceRange range) const {
 
   vk::ImageMemoryBarrier barrier;
@@ -423,7 +423,7 @@ void CommandBuffer::transitionImageLayout(vk::Image image, vk::ImageLayout oldLa
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::transitionImageLayout(const BackedImagePtr& image, vk::ImageLayout oldLayout,
+void CommandBuffer::transitionImageLayout(BackedImagePtr const& image, vk::ImageLayout oldLayout,
     vk::ImageLayout newLayout, vk::ImageSubresourceRange range) const {
 
   transitionImageLayout(*image->mImage, oldLayout, newLayout, std::move(range));
@@ -433,21 +433,21 @@ void CommandBuffer::transitionImageLayout(const BackedImagePtr& image, vk::Image
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::transitionImageLayout(
-    const BackedImagePtr& image, vk::ImageLayout newLayout, vk::ImageSubresourceRange range) const {
+    BackedImagePtr const& image, vk::ImageLayout newLayout, vk::ImageSubresourceRange range) const {
   transitionImageLayout(image, image->mCurrentLayout, newLayout, std::move(range));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::transitionImageLayout(
-    const BackedImagePtr& image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) const {
+    BackedImagePtr const& image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) const {
   transitionImageLayout(image, oldLayout, newLayout, image->mViewInfo.subresourceRange);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::transitionImageLayout(
-    const BackedImagePtr& image, vk::ImageLayout newLayout) const {
+    BackedImagePtr const& image, vk::ImageLayout newLayout) const {
   transitionImageLayout(image, image->mCurrentLayout, newLayout, image->mViewInfo.subresourceRange);
 }
 
@@ -507,7 +507,7 @@ void CommandBuffer::blitImage(vk::Image src, uint32_t srcMipmapLevel, vk::Image 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::resolveImage(vk::Image src, vk::ImageLayout srcLayout, vk::Image dst,
-    vk::ImageLayout dstLayout, const vk::ImageResolve& region) const {
+    vk::ImageLayout dstLayout, vk::ImageResolve const& region) const {
   mVkCmd->resolveImage(src, srcLayout, dst, dstLayout, region);
 }
 

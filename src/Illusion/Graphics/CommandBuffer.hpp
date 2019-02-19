@@ -155,8 +155,8 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
   // parameters. You have to make sure that the given access flags are supported by the given
   // pipeline stage flags.
   void transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout,
-      const vk::AccessFlags& srcAccess, vk::PipelineStageFlagBits srcStage,
-      vk::ImageLayout newLayout, const vk::AccessFlags& dstAccess,
+      vk::AccessFlags const& srcAccess, vk::PipelineStageFlagBits srcStage,
+      vk::ImageLayout newLayout, vk::AccessFlags const& dstAccess,
       vk::PipelineStageFlagBits dstStage, vk::ImageSubresourceRange range) const;
 
   // All of the methods below will try to best-guess the access flags, the pipeline stages, the
@@ -207,13 +207,13 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
 
   void transitionImageLayout(vk::Image image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout,
       vk::ImageSubresourceRange range) const;
-  void transitionImageLayout(const BackedImagePtr& image, vk::ImageLayout oldLayout,
+  void transitionImageLayout(BackedImagePtr const& image, vk::ImageLayout oldLayout,
       vk::ImageLayout newLayout, vk::ImageSubresourceRange range) const;
-  void transitionImageLayout(const BackedImagePtr& image, vk::ImageLayout newLayout,
+  void transitionImageLayout(BackedImagePtr const& image, vk::ImageLayout newLayout,
       vk::ImageSubresourceRange range) const;
   void transitionImageLayout(
-      const BackedImagePtr& image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) const;
-  void transitionImageLayout(const BackedImagePtr& image, vk::ImageLayout newLayout) const;
+      BackedImagePtr const& image, vk::ImageLayout oldLayout, vk::ImageLayout newLayout) const;
+  void transitionImageLayout(BackedImagePtr const& image, vk::ImageLayout newLayout) const;
 
   // convenience methods ---------------------------------------------------------------------------
 
@@ -227,7 +227,7 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
       vk::Filter filter) const;
 
   void resolveImage(vk::Image src, vk::ImageLayout srcLayout, vk::Image dst,
-      vk::ImageLayout dstLayout, const vk::ImageResolve& region) const;
+      vk::ImageLayout dstLayout, vk::ImageResolve const& region) const;
 
   void copyBuffer(vk::Buffer src, vk::Buffer dst, vk::DeviceSize size) const;
 

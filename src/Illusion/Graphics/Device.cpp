@@ -62,8 +62,8 @@ Device::~Device() = default;
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 BackedImagePtr Device::createBackedImage(std::string const& name, vk::ImageCreateInfo imageInfo,
-    vk::ImageViewType viewType, const vk::ImageAspectFlags& imageAspectMask,
-    const vk::MemoryPropertyFlags& properties, vk::ImageLayout layout,
+    vk::ImageViewType viewType, vk::ImageAspectFlags const& imageAspectMask,
+    vk::MemoryPropertyFlags const& properties, vk::ImageLayout layout,
     vk::ComponentMapping const& componentMapping, vk::DeviceSize dataSize, const void* data) const {
 
   auto result   = std::make_shared<BackedImage>();
@@ -214,7 +214,7 @@ BackedImagePtr Device::createBackedImage(std::string const& name, vk::ImageCreat
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 BackedBufferPtr Device::createBackedBuffer(std::string const& name,
-    const vk::BufferUsageFlags& usage, const vk::MemoryPropertyFlags& properties,
+    vk::BufferUsageFlags const& usage, vk::MemoryPropertyFlags const& properties,
     vk::DeviceSize dataSize, const void* data) const {
 
   auto result   = std::make_shared<BackedBuffer>();
@@ -308,7 +308,7 @@ BackedBufferPtr Device::createUniformBuffer(std::string const& name, vk::DeviceS
 
 TexturePtr Device::createTexture(std::string const& name, vk::ImageCreateInfo imageInfo,
     vk::SamplerCreateInfo samplerInfo, vk::ImageViewType viewType,
-    const vk::ImageAspectFlags& imageAspectMask, vk::ImageLayout layout,
+    vk::ImageAspectFlags const& imageAspectMask, vk::ImageLayout layout,
     vk::ComponentMapping const& componentMapping, vk::DeviceSize dataSize, const void* data) const {
 
   auto result = std::make_shared<Texture>();

@@ -169,7 +169,7 @@ PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 uint32_t PhysicalDevice::findMemoryType(
-    uint32_t typeFilter, const vk::MemoryPropertyFlags& properties) const {
+    uint32_t typeFilter, vk::MemoryPropertyFlags const& properties) const {
 
   auto memProperties = getMemoryProperties();
 

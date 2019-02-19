@@ -41,15 +41,15 @@ class Device : public Core::StaticCreate<Device>, public Core::NamedObject {
   // Creates a BackedImage and optionally uploads data to the GPU. This uses a BackedBuffer as
   // staging buffer.
   BackedImagePtr createBackedImage(std::string const& name, vk::ImageCreateInfo info,
-      vk::ImageViewType viewType, const vk::ImageAspectFlags& imageAspectMask,
-      const vk::MemoryPropertyFlags& properties, vk::ImageLayout layout,
+      vk::ImageViewType viewType, vk::ImageAspectFlags const& imageAspectMask,
+      vk::MemoryPropertyFlags const& properties, vk::ImageLayout layout,
       vk::ComponentMapping const& componentMapping = vk::ComponentMapping(),
       vk::DeviceSize dataSize = 0, const void* data = nullptr) const;
 
   // Creates a BackedBuffer and optionally uploads data to the GPU. If the memory is eHostVisible
   // and eHostCoherent, the data will be uploaded by mapping. Else a staging buffer will be used.
-  BackedBufferPtr createBackedBuffer(std::string const& name, const vk::BufferUsageFlags& usage,
-      const vk::MemoryPropertyFlags& properties, vk::DeviceSize dataSize,
+  BackedBufferPtr createBackedBuffer(std::string const& name, vk::BufferUsageFlags const& usage,
+      vk::MemoryPropertyFlags const& properties, vk::DeviceSize dataSize,
       const void* data = nullptr) const;
 
   // Creates a device-local BackedBuffer with vk::BufferUsageFlagBits::eVertexBuffer and uploads the
@@ -80,7 +80,7 @@ class Device : public Core::StaticCreate<Device>, public Core::NamedObject {
 
   TexturePtr createTexture(std::string const& name, vk::ImageCreateInfo imageInfo,
       vk::SamplerCreateInfo samplerInfo, vk::ImageViewType viewType,
-      const vk::ImageAspectFlags& imageAspectMask, vk::ImageLayout layout,
+      vk::ImageAspectFlags const& imageAspectMask, vk::ImageLayout layout,
       vk::ComponentMapping const& componentMapping = vk::ComponentMapping(),
       vk::DeviceSize dataSize = 0, const void* data = nullptr) const;
 

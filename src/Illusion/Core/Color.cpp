@@ -231,7 +231,7 @@ std::string Color::htmlRgba() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Color::htmlRgba(std::string const& val) {
-  const std::string& str(val);
+  std::string const& str(val);
   std::string        cropped = str.substr(str.find_first_of('(') + 1, str.find_first_of(')') - 1);
 
   std::stringstream stream(cropped);

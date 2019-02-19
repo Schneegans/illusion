@@ -74,9 +74,9 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
    public:
     Pass& setName(std::string const& name);
 
-    Pass& addColorAttachment(Resource const& resource, const AccessFlags& access,
+    Pass& addColorAttachment(Resource const& resource, AccessFlags const& access,
         std::optional<vk::ClearColorValue> clear = {});
-    Pass& addDepthAttachment(Resource const& resource, const AccessFlags& access,
+    Pass& addDepthAttachment(Resource const& resource, AccessFlags const& access,
         std::optional<vk::ClearDepthStencilValue> clear = {});
 
     Pass& setProcessCallback(
@@ -107,7 +107,7 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
   Pass&     createPass();
 
   void setOutput(WindowPtr const& window, Pass const& pass, Resource const& attachment);
-  void process(const ProcessingFlags& flags = ProcessingFlagBits::eNone);
+  void process(ProcessingFlags const& flags = ProcessingFlagBits::eNone);
 
  private:
   // -----------------------------------------------------------------------------------------------

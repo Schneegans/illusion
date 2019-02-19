@@ -27,7 +27,7 @@ class PhysicalDevice : public vk::PhysicalDevice, public Core::StaticCreate<Phys
 
   // Tries to find a memory type matching both parameters. This will throw a std::runtime_error when
   // there is no suitable memory type.
-  uint32_t findMemoryType(uint32_t typeFilter, const vk::MemoryPropertyFlags& properties) const;
+  uint32_t findMemoryType(uint32_t typeFilter, vk::MemoryPropertyFlags const& properties) const;
 
   // The PhysicalDevice will try to pick different Queues for each QueueType. If that is not
   // possible, it might happen that two or all three QueueTypes actually refer to the same queue.

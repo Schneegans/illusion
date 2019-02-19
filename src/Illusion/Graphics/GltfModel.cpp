@@ -108,7 +108,7 @@ vk::PrimitiveTopology convertPrimitiveTopology(int value) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Model::Model(
-    std::string const& name, DevicePtr device, std::string const& file, const LoadOptions& options)
+    std::string const& name, DevicePtr device, std::string const& file, LoadOptions const& options)
     : Core::NamedObject(name)
     , mDevice(std::move(device))
     , mRootNode(std::make_shared<Node>()) {
@@ -692,7 +692,7 @@ Model::Model(
       node->mSkin->mRoot = node;
     }
 
-    for (const auto& child : node->mChildren) {
+    for (auto const& child : node->mChildren) {
       visit(child);
     }
   };

@@ -195,7 +195,7 @@ void Swapchain::recreate() {
   if (formats.size() == 1 && formats[0].format == vk::Format::eUndefined) {
     mFormat = {vk::Format::eB8G8R8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear};
   } else {
-    for (const auto& format : formats) {
+    for (auto const& format : formats) {
       if (format.format == vk::Format::eB8G8R8A8Unorm &&
           format.colorSpace == vk::ColorSpaceKHR::eSrgbNonlinear) {
         mFormat = format;

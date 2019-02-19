@@ -73,7 +73,7 @@ glm::uvec2 FrameGraph::Resource::getAbsoluteExtent(glm::uvec2 const& windowExten
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 FrameGraph::Pass& FrameGraph::Pass::addColorAttachment(
-    Resource const& resource, const AccessFlags& access, std::optional<vk::ClearColorValue> clear) {
+    Resource const& resource, AccessFlags const& access, std::optional<vk::ClearColorValue> clear) {
 
   // We cannot add the same resource twice.
   if (Core::Utils::contains(mAttachments, &resource)) {
@@ -115,7 +115,7 @@ FrameGraph::Pass& FrameGraph::Pass::addColorAttachment(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 FrameGraph::Pass& FrameGraph::Pass::addDepthAttachment(Resource const& resource,
-    const AccessFlags& access, std::optional<vk::ClearDepthStencilValue> clear) {
+    AccessFlags const& access, std::optional<vk::ClearDepthStencilValue> clear) {
 
   // Depth attachments cannot be read.
   if (access.contains(AccessFlagBits::eRead)) {
@@ -233,7 +233,7 @@ void FrameGraph::setOutput(WindowPtr const& window, Pass const& pass, Resource c
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void FrameGraph::process(const ProcessingFlags& flags) {
+void FrameGraph::process(ProcessingFlags const& flags) {
 
   // -------------------------------------------------------------------------------------------- //
   // ---------------------------------- graph validation phase ---------------------------------- //
@@ -341,7 +341,7 @@ void FrameGraph::process(const ProcessingFlags& flags) {
 
       // Now we have to find the passes which are in front of the current pass in the mPasses list
       // of the FrameGraph and write to to the resources of the current pass.
-      for (const auto& attachment : pass->mAttachments) {
+      for (auto const& attachment : pass->mAttachments) {
         Core::Logger::debug() << "      resource \"" + attachment->mName + "\"" << std::endl;
 
         // Step backwards through all Passes, collecting all passes writing to this attachment.
@@ -531,7 +531,7 @@ void FrameGraph::process(const ProcessingFlags& flags) {
     // This can definitely be optimized, but for now frequent graph changes are not planned anyways.
     perFrame.mAllAttachments.clear();
 
-    for (const auto& attachment : overallAttachmentUsage) {
+    for (auto const& attachment : overallAttachmentUsage) {
       vk::ImageAspectFlags aspect;
 
       if (Utils::isDepthOnlyFormat(attachment.first->mFormat)) {
