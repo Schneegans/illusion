@@ -93,7 +93,7 @@ class GltfModel {
   // node has no associated skin.
   Illusion::Graphics::CoherentBufferPtr mEmptySkinBuffer;
 
-  glm::mat4 mModelMatrix;
+  glm::mat4 mModelMatrix{};
 };
 
 #endif // ILLUSION_EXAMPLES_GLTF_VIEWER_GLTF_MODEL_HPP

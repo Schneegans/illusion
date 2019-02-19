@@ -29,7 +29,7 @@ bool formatSupportsLinearSampling(DevicePtr const& device, vk::Format format) {
   auto const& features =
       device->getPhysicalDevice()->getFormatProperties(format).optimalTilingFeatures;
 
-  return (bool)(features & vk::FormatFeatureFlagBits::eSampledImageFilterLinear);
+  return static_cast<bool>(features & vk::FormatFeatureFlagBits::eSampledImageFilterLinear);
 }
 
 } // namespace

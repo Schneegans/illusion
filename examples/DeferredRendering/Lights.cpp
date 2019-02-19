@@ -71,13 +71,14 @@ Lights::Lights(Illusion::Graphics::DevicePtr const&  device,
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Lights::update(float time, glm::mat4 const& matMVP) {
-  mMatVP = matMVP;
+void Lights::update(float time, glm::mat4 const& matVP) {
+  mMatVP = matVP;
   for (size_t i(0); i < mLights.size(); ++i) {
     mLights[i].mPosition.y = std::sin(time + i) * 0.9;
   }
 
-  mLightBuffer.current()->updateData((uint8_t*)&mLights[0], sizeof(Light) * mLights.size(), 0);
+  mLightBuffer.current()->updateData(
+      reinterpret_cast<uint8_t*>(&mLights[0]), sizeof(Light) * mLights.size(), 0);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

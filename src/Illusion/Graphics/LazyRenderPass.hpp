@@ -22,7 +22,7 @@ class LazyRenderPass : public RenderPass, public Core::StaticCreate<LazyRenderPa
   using Core::StaticCreate<LazyRenderPass>::create;
 
   LazyRenderPass(std::string const& name, DevicePtr const& device);
-  virtual ~LazyRenderPass();
+  virtual ~LazyRenderPass() override;
 
   void init() override;
   void addAttachment(vk::Format format);

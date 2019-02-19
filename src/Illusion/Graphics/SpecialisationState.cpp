@@ -41,7 +41,7 @@ void SpecialisationState::reset(uint32_t constantID) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void SpecialisationState::reset() {
-  if (mValues.size() > 0) {
+  if (!mValues.empty()) {
     mValues.clear();
     mDirty = true;
   }
@@ -52,7 +52,7 @@ void SpecialisationState::reset() {
 vk::SpecializationInfo const* SpecialisationState::getInfo() const {
   update();
 
-  if (mValues.size() == 0) {
+  if (mValues.empty()) {
     return nullptr;
   }
 

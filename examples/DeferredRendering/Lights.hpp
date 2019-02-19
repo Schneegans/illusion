@@ -34,7 +34,7 @@ class Lights {
   };
 
   std::vector<Light>                  mLights;
-  glm::mat4                           mMatVP;
+  glm::mat4                           mMatVP{};
   Illusion::Graphics::BackedBufferPtr mPositionBuffer;
   Illusion::Graphics::BackedBufferPtr mIndexBuffer;
   Illusion::Graphics::ShaderPtr       mDrawLights;

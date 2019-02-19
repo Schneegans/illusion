@@ -207,7 +207,7 @@ Model::Model(
         auto texture = mDevice->createTexture("Texture " + std::to_string(i) + " of " + getName(),
             imageInfo, samplerInfo, vk::ImageViewType::e2D, vk::ImageAspectFlagBits::eColor,
             vk::ImageLayout::eShaderReadOnlyOptimal, vk::ComponentMapping(), image.image.size(),
-            (void*)image.image.data());
+            reinterpret_cast<void*>(image.image.data()));
 
         Texture::updateMipmaps(mDevice, texture);
 
@@ -692,7 +692,7 @@ Model::Model(
       node->mSkin->mRoot = node;
     }
 
-    for (auto child : node->mChildren) {
+    for (const auto& child : node->mChildren) {
       visit(child);
     }
   };

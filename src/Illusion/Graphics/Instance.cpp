@@ -44,7 +44,7 @@ VkBool32 debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
   for (uint32_t i(0); i < pCallbackData->objectCount; ++i) {
     if (pCallbackData->pObjects[i].pObjectName != nullptr) {
       std::ostringstream address;
-      address << (void const*)pCallbackData->pObjects[i].objectHandle;
+      address << reinterpret_cast<void const*>(pCallbackData->pObjects[i].objectHandle);
 
       std::string hexHandle  = address.str();
       std::string objectName = "\"" + std::string(pCallbackData->pObjects[i].pObjectName) + "\"";

@@ -25,7 +25,7 @@ class Floor {
   void draw(Illusion::Graphics::CommandBufferPtr const& cmd);
 
  private:
-  glm::mat4                      mMatVP;
+  glm::mat4                      mMatVP{};
   Illusion::Graphics::TexturePtr mAlbedoTexture;
   Illusion::Graphics::TexturePtr mNormalTexture;
   Illusion::Graphics::ShaderPtr  mShader;
