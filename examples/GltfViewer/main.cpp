@@ -194,7 +194,7 @@ int main(int argc, char* argv[]) {
     res.mCmd->graphicsState().setTopology(vk::PrimitiveTopology::eTriangleStrip);
     res.mCmd->graphicsState().setVertexInputAttributes({});
     res.mCmd->graphicsState().setVertexInputBindings({});
-    res.mCmd->draw(4);
+    res.mCmd->draw(3);
 
     res.mCmd->bindingState().reset(1);
     res.mCmd->bindingState().setTexture(brdflut, 1, 0);
