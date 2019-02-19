@@ -6,8 +6,8 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_GRAPHICS_RENDER_GRAPH_HPP
-#define ILLUSION_GRAPHICS_RENDER_GRAPH_HPP
+#ifndef ILLUSION_GRAPHICS_FRAME_GRAPH_HPP
+#define ILLUSION_GRAPHICS_FRAME_GRAPH_HPP
 
 #include "../Core/Flags.hpp"
 #include "../Core/NamedObject.hpp"
@@ -26,7 +26,7 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // In Illusion, the FrameGraph is used to configure your render passes, framebuffer attachments   //
-// and all dependencies between the passes. It automatically create RenderPasses and merges them  //
+// and all dependencies between the passes. It automatically creates RenderPasses and merges them //
 // into subpasses as often as possible. It actively supports parallel CommandBuffer recording by  //
 // using secondary CommandBuffers for each subpass.                                               //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -40,18 +40,28 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
   typedef Core::Flags<AccessFlagBits> AccessFlags;
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
+  // For now, resources are "only" images which can be used as input, color or depth attachment.  //
+  // You can specify the size and the format of each resource. The resource itself does not hold  //
+  // any Vulkan objects, it is rather a description which is later used to create the physical    //
+  // resources. When you change one of the resource's properties, the entire frame graph will be  //
+  // reconstructed.                                                                               //
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
   class Resource {
    public:
     enum class Sizing { eAbsolute, eRelative };
 
+    // The name is used for some debug prints and the Vulkan objects which are created for this
+    // resource. The size can be either in absolute pixels or in a fraction of the output window's
+    // resolution. Have a look at the private members for the default values.
     Resource& setName(std::string const& name);
     Resource& setFormat(vk::Format format);
     Resource& setSizing(Sizing sizing);
     Resource& setExtent(glm::vec2 const& extent);
     Resource& setSamples(vk::SampleCountFlagBits const& samples);
 
+    // Returns either mExtent (when sizing is set to eAbsolute) or mExtent * windowExtent (when
+    // sizing is set to eRelative).
     glm::uvec2 getAbsoluteExtent(glm::uvec2 const& windowExtent) const;
 
     friend class FrameGraph;
@@ -99,18 +109,29 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
     bool mDirty = true;
   };
 
-  // -----------------------------------------------------------------------------------------------
+  //////////////////////////////////////////////////////////////////////////////////////////////////
 
   FrameGraph(std::string const& name, DevicePtr const& device, FrameResourceIndexPtr const& index);
 
+  // Adds a new resource to the frame graph. Make sure to capture the returned object by reference,
+  // else you will be working with a copy.
   Resource& createResource();
-  Pass&     createPass();
 
+  // Adds a new pass to the frame graph. Make sure to capture the returned object by reference,
+  // else you will be working with a copy.
+  Pass& createPass();
+
+  // Selects a resource of a pass as the output of the frame graph. The given resource will be
+  // blitted to the given window. Make sure that the given pass and resource were actually created
+  // with the methods above, alse a std::runtime_error will be thrown.
   void setOutput(WindowPtr const& window, Pass const& pass, Resource const& attachment);
+
+  // This triggers construction and execution of the frame graph. Call this once per frame.
   void process(ProcessingFlags const& flags = ProcessingFlagBits::eNone);
 
  private:
-  // -----------------------------------------------------------------------------------------------
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////
 
   struct RenderPassInfo {
     struct Subpass : public RenderPass::Subpass {
@@ -131,7 +152,8 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
     std::unordered_map<Resource const*, vk::ClearValue>      mAttachmentClear;
   };
 
-  // -----------------------------------------------------------------------------------------------
+  //////////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////////
 
   struct PerFrame {
     CommandBufferPtr mPrimaryCommandBuffer;
@@ -143,7 +165,7 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
     bool                                                mDirty = true;
   };
 
-  // -----------------------------------------------------------------------------------------------
+  //////////////////////////////////////////////////////////////////////////////////////////////////
 
   bool isDirty() const;
   void clearDirty();
@@ -174,4 +196,4 @@ Illusion::Graphics::FrameGraph::AccessFlags operator|(
     Illusion::Graphics::FrameGraph::AccessFlagBits bit0,
     Illusion::Graphics::FrameGraph::AccessFlagBits bit1);
 
-#endif // ILLUSION_GRAPHICS_RENDER_GRAPH_HPP
+#endif // ILLUSION_GRAPHICS_FRAME_GRAPH_HPP
