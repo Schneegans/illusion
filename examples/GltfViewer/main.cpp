@@ -100,13 +100,13 @@ int main(int argc, char* argv[]) {
 
   // clang-format off
   Illusion::Core::CommandLine args("Simple viewer for GLTF files.");
-  args.addOption({"-h",  "--help"},        &options.mPrintHelp,  "Print this help");
-  args.addOption({"-m",  "--model"},       &options.mModelFile,  "GLTF model (.gltf or .glb)");
-  args.addOption({"-e",  "--environment"}, &options.mSkyboxFile, "Skybox image (in equirectangular projection)");
-  args.addOption({"-a",  "--animation"},   &options.mAnimation,  "Index of the animation to play. Default: 0, Use -1 to disable animations.");
-  args.addOption({"-ns", "--no-skins"},    &options.mNoSkins,    "Disable loading of skins");
-  args.addOption({"-nt", "--no-textures"}, &options.mNoTextures, "Disable loading of textures");
-  args.addOption({"-t",  "--trace"},       &Illusion::Core::Logger::enableTrace, "Print trace output");
+  args.addArgument({"-h",  "--help"},        &options.mPrintHelp,  "Print this help");
+  args.addArgument({"-m",  "--model"},       &options.mModelFile,  "GLTF model (.gltf or .glb)");
+  args.addArgument({"-e",  "--environment"}, &options.mSkyboxFile, "Skybox image (in equirectangular projection)");
+  args.addArgument({"-a",  "--animation"},   &options.mAnimation,  "Index of the animation to play. Default: 0, Use -1 to disable animations.");
+  args.addArgument({"-ns", "--no-skins"},    &options.mNoSkins,    "Disable loading of skins");
+  args.addArgument({"-nt", "--no-textures"}, &options.mNoTextures, "Disable loading of textures");
+  args.addArgument({"-t",  "--trace"},       &Illusion::Core::Logger::enableTrace, "Print trace output");
   args.parse(argc, argv);
   // clang-format on
 

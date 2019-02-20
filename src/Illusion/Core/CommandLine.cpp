@@ -15,6 +15,7 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <unordered_set>
 #include <utility>
 
 namespace Illusion::Core {
@@ -27,57 +28,59 @@ CommandLine::CommandLine(std::string description)
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandLine::addOption(
-    std::vector<std::string> const& optionNames, OptionValue value, std::string const& help) {
+void CommandLine::addArgument(
+    std::vector<std::string> const& flags, Value value, std::string const& help) {
 
-  mOptions.emplace_back(Option{optionNames, std::move(value), help});
+  mArguments.emplace_back(Argument{flags, std::move(value), help});
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandLine::printHelp() const {
 
-  // print the general description
+  // Print the general description.
   Logger::message() << mDescription << std::endl;
 
-  // find the option with the longest combined name length (in order to align the help messages)
-  uint32_t maxNameLength = 0;
+  // Find the argument with the longest combined flag length (in order to align the help messages).
+  uint32_t maxFlagLength = 0;
 
-  for (auto const& option : mOptions) {
-    uint32_t nameLength = 0;
-    for (auto const& name : option.mNames) {
-      nameLength += static_cast<uint32_t>(name.size()) + 2;
+  for (auto const& argument : mArguments) {
+    uint32_t flagLength = 0;
+    for (auto const& flag : argument.mFlags) {
+      // Plus comma and space.
+      flagLength += static_cast<uint32_t>(flag.size()) + 2;
     }
 
-    maxNameLength = std::max(maxNameLength, nameLength);
+    maxFlagLength = std::max(maxFlagLength, flagLength);
   }
 
-  // print each option
-  for (auto const& option : mOptions) {
+  // Now print each argument.
+  for (auto const& argument : mArguments) {
 
-    std::string names;
-
-    for (auto const& name : option.mNames) {
-      names += name + ", ";
+    std::string flags;
+    for (auto const& flag : argument.mFlags) {
+      flags += flag + ", ";
     }
 
+    // Remove last comma and space and add padding according to the longest flags in order to align
+    // the help messages.
     std::stringstream sstr;
-    sstr << std::left << std::setw(maxNameLength) << names.substr(0, names.size() - 2);
+    sstr << std::left << std::setw(maxFlagLength) << flags.substr(0, flags.size() - 2);
 
-    // Print the help for each option. This is a bit more involved since we do line wrapping for
+    // Print the help for each argument. This is a bit more involved since we do line wrapping for
     // long descriptions.
     size_t currentSpacePos  = 0;
     size_t currentLineWidth = 0;
     while (currentSpacePos != std::string::npos) {
-      size_t nextSpacePos = option.mHelp.find_first_of(' ', currentSpacePos + 1);
-      sstr << option.mHelp.substr(currentSpacePos, nextSpacePos - currentSpacePos);
+      size_t nextSpacePos = argument.mHelp.find_first_of(' ', currentSpacePos + 1);
+      sstr << argument.mHelp.substr(currentSpacePos, nextSpacePos - currentSpacePos);
       currentLineWidth += nextSpacePos - currentSpacePos;
       currentSpacePos = nextSpacePos;
 
       if (currentLineWidth > 60) {
         Logger::message() << sstr.str() << std::endl;
         sstr = std::stringstream();
-        sstr << std::left << std::setw(maxNameLength - 1) << " ";
+        sstr << std::left << std::setw(maxFlagLength - 1) << " ";
         currentLineWidth = 0;
       }
     }
@@ -88,71 +91,73 @@ void CommandLine::printHelp() const {
 
 void CommandLine::parse(int argc, char* argv[]) const {
 
-  // skip the first argument (name of the program)
+  // Skip the first argument (name of the program).
   int i = 1;
   while (i < argc) {
 
-    // we assume that the entire argument is an option name
-    std::string name(argv[i]);
+    // We assume that the entire argument is an argument flag.
+    std::string flag(argv[i]);
     std::string value;
     bool        valueIsSeperate = false;
 
-    // if there is an '=' in the name, the part after the '=' is actually the value
-    size_t equalPos = name.find('=');
+    // If there is an '=' in the flag, the part after the '=' is actually the value.
+    size_t equalPos = flag.find('=');
     if (equalPos != std::string::npos) {
-      value = name.substr(equalPos + 1);
-      name  = name.substr(0, equalPos);
+      value = flag.substr(equalPos + 1);
+      flag  = flag.substr(0, equalPos);
     }
-    // else the following argument is the value
+    // Else the following argument is the value.
     else if (i + 1 < argc) {
       value           = argv[i + 1];
       valueIsSeperate = true;
     }
 
-    // search for an option with the provided name
-    bool foundOption = false;
+    // Search for an argument with the provided flag.
+    bool foundArgument = false;
 
-    for (auto const& option : mOptions) {
-      if (Utils::contains(option.mNames, name)) {
-        foundOption = true;
+    for (auto const& argument : mArguments) {
+      if (Utils::contains(argument.mFlags, flag)) {
+        foundArgument = true;
 
         // In the case of booleans, there must not be a value present. So if the value is neither
-        // 'true' nor 'false' it is considered to be the next argument
-        if (std::holds_alternative<bool*>(option.mValue)) {
+        // 'true' nor 'false' it is considered to be the next argument.
+        if (std::holds_alternative<bool*>(argument.mValue)) {
           if (!value.empty() && value != "true" && value != "false") {
             valueIsSeperate = false;
           }
-          *std::get<bool*>(option.mValue) = (value != "false");
+          *std::get<bool*>(argument.mValue) = (value != "false");
         }
-        // In all other cases there must be a value
+        // In all other cases there must be a value.
         else if (value.empty()) {
           throw std::runtime_error(
-              "Failed to parse command line arguments: Missing value for option \"" + name + "\"!");
+              "Failed to parse command line arguments: Missing value for argument \"" + flag +
+              "\"!");
         }
-        // For a std::string, we take the entire value
-        else if (std::holds_alternative<std::string*>(option.mValue)) {
-          *std::get<std::string*>(option.mValue) = value;
+        // For a std::string, we take the entire value.
+        else if (std::holds_alternative<std::string*>(argument.mValue)) {
+          *std::get<std::string*>(argument.mValue) = value;
         }
-        // In all other cases we use a std::stringstream to convert the value
+        // In all other cases we use a std::stringstream to convert the value.
         else {
           std::visit(
               [&value](auto&& arg) {
                 std::stringstream sstr(value);
                 sstr >> *arg;
               },
-              option.mValue);
+              argument.mValue);
         }
 
         break;
       }
     }
 
-    // Print a warning if there was an unknown option
-    if (!foundOption) {
-      Logger::warning() << "Ignoring unknown command line option \"" << name << "\"." << std::endl;
+    // Print a warning if there was an unknown argument.
+    if (!foundArgument) {
+      Logger::warning() << "Ignoring unknown command line argument \"" << flag << "\"."
+                        << std::endl;
     }
 
-    if (foundOption && valueIsSeperate) {
+    if (foundArgument && valueIsSeperate) {
       ++i;
     }
 

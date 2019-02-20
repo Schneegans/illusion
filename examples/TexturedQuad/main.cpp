@@ -46,8 +46,8 @@ int main(int argc, char* argv[]) {
   bool printHelp = false;
 
   Illusion::Core::CommandLine args("Renders a full screen texture.");
-  args.addOption({"-h", "--help"}, &printHelp, "Print this help");
-  args.addOption({"--hlsl"}, &useHLSL, "Use HLSL shaders instead of GLSL shaders");
+  args.addArgument({"-h", "--help"}, &printHelp, "Print this help");
+  args.addArgument({"--hlsl"}, &useHLSL, "Use HLSL shaders instead of GLSL shaders");
   args.parse(argc, argv);
 
   // When printHelp was set to true, we print a help message and exit.

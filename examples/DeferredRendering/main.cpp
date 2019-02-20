@@ -36,9 +36,9 @@ int main(int argc, char* argv[]) {
 
   // clang-format off
   Illusion::Core::CommandLine args("Deferred Rendering with Vulkan.");
-  args.addOption({"-h",  "--help"},   &options.mPrintHelp,  "Print this help");
-  args.addOption({"-l",  "--lights"}, &options.mLightCount, "Number of light sources");
-  args.addOption({"-t",  "--trace"},  &Illusion::Core::Logger::enableTrace, "Print trace output");
+  args.addArgument({"-h", "--help"},   &options.mPrintHelp,  "Print this help");
+  args.addArgument({"-l", "--lights"}, &options.mLightCount, "Number of light sources");
+  args.addArgument({"-t", "--trace"},  &Illusion::Core::Logger::enableTrace, "Print trace output");
   // clang-format on
 
   args.parse(argc, argv);

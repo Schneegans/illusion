@@ -34,12 +34,13 @@ int main(int argc, char* argv[]) {
 
   // The --trace option enables Logger::trace() output. This mainly shows when Vulkan objects are
   // created and destroyed.
+  // clang-format off
   Illusion::Core::CommandLine args("Renders a full screen texture.");
-  args.addOption({"-h", "--help"}, &printHelp, "Print this help");
-  args.addOption({"-t", "--trace"}, &Illusion::Core::Logger::enableTrace, "Print trace output");
-  args.addOption({"-s", "--shader"}, &shaderFile,
-      "The fragment shader file to use. This defaults to data/ShaderSandbox/Sandbox.frag");
+  args.addArgument({"-h", "--help"},   &printHelp,  "Print this help");
+  args.addArgument({"-s", "--shader"}, &shaderFile, "The fragment shader file to use. This defaults to data/ShaderSandbox/Sandbox.frag");
+  args.addArgument({"-t", "--trace"},  &Illusion::Core::Logger::enableTrace, "Print trace output");
   args.parse(argc, argv);
+  // clang-format on
 
   // When printHelp was set to true, we print a help message and exit.
   if (printHelp) {
