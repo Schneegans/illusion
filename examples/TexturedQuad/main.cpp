@@ -6,7 +6,7 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <Illusion/Core/CommandLineOptions.hpp>
+#include <Illusion/Core/CommandLine.hpp>
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
 #include <Illusion/Graphics/Instance.hpp>
@@ -19,7 +19,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // When compared to the Triangle example, this one is only a little bit more involved. Still, no  //
-// vertex data is used, however a texture is loaded. Furthermore, the CommandlineOptions class is //
+// vertex data is used, however a texture is loaded. Furthermore, the CommandLine class is //
 // used to allow the user to specify whether GLSL or HLSL shaders should be used for rendering.   //
 // Despite its name, this example actually draws a triangle as well. It is larger thant the       //
 // framebuffer inorder to cover the entire window. Like this:                                     //
@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
   bool useHLSL   = false;
   bool printHelp = false;
 
-  Illusion::Core::CommandLineOptions args("Renders a full screen texture.");
+  Illusion::Core::CommandLine args("Renders a full screen texture.");
   args.addOption({"-h", "--help"}, &printHelp, "Print this help");
   args.addOption({"--hlsl"}, &useHLSL, "Use HLSL shaders instead of GLSL shaders");
   args.parse(argc, argv);

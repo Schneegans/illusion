@@ -6,8 +6,8 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#ifndef ILLUSION_CORE_COMMAND_LINE_OPTIONS_HPP
-#define ILLUSION_CORE_COMMAND_LINE_OPTIONS_HPP
+#ifndef ILLUSION_CORE_COMMAND_LINE_HPP
+#define ILLUSION_CORE_COMMAND_LINE_HPP
 
 #include <string>
 #include <variant>
@@ -35,7 +35,7 @@ namespace Illusion::Core {
 // --verbose true                                                                                 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class CommandLineOptions {
+class CommandLine {
  public:
   // These are the possible variables the options may point to. Bool and std::string are handled in
   // a special way, all other values are parsed with a std::stringstream. This std::variant can be
@@ -44,7 +44,7 @@ class CommandLineOptions {
   typedef std::variant<int32_t*, uint32_t*, double*, float*, bool*, std::string*> OptionValue;
 
   // The description is printed as part of the help message.
-  explicit CommandLineOptions(std::string description);
+  explicit CommandLine(std::string description);
 
   // Adds a possible option. A typical call would be like this:
   // bool printHelp = false;
@@ -75,4 +75,4 @@ class CommandLineOptions {
 
 } // namespace Illusion::Core
 
-#endif // ILLUSION_CORE_COMMAND_LINE_OPTIONS_HPP
+#endif // ILLUSION_CORE_COMMAND_LINE_HPP

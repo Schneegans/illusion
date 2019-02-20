@@ -6,7 +6,7 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <Illusion/Core/CommandLineOptions.hpp>
+#include <Illusion/Core/CommandLine.hpp>
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Core/Timer.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
@@ -35,7 +35,7 @@ int main(int argc, char* argv[]) {
   } options;
 
   // clang-format off
-  Illusion::Core::CommandLineOptions args("Deferred Rendering with Vulkan.");
+  Illusion::Core::CommandLine args("Deferred Rendering with Vulkan.");
   args.addOption({"-h",  "--help"},   &options.mPrintHelp,  "Print this help");
   args.addOption({"-l",  "--lights"}, &options.mLightCount, "Number of light sources");
   args.addOption({"-t",  "--trace"},  &Illusion::Core::Logger::enableTrace, "Print trace output");

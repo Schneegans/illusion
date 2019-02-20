@@ -9,7 +9,7 @@
 #include "GltfModel.hpp"
 #include "Turntable.hpp"
 
-#include <Illusion/Core/CommandLineOptions.hpp>
+#include <Illusion/Core/CommandLine.hpp>
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Core/Timer.hpp>
 #include <Illusion/Graphics/CoherentBuffer.hpp>
@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
   } options;
 
   // clang-format off
-  Illusion::Core::CommandLineOptions args("Simple viewer for GLTF files.");
+  Illusion::Core::CommandLine args("Simple viewer for GLTF files.");
   args.addOption({"-h",  "--help"},        &options.mPrintHelp,  "Print this help");
   args.addOption({"-m",  "--model"},       &options.mModelFile,  "GLTF model (.gltf or .glb)");
   args.addOption({"-e",  "--environment"}, &options.mSkyboxFile, "Skybox image (in equirectangular projection)");

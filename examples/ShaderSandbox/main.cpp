@@ -6,7 +6,7 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include <Illusion/Core/CommandLineOptions.hpp>
+#include <Illusion/Core/CommandLine.hpp>
 #include <Illusion/Core/Logger.hpp>
 #include <Illusion/Core/Timer.hpp>
 #include <Illusion/Graphics/CommandBuffer.hpp>
@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
 
   // The --trace option enables Logger::trace() output. This mainly shows when Vulkan objects are
   // created and destroyed.
-  Illusion::Core::CommandLineOptions args("Renders a full screen texture.");
+  Illusion::Core::CommandLine args("Renders a full screen texture.");
   args.addOption({"-h", "--help"}, &printHelp, "Print this help");
   args.addOption({"-t", "--trace"}, &Illusion::Core::Logger::enableTrace, "Print trace output");
   args.addOption({"-s", "--shader"}, &shaderFile,

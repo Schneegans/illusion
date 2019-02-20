@@ -6,7 +6,7 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#include "CommandLineOptions.hpp"
+#include "CommandLine.hpp"
 
 #include "Logger.hpp"
 #include "Utils.hpp"
@@ -21,13 +21,13 @@ namespace Illusion::Core {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-CommandLineOptions::CommandLineOptions(std::string description)
+CommandLine::CommandLine(std::string description)
     : mDescription(std::move(description)) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandLineOptions::addOption(
+void CommandLine::addOption(
     std::vector<std::string> const& optionNames, OptionValue value, std::string const& help) {
 
   mOptions.emplace_back(Option{optionNames, std::move(value), help});
@@ -35,7 +35,7 @@ void CommandLineOptions::addOption(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandLineOptions::printHelp() const {
+void CommandLine::printHelp() const {
 
   // print the general description
   Logger::message() << mDescription << std::endl;
@@ -86,7 +86,7 @@ void CommandLineOptions::printHelp() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandLineOptions::parse(int argc, char* argv[]) const {
+void CommandLine::parse(int argc, char* argv[]) const {
 
   // skip the first argument (name of the program)
   int i = 1;
