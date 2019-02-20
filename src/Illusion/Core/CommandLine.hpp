@@ -17,21 +17,21 @@ namespace Illusion::Core {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 // This class is a simple and effective class to parse command line arguments. For each possible  //
-// option it stores a pointer to a variable. When the corresponding option is set on the          //
+// argument it stores a pointer to a variable. When the corresponding argument is set on the      //
 // command line (given to the parse() method) the variable is set to the given value. If the      //
 // option is not set, the variable is not touched. Hence it should be initialized to a default    //
 // state.                                                                                         //
-// For each option, several option names (aliases) can be defined. Thus, the same boolean could   //
-// be set via '--help' or '-h'. While not required, it is a good practice to precede the option   //
-// names with either '--' or '-'. Except for booleans, a value is expected to be given. Booleans  //
-// are set to 'true' if no value is provided (that means they can be used as simple flags as in   //
+// For each argument, several names (aliases) can be defined. Thus, the same boolean could be set //
+// via '--help' or '-h'. While not required, it is a good practice to precede the argument names  //
+// with either '--' or '-'. Except for booleans, a value is expected to be given. Booleans are    //
+// set to 'true' if no value is provided (that means they can be used as simple flags as in       //
 // the '--help' case). Values can be given in two ways: Either the option name and the value      //
 // should be separated by a space or by a '='. Here are some valid examples:                      //
 // --string="Foo Bar"                                                                             //
 // --string "Foo Bar"                                                                             //
-// --verbose                                                                                      //
-// --verbose=false                                                                                //
-// --verbose true                                                                                 //
+// --help                                                                                         //
+// --help=false                                                                                   //
+// --help true                                                                                    //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CommandLine {
