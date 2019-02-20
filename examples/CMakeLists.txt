@@ -8,6 +8,7 @@
 
 # make each example --------------------------------------------------------------------------------
 set(ENABLED_EXAMPLES
+  "CommandLine"
   "DeferredRendering"
   "GltfViewer"
   "GPUInfo"

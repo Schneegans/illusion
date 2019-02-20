@@ -72,6 +72,7 @@ The list below is roughly sorted by complexity. So if you want to learn features
 
 Link | Description | Screenshot
 -----|-------------|-----------
+[CommandLine](examples/CommandLine) | This small example shows how to use Illusions very basic command line parser. Use `CommandLine --help` to see the options. | ![screenshot](examples/CommandLine/screenshot.jpg)
 [GPUInfo](examples/GPUInfo) | This minimal example creates a Vulkan instance and prints a very verbose list of your Vulkan implementation's hardware and software capabilities. | ![screenshot](examples/GPUInfo/screenshot.jpg)
 [Triangle](examples/Triangle) | A simple triangle without vertex or index buffers that uses a pre-recorded command buffer and no per-frame resources. | ![screenshot](examples/Triangle/screenshot.jpg)
 [SpecializationConstants](examples/SpecializationConstants) | Similar to the Triangle example, but here three triangles are drawn with one shader program. For each triangle some specialization constants are set to different values. | ![screenshot](examples/SpecializationConstants/screenshot.jpg)
