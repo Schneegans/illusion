@@ -70,20 +70,15 @@ When compiled with [the commands below](#building-illusion), the examples will b
 
 The list below is roughly sorted by complexity. So if you want to learn features of Illusion step-by-step you can have a look at the example's code in that order.
 
-### Core Utility Examples 
-
 Link | Description | Screenshot
 -----|-------------|-----------
+| | **Core Utility Examples Examples** | |
 [SignalSlot](examples/SignalSlot) | This very small example shows some basic usage of Illusion's Signals and Properties. You can read some information on the implementation [on my blog](http://simmesimme.github.io/tutorials/2015/09/21/properties). | ![screenshot](examples/SignalSlot/screenshot.jpg)
 [CommandLine](examples/CommandLine) | This small example shows how to use Illusion's very basic command line parser. Use `CommandLine --help` to see the options. | ![screenshot](examples/CommandLine/screenshot.jpg)
-
-### Low-level Vulkan Examples
-
-Link | Description | Screenshot
------|-------------|-----------
+| | **Low-level Vulkan Examples** | |
 [GPUInfo](examples/GPUInfo) | This minimal example creates a Vulkan instance and prints a very verbose list of your Vulkan implementation's hardware and software capabilities. | ![screenshot](examples/GPUInfo/screenshot.jpg)
 [Triangle](examples/Triangle) | A simple triangle without vertex or index buffers that uses a pre-recorded command buffer and no per-frame resources. | ![screenshot](examples/Triangle/screenshot.jpg)
-[SpecializationConstants](examples/SpecializationConstants) | Similar to the Triangle example, but here three triangles are drawn with one shader program. For each triangle some specialization constants are set to different values. | ![screenshot](examples/SpecializationConstants/screenshot.jpg)
+[Specialization Constants](examples/SpecializationConstants) | Similar to the Triangle example, but here three triangles are drawn with one shader program. For each triangle some specialization constants are set to different values. | ![screenshot](examples/SpecializationConstants/screenshot.jpg)
 [TexturedQuad](examples/TexturedQuad) | Similar to the triangle, in addition a texture is loaded and bound as fragment shader input. This example can either use GLSL or HLSL shaders. Use `TexturedQuad --help` to see the options. | ![screenshot](examples/TexturedQuad/screenshot.jpg)
 [ShaderSandbox](examples/ShaderSandbox) | An example similar to [ShaderToy](https://www.shadertoy.com). You can specify a fragment shader on the command line and it will be automatically reloaded when it changes on disc. Use `ShaderSandbox --help` to see the options. | ![screenshot](examples/ShaderSandbox/screenshot.jpg)
 [TexturedCube](examples/TexturedCube) | A more complex example using vertex buffers and an index buffer. Camera information is uploaded as uniform buffer, the cube's transformation is set via push constants. The command buffer is re-recorded every frame. The uniform buffer and the command buffer are per-frame resources. | ![screenshot](examples/TexturedCube/screenshot.jpg)
