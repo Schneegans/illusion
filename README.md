@@ -10,7 +10,7 @@ Since everybody loves badges, here are some describing Illusion:
 ![license](https://img.shields.io/badge/license-MIT-blue.svg)
 ![code](https://img.shields.io/badge/code-C++17-orange.svg)
 ![loc](https://img.shields.io/badge/loc-12.7k-green.svg)
-![code](https://img.shields.io/badge/comments-1.9k-green.svg)
+![code](https://img.shields.io/badge/comments-2.0k-green.svg)
 
 Illusion uses C++17 and can be build on Linux (gcc or clang), Windows (msvc) and OS X (xcode). Nearly all dependencies are included as [git submodules](externals), please refer to the section [Building Illusion](#building-illusion) in order to get started.
 
@@ -70,9 +70,17 @@ When compiled with [the commands below](#building-illusion), the examples will b
 
 The list below is roughly sorted by complexity. So if you want to learn features of Illusion step-by-step you can have a look at the example's code in that order.
 
+### Core Utility Examples 
+
 Link | Description | Screenshot
 -----|-------------|-----------
-[CommandLine](examples/CommandLine) | This small example shows how to use Illusions very basic command line parser. Use `CommandLine --help` to see the options. | ![screenshot](examples/CommandLine/screenshot.jpg)
+[SignalSlot](examples/SignalSlot) | This very small example shows some basic usage of Illusion's Signals and Properties. You can read some information on the implementation [on my blog](http://simmesimme.github.io/tutorials/2015/09/21/properties). | ![screenshot](examples/SignalSlot/screenshot.jpg)
+[CommandLine](examples/CommandLine) | This small example shows how to use Illusion's very basic command line parser. Use `CommandLine --help` to see the options. | ![screenshot](examples/CommandLine/screenshot.jpg)
+
+### Low-level Vulkan Examples
+
+Link | Description | Screenshot
+-----|-------------|-----------
 [GPUInfo](examples/GPUInfo) | This minimal example creates a Vulkan instance and prints a very verbose list of your Vulkan implementation's hardware and software capabilities. | ![screenshot](examples/GPUInfo/screenshot.jpg)
 [Triangle](examples/Triangle) | A simple triangle without vertex or index buffers that uses a pre-recorded command buffer and no per-frame resources. | ![screenshot](examples/Triangle/screenshot.jpg)
 [SpecializationConstants](examples/SpecializationConstants) | Similar to the Triangle example, but here three triangles are drawn with one shader program. For each triangle some specialization constants are set to different values. | ![screenshot](examples/SpecializationConstants/screenshot.jpg)
