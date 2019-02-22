@@ -13,5 +13,6 @@ It a great idea starting the commit message with an applicable emoji. This not o
 * :beetle: `:beetle:` when fixing a bug
 * :truck: `:truck:` when when moving or renaming a file
 * :green_heart: `:green_heart:` when fixing the CI build
+* :see_no_evil: `:see_no_evil:` when modifying the `.gitignore` file
 * :arrow_up_small: `:arrow_up_small:` when adding / upgrading dependencies
 * :arrow_down_small: `:arrow_down_small:` when removing / downgrading dependencies
