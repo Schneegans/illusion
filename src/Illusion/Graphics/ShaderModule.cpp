@@ -118,11 +118,9 @@ ShaderModule::ShaderModule(std::string const& name, DeviceConstPtr device, Shade
     vk::ShaderStageFlagBits stage, std::set<std::string> dynamicBuffers)
     : Core::NamedObject(name)
     , mDevice(std::move(device))
-    , mStage(stage)
     , mSource(std::move(source))
-    , mDynamicBuffers(std::move(dynamicBuffers)) {
-
-  reload();
+    , mDynamicBuffers(std::move(dynamicBuffers))
+    , mStage(stage) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -131,54 +129,51 @@ ShaderModule::~ShaderModule() = default;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-bool ShaderModule::requiresReload() const {
-  return mSource->requiresReload();
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void ShaderModule::resetReloadingRequired() {
-  return mSource->resetReloadingRequired();
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void ShaderModule::reload() {
-  // Get spirv code. This comes either from file, from inline code or is compiled on-the-fly from
-  // GLSL or HLSL. This depends on the ShaderSource.
-  auto spirv = mSource->getSpirv(mStage);
-
-  // Create reflection information.
-  createReflection(spirv);
-
-  // And the the actual vk::ShaderModule.
-  vk::ShaderModuleCreateInfo info;
-  info.codeSize = spirv.size() * 4;
-  info.pCode    = spirv.data();
-  mHandle       = mDevice->createShaderModule(getName(), info);
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
 vk::ShaderModulePtr ShaderModule::getHandle() const {
+  reload();
   return mHandle;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 vk::ShaderStageFlagBits ShaderModule::getStage() const {
+  reload();
   return mStage;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::vector<PipelineResource> const& ShaderModule::getResources() const {
+  reload();
   return mResources;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) {
+void ShaderModule::reload() const {
+  if (mSource->isDirty()) {
+    try {
+      // Get spirv code. This comes either from file, from inline code or is compiled on-the-fly
+      // from GLSL or HLSL. This depends on the ShaderSource.
+      auto spirv = mSource->getSpirv(mStage);
+
+      // Create reflection information.
+      createReflection(spirv);
+
+      // And the the actual vk::ShaderModule.
+      vk::ShaderModuleCreateInfo info;
+      info.codeSize = spirv.size() * 4;
+      info.pCode    = spirv.data();
+      mHandle       = mDevice->createShaderModule(getName(), info);
+    } catch (std::runtime_error const& e) {
+      Core::Logger::error() << "Shader reloading failed. " << e.what() << std::endl;
+    }
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void ShaderModule::createReflection(std::vector<uint32_t> const& spirv) const {
   // Parse SPIRV binary.
   CustomCompiler                     compiler(spirv);
   spirv_cross::CompilerGLSL::Options opts = compiler.get_common_options();

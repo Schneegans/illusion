@@ -37,19 +37,6 @@ class ShaderModule : public Core::StaticCreate<ShaderModule>, public Core::Named
 
   virtual ~ShaderModule();
 
-  // This method is just forwarded to the contained ShaderSource. One reason for requiresReload() to
-  // return true is when the ShaderSource is actually a file on disc and this file has been changed
-  // since the last reloading of the ShaderMoule.
-  bool requiresReload() const;
-
-  // This method is also forwarded to the contained ShaderSource. For ShaderSources which are
-  // actually files on disc, this will prevent requiresReload() to return true until the file is
-  // changed once more.
-  void resetReloadingRequired();
-
-  // After this call, if no error occurs, the getHandle() method will return a new vk::ShaderModule.
-  void reload();
-
   // Returns the internal vk::ShaderModule. Storing this might be a bad idea since a reload may
   // happen when shader files are changed on disc.
   vk::ShaderModulePtr getHandle() const;
@@ -61,7 +48,8 @@ class ShaderModule : public Core::StaticCreate<ShaderModule>, public Core::Named
   std::vector<PipelineResource> const& getResources() const;
 
  private:
-  void createReflection(std::vector<uint32_t> const& spirv);
+  void reload() const;
+  void createReflection(std::vector<uint32_t> const& spirv) const;
 
   DeviceConstPtr          mDevice;
   ShaderSourcePtr         mSource;

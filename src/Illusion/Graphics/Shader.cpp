@@ -123,20 +123,6 @@ std::vector<DescriptorSetReflectionPtr> const& Shader::getDescriptorSetReflectio
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Shader::reload() const {
-
-  // first check whether one of our modules needs to be reload (this is for example the case when
-  // the source file changed on disc)
-  for (auto const& m : mModules) {
-    if (m->requiresReload()) {
-      try {
-        m->reload();
-      } catch (std::runtime_error const& e) {
-        Core::Logger::error() << "Shader reloading failed. " << e.what() << std::endl;
-        m->resetReloadingRequired();
-      }
-    }
-  }
-
   // A new module was added. Just recreate everything. This could be optimized to just recreate the
   // newly added modules, however there will be only very few cases were this method is called
   // before all modules are added anyways.

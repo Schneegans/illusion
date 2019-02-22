@@ -38,6 +38,11 @@ const std::unordered_map<vk::ShaderStageFlagBits, EShLanguage> shaderStageMappin
 
 class Includer : public DirStackFileIncluder {
  public:
+  Includer(std::vector<Core::File>& includedFiles)
+      : mIncludedFiles(includedFiles) {
+    mIncludedFiles.clear();
+  }
+
   IncludeResult* includeLocal(
       const char* headerName, const char* includerName, size_t inclusionDepth) override {
 
@@ -62,13 +67,13 @@ class Includer : public DirStackFileIncluder {
   }
 
  private:
-  std::vector<Core::File> mIncludedFiles;
+  std::vector<Core::File>& mIncludedFiles;
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::vector<uint32_t> compile(std::string const& code, std::string const& fileName,
-    vk::ShaderStageFlagBits vkStage, EShMessages messages, Includer& includer) {
+    vk::ShaderStageFlagBits vkStage, EShMessages messages, std::vector<Core::File>& includedFiles) {
 
   glslang::InitializeProcess();
 
@@ -84,6 +89,8 @@ std::vector<uint32_t> compile(std::string const& code, std::string const& fileNa
 
   // Default built in resource limits.
   auto resourceLimits = glslang::DefaultTBuiltInResource;
+
+  Includer includer(includedFiles);
 
   if (!shader.parse(&resourceLimits, 100, false, messages, includer)) {
     throw std::runtime_error(shader.getInfoLog());
@@ -118,132 +125,149 @@ std::vector<uint32_t> compile(std::string const& code, std::string const& fileNa
 
 } // namespace
 
-// -------------------------------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ShaderFile::ShaderFile(std::string const& fileName, bool reloadOnChanges)
     : mFile(fileName)
     , mReloadOnChanges(reloadOnChanges) {
 }
 
-bool ShaderFile::requiresReload() const {
-  if (!mReloadOnChanges) {
-    return false;
-  }
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
-  if (mFile.changedOnDisc()) {
-    return true;
-  }
+bool ShaderFile::isDirty() const {
+  if (mReloadOnChanges) {
 
-  for (auto const& f : mIncludedFiles) {
-    if (f.changedOnDisc()) {
-      return true;
+    if (mFile.changedOnDisc()) {
+      mDirty |= true;
+    }
+
+    for (auto const& f : mIncludedFiles) {
+      if (f.changedOnDisc()) {
+        mDirty |= true;
+      }
     }
   }
 
-  return false;
+  return mDirty;
 }
 
-void ShaderFile::resetReloadingRequired() {
-  mFile.resetChangedOnDisc();
-
-  for (auto& f : mIncludedFiles) {
-    f.resetChangedOnDisc();
-  }
-}
-
-// -------------------------------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ShaderCode::ShaderCode(std::string code, std::string name)
     : mCode(std::move(code))
     , mName(std::move(name)) {
 }
 
-bool ShaderCode::requiresReload() const {
-  return false;
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool ShaderCode::isDirty() const {
+  return mDirty;
 }
 
-void ShaderCode::resetReloadingRequired() {
-}
-
-// -------------------------------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 GlslFile::GlslFile(std::string const& fileName, bool reloadOnChanges)
     : ShaderFile(fileName, reloadOnChanges) {
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::vector<uint32_t> GlslFile::getSpirv(vk::ShaderStageFlagBits stage) {
-  auto     code = mFile.getContent<std::string>();
-  Includer includer;
-  auto     spirv = compile(
-      code, mFile.getFileName(), stage, EShMessages(EShMsgSpvRules | EShMsgVulkanRules), includer);
-
-  mIncludedFiles = includer.getIncludedFiles();
-
-  return spirv;
+  mDirty = false;
+  return compile(mFile.getContent<std::string>(), mFile.getFileName(), stage,
+      EShMessages(EShMsgSpvRules | EShMsgVulkanRules), mIncludedFiles);
 }
 
-// -------------------------------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 GlslCode::GlslCode(std::string const& code, std::string const& name)
     : ShaderCode(code, name) {
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::vector<uint32_t> GlslCode::getSpirv(vk::ShaderStageFlagBits stage) {
-  Includer includer;
-  return compile(mCode, mName, stage, EShMessages(EShMsgSpvRules | EShMsgVulkanRules), includer);
+  mDirty = false;
+  return compile(
+      mCode, mName, stage, EShMessages(EShMsgSpvRules | EShMsgVulkanRules), mIncludedFiles);
 }
 
-// -------------------------------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 HlslFile::HlslFile(std::string const& fileName, bool reloadOnChanges)
     : ShaderFile(fileName, reloadOnChanges) {
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::vector<uint32_t> HlslFile::getSpirv(vk::ShaderStageFlagBits stage) {
-  auto     code = mFile.getContent<std::string>();
-  Includer includer;
-  auto     spirv = compile(code, mFile.getFileName(), stage,
-      EShMessages(EShMsgSpvRules | EShMsgVulkanRules | EShMsgReadHlsl), includer);
-
-  mIncludedFiles = includer.getIncludedFiles();
-
-  return spirv;
+  mDirty = false;
+  return compile(mFile.getContent<std::string>(), mFile.getFileName(), stage,
+      EShMessages(EShMsgSpvRules | EShMsgVulkanRules | EShMsgReadHlsl), mIncludedFiles);
 }
 
-// -------------------------------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 HlslCode::HlslCode(std::string const& code, std::string const& name)
     : ShaderCode(code, name) {
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::vector<uint32_t> HlslCode::getSpirv(vk::ShaderStageFlagBits stage) {
-  Includer includer;
+  mDirty = false;
   return compile(mCode, mName, stage,
-      EShMessages(EShMsgSpvRules | EShMsgVulkanRules | EShMsgReadHlsl), includer);
+      EShMessages(EShMsgSpvRules | EShMsgVulkanRules | EShMsgReadHlsl), mIncludedFiles);
 }
 
-// -------------------------------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SpirvFile::SpirvFile(std::string const& fileName, bool reloadOnChanges)
     : ShaderFile(fileName, reloadOnChanges) {
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::vector<uint32_t> SpirvFile::getSpirv(vk::ShaderStageFlagBits /*stage*/) {
+  mDirty = false;
   return mFile.getContent<std::vector<uint32_t>>();
 }
 
-// -------------------------------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 SpirvCode::SpirvCode(std::vector<uint32_t> code)
     : mCode(std::move(code)) {
 }
 
-bool SpirvCode::requiresReload() const {
-  return false;
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+bool SpirvCode::isDirty() const {
+  return mDirty;
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 std::vector<uint32_t> SpirvCode::getSpirv(vk::ShaderStageFlagBits /*stage*/) {
+  mDirty = false;
   return mCode;
 }
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
 
 } // namespace Illusion::Graphics

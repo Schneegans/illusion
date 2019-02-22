@@ -76,7 +76,7 @@ class Shader : public Core::StaticCreate<Shader>, public Core::NamedObject {
   std::unordered_map<vk::ShaderStageFlagBits, ShaderSourcePtr>       mSources;
   std::unordered_map<vk::ShaderStageFlagBits, std::set<std::string>> mDynamicBuffers;
 
-  // dirty state -----------------------------------------------------------------------------------
+  // lazy state ------------------------------------------------------------------------------------
   mutable bool                         mDirty = false;
   mutable std::vector<ShaderModulePtr> mModules;
   mutable PipelineReflectionConstPtr   mReflection;

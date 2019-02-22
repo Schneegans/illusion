@@ -29,8 +29,7 @@ namespace Illusion::Graphics {
 // Abstract base class for all shader sources.
 class ShaderSource {
  public:
-  virtual bool                  requiresReload() const                  = 0;
-  virtual void                  resetReloadingRequired()                = 0;
+  virtual bool                  isDirty() const                         = 0;
   virtual std::vector<uint32_t> getSpirv(vk::ShaderStageFlagBits stage) = 0;
 };
 
@@ -40,13 +39,15 @@ class ShaderSource {
 class ShaderFile : public ShaderSource {
  public:
   ShaderFile(std::string const& fileName, bool reloadOnChanges);
-  bool requiresReload() const override;
-  void resetReloadingRequired() override;
+  bool isDirty() const override;
 
  protected:
-  Core::File              mFile;
-  bool                    mReloadOnChanges;
-  std::vector<Core::File> mIncludedFiles;
+  Core::File mFile;
+  bool       mReloadOnChanges;
+
+  // lazy state
+  mutable bool                    mDirty = true;
+  mutable std::vector<Core::File> mIncludedFiles;
 };
 
 // -------------------------------------------------------------------------------------------------
@@ -56,12 +57,15 @@ class ShaderFile : public ShaderSource {
 class ShaderCode : public ShaderSource {
  public:
   ShaderCode(std::string code, std::string name);
-  bool requiresReload() const override;
-  void resetReloadingRequired() override;
+  bool isDirty() const override;
 
  protected:
   std::string mCode;
   std::string mName;
+
+  // lazy state
+  mutable bool                    mDirty = true;
+  mutable std::vector<Core::File> mIncludedFiles;
 };
 
 // -------------------------------------------------------------------------------------------------
@@ -115,11 +119,14 @@ class SpirvCode : public ShaderSource, public Core::StaticCreate<SpirvCode> {
  public:
   SpirvCode(std::vector<uint32_t> code);
 
-  bool                  requiresReload() const override;
+  bool                  isDirty() const override;
   std::vector<uint32_t> getSpirv(vk::ShaderStageFlagBits stage) override;
 
  private:
   std::vector<uint32_t> mCode;
+
+  // lazy state
+  mutable bool mDirty = true;
 };
 
 // -------------------------------------------------------------------------------------------------
