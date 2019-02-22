@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# ------------------------------------------------------------------------------------------------ #
+#                                                                                                  #
+#     _)  |  |            _)                This code may be used and modified under the terms     #
+#      |  |  |  |  | (_-<  |   _ \    \     of the MIT license. See the LICENSE file for details.  #
+#     _| _| _| \_,_| ___/ _| \___/ _| _|    Copyright (c) 2018-2019 Simon Schneegans               #
+#                                                                                                  #
+# ------------------------------------------------------------------------------------------------ #
+
+# set paths for Vulkan
+export LD_LIBRARY_PATH=../@CMAKE_INSTALL_LIBDIR@:$LD_LIBRARY_PATH
+export VK_LAYER_PATH=../@CMAKE_INSTALL_DATAROOTDIR@/vulkan/explicit_layer.d
+
+# get the location of this script
+SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
+cd $SCRIPT_DIR
+
+./SignalSlot
+./CommandLine
+./GPUInfo
+./Triangle
+./SpecializationConstants
+./TexturedQuad
+./ShaderSandbox
+./TexturedCube
+./GltfViewer
+./DeferredRendering

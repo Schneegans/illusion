@@ -52,3 +52,10 @@ foreach(EXAMPLE ${ENABLED_EXAMPLES})
     )
   endif()
 endforeach()
+
+configure_file("start_all_examples.sh.in" "start_all_examples.sh")
+
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/start_all_examples.sh"
+  DESTINATION "bin"
+  PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ
+)
