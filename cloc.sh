@@ -33,9 +33,12 @@ LINES_OF_CODE=${TOKENS[4]}
 # which is included in each file. This header has the length of five lines.
 # All dumb comments like those /////////// or those // ------------ are also substracted. As cloc
 # does not count inline comments, the overall estimate should be rather conservative.
-DUMB_COMMENTS="$(grep -r -- "//////" examples src | wc -l)"
-MORE_DUMB_COMMENTS="$(grep -r -- "// -----" examples src | wc -l)"
-COMMENT_LINES=$(($COMMENT_LINES - 5 * $NUMBER_OF_FILES - $DUMB_COMMENTS - $MORE_DUMB_COMMENTS))
+DUMB_COMMENTS="$(grep -r -E '//////|// -----' examples src | wc -l)"
+COMMENT_LINES=$(($COMMENT_LINES - 5 * $NUMBER_OF_FILES - $DUMB_COMMENTS))
 
-awk -v lines=$LINES_OF_CODE 'BEGIN {printf "Lines of code:     %5.1fk\n", lines/1000}'
-awk -v lines=$COMMENT_LINES 'BEGIN {printf "Lines of comments: %5.1fk\n", lines/1000}'
+awk -v count=$LINES_OF_CODE 'BEGIN {printf "Lines of code:     %5.1fk\n", count/1000}'
+awk -v count=$COMMENT_LINES 'BEGIN {printf "Lines of comments: %5.1fk\n", count/1000}'
+
+# Just because we can, we will print the count of "const" and "ConstPtr" in the source.
+CONST_COUNT="$(grep -r -E -o 'const|ConstPtr' examples src | wc -l)"
+awk -v count=$CONST_COUNT 'BEGIN {printf "Const count:       %5.1fk\n", count/1000}'
