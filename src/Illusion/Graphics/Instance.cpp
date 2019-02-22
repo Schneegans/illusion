@@ -131,7 +131,8 @@ Instance::~Instance() = default;
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-PhysicalDevicePtr Instance::getPhysicalDevice(std::vector<std::string> const& extensions) const {
+PhysicalDeviceConstPtr Instance::getPhysicalDevice(
+    std::vector<std::string> const& extensions) const {
 
   // loop through physical devices and choose a suitable one
   for (auto const& physicalDevice : mPhysicalDevices) {

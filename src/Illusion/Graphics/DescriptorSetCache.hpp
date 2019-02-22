@@ -24,13 +24,13 @@ namespace Illusion::Graphics {
 class DescriptorSetCache : public Core::NamedObject {
  public:
   // Creates a new DescriptorSetCache. It is a good idea to give the object a descriptive name.
-  DescriptorSetCache(std::string const& name, DevicePtr device);
+  DescriptorSetCache(std::string const& name, DeviceConstPtr device);
   virtual ~DescriptorSetCache();
 
   // A reference to the acquired vk::DescriptorSet is also stored in the internal cache of this
   // object. Therefore it will not be deleted, even if the returned handle goes out of scope. A hash
   // based on the reflection will be used to store the handle.
-  vk::DescriptorSetPtr acquireHandle(DescriptorSetReflectionPtr const& reflection);
+  vk::DescriptorSetPtr acquireHandle(DescriptorSetReflectionConstPtr const& reflection);
 
   // This should only be used with handles created by the method above. The passed in handle is
   // marked as not being used anymore and will be returned by subsequent calls to acquireHandle()
@@ -54,7 +54,9 @@ class DescriptorSetCache : public Core::NamedObject {
     std::set<vk::DescriptorSetPtr> mFreeHandels;
   };
 
-  DevicePtr                                   mDevice;
+  DeviceConstPtr mDevice;
+
+  // lazy state ------------------------------------------------------------------------------------
   mutable std::map<Core::BitHash, CacheEntry> mCache;
 };
 

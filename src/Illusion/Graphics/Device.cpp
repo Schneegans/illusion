@@ -33,7 +33,7 @@ const std::vector<const char*> DEVICE_EXTENSIONS{VK_KHR_SWAPCHAIN_EXTENSION_NAME
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Device::Device(std::string const& name, PhysicalDevicePtr physicalDevice)
+Device::Device(std::string const& name, PhysicalDeviceConstPtr physicalDevice)
     : Core::NamedObject(name)
     , mPhysicalDevice(std::move(physicalDevice))
     , mDevice(createDevice(name)) {
@@ -343,7 +343,7 @@ vk::SamplerCreateInfo Device::createSamplerInfo(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-TexturePtr Device::getSinglePixelTexture(std::array<uint8_t, 4> const& color) {
+TexturePtr Device::getSinglePixelTexture(std::array<uint8_t, 4> const& color) const {
 
   auto cached = mSinglePixelTextures.find(color);
   if (cached != mSinglePixelTextures.end()) {
@@ -695,7 +695,7 @@ vk::DevicePtr const& Device::getHandle() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-PhysicalDevicePtr const& Device::getPhysicalDevice() const {
+PhysicalDeviceConstPtr const& Device::getPhysicalDevice() const {
   return mPhysicalDevice;
 }
 
@@ -708,7 +708,7 @@ vk::Queue const& Device::getQueue(QueueType type) const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Device::waitForFences(
-    std::vector<vk::FencePtr> const& fences, bool waitAll, uint64_t timeout) {
+    std::vector<vk::FencePtr> const& fences, bool waitAll, uint64_t timeout) const {
   std::vector<vk::Fence> tmp(fences.size());
   for (size_t i(0); i < fences.size(); ++i) {
     tmp[i] = *fences[i];
@@ -716,11 +716,11 @@ void Device::waitForFences(
   mDevice->waitForFences(tmp, static_cast<vk::Bool32>(waitAll), timeout);
 }
 
-void Device::waitForFence(vk::FencePtr const& fence, uint64_t timeout) {
+void Device::waitForFence(vk::FencePtr const& fence, uint64_t timeout) const {
   mDevice->waitForFences(*fence, 1u, timeout);
 }
 
-void Device::resetFences(std::vector<vk::FencePtr> const& fences) {
+void Device::resetFences(std::vector<vk::FencePtr> const& fences) const {
   std::vector<vk::Fence> tmp(fences.size());
   for (size_t i(0); i < fences.size(); ++i) {
     tmp[i] = *fences[i];
@@ -728,11 +728,11 @@ void Device::resetFences(std::vector<vk::FencePtr> const& fences) {
   mDevice->resetFences(tmp);
 }
 
-void Device::resetFence(vk::FencePtr const& fence) {
+void Device::resetFence(vk::FencePtr const& fence) const {
   mDevice->resetFences(*fence);
 }
 
-void Device::waitIdle() {
+void Device::waitIdle() const {
   mDevice->waitIdle();
 }
 

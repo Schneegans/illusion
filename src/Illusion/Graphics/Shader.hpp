@@ -36,14 +36,14 @@ class Shader : public Core::StaticCreate<Shader>, public Core::NamedObject {
   // .tese / .ds: Tessellation Evaluation Shader / Domain Shader
   // .comp / .cs: Compute Shader
   // This will throw a std::runtime_error when none of the above extensions is detected.
-  static ShaderPtr createFromFiles(std::string const& name, DevicePtr const& device,
+  static ShaderPtr createFromFiles(std::string const& name, DeviceConstPtr const& device,
       std::vector<std::string> const& fileNames, std::set<std::string> const& dynamicBuffers = {},
       bool reloadOnChanges = true);
 
   // Creates an "empty" shader program with no modules attached to. Use the method addModule() to
   // add modules for each required shader stage. It is a good idea to give the object a descriptive
   // name.
-  Shader(std::string const& name, DevicePtr device);
+  Shader(std::string const& name, DeviceConstPtr device);
   virtual ~Shader();
 
   // Adds a shader module to this Shader. No Vulkan resources are allocated by this call, only an
@@ -59,26 +59,27 @@ class Shader : public Core::StaticCreate<Shader>, public Core::NamedObject {
 
   // Returns a vector of ShaderModules. These are allocated lazily by this call and can be queried
   // for the actual Vulkan handle.
-  std::vector<ShaderModulePtr> const& getModules();
+  std::vector<ShaderModulePtr> const& getModules() const;
 
   // The PipelineReflection can be used to query information on all resources of the contained
   // modules. It is primarily used to generate a corresponding vk::PipelineLayout.
-  PipelineReflectionPtr const& getReflection();
+  PipelineReflectionConstPtr const& getReflection() const;
 
   // This is just a convenience getter for the same method on the PipelineReflection. The
   // DescriptorSetReflection can be used to create a corresponding vk::DescriptorSetLayout.
-  std::vector<DescriptorSetReflectionPtr> const& getDescriptorSetReflections();
+  std::vector<DescriptorSetReflectionPtr> const& getDescriptorSetReflections() const;
 
  private:
-  void reload();
+  void reload() const;
 
-  DevicePtr                    mDevice;
-  std::vector<ShaderModulePtr> mModules;
-  PipelineReflectionPtr        mReflection;
-
-  bool                                                               mDirty = false;
+  DeviceConstPtr                                                     mDevice;
   std::unordered_map<vk::ShaderStageFlagBits, ShaderSourcePtr>       mSources;
   std::unordered_map<vk::ShaderStageFlagBits, std::set<std::string>> mDynamicBuffers;
+
+  // dirty state -----------------------------------------------------------------------------------
+  mutable bool                         mDirty = false;
+  mutable std::vector<ShaderModulePtr> mModules;
+  mutable PipelineReflectionConstPtr   mReflection;
 };
 
 } // namespace Illusion::Graphics

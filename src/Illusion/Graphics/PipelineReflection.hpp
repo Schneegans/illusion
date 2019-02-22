@@ -28,7 +28,7 @@ class PipelineReflection : public Core::StaticCreate<PipelineReflection>, public
  public:
   // Initially, the PipelineReflection is empty. Resources can be added with addResource(). It is a
   // good idea to give the object a descriptive name.
-  PipelineReflection(std::string const& name, DevicePtr device);
+  PipelineReflection(std::string const& name, DeviceConstPtr device);
   virtual ~PipelineReflection();
 
   // Adds a new resource to this PipelineReflection. If the mResourceType is eInput, eOutput or
@@ -61,12 +61,14 @@ class PipelineReflection : public Core::StaticCreate<PipelineReflection>, public
   void printInfo() const;
 
  private:
-  DevicePtr                               mDevice;
+  DeviceConstPtr                          mDevice;
   std::vector<DescriptorSetReflectionPtr> mDescriptorSetReflections;
   std::map<std::string, PipelineResource> mInputs;
   std::map<std::string, PipelineResource> mOutputs;
   std::map<std::string, PipelineResource> mPushConstantBuffers;
-  mutable vk::PipelineLayoutPtr           mLayout;
+
+  // lazy state ------------------------------------------------------------------------------------
+  mutable vk::PipelineLayoutPtr mLayout;
 };
 
 } // namespace Illusion::Graphics

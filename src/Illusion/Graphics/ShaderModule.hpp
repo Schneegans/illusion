@@ -32,7 +32,7 @@ class ShaderModule : public Core::StaticCreate<ShaderModule>, public Core::Named
   // If there are any uniform and storage buffers defined in your shader source which should be
   // dynamic in the reflection, you should provide their names in the dynamicBuffers parameter. It
   // is a good idea to give the object a descriptive name.
-  ShaderModule(std::string const& name, DevicePtr device, ShaderSourcePtr source,
+  ShaderModule(std::string const& name, DeviceConstPtr device, ShaderSourcePtr source,
       vk::ShaderStageFlagBits stage, std::set<std::string> dynamicBuffers = {});
 
   virtual ~ShaderModule();
@@ -63,13 +63,14 @@ class ShaderModule : public Core::StaticCreate<ShaderModule>, public Core::Named
  private:
   void createReflection(std::vector<uint32_t> const& spirv);
 
-  DevicePtr                     mDevice;
-  vk::ShaderStageFlagBits       mStage;
-  vk::ShaderModulePtr           mHandle;
-  std::vector<PipelineResource> mResources;
+  DeviceConstPtr          mDevice;
+  ShaderSourcePtr         mSource;
+  std::set<std::string>   mDynamicBuffers;
+  vk::ShaderStageFlagBits mStage;
 
-  ShaderSourcePtr       mSource;
-  std::set<std::string> mDynamicBuffers;
+  // lazy state ------------------------------------------------------------------------------------
+  mutable vk::ShaderModulePtr           mHandle;
+  mutable std::vector<PipelineResource> mResources;
 };
 
 } // namespace Illusion::Graphics

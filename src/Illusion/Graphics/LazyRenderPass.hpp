@@ -25,7 +25,7 @@ class LazyRenderPass : public RenderPass, public Core::StaticCreate<LazyRenderPa
   // Make sure that we use the correct static create method.
   using Core::StaticCreate<LazyRenderPass>::create;
 
-  LazyRenderPass(std::string const& name, DevicePtr const& device);
+  LazyRenderPass(std::string const& name, DeviceConstPtr const& device);
   virtual ~LazyRenderPass() override;
 
   // This will initialize the contained vk::Framebuffer and vk::RenderPass. You do not really have

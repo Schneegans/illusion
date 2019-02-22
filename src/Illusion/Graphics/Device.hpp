@@ -31,7 +31,7 @@ class Device : public Core::StaticCreate<Device>, public Core::NamedObject {
  public:
   // The device needs the physical device it should be created for. You can get one from your
   // Instance. It is a good idea to give the object a descriptive name.
-  explicit Device(std::string const& name, PhysicalDevicePtr physicalDevice);
+  explicit Device(std::string const& name, PhysicalDeviceConstPtr physicalDevice);
   virtual ~Device();
 
   // high-level create methods ---------------------------------------------------------------------
@@ -86,7 +86,7 @@ class Device : public Core::StaticCreate<Device>, public Core::NamedObject {
 
   // If you need a texture with a single pixel of a specific color, you can use this method. When
   // called multiple times with the same color, it will only create a texture once.
-  TexturePtr getSinglePixelTexture(std::array<uint8_t, 4> const& color);
+  TexturePtr getSinglePixelTexture(std::array<uint8_t, 4> const& color) const;
 
   // static method for easy allocation of a vk::SamplerCreateInfo. It uses useful defaults and
   // assigns the same filter to magFilter and minFilter as well as the same address mode to U, V and
@@ -124,24 +124,24 @@ class Device : public Core::StaticCreate<Device>, public Core::NamedObject {
   // clang-format on
 
   // vulkan getters --------------------------------------------------------------------------------
-  vk::DevicePtr const&     getHandle() const;
-  PhysicalDevicePtr const& getPhysicalDevice() const;
-  vk::Queue const&         getQueue(QueueType type) const;
+  vk::DevicePtr const&          getHandle() const;
+  PhysicalDeviceConstPtr const& getPhysicalDevice() const;
+  vk::Queue const&              getQueue(QueueType type) const;
 
   // device interface forwarding -------------------------------------------------------------------
   void waitForFences(
-      std::vector<vk::FencePtr> const& fences, bool waitAll = true, uint64_t timeout = ~0);
-  void waitForFence(vk::FencePtr const& fence, uint64_t timeout = ~0);
-  void resetFences(std::vector<vk::FencePtr> const& fences);
-  void resetFence(vk::FencePtr const& fence);
-  void waitIdle();
+      std::vector<vk::FencePtr> const& fences, bool waitAll = true, uint64_t timeout = ~0) const;
+  void waitForFence(vk::FencePtr const& fence, uint64_t timeout = ~0) const;
+  void resetFences(std::vector<vk::FencePtr> const& fences) const;
+  void resetFence(vk::FencePtr const& fence) const;
+  void waitIdle() const;
 
  private:
   vk::DevicePtr createDevice(std::string const& name) const;
   void assignName(uint64_t vulkanHandle, vk::ObjectType objectType, std::string const& name) const;
 
-  PhysicalDevicePtr mPhysicalDevice;
-  vk::DevicePtr     mDevice;
+  PhysicalDeviceConstPtr mPhysicalDevice;
+  vk::DevicePtr          mDevice;
 
   PFN_vkSetDebugUtilsObjectNameEXT mSetObjectNameFunc;
 
@@ -149,7 +149,8 @@ class Device : public Core::StaticCreate<Device>, public Core::NamedObject {
   std::array<vk::Queue, 3>          mQueues;
   std::array<vk::CommandPoolPtr, 3> mCommandPools;
 
-  std::map<std::array<uint8_t, 4>, TexturePtr> mSinglePixelTextures;
+  // lazy state ------------------------------------------------------------------------------------
+  mutable std::map<std::array<uint8_t, 4>, TexturePtr> mSinglePixelTextures;
 };
 
 } // namespace Illusion::Graphics

@@ -43,7 +43,7 @@ bool GraphicsState::Scissor::operator==(GraphicsState::Scissor const& other) con
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-GraphicsState::GraphicsState(DevicePtr device)
+GraphicsState::GraphicsState(DeviceConstPtr device)
     : mDevice(std::move(device)) {
 }
 

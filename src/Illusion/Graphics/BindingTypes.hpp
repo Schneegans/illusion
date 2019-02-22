@@ -22,7 +22,7 @@ namespace Illusion::Graphics {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 struct InputAttachmentBinding {
-  BackedImagePtr mAttachment;
+  BackedImageConstPtr mAttachment;
 
   bool operator==(InputAttachmentBinding const& other) const;
   bool operator!=(InputAttachmentBinding const& other) const;
@@ -31,7 +31,7 @@ struct InputAttachmentBinding {
 // -------------------------------------------------------------------------------------------------
 
 struct StorageImageBinding {
-  TexturePtr       mImage;
+  TextureConstPtr  mImage;
   vk::ImageViewPtr mView;
 
   bool operator==(StorageImageBinding const& other) const;
@@ -41,7 +41,7 @@ struct StorageImageBinding {
 // -------------------------------------------------------------------------------------------------
 
 struct CombinedImageSamplerBinding {
-  TexturePtr mTexture;
+  TextureConstPtr mTexture;
 
   bool operator==(CombinedImageSamplerBinding const& other) const;
   bool operator!=(CombinedImageSamplerBinding const& other) const;
@@ -50,9 +50,9 @@ struct CombinedImageSamplerBinding {
 // -------------------------------------------------------------------------------------------------
 
 struct UniformBufferBinding {
-  BackedBufferPtr mBuffer;
-  vk::DeviceSize  mSize;
-  vk::DeviceSize  mOffset;
+  BackedBufferConstPtr mBuffer;
+  vk::DeviceSize       mSize;
+  vk::DeviceSize       mOffset;
 
   bool operator==(UniformBufferBinding const& other) const;
   bool operator!=(UniformBufferBinding const& other) const;
@@ -61,8 +61,8 @@ struct UniformBufferBinding {
 // -------------------------------------------------------------------------------------------------
 
 struct DynamicUniformBufferBinding {
-  BackedBufferPtr mBuffer;
-  vk::DeviceSize  mSize;
+  BackedBufferConstPtr mBuffer;
+  vk::DeviceSize       mSize;
 
   bool operator==(DynamicUniformBufferBinding const& other) const;
   bool operator!=(DynamicUniformBufferBinding const& other) const;
@@ -71,9 +71,9 @@ struct DynamicUniformBufferBinding {
 // -------------------------------------------------------------------------------------------------
 
 struct StorageBufferBinding {
-  BackedBufferPtr mBuffer;
-  vk::DeviceSize  mSize;
-  vk::DeviceSize  mOffset;
+  BackedBufferConstPtr mBuffer;
+  vk::DeviceSize       mSize;
+  vk::DeviceSize       mOffset;
 
   bool operator==(StorageBufferBinding const& other) const;
   bool operator!=(StorageBufferBinding const& other) const;
@@ -82,8 +82,8 @@ struct StorageBufferBinding {
 // -------------------------------------------------------------------------------------------------
 
 struct DynamicStorageBufferBinding {
-  BackedBufferPtr mBuffer;
-  vk::DeviceSize  mSize;
+  BackedBufferConstPtr mBuffer;
+  vk::DeviceSize       mSize;
 
   bool operator==(DynamicStorageBufferBinding const& other) const;
   bool operator!=(DynamicStorageBufferBinding const& other) const;

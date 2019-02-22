@@ -14,7 +14,7 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-LazyRenderPass::LazyRenderPass(std::string const& name, DevicePtr const& device)
+LazyRenderPass::LazyRenderPass(std::string const& name, DeviceConstPtr const& device)
     : RenderPass(name, device) {
 }
 

@@ -22,7 +22,7 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-RenderPass::RenderPass(std::string const& name, DevicePtr device)
+RenderPass::RenderPass(std::string const& name, DeviceConstPtr device)
     : Core::NamedObject(name)
     , mDevice(std::move(device)) {
 }

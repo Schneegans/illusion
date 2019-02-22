@@ -107,8 +107,8 @@ vk::PrimitiveTopology convertPrimitiveTopology(int value) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Model::Model(
-    std::string const& name, DevicePtr device, std::string const& file, LoadOptions const& options)
+Model::Model(std::string const& name, DeviceConstPtr device, std::string const& file,
+    LoadOptions const& options)
     : Core::NamedObject(name)
     , mDevice(std::move(device))
     , mRootNode(std::make_shared<Node>()) {

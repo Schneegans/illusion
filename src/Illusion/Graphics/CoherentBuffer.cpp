@@ -15,7 +15,7 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-CoherentBuffer::CoherentBuffer(std::string const& name, DevicePtr const& device,
+CoherentBuffer::CoherentBuffer(std::string const& name, DeviceConstPtr const& device,
     vk::DeviceSize size, vk::BufferUsageFlagBits usage, vk::DeviceSize alignment)
     : Core::NamedObject(name)
     , mDevice(device)

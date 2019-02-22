@@ -56,7 +56,7 @@ class Model : public Core::StaticCreate<Model>, public Core::NamedObject {
   // idea to give the object a descriptive name. There are several reasons why this could throw a
   // std::runtime_error. It is a good idea to catch those cases and report the error message to the
   // user.
-  Model(std::string const& name, DevicePtr device, std::string const& fileName,
+  Model(std::string const& name, DeviceConstPtr device, std::string const& fileName,
       LoadOptions const& options = LoadOptionBits::eAll);
 
   // Updates all transformations of all Nodes according to the given animation and time. The time is
@@ -92,7 +92,7 @@ class Model : public Core::StaticCreate<Model>, public Core::NamedObject {
   static std::vector<vk::VertexInputAttributeDescription> getVertexInputAttributes();
 
  private:
-  DevicePtr       mDevice;
+  DeviceConstPtr  mDevice;
   NodePtr         mRootNode;
   BackedBufferPtr mIndexBuffer;
   BackedBufferPtr mVertexBuffer;

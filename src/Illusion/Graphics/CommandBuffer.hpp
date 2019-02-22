@@ -30,7 +30,7 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
  public:
   // Allocates a new vk::CommandBuffer from the device. It is a good idea to give the object a
   // descriptive name.
-  CommandBuffer(std::string const& name, DevicePtr const& device,
+  CommandBuffer(std::string const& name, DeviceConstPtr const& device,
       QueueType              type  = QueueType::eGeneric,
       vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);
 
@@ -238,7 +238,7 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
   void            flush();
   vk::PipelinePtr getPipelineHandle();
 
-  DevicePtr              mDevice;
+  DeviceConstPtr         mDevice;
   vk::CommandBufferPtr   mVkCmd;
   QueueType              mType;
   vk::CommandBufferLevel mLevel;

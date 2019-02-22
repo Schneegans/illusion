@@ -114,7 +114,7 @@ class CustomCompiler : public spirv_cross::CompilerGLSL {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ShaderModule::ShaderModule(std::string const& name, DevicePtr device, ShaderSourcePtr source,
+ShaderModule::ShaderModule(std::string const& name, DeviceConstPtr device, ShaderSourcePtr source,
     vk::ShaderStageFlagBits stage, std::set<std::string> dynamicBuffers)
     : Core::NamedObject(name)
     , mDevice(std::move(device))

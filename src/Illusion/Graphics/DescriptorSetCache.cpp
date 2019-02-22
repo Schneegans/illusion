@@ -17,7 +17,7 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-DescriptorSetCache::DescriptorSetCache(std::string const& name, DevicePtr device)
+DescriptorSetCache::DescriptorSetCache(std::string const& name, DeviceConstPtr device)
     : Core::NamedObject(name)
     , mDevice(std::move(device)) {
 }
@@ -29,7 +29,7 @@ DescriptorSetCache::~DescriptorSetCache() = default;
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 vk::DescriptorSetPtr DescriptorSetCache::acquireHandle(
-    DescriptorSetReflectionPtr const& reflection) {
+    DescriptorSetReflectionConstPtr const& reflection) {
 
   auto const& hash       = reflection->getHash();
   auto        cacheEntry = mCache.find(hash);

@@ -29,7 +29,7 @@ class CoherentBuffer : public Core::StaticCreate<CoherentBuffer>, public Core::N
   // blocks which may be required when used for dynamic uniform or storage buffers. You can use
   // instance->getPhysicalDevice()->getProperties().limits.minUniformBufferOffsetAlignment to query
   // the required value of your implementation.
-  CoherentBuffer(std::string const& name, DevicePtr const& device, vk::DeviceSize size,
+  CoherentBuffer(std::string const& name, DeviceConstPtr const& device, vk::DeviceSize size,
       vk::BufferUsageFlagBits usage, vk::DeviceSize alignment = 0);
   virtual ~CoherentBuffer();
 
@@ -62,7 +62,7 @@ class CoherentBuffer : public Core::StaticCreate<CoherentBuffer>, public Core::N
   BackedBufferPtr const& getBuffer() const;
 
  private:
-  DevicePtr       mDevice;
+  DeviceConstPtr  mDevice;
   BackedBufferPtr mBuffer;
   uint8_t*        mMappedData         = nullptr;
   vk::DeviceSize  mCurrentWriteOffset = 0;

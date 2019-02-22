@@ -34,7 +34,7 @@ class Instance : public Core::StaticCreate<Instance>, public Core::NamedObject {
 
   // Tries to find a physical device which supports the given extensions. This will throw a
   // std::runtime_error when there is no suitable Vulkan device.
-  PhysicalDevicePtr getPhysicalDevice(
+  PhysicalDeviceConstPtr getPhysicalDevice(
       std::vector<std::string> const& extensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME}) const;
 
   // This is used by the Window class. This will throw a std::runtime_error when glfw failed to
@@ -50,9 +50,9 @@ class Instance : public Core::StaticCreate<Instance>, public Core::NamedObject {
 
   bool mDebugMode = false;
 
-  vk::InstancePtr                mInstance;
-  vk::DebugUtilsMessengerEXTPtr  mDebugCallback;
-  std::vector<PhysicalDevicePtr> mPhysicalDevices;
+  vk::InstancePtr                     mInstance;
+  vk::DebugUtilsMessengerEXTPtr       mDebugCallback;
+  std::vector<PhysicalDeviceConstPtr> mPhysicalDevices;
 };
 
 } // namespace Illusion::Graphics

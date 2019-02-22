@@ -19,7 +19,7 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-PipelineReflection::PipelineReflection(std::string const& name, DevicePtr device)
+PipelineReflection::PipelineReflection(std::string const& name, DeviceConstPtr device)
     : Core::NamedObject(name)
     , mDevice(std::move(device)) {
 }

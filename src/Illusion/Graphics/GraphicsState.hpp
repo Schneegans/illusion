@@ -63,7 +63,7 @@ class GraphicsState {
 
   // -----------------------------------------------------------------------------------------------
 
-  GraphicsState(DevicePtr device);
+  GraphicsState(DeviceConstPtr device);
 
   void reset();
 
@@ -205,7 +205,7 @@ class GraphicsState {
   Core::BitHash const& getHash() const;
 
  private:
-  DevicePtr mDevice;
+  DeviceConstPtr mDevice;
 
   // Color Blend State------------------------------------------------------------------------------
   bool                         mBlendLogicOpEnable = false;

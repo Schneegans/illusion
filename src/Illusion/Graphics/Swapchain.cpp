@@ -21,7 +21,7 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Swapchain::Swapchain(std::string const& name, DevicePtr device, vk::SurfaceKHRPtr surface)
+Swapchain::Swapchain(std::string const& name, DeviceConstPtr device, vk::SurfaceKHRPtr surface)
     : Core::NamedObject(name)
     , mDevice(std::move(device))
     , mSurface(std::move(surface)) {

@@ -21,7 +21,7 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Window::Window(std::string const& name, InstancePtr instance, DevicePtr device)
+Window::Window(std::string const& name, InstanceConstPtr instance, DeviceConstPtr device)
     : Core::NamedObject(name)
     , mInstance(std::move(instance))
     , mDevice(std::move(device)) {

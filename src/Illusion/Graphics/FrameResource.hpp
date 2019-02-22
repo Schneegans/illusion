@@ -36,7 +36,7 @@ class FrameResource {
   // entry at construction time, serving as a factory. It should return an instance of the wrapped
   // type. The factory is not kept around, so anything which is captured in the lambda will be
   // released as soon as the constructor returns.
-  FrameResource(FrameResourceIndexPtr const& index, std::function<T(uint32_t)> const& factory)
+  FrameResource(FrameResourceIndexConstPtr const& index, std::function<T(uint32_t)> const& factory)
       : mRingBuffer(index->indexCount())
       , mIndex(index) {
 
@@ -104,8 +104,8 @@ class FrameResource {
   }
 
  private:
-  std::vector<T>        mRingBuffer;
-  FrameResourceIndexPtr mIndex;
+  std::vector<T>             mRingBuffer;
+  FrameResourceIndexConstPtr mIndex;
 };
 
 } // namespace Illusion::Graphics

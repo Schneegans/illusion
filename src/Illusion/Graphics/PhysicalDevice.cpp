@@ -197,7 +197,7 @@ uint32_t PhysicalDevice::getQueueIndex(QueueType type) const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void PhysicalDevice::printInfo() {
+void PhysicalDevice::printInfo() const {
   // basic information
   vk::PhysicalDeviceProperties properties = getProperties();
   Core::Logger::message() << Core::Logger::PRINT_BOLD << "Physical Device Information "

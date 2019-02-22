@@ -46,7 +46,7 @@ const std::unordered_map<std::string, vk::ShaderStageFlagBits> hlslExtensionMapp
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ShaderPtr Shader::createFromFiles(std::string const& name, DevicePtr const& device,
+ShaderPtr Shader::createFromFiles(std::string const& name, DeviceConstPtr const& device,
     std::vector<std::string> const& fileNames, std::set<std::string> const& dynamicBuffers,
     bool reloadOnChanges) {
 
@@ -81,7 +81,7 @@ ShaderPtr Shader::createFromFiles(std::string const& name, DevicePtr const& devi
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Shader::Shader(std::string const& name, DevicePtr device)
+Shader::Shader(std::string const& name, DeviceConstPtr device)
     : Core::NamedObject(name)
     , mDevice(std::move(device)) {
 }
@@ -101,28 +101,28 @@ void Shader::addModule(vk::ShaderStageFlagBits stage, ShaderSourcePtr const& sou
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<ShaderModulePtr> const& Shader::getModules() {
+std::vector<ShaderModulePtr> const& Shader::getModules() const {
   reload();
   return mModules;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-PipelineReflectionPtr const& Shader::getReflection() {
+PipelineReflectionConstPtr const& Shader::getReflection() const {
   reload();
   return mReflection;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<DescriptorSetReflectionPtr> const& Shader::getDescriptorSetReflections() {
+std::vector<DescriptorSetReflectionPtr> const& Shader::getDescriptorSetReflections() const {
   reload();
   return mReflection->getDescriptorSetReflections();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Shader::reload() {
+void Shader::reload() const {
 
   // first check whether one of our modules needs to be reload (this is for example the case when
   // the source file changed on disc)
@@ -150,8 +150,8 @@ void Shader::reload() {
 
       // create modules
       for (auto const& s : mSources) {
-        modules.emplace_back(ShaderModule::create(
-            "ShaderModule of " + getName(), mDevice, s.second, s.first, mDynamicBuffers[s.first]));
+        modules.emplace_back(ShaderModule::create("ShaderModule of " + getName(), mDevice, s.second,
+            s.first, mDynamicBuffers.at(s.first)));
       }
 
       // create reflection

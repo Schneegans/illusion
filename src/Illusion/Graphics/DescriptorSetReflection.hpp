@@ -30,7 +30,7 @@ class DescriptorSetReflection : public Core::StaticCreate<DescriptorSetReflectio
  public:
   // Initially, the DescriptorSetReflection is empty. Resources can be added with addResource(). It
   // is a good idea to give the object a descriptive name.
-  DescriptorSetReflection(std::string const& name, DevicePtr device, uint32_t set);
+  DescriptorSetReflection(std::string const& name, DeviceConstPtr device, uint32_t set);
   virtual ~DescriptorSetReflection();
 
   // Adds a new resource to this DescriptorSetReflection. The mName of the resource is used as a key
@@ -68,11 +68,13 @@ class DescriptorSetReflection : public Core::StaticCreate<DescriptorSetReflectio
   Core::BitHash const& getHash() const;
 
  private:
-  DevicePtr                               mDevice;
+  DeviceConstPtr                          mDevice;
   std::map<std::string, PipelineResource> mResources;
   uint32_t                                mSet;
-  mutable vk::DescriptorSetLayoutPtr      mLayout;
-  mutable Core::BitHash                   mHash;
+
+  // lazy state ------------------------------------------------------------------------------------
+  mutable vk::DescriptorSetLayoutPtr mLayout;
+  mutable Core::BitHash              mHash;
 };
 
 } // namespace Illusion::Graphics

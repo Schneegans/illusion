@@ -24,8 +24,8 @@ namespace Illusion::Graphics {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-CommandBuffer::CommandBuffer(
-    std::string const& name, DevicePtr const& device, QueueType type, vk::CommandBufferLevel level)
+CommandBuffer::CommandBuffer(std::string const& name, DeviceConstPtr const& device, QueueType type,
+    vk::CommandBufferLevel level)
     : Core::NamedObject(name)
     , mDevice(device)
     , mVkCmd(device->allocateCommandBuffer(name, type, level))

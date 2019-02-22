@@ -57,7 +57,7 @@ class RenderPass : public Core::StaticCreate<RenderPass>, public Core::NamedObje
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
-  RenderPass(std::string const& name, DevicePtr device);
+  RenderPass(std::string const& name, DeviceConstPtr device);
   virtual ~RenderPass();
 
   // This will initialize the contained vk::Framebuffer and vk::RenderPass. You do not really have
@@ -98,8 +98,8 @@ class RenderPass : public Core::StaticCreate<RenderPass>, public Core::NamedObje
   void                        clearSubpasses();
 
  protected:
-  DevicePtr mDevice;
-  bool      mDirty = true;
+  DeviceConstPtr mDevice;
+  bool           mDirty = true;
 
  private:
   void createRenderPass();

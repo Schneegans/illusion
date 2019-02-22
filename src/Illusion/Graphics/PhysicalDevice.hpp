@@ -35,7 +35,7 @@ class PhysicalDevice : public vk::PhysicalDevice, public Core::StaticCreate<Phys
   uint32_t getQueueIndex(QueueType type) const;
 
   // Prints a complete list of your hardware capabilities to std::cout.
-  void printInfo();
+  void printInfo() const;
 
  private:
   std::array<uint32_t, 3> mQueueFamilies = {0, 0, 0};

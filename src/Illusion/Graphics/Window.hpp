@@ -68,7 +68,7 @@ class Window : public Core::StaticCreate<Window>, public Core::NamedObject {
 
   // Once you created an Instance and a Device, you can start creating Windows. It is a good idea to
   // give the object a descriptive name.
-  Window(std::string const& name, InstancePtr instance, DevicePtr device);
+  Window(std::string const& name, InstanceConstPtr instance, DeviceConstPtr device);
   virtual ~Window();
 
   // You should set up the Properties above (especially the pExtent) before calling this method
@@ -111,10 +111,10 @@ class Window : public Core::StaticCreate<Window>, public Core::NamedObject {
  private:
   void updateJoysticks();
 
-  InstancePtr mInstance;
-  DevicePtr   mDevice;
-  GLFWwindow* mWindow = nullptr;
-  GLFWcursor* mCursor = nullptr;
+  InstanceConstPtr mInstance;
+  DeviceConstPtr   mDevice;
+  GLFWwindow*      mWindow = nullptr;
+  GLFWcursor*      mCursor = nullptr;
 
   vk::SurfaceKHRPtr mSurface;
   SwapchainPtr      mSwapchain;

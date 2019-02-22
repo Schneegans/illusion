@@ -39,7 +39,7 @@ const std::unordered_map<PipelineResource::ResourceType, vk::DescriptorType> res
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 DescriptorSetReflection::DescriptorSetReflection(
-    std::string const& name, DevicePtr device, uint32_t set)
+    std::string const& name, DeviceConstPtr device, uint32_t set)
     : Core::NamedObject(name)
     , mDevice(std::move(device))
     , mSet(set) {
