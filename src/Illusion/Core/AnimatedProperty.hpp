@@ -35,11 +35,7 @@ class AnimatedProperty : public Property<T> {
 
   Signal<> onFinish;
 
-  AnimatedProperty()
-      : Property<T>()
-      , mStart()
-      , mEnd() {
-  }
+  AnimatedProperty() = default;
 
   AnimatedProperty(T const& val)
       : Property<T>(val)
@@ -132,6 +128,15 @@ class AnimatedProperty : public Property<T> {
     return mEnd;
   }
   virtual AnimatedProperty<T>& operator=(T const& rhs) override {
+    mDirection = rhs.mDirection;
+    mLoop      = rhs.mLoop;
+    mDuration  = rhs.mDuration;
+    mExponent  = rhs.mExponent;
+    mDelay     = rhs.mDelay;
+    mStart     = rhs.mStart;
+    mEnd       = rhs.mEnd;
+    mState     = rhs.mState;
+
     set(rhs);
     return *this;
   }
@@ -173,70 +178,6 @@ std::ostream& operator<<(std::ostream& os, AnimationDirection value);
 std::istream& operator>>(std::istream& is, AnimationDirection& value);
 std::ostream& operator<<(std::ostream& os, AnimationLoop value);
 std::istream& operator>>(std::istream& is, AnimationLoop& value);
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-class AnimatedFloat : public AnimatedProperty<float> {
- public:
-  AnimatedFloat()
-      : AnimatedProperty<float>(0.f) {
-  }
-  AnimatedFloat(float val)
-      : AnimatedProperty<float>(val) {
-  }
-  AnimatedFloat(float const& start, float const& end, double duration = 1.0,
-      AnimationDirection direction = AnimationDirection::eInOut,
-      AnimationLoop loop = AnimationLoop::eNone, double exponent = 0.0, double delay = 0.0)
-      : AnimatedProperty<float>(start, end, duration, direction, loop, exponent, delay) {
-  }
-
-  AnimatedFloat& operator=(AnimatedFloat const& other) {
-    mDirection = other.mDirection;
-    mLoop      = other.mLoop;
-    mDuration  = other.mDuration;
-    mExponent  = other.mExponent;
-    mDelay     = other.mDelay;
-    mStart     = other.mStart;
-    mEnd       = other.mEnd;
-    mState     = other.mState;
-
-    Property<float>::set(other.get());
-
-    return *this;
-  }
-};
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-class AnimatedDouble : public AnimatedProperty<double> {
- public:
-  AnimatedDouble()
-      : AnimatedProperty<double>(0.0) {
-  }
-  AnimatedDouble(double val)
-      : AnimatedProperty<double>(val) {
-  }
-  AnimatedDouble(double const& start, double const& end, double duration = 1.0,
-      AnimationDirection direction = AnimationDirection::eInOut,
-      AnimationLoop loop = AnimationLoop::eNone, double exponent = 0.0, double delay = 0.0)
-      : AnimatedProperty<double>(start, end, duration, direction, loop, exponent, delay) {
-  }
-
-  AnimatedDouble& operator=(AnimatedDouble const& other) {
-    mDirection = other.mDirection;
-    mLoop      = other.mLoop;
-    mDuration  = other.mDuration;
-    mExponent  = other.mExponent;
-    mDelay     = other.mDelay;
-    mStart     = other.mStart;
-    mEnd       = other.mEnd;
-    mState     = other.mState;
-
-    Property<double>::set(other.get());
-
-    return *this;
-  }
-};
 
 } // namespace Illusion::Core
 
