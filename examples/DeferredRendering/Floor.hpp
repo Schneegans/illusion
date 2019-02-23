@@ -19,7 +19,7 @@
 
 class Floor {
  public:
-  Floor(Illusion::Graphics::DevicePtr const& device);
+  Floor(Illusion::Graphics::DeviceConstPtr const& device);
 
   void update(glm::mat4 const& matVP);
   void draw(Illusion::Graphics::CommandBufferPtr const& cmd);

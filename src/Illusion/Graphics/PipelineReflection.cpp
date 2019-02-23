@@ -80,9 +80,9 @@ void PipelineReflection::addResource(PipelineResource const& resource) {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<DescriptorSetReflectionPtr> const&
+std::vector<DescriptorSetReflectionConstPtr>
 PipelineReflection::getDescriptorSetReflections() const {
-  return mDescriptorSetReflections;
+  return {mDescriptorSetReflections.begin(), mDescriptorSetReflections.end()};
 };
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

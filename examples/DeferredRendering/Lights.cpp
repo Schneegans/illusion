@@ -18,7 +18,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Lights::Lights(Illusion::Graphics::DevicePtr const&  device,
+Lights::Lights(Illusion::Graphics::DeviceConstPtr const& device,
     Illusion::Graphics::FrameResourceIndexPtr const& frameIndex, uint32_t lightCount)
     : mLights(lightCount)
     , mDrawLights(Illusion::Graphics::Shader::createFromFiles("DrawLights", device,

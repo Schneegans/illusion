@@ -62,7 +62,7 @@ class GltfModel {
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
-  GltfModel(std::string const& name, Illusion::Graphics::DevicePtr const& device,
+  GltfModel(std::string const& name, Illusion::Graphics::DeviceConstPtr const& device,
       std::string const& fileName, Illusion::Graphics::Gltf::LoadOptions const& options,
       Illusion::Graphics::FrameResourceIndexPtr const& frameIndex);
 
@@ -80,7 +80,7 @@ class GltfModel {
       std::vector<std::shared_ptr<Illusion::Graphics::Gltf::Node>> const& nodes,
       glm::mat4 const& viewMatrix, bool doAlphaBlending);
 
-  Illusion::Graphics::DevicePtr      mDevice;
+  Illusion::Graphics::DeviceConstPtr mDevice;
   Illusion::Graphics::Gltf::ModelPtr mModel;
   Illusion::Graphics::ShaderPtr      mShader;
 

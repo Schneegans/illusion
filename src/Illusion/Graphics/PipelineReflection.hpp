@@ -38,10 +38,10 @@ class PipelineReflection : public Core::StaticCreate<PipelineReflection>, public
   // before, the mStages of the new resource will be appended to those of the previous resource.
   void addResource(PipelineResource const& resource);
 
-  // Returns a reference to a vector containing the individual DescriptorSetReflections of this
+  // Returns a a vector containing the individual DescriptorSetReflections of this
   // PipelineReflection. The DescriptorSetReflection can be used to create a corresponding
   // vk::DescriptorSetLayout.
-  std::vector<DescriptorSetReflectionPtr> const& getDescriptorSetReflections() const;
+  std::vector<DescriptorSetReflectionConstPtr> getDescriptorSetReflections() const;
 
   // Returns all resources which have been added to this PipelineReflection. The returned map is
   // created on-the-fly, hence this operation is quite costly. If this becomes a bottleneck, storing

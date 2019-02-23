@@ -101,7 +101,7 @@ void Shader::addModule(vk::ShaderStageFlagBits stage, ShaderSourcePtr const& sou
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<ShaderModulePtr> const& Shader::getModules() const {
+std::vector<ShaderModuleConstPtr> const& Shader::getModules() const {
   reload();
   return mModules;
 }
@@ -115,7 +115,7 @@ PipelineReflectionConstPtr const& Shader::getReflection() const {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<DescriptorSetReflectionPtr> const& Shader::getDescriptorSetReflections() const {
+std::vector<DescriptorSetReflectionConstPtr> Shader::getDescriptorSetReflections() const {
   reload();
   return mReflection->getDescriptorSetReflections();
 }
@@ -127,7 +127,7 @@ void Shader::reload() const {
   // newly added modules, however there will be only very few cases were this method is called
   // before all modules are added anyways.
   if (mDirty) {
-    std::vector<ShaderModulePtr> modules;
+    std::vector<ShaderModuleConstPtr> modules;
 
     auto reflection =
         std::make_shared<PipelineReflection>("PipelineReflection for " + getName(), mDevice);

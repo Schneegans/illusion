@@ -23,39 +23,39 @@ void BindingState::setBinding(BindingType const& value, uint32_t set, uint32_t b
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void BindingState::setInputAttachment(
-    BackedImagePtr const& attachment, uint32_t set, uint32_t binding) {
+    BackedImageConstPtr const& attachment, uint32_t set, uint32_t binding) {
   setBinding(InputAttachmentBinding{attachment}, set, binding);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void BindingState::setTexture(TexturePtr const& texture, uint32_t set, uint32_t binding) {
+void BindingState::setTexture(TextureConstPtr const& texture, uint32_t set, uint32_t binding) {
   setBinding(CombinedImageSamplerBinding{texture}, set, binding);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void BindingState::setStorageImage(TexturePtr const& image, uint32_t set, uint32_t binding) {
+void BindingState::setStorageImage(TextureConstPtr const& image, uint32_t set, uint32_t binding) {
   setBinding(StorageImageBinding{image, nullptr}, set, binding);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void BindingState::setStorageImage(
-    TexturePtr const& image, vk::ImageViewPtr const& view, uint32_t set, uint32_t binding) {
+    TextureConstPtr const& image, vk::ImageViewPtr const& view, uint32_t set, uint32_t binding) {
   setBinding(StorageImageBinding{image, view}, set, binding);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void BindingState::setUniformBuffer(BackedBufferPtr const& buffer, vk::DeviceSize size,
+void BindingState::setUniformBuffer(BackedBufferConstPtr const& buffer, vk::DeviceSize size,
     vk::DeviceSize offset, uint32_t set, uint32_t binding) {
   setBinding(UniformBufferBinding{buffer, size, offset}, set, binding);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void BindingState::setDynamicUniformBuffer(BackedBufferPtr const& buffer, vk::DeviceSize size,
+void BindingState::setDynamicUniformBuffer(BackedBufferConstPtr const& buffer, vk::DeviceSize size,
     uint32_t offset, uint32_t set, uint32_t binding) {
   setBinding(DynamicUniformBufferBinding{buffer, size}, set, binding);
 
@@ -68,14 +68,14 @@ void BindingState::setDynamicUniformBuffer(BackedBufferPtr const& buffer, vk::De
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void BindingState::setStorageBuffer(BackedBufferPtr const& buffer, vk::DeviceSize size,
+void BindingState::setStorageBuffer(BackedBufferConstPtr const& buffer, vk::DeviceSize size,
     vk::DeviceSize offset, uint32_t set, uint32_t binding) {
   setBinding(StorageBufferBinding{buffer, size, offset}, set, binding);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void BindingState::setDynamicStorageBuffer(BackedBufferPtr const& buffer, vk::DeviceSize size,
+void BindingState::setDynamicStorageBuffer(BackedBufferConstPtr const& buffer, vk::DeviceSize size,
     uint32_t offset, uint32_t set, uint32_t binding) {
   setBinding(DynamicStorageBufferBinding{buffer, size}, set, binding);
 

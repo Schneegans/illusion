@@ -19,7 +19,7 @@
 
 class Lights {
  public:
-  Lights(Illusion::Graphics::DevicePtr const&          device,
+  Lights(Illusion::Graphics::DeviceConstPtr const&     device,
       Illusion::Graphics::FrameResourceIndexPtr const& frameIndex, uint32_t lightCount);
 
   void update(float time, glm::mat4 const& matVP);

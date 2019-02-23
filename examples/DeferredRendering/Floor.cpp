@@ -14,7 +14,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Floor::Floor(Illusion::Graphics::DevicePtr const& device)
+Floor::Floor(Illusion::Graphics::DeviceConstPtr const& device)
     : mAlbedoTexture(Illusion::Graphics::Texture::createFromFile("FloorAlbedo", device,
           "data/DeferredRendering/textures/albedo.jpg",
           Illusion::Graphics::Device::createSamplerInfo(vk::Filter::eLinear,

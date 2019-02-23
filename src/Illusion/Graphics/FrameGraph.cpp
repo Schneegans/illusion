@@ -182,7 +182,7 @@ FrameGraph::Pass& FrameGraph::Pass::setProcessCallback(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 FrameGraph::FrameGraph(
-    std::string const& name, DevicePtr const& device, FrameResourceIndexPtr const& index)
+    std::string const& name, DeviceConstPtr const& device, FrameResourceIndexPtr const& index)
     : Core::NamedObject(name)
     , mDevice(device)
     , mPerFrame(index, [device, this](uint32_t i) {

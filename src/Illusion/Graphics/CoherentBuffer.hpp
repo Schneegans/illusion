@@ -59,14 +59,14 @@ class CoherentBuffer : public Core::StaticCreate<CoherentBuffer>, public Core::N
   }
 
   // Access to the internal buffer.
-  BackedBufferPtr const& getBuffer() const;
+  BackedBufferConstPtr const& getBuffer() const;
 
  private:
-  DeviceConstPtr  mDevice;
-  BackedBufferPtr mBuffer;
-  uint8_t*        mMappedData         = nullptr;
-  vk::DeviceSize  mCurrentWriteOffset = 0;
-  vk::DeviceSize  mAlignment          = 0;
+  DeviceConstPtr       mDevice;
+  BackedBufferConstPtr mBuffer;
+  uint8_t*             mMappedData         = nullptr;
+  vk::DeviceSize       mCurrentWriteOffset = 0;
+  vk::DeviceSize       mAlignment          = 0;
 };
 
 } // namespace Illusion::Graphics

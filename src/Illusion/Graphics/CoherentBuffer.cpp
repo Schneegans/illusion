@@ -70,7 +70,7 @@ void CoherentBuffer::updateData(uint8_t const* data, vk::DeviceSize count, vk::D
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-BackedBufferPtr const& CoherentBuffer::getBuffer() const {
+BackedBufferConstPtr const& CoherentBuffer::getBuffer() const {
   return mBuffer;
 }
 

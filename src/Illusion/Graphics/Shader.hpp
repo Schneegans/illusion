@@ -59,7 +59,7 @@ class Shader : public Core::StaticCreate<Shader>, public Core::NamedObject {
 
   // Returns a vector of ShaderModules. These are allocated lazily by this call and can be queried
   // for the actual Vulkan handle.
-  std::vector<ShaderModulePtr> const& getModules() const;
+  std::vector<ShaderModuleConstPtr> const& getModules() const;
 
   // The PipelineReflection can be used to query information on all resources of the contained
   // modules. It is primarily used to generate a corresponding vk::PipelineLayout.
@@ -67,7 +67,7 @@ class Shader : public Core::StaticCreate<Shader>, public Core::NamedObject {
 
   // This is just a convenience getter for the same method on the PipelineReflection. The
   // DescriptorSetReflection can be used to create a corresponding vk::DescriptorSetLayout.
-  std::vector<DescriptorSetReflectionPtr> const& getDescriptorSetReflections() const;
+  std::vector<DescriptorSetReflectionConstPtr> getDescriptorSetReflections() const;
 
  private:
   void reload() const;
@@ -77,9 +77,9 @@ class Shader : public Core::StaticCreate<Shader>, public Core::NamedObject {
   std::unordered_map<vk::ShaderStageFlagBits, std::set<std::string>> mDynamicBuffers;
 
   // lazy state ------------------------------------------------------------------------------------
-  mutable bool                         mDirty = false;
-  mutable std::vector<ShaderModulePtr> mModules;
-  mutable PipelineReflectionConstPtr   mReflection;
+  mutable bool                              mDirty = false;
+  mutable std::vector<ShaderModuleConstPtr> mModules;
+  mutable PipelineReflectionConstPtr        mReflection;
 };
 
 } // namespace Illusion::Graphics

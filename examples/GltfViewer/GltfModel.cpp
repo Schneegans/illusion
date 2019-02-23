@@ -17,7 +17,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-GltfModel::GltfModel(std::string const& name, Illusion::Graphics::DevicePtr const& device,
+GltfModel::GltfModel(std::string const& name, Illusion::Graphics::DeviceConstPtr const& device,
     std::string const& fileName, Illusion::Graphics::Gltf::LoadOptions const& options,
     Illusion::Graphics::FrameResourceIndexPtr const& frameIndex)
     : mDevice(device)

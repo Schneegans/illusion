@@ -42,41 +42,41 @@ class BindingState {
   void setBinding(BindingType const& value, uint32_t set, uint32_t binding);
 
   // Stores the given Texture as InputAttachmentBinding.
-  void setInputAttachment(BackedImagePtr const& attachment, uint32_t set, uint32_t binding);
+  void setInputAttachment(BackedImageConstPtr const& attachment, uint32_t set, uint32_t binding);
 
   // Stores the given Texture as CombinedImageSamplerBinding.
-  void setTexture(TexturePtr const& texture, uint32_t set, uint32_t binding);
+  void setTexture(TextureConstPtr const& texture, uint32_t set, uint32_t binding);
 
   // Stores the given Texture as StorageImageBinding. It will use the ImageView of the texture,
   // which usually means that the entire base level of the texture will be bound for writing.
-  void setStorageImage(TexturePtr const& image, uint32_t set, uint32_t binding);
+  void setStorageImage(TextureConstPtr const& image, uint32_t set, uint32_t binding);
 
   // Stores the given Texture as StorageImageBinding. The ImageView parameter can be used to store a
   // specific part of the Image (e.g. one specific mipmap level),
   void setStorageImage(
-      TexturePtr const& image, vk::ImageViewPtr const& view, uint32_t set, uint32_t binding);
+      TextureConstPtr const& image, vk::ImageViewPtr const& view, uint32_t set, uint32_t binding);
 
   // Stores the given BackedBuffer range as UniformBufferBinding.
-  void setUniformBuffer(BackedBufferPtr const& buffer, vk::DeviceSize size, vk::DeviceSize offset,
-      uint32_t set, uint32_t binding);
+  void setUniformBuffer(BackedBufferConstPtr const& buffer, vk::DeviceSize size,
+      vk::DeviceSize offset, uint32_t set, uint32_t binding);
 
   // Stores the given BackedBuffer range as DynamicUniformBufferBinding. When the same buffer and
   // size were bound before (only the offset changed) the set will not become dirty. Only the
   // dynamic offset for this set will be dirty which means that the currently bound descriptor sets
   // needs to be re-bound
-  void setDynamicUniformBuffer(BackedBufferPtr const& buffer, vk::DeviceSize size, uint32_t offset,
-      uint32_t set, uint32_t binding);
+  void setDynamicUniformBuffer(BackedBufferConstPtr const& buffer, vk::DeviceSize size,
+      uint32_t offset, uint32_t set, uint32_t binding);
 
   // Stores the given BackedBuffer range as StorageBufferBinding.
-  void setStorageBuffer(BackedBufferPtr const& buffer, vk::DeviceSize size, vk::DeviceSize offset,
-      uint32_t set, uint32_t binding);
+  void setStorageBuffer(BackedBufferConstPtr const& buffer, vk::DeviceSize size,
+      vk::DeviceSize offset, uint32_t set, uint32_t binding);
 
   // Stores the given BackedBuffer range as DynamicStorageBufferBinding. When the same buffer and
   // size were bound before (only the offset changed) the set will not become dirty. Only the
   // dynamic offset for this set will be dirty which means that the currently bound descriptor sets
   // needs to be re-bound
-  void setDynamicStorageBuffer(BackedBufferPtr const& buffer, vk::DeviceSize size, uint32_t offset,
-      uint32_t set, uint32_t binding);
+  void setDynamicStorageBuffer(BackedBufferConstPtr const& buffer, vk::DeviceSize size,
+      uint32_t offset, uint32_t set, uint32_t binding);
 
   // Removes the given binding for the given set. The dynamic offset (if set) will be removed as
   // well. The set and the dynamic offsets will be flagged as being dirty.

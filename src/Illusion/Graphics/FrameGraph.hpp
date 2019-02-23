@@ -111,7 +111,8 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
 
   //////////////////////////////////////////////////////////////////////////////////////////////////
 
-  FrameGraph(std::string const& name, DevicePtr const& device, FrameResourceIndexPtr const& index);
+  FrameGraph(
+      std::string const& name, DeviceConstPtr const& device, FrameResourceIndexPtr const& index);
 
   // Adds a new resource to the frame graph. Make sure to capture the returned object by reference,
   // else you will be working with a copy.
@@ -171,7 +172,7 @@ class FrameGraph : public Core::StaticCreate<FrameGraph>, public Core::NamedObje
   void clearDirty();
   void validate() const;
 
-  DevicePtr               mDevice;
+  DeviceConstPtr          mDevice;
   Core::ThreadPool        mThreadPool;
   FrameResource<PerFrame> mPerFrame;
 

@@ -16,7 +16,7 @@
 
 class ToneMapping {
  public:
-  ToneMapping(Illusion::Graphics::DevicePtr const& device);
+  ToneMapping(Illusion::Graphics::DeviceConstPtr const& device);
 
   void draw(Illusion::Graphics::CommandBufferPtr const&      cmd,
       std::vector<Illusion::Graphics::BackedImagePtr> const& inputAttachments);

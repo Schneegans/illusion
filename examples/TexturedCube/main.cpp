@@ -36,7 +36,7 @@
 
 struct PerFrame {
   PerFrame() = default;
-  PerFrame(uint32_t index, Illusion::Graphics::DevicePtr const& device)
+  PerFrame(uint32_t index, Illusion::Graphics::DeviceConstPtr const& device)
       : mCmd(Illusion::Graphics::CommandBuffer::create(
             "CommandBuffer " + std::to_string(index), device))
       , mRenderPass(Illusion::Graphics::LazyRenderPass::create(

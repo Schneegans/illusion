@@ -13,7 +13,7 @@
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ToneMapping::ToneMapping(Illusion::Graphics::DevicePtr const& device)
+ToneMapping::ToneMapping(Illusion::Graphics::DeviceConstPtr const& device)
     : mShader(Illusion::Graphics::Shader::createFromFiles("ToneMappingShader", device,
           {"data/DeferredRendering/shaders/Quad.vert",
               "data/DeferredRendering/shaders/ToneMapping.frag"})) {
