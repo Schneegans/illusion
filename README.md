@@ -49,13 +49,14 @@ I try to add as many comments to the source code as possible. The number of sour
   - [x] Automatic shader program reflection using [spirv-cross](https://github.com/KhronosGroup/SPIRV-Cross)
   - [x] Automatic creation of pipeline layouts
   - [x] Automatic allocation and updates of descriptor sets
-- [x] Texture support  
+- [ ] Texture support  
   - [x] LDR and HDR texture loading using [stb](https://github.com/nothings/stb) (hdr, jpg, png, tga, bmp, ...)
   - [x] DDS texture loading using [gli](https://github.com/g-truc/gli)
   - [x] Automatic mipmap generation
   - [x] Conversion of equirectangular panoramas to cubemaps using compute shaders
   - [x] Creation of prefiltered irradiance and reflectance maps for physically based shading using compute shaders
   - [x] Creation of the BRDFLuT for physically based shading using compute shaders
+  - [ ] Saving textures to files
 - [ ] glTF loading using [tinygltf](https://github.com/syoyo/tinygltf)
   - [x] Metallic-roughness materials
   - [x] Specular-glossiness materials
