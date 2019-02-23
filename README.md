@@ -35,6 +35,7 @@ I try to add as many comments to the source code as possible. The number of sour
   - [x] Automatically create framebuffer attachments
   - [x] Automatic image layout transitions of the framebuffer attachments
   - [ ] Texture input support
+  - [ ] Async compute
   - [ ] Parallel render pass recording
   - [ ] Parallel subpass recording
   - [ ] In-depth testing :grimacing:
