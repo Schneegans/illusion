@@ -35,6 +35,16 @@ include(externals/stb.cmake)
 include(externals/tinygltf.cmake)
 include(externals/doctest.cmake)
 
+# build the tests ----------------------------------------------------------------------------------
+option(ILLUSION_CODE_COVERAGE "Run code coverage analytics" OFF)
+
+if(ILLUSION_CODE_COVERAGE AND "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  add_definitions(--coverage)
+  set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS} " --coverage")
+endif()
+
+add_subdirectory(test)
+
 # build the libraries ------------------------------------------------------------------------------
 add_subdirectory(src/Illusion)
 
@@ -44,3 +54,4 @@ option(ILLUSION_COMPILE_SAMPLES "Compile examples" ON)
 if(ILLUSION_COMPILE_SAMPLES)
     add_subdirectory(examples)
 endif()
+
