@@ -36,4 +36,4 @@
 	url = ../../KhronosGroup/SPIRV-Headers
 [submodule "externals/doctest"]
 	path = externals/doctest
-	url = ../../doctest.git
+	url = ../../onqtam/doctest.git
