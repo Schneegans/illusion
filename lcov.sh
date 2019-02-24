@@ -10,15 +10,15 @@
 
 # get the location of this script
 SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
-de $SCRIPT_DIR
+cd $SCRIPT_DIR
 
-lcov --zerocounters --directory .
-lcov --capture --no-external --initial --directory . --output-file build/zero_coverage.info
+lcov -q --zerocounters --directory .
+lcov -q --capture --no-external --initial --directory . --output-file build/zero_coverage.info
 
 build/install/bin/RunAllTests.sh
 
-lcov --capture --no-external --directory . --output-file build/test_coverage.info
-lcov -a build/zero_coverage.info -a build/test_coverage.info --o build/coverage.info
+lcov -q --capture --no-external --directory . --output-file build/test_coverage.info
+lcov -q -a build/zero_coverage.info -a build/test_coverage.info --o build/coverage.info
 
-lcov --remove build/coverage.info \*externals\* --output-file build/coverage.info
-lcov --remove build/coverage.info \*examples\* --output-file build/coverage.info
+lcov -q --remove build/coverage.info \*externals\* --output-file build/coverage.info
+lcov -q --remove build/coverage.info \*examples\* --output-file build/coverage.info
