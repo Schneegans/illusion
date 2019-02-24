@@ -22,6 +22,7 @@ matrix:
       before_script:
         - CC=gcc-7
         - CXX=g++-7
+        - INSTALL_TARGET_NAME=install
     - name: Linux Clang
       env: LABEL=LinuxClang
       os: linux
@@ -30,21 +31,26 @@ matrix:
       before_script:
         - CC=clang-6.0
         - CXX=clang++-6.0
+        - INSTALL_TARGET_NAME=install
     - name: Windows MSVC
       env: LABEL=WindowsMSVC
       os: windows
       install:
         - choco install python3
+      before_script:
+        - INSTALL_TARGET_NAME=INSTALL
     - name: OS X
       env: LABEL=OSX
       os: osx
       osx_image: xcode10.1
+      before_script:
+        - INSTALL_TARGET_NAME=install
 script:
   - mkdir build && cd build
-  - if [ "$TRAVIS_OS_NAME" == "linux" ];   then cmake -DILLUSION_CODE_COVERAGE=On -DCMAKE_BUILD_TYPE=Debug ..; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ];   then cmake -DILLUSION_CODE_COVERAGE=On -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=install ..; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ];     then cmake -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14 ..; fi
   - if [ "$TRAVIS_OS_NAME" == "windows" ]; then cmake -G "Visual Studio 15 2017 Win64" -DPYTHON_EXECUTABLE=/c/Python37/python.exe ..; fi
-  - cmake --build . && cd ..
+  - cmake --build . --target $INSTALL_TARGET_NAME && cd ..
   - if [ "$CXX" == "g++-7" ]; then ./lcov.sh; fi
   - if [ "$CXX" == "g++-7" ]; then coveralls-lcov build/coverage.info; fi
 notifications:
