@@ -59,6 +59,20 @@ class BitHash : public std::vector<bool> {
   }
 };
 
+// tests -------------------------------------------------------------------------------------------
+#ifdef DOCTEST_LIBRARY_INCLUDED
+
+TEST_CASE("Illusion::Core::BitHash") {
+  BitHash hash;
+
+  SUBCASE("Pushing bits") {
+    hash.push<32>(42);
+    CHECK(hash.size() == 32);
+  }
+}
+
+#endif
+
 } // namespace Illusion::Core
 
 #endif // ILLUSION_CORE_BITHASH_HPP
