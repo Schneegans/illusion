@@ -23,7 +23,7 @@ set(ENABLED_EXAMPLES
 foreach(EXAMPLE ${ENABLED_EXAMPLES})
   if (UNIX)
     # configure start script
-    configure_file("start.sh.in" "${EXAMPLE}.sh")
+    configure_file("RunExample.sh.in" "${EXAMPLE}.sh")
 
     # install
     install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${EXAMPLE}.sh"
@@ -53,9 +53,11 @@ foreach(EXAMPLE ${ENABLED_EXAMPLES})
   endif()
 endforeach()
 
-configure_file("start_all_examples.sh.in" "start_all_examples.sh")
+if (UNIX)
+  configure_file("RunAllExamples.sh.in" "RunAllExamples.sh")
 
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/start_all_examples.sh"
-  DESTINATION "bin"
-  PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ
-)
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/RunAllExamples.sh"
+    DESTINATION "bin"
+    PERMISSIONS OWNER_EXECUTE OWNER_WRITE OWNER_READ GROUP_EXECUTE GROUP_READ
+  )
+endif()

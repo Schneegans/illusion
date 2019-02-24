@@ -47,3 +47,10 @@ script:
   - cmake --build . && cd ..
   - if [ "$CXX" == "g++-7" ]; then ./lcov.sh; fi
   - if [ "$CXX" == "g++-7" ]; then coveralls-lcov build/coverage.info; fi
+notifications:
+  webhooks:
+    urls:
+      - https://webhooks.gitter.im/e/55e8e7aa87bb2d989407
+    on_success: change
+    on_failure: change
+    on_start: never
