@@ -33,6 +33,7 @@ include(externals/glm.cmake)
 include(externals/gli.cmake)
 include(externals/stb.cmake)
 include(externals/tinygltf.cmake)
+include(externals/doctest.cmake)
 
 # build the libraries ------------------------------------------------------------------------------
 add_subdirectory(src/Illusion)

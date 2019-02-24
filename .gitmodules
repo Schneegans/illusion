@@ -34,3 +34,6 @@
 [submodule "externals/spirv-headers"]
 	path = externals/spirv-headers
 	url = ../../KhronosGroup/SPIRV-Headers
+[submodule "externals/doctest"]
+	path = externals/doctest
+	url = ../../doctest.git
