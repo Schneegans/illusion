@@ -38,7 +38,3 @@ COMMENT_LINES=$(($COMMENT_LINES - 5 * $NUMBER_OF_FILES - $DUMB_COMMENTS))
 
 awk -v count=$LINES_OF_CODE 'BEGIN {printf "Lines of code:     %5.1fk\n", count/1000}'
 awk -v count=$COMMENT_LINES 'BEGIN {printf "Lines of comments: %5.1fk\n", count/1000}'
-
-# Just because we can, we will print the count of "const" and "ConstPtr" in the source.
-CONST_COUNT="$(grep -r -E -o 'const|ConstPtr' examples src | wc -l)"
-awk -v count=$CONST_COUNT 'BEGIN {printf "Const count:       %5.1fk\n", count/1000}'
