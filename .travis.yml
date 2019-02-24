@@ -47,9 +47,9 @@ matrix:
         - INSTALL_TARGET_NAME=install
 script:
   - mkdir build && cd build
-  - if [ "$TRAVIS_OS_NAME" == "linux" ];   then cmake -DILLUSION_CODE_COVERAGE=On -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=install ..; fi
-  - if [ "$TRAVIS_OS_NAME" == "osx" ];     then cmake -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14 ..; fi
-  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then cmake -G "Visual Studio 15 2017 Win64" -DPYTHON_EXECUTABLE=/c/Python37/python.exe ..; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ];   then cmake -DCMAKE_INSTALL_PREFIX=install -DILLUSION_CODE_COVERAGE=On -DCMAKE_BUILD_TYPE=Debug ..; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ];     then cmake -DCMAKE_INSTALL_PREFIX=install -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14 ..; fi
+  - if [ "$TRAVIS_OS_NAME" == "windows" ]; then cmake -DCMAKE_INSTALL_PREFIX=install -G "Visual Studio 15 2017 Win64" -DPYTHON_EXECUTABLE=/c/Python37/python.exe ..; fi
   - cmake --build . --target $INSTALL_TARGET_NAME && cd ..
   - if [ "$CXX" == "g++-7" ]; then ./lcov.sh; fi
   - if [ "$CXX" == "g++-7" ]; then coveralls-lcov build/coverage.info; fi
@@ -58,5 +58,5 @@ notifications:
     urls:
       - https://webhooks.gitter.im/e/55e8e7aa87bb2d989407
     on_success: change
-    on_failure: change
+    on_failure: always
     on_start: never
