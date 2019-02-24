@@ -11,4 +11,5 @@
 
 #include <Illusion/Core/BitHash.hpp>
 #include <Illusion/Core/Color.hpp>
+#include <Illusion/Core/NamedObject.hpp>
 #include <Illusion/Core/Property.hpp>

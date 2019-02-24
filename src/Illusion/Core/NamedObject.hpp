@@ -34,6 +34,38 @@ class NamedObject {
   std::string mName;
 };
 
+// ---------------------------------------------------------------------------------------------- //
+// --------------------------------------- Tests ------------------------------------------------ //
+// ---------------------------------------------------------------------------------------------- //
+
+#ifdef DOCTEST_LIBRARY_INCLUDED
+
+TEST_CASE("Illusion::Core::NamedObject") {
+
+  SUBCASE("Checking default constructor") {
+    NamedObject object;
+    CHECK(object.getName() == "Unamed Object");
+  }
+
+  SUBCASE("Checking non-default constructor") {
+    NamedObject object("Foo Bar");
+    CHECK(object.getName() == "Foo Bar");
+  }
+
+  SUBCASE("Checking setName()") {
+    class Derived : public NamedObject {
+     public:
+      Derived() {
+        setName("Foo Bar");
+      }
+    };
+    Derived object;
+    CHECK(object.getName() == "Foo Bar");
+  }
+}
+
+#endif
+
 } // namespace Illusion::Core
 
 #endif // ILLUSION_CORE_NAMED_OBJECT_HPP
