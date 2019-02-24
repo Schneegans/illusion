@@ -7,11 +7,11 @@ For now, Illusion is a convenience layer on top of Vulkan, similar in spirit to 
 Since everybody loves badges, here are some describing Illusion:
 
 [![Build Status](https://travis-ci.org/Simmesimme/illusion.svg?branch=develop)](https://travis-ci.org/Simmesimme/illusion/branches)
-![license](https://img.shields.io/badge/license-MIT-blue.svg)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![c++17](https://img.shields.io/badge/standard-C++17-orange.svg)
-![loc](https://img.shields.io/badge/loc-12.8k-green.svg)
-![comment](https://img.shields.io/badge/comments-2.0k-green.svg)
-![constcount](https://img.shields.io/badge/const_count-1.9k-purple.svg)
+[![loc](https://img.shields.io/badge/loc-12.8k-green.svg)](cloc.sh)
+[![comment](https://img.shields.io/badge/comments-2.0k-green.svg)](cloc.sh)
+[![constcount](https://img.shields.io/badge/const_count-1.9k-purple.svg)](cloc.sh)
 [![gitter](https://badges.gitter.im/simmesimme/illusion.svg)](https://gitter.im/illusion-engine/community)
 
 Illusion uses C++17 and can be build on Linux (gcc or clang), Windows (msvc) and OS X (xcode). Nearly all dependencies are included as [git submodules](externals), please refer to the section [Building Illusion](#building-illusion) in order to get started.
