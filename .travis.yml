@@ -6,6 +6,7 @@ addons:
       - clang-6.0
       - xorg-dev
       - libc++-dev
+      - lcov
     sources:
       - ubuntu-toolchain-r-test
       - llvm-toolchain-xenial-6.0
@@ -16,6 +17,8 @@ matrix:
       os: linux
       dist: xenial
       sudo: required
+      install:
+        - gem install coveralls-lcov
       before_script:
         - CC=gcc-7
         - CXX=g++-7
@@ -38,7 +41,9 @@ matrix:
       osx_image: xcode10.1
 script:
   - mkdir build && cd build
-  - if [ "$TRAVIS_OS_NAME" == "linux" ];   then cmake ..; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ];   then cmake -DILLUSION_CODE_COVERAGE=On -DCMAKE_BUILD_TYPE=Debug ..; fi
   - if [ "$TRAVIS_OS_NAME" == "osx" ];     then cmake -DCMAKE_OSX_DEPLOYMENT_TARGET=10.14 ..; fi
   - if [ "$TRAVIS_OS_NAME" == "windows" ]; then cmake -G "Visual Studio 15 2017 Win64" -DPYTHON_EXECUTABLE=/c/Python37/python.exe ..; fi
-  - cmake --build .
+  - cmake --build . && cd ..
+  - if [ "$CXX" == "g++-7" ]; then ./lcov.sh; fi
+  - if [ "$CXX" == "g++-7" ]; then coveralls-lcov build/coverage.info; fi
