@@ -13,7 +13,7 @@
 namespace Illusion::Core {
 
 TEST_CASE("Illusion::Core::File") {
-  Illusion::Core::File testFile("invalid.txt");
+  File testFile("invalid.txt");
 
   // At first, this file should not exist.
   CHECK(testFile.isValid() == false);

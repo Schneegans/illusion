@@ -23,7 +23,7 @@ TEST_CASE("Illusion::Core::CommandLine") {
   bool        oBool      = false;
   bool        oPrintHelp = false;
 
-  Illusion::Core::CommandLine cmd("Program description.");
+  CommandLine cmd("Program description.");
   cmd.addArgument({"-s", "--string"}, &oString, "String description");
   cmd.addArgument({"-i", "--integer"}, &oInteger, "Integer description");
   cmd.addArgument({"-u", "--unsigned"}, &oUnsigned, "Unsigned description");
@@ -108,7 +108,7 @@ TEST_CASE("Illusion::Core::CommandLine") {
   }
 
   SUBCASE("Checking help output") {
-    Illusion::Core::Logger::enableColorOutput = false;
+    Logger::enableColorOutput = false;
     std::ostringstream oss;
     cmd.printHelp(oss);
 
@@ -123,7 +123,7 @@ TEST_CASE("Illusion::Core::CommandLine") {
 [ILLUSION][M] -h, --help      PrintHelp description
 )");
 
-    Illusion::Core::Logger::enableColorOutput = true;
+    Logger::enableColorOutput = true;
   }
 }
 
