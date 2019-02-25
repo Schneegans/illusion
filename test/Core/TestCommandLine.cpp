@@ -7,12 +7,14 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 #include <Illusion/Core/CommandLine.hpp>
+#include <Illusion/Core/Logger.hpp>
 
 #include <doctest.h>
+#include <sstream>
 
 namespace Illusion::Core {
 
-TEST_CASE("Illusion::Core::Color") {
+TEST_CASE("Illusion::Core::CommandLine") {
   std::string oString    = "Default Value";
   int32_t     oInteger   = -1;
   uint32_t    oUnsigned  = 0;
@@ -21,14 +23,14 @@ TEST_CASE("Illusion::Core::Color") {
   bool        oBool      = false;
   bool        oPrintHelp = false;
 
-  Illusion::Core::CommandLine cmd("Description.");
-  cmd.addArgument({"-s", "--string"}, &oString, "Description");
-  cmd.addArgument({"-i", "--integer"}, &oInteger, "Description");
-  cmd.addArgument({"-u", "--unsigned"}, &oUnsigned, "Description");
-  cmd.addArgument({"-d", "--double"}, &oDouble, "Description");
-  cmd.addArgument({"-f", "--float"}, &oFloat, "Description");
-  cmd.addArgument({"-b", "--bool"}, &oBool, "Description");
-  cmd.addArgument({"-h", "--help"}, &oPrintHelp, "Description");
+  Illusion::Core::CommandLine cmd("Program description.");
+  cmd.addArgument({"-s", "--string"}, &oString, "String description");
+  cmd.addArgument({"-i", "--integer"}, &oInteger, "Integer description");
+  cmd.addArgument({"-u", "--unsigned"}, &oUnsigned, "Unsigned description");
+  cmd.addArgument({"-d", "--double"}, &oDouble, "Double description");
+  cmd.addArgument({"-f", "--float"}, &oFloat, "Float description");
+  cmd.addArgument({"-b", "--bool"}, &oBool, "Bool description");
+  cmd.addArgument({"-h", "--help"}, &oPrintHelp, "PrintHelp description");
 
   SUBCASE("Checking default values untouched") {
     std::vector<char*> args = {const_cast<char*>("foo"), nullptr};
@@ -58,6 +60,70 @@ TEST_CASE("Illusion::Core::Color") {
     CHECK(oFloat == 256.7f);
     CHECK(oBool == true);
     CHECK(oPrintHelp == true);
+  }
+
+  SUBCASE("Checking passing argument with -i 1") {
+    std::vector<char*> args = {
+        const_cast<char*>("foo"), const_cast<char*>("-i"), const_cast<char*>("1"), nullptr};
+    cmd.parse(args.size() - 1, args.data());
+
+    CHECK(oInteger == 1);
+  }
+
+  SUBCASE("Checking passing argument with --integer 1") {
+    std::vector<char*> args = {
+        const_cast<char*>("foo"), const_cast<char*>("--integer"), const_cast<char*>("1"), nullptr};
+    cmd.parse(args.size() - 1, args.data());
+
+    CHECK(oInteger == 1);
+  }
+
+  SUBCASE("Checking passing argument with -i=1") {
+    std::vector<char*> args = {const_cast<char*>("foo"), const_cast<char*>("-i=1"), nullptr};
+    cmd.parse(args.size() - 1, args.data());
+
+    CHECK(oInteger == 1);
+  }
+
+  SUBCASE("Checking passing argument with --integer=1") {
+    std::vector<char*> args = {const_cast<char*>("foo"), const_cast<char*>("--integer=1"), nullptr};
+    cmd.parse(args.size() - 1, args.data());
+
+    CHECK(oInteger == 1);
+  }
+
+  SUBCASE("Checking passing no argument for bools") {
+    std::vector<char*> args = {const_cast<char*>("foo"), const_cast<char*>("-b"), nullptr};
+    cmd.parse(args.size() - 1, args.data());
+
+    CHECK(oBool == true);
+  }
+
+  SUBCASE("Checking passing false argument for bools") {
+    oBool                   = true;
+    std::vector<char*> args = {const_cast<char*>("foo"), const_cast<char*>("-b=false"), nullptr};
+    cmd.parse(args.size() - 1, args.data());
+
+    CHECK(oBool == false);
+  }
+
+  SUBCASE("Checking help output") {
+    Illusion::Core::Logger::enableColorOutput = false;
+    std::ostringstream oss;
+    cmd.printHelp(oss);
+
+    CHECK(oss);
+    CHECK(oss.str() == R"([ILLUSION][M] Program description.
+[ILLUSION][M] -s, --string    String description
+[ILLUSION][M] -i, --integer   Integer description
+[ILLUSION][M] -u, --unsigned  Unsigned description
+[ILLUSION][M] -d, --double    Double description
+[ILLUSION][M] -f, --float     Float description
+[ILLUSION][M] -b, --bool      Bool description
+[ILLUSION][M] -h, --help      PrintHelp description
+)");
+
+    Illusion::Core::Logger::enableColorOutput = true;
   }
 }
 
