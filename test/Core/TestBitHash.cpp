@@ -6,5 +6,19 @@
 //                                                                                                //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
+#include <Illusion/Core/BitHash.hpp>
+
 #include <doctest.h>
+
+namespace Illusion::Core {
+
+TEST_CASE("Illusion::Core::BitHash") {
+  BitHash hash;
+
+  SUBCASE("Pushing bits") {
+    hash.push<32>(42);
+    CHECK(hash.size() == 32);
+  }
+}
+
+} // namespace Illusion::Core

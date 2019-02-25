@@ -6,7 +6,11 @@
 #                                                                                                  #
 # ------------------------------------------------------------------------------------------------ #
 
-add_executable(RunAllTests main.cpp)
+file(GLOB TEST_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
+  "*/*.cpp"
+)
+
+add_executable(RunAllTests main.cpp ${TEST_SRC})
 
 target_link_libraries(RunAllTests 
   PRIVATE illusion-core

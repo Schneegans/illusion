@@ -96,25 +96,6 @@ Color operator/(Color const& lhs, float rhs);
 
 std::ostream& operator<<(std::ostream& os, Color const& color);
 
-// ---------------------------------------------------------------------------------------------- //
-// --------------------------------------- Tests ------------------------------------------------ //
-// ---------------------------------------------------------------------------------------------- //
-
-#ifdef DOCTEST_LIBRARY_INCLUDED
-
-TEST_CASE("Illusion::Core::Color") {
-  Color color("rgba(255, 127, 0, 0.2)");
-
-  SUBCASE("Checking from-string constructor") {
-    CHECK(color.r() == 1.f);
-    CHECK(color.g() == 127.f / 255.f);
-    CHECK(color.b() == 0.f);
-    CHECK(color.a() == 0.2f);
-  }
-}
-
-#endif
-
 } // namespace Illusion::Core
 
 #endif // ILLUSION_COLOR_HPP
