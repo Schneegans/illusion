@@ -20,5 +20,6 @@ build/install/bin/RunAllTests.sh
 lcov -q --capture --no-external --directory . --output-file build/test_coverage.info
 lcov -q -a build/zero_coverage.info -a build/test_coverage.info --o build/coverage.info
 
-lcov -q --remove build/coverage.info \*externals\* --output-file build/coverage.info
-lcov -q --remove build/coverage.info \*examples\* --output-file build/coverage.info
+lcov -q --remove build/coverage.info \*externals/\* --output-file build/coverage.info
+lcov -q --remove build/coverage.info \*examples/\* --output-file build/coverage.info
+lcov -q --remove build/coverage.info \*test/\* --output-file build/coverage.info
