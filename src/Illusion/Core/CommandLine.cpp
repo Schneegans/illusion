@@ -36,10 +36,10 @@ void CommandLine::addArgument(
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandLine::printHelp() const {
+void CommandLine::printHelp(std::ostream& os) const {
 
   // Print the general description.
-  Logger::message() << mDescription << std::endl;
+  Logger::message(os) << mDescription << std::endl;
 
   // Find the argument with the longest combined flag length (in order to align the help messages).
   uint32_t maxFlagLength = 0;
@@ -78,7 +78,7 @@ void CommandLine::printHelp() const {
       currentSpacePos = nextSpacePos;
 
       if (currentLineWidth > 60) {
-        Logger::message() << sstr.str() << std::endl;
+        Logger::message(os) << sstr.str() << std::endl;
         sstr = std::stringstream();
         sstr << std::left << std::setw(maxFlagLength - 1) << " ";
         currentLineWidth = 0;

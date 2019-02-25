@@ -9,7 +9,7 @@
 #ifndef ILLUSION_LOGGER_HPP
 #define ILLUSION_LOGGER_HPP
 
-#include <iosfwd>
+#include <iostream>
 #include <string>
 
 namespace Illusion::Core {
@@ -46,17 +46,20 @@ class Logger {
   static bool enableMessage;
   static bool enableWarning;
   static bool enableError;
+  static bool enableColorOutput;
 
   // Use these to print something.
-  static std::ostream& trace();
-  static std::ostream& debug();
-  static std::ostream& message();
-  static std::ostream& warning();
-  static std::ostream& error();
+  static std::ostream& trace(std::ostream& os = std::cout);
+  static std::ostream& debug(std::ostream& os = std::cout);
+  static std::ostream& message(std::ostream& os = std::cout);
+  static std::ostream& warning(std::ostream& os = std::cout);
+  static std::ostream& error(std::ostream& os = std::cout);
 
   // Use this to print beautiful and consistent object life-time notifications on tracing level.
-  static void traceCreation(std::string const& object, std::string const& name);
-  static void traceDeletion(std::string const& object, std::string const& name);
+  static void traceCreation(
+      std::string const& object, std::string const& name, std::ostream& os = std::cout);
+  static void traceDeletion(
+      std::string const& object, std::string const& name, std::ostream& os = std::cout);
 };
 
 } // namespace Illusion::Core

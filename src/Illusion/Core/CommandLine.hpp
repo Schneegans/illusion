@@ -9,6 +9,7 @@
 #ifndef ILLUSION_CORE_COMMAND_LINE_HPP
 #define ILLUSION_CORE_COMMAND_LINE_HPP
 
+#include <iostream>
 #include <string>
 #include <variant>
 #include <vector>
@@ -52,7 +53,7 @@ class CommandLine {
   void addArgument(std::vector<std::string> const& flags, Value value, std::string const& help);
 
   // Prints the description given to the constructor and the help for each option.
-  void printHelp() const;
+  void printHelp(std::ostream& os = std::cout) const;
 
   // The command line arguments are traversed from start to end. That means, if an option is set
   // multiple times, the last will be the one which is finally used. This call will throw a

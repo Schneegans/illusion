@@ -15,11 +15,12 @@
 
 namespace Illusion::Core {
 
-bool Logger::enableTrace   = false;
-bool Logger::enableDebug   = true;
-bool Logger::enableMessage = true;
-bool Logger::enableWarning = true;
-bool Logger::enableError   = true;
+bool Logger::enableTrace       = false;
+bool Logger::enableDebug       = true;
+bool Logger::enableMessage     = true;
+bool Logger::enableWarning     = true;
+bool Logger::enableError       = true;
+bool Logger::enableColorOutput = true;
 
 // no colors on windows!
 #if defined(_WIN32)
@@ -70,9 +71,11 @@ class NullBuffer : public std::streambuf {
 NullBuffer   nullBuffer;
 std::ostream devNull(&nullBuffer);
 
-std::ostream& print(bool enable, std::string const& header, std::string const& color) {
+std::ostream& print(
+    std::ostream& os, bool enable, std::string const& header, std::string const& color) {
   if (enable) {
-    return std::cout << color << header << Logger::PRINT_RESET << " ";
+    return os << (Logger::enableColorOutput ? color : "") << header
+              << (Logger::enableColorOutput ? Logger::PRINT_RESET : "") << " ";
   }
   return devNull;
 }
@@ -80,49 +83,49 @@ std::ostream& print(bool enable, std::string const& header, std::string const& c
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::ostream& Logger::trace() {
-  return print(enableTrace, "[ILLUSION][T]", PRINT_TURQUOISE);
+std::ostream& Logger::trace(std::ostream& os) {
+  return print(os, enableTrace, "[ILLUSION][T]", PRINT_TURQUOISE);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::ostream& Logger::debug() {
-  return print(enableDebug, "[ILLUSION][D]", PRINT_BLUE);
+std::ostream& Logger::debug(std::ostream& os) {
+  return print(os, enableDebug, "[ILLUSION][D]", PRINT_BLUE);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::ostream& Logger::message() {
-  return print(enableMessage, "[ILLUSION][M]", PRINT_GREEN);
+std::ostream& Logger::message(std::ostream& os) {
+  return print(os, enableMessage, "[ILLUSION][M]", PRINT_GREEN);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::ostream& Logger::warning() {
-  return print(enableWarning, "[ILLUSION][W]", PRINT_YELLOW);
+std::ostream& Logger::warning(std::ostream& os) {
+  return print(os, enableWarning, "[ILLUSION][W]", PRINT_YELLOW);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::ostream& Logger::error() {
-  return print(enableError, "[ILLUSION][E]", PRINT_RED);
+std::ostream& Logger::error(std::ostream& os) {
+  return print(os, enableError, "[ILLUSION][E]", PRINT_RED);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Logger::traceCreation(std::string const& object, std::string const& name) {
+void Logger::traceCreation(std::string const& object, std::string const& name, std::ostream& os) {
   if (enableTrace) {
-    trace() << PRINT_GREEN << "[create] " << PRINT_RESET << std::left << std::setw(20) << object
-            << ((!name.empty()) ? " (" + name + ")" : "") << std::endl;
+    trace(os) << PRINT_GREEN << "[create] " << PRINT_RESET << std::left << std::setw(20) << object
+              << ((!name.empty()) ? " (" + name + ")" : "") << std::endl;
   }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void Logger::traceDeletion(std::string const& object, std::string const& name) {
+void Logger::traceDeletion(std::string const& object, std::string const& name, std::ostream& os) {
   if (enableTrace) {
-    trace() << PRINT_RED << "[delete] " << PRINT_RESET << std::left << std::setw(20) << object
-            << " (" + name + ")" << std::endl;
+    trace(os) << PRINT_RED << "[delete] " << PRINT_RESET << std::left << std::setw(20) << object
+              << " (" + name + ")" << std::endl;
   }
 }
 
