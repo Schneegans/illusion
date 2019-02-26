@@ -19,6 +19,7 @@ bool    isDepthFormat(vk::Format format);
 bool    isDepthOnlyFormat(vk::Format format);
 bool    isDepthStencilFormat(vk::Format format);
 uint8_t getByteCount(vk::Format format);
+uint8_t getComponentCount(vk::Format format);
 
 } // namespace Illusion::Graphics::Utils
 

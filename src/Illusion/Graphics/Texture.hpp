@@ -60,6 +60,12 @@ struct Texture : public BackedImage {
   // Regenerates all mipmap levels of the given texture.
   // This is done with linearly filtered image blits.
   static void updateMipmaps(DeviceConstPtr const& device, TexturePtr const& texture);
+
+  // This method is quite "raw" for the moment. It uses stbi_image_write internally but does not
+  // perform any checks or conversion. So if the file format does not really support the format you
+  // are requesting, intersting things may happen. This should definitely be improved.
+  static void saveToFile(
+      BackedImagePtr const& image, DeviceConstPtr const& device, std::string const& fileName);
 };
 
 } // namespace Illusion::Graphics

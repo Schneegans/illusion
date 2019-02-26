@@ -530,6 +530,14 @@ void CommandBuffer::copyBufferToImage(vk::Buffer src, vk::Image dst, vk::ImageLa
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+void CommandBuffer::copyImageToBuffer(vk::Image src, vk::Buffer dst, vk::ImageLayout srcLayout,
+    std::vector<vk::BufferImageCopy> const& infos) const {
+
+  mVkCmd->copyImageToBuffer(src, srcLayout, dst, infos);
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
 void CommandBuffer::flush() {
 
   if (!mCurrentShader) {

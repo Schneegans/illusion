@@ -234,6 +234,9 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
   void copyBufferToImage(vk::Buffer src, vk::Image dst, vk::ImageLayout dstLayout,
       std::vector<vk::BufferImageCopy> const& infos) const;
 
+  void copyImageToBuffer(vk::Image src, vk::Buffer dst, vk::ImageLayout srcLayout,
+      std::vector<vk::BufferImageCopy> const& infos) const;
+
  private:
   void            flush();
   vk::PipelinePtr getPipelineHandle();

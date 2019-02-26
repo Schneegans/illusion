@@ -9,15 +9,18 @@
 #include "Texture.hpp"
 
 #include "../Core/Logger.hpp"
+#include "BackedBuffer.hpp"
 #include "CommandBuffer.hpp"
 #include "Device.hpp"
 #include "PhysicalDevice.hpp"
 #include "Shader.hpp"
 #include "ShaderModule.hpp"
+#include "Utils.hpp"
 
 #include <gli/gli.hpp>
 #include <iostream>
 #include <stb_image.h>
+#include <stb_image_write.h>
 
 namespace Illusion::Graphics {
 
@@ -754,7 +757,6 @@ void Texture::updateMipmaps(DeviceConstPtr const& device, TexturePtr const& text
   subresourceRange.baseMipLevel = 0;
   subresourceRange.levelCount   = 1;
   subresourceRange.layerCount   = texture->mImageInfo.arrayLayers;
-  subresourceRange.baseMipLevel = 0;
 
   uint32_t mipWidth  = texture->mImageInfo.extent.width;
   uint32_t mipHeight = texture->mImageInfo.extent.height;
@@ -789,6 +791,52 @@ void Texture::updateMipmaps(DeviceConstPtr const& device, TexturePtr const& text
   cmd->end();
   cmd->submit();
   cmd->waitIdle();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void Texture::saveToFile(
+    BackedImagePtr const& image, DeviceConstPtr const& device, std::string const& fileName) {
+
+  auto stagingBuffer = device->createBackedBuffer("StagingBuffer for downloading " + image->mName,
+      vk::BufferUsageFlagBits::eTransferDst,
+      vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+      image->mImageInfo.extent.width * image->mImageInfo.extent.height *
+          Utils::getByteCount(image->mImageInfo.format));
+
+  auto cmd = CommandBuffer::create("Download image data", device, QueueType::eGeneric);
+  cmd->begin();
+
+  auto origLayout = image->mCurrentLayout;
+  cmd->transitionImageLayout(image, origLayout, vk::ImageLayout::eTransferSrcOptimal);
+
+  vk::BufferImageCopy info;
+  info.imageSubresource.aspectMask     = image->mViewInfo.subresourceRange.aspectMask;
+  info.imageSubresource.mipLevel       = 0;
+  info.imageSubresource.baseArrayLayer = 0;
+  info.imageSubresource.layerCount     = 1;
+  info.imageExtent.width               = image->mImageInfo.extent.width;
+  info.imageExtent.height              = image->mImageInfo.extent.height;
+  info.imageExtent.depth               = 1;
+  info.bufferOffset                    = 0;
+
+  cmd->copyImageToBuffer(
+      *image->mImage, *stagingBuffer->mBuffer, vk::ImageLayout::eTransferSrcOptimal, {info});
+
+  cmd->transitionImageLayout(image, origLayout);
+
+  cmd->end();
+  cmd->submit();
+  cmd->waitIdle();
+
+  // Map the data.
+  auto data = device->getHandle()->mapMemory(
+      *stagingBuffer->mMemory, 0, stagingBuffer->mMemoryInfo.allocationSize);
+
+  stbi_write_tga(fileName.c_str(), image->mImageInfo.extent.width, image->mImageInfo.extent.height,
+      Utils::getComponentCount(image->mImageInfo.format), data);
+
+  device->getHandle()->unmapMemory(*stagingBuffer->mMemory);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
