@@ -48,7 +48,8 @@ bool contains(std::unordered_map<K, V> const& map, K const& key) {
 std::vector<std::string> splitString(std::string const& s, char delim);
 
 // Joins the given strings, putting delim between each part.
-std::string joinStrings(std::vector<std::string> const& parts, std::string const& delim = "");
+std::string joinStrings(
+    std::vector<std::string> const& parts, std::string const& delim = std::string(""));
 
 // Joins the given strings, putting delim between each part; lastDelim is used as the last delimiter
 // (or the only one if parts only contains two strings). A typical use case is delim = ", " and
