@@ -10,8 +10,8 @@ Since everybody loves badges, here are some describing Illusion:
 [![Coverage Status](https://coveralls.io/repos/github/Simmesimme/illusion/badge.svg?branch=develop)](https://coveralls.io/github/Simmesimme/illusion?branch=develop)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![c++17](https://img.shields.io/badge/standard-C++17-orange.svg)
-[![source loc](https://img.shields.io/badge/source_loc-12.7k-green.svg)](cloc.sh)
-[![test loc](https://img.shields.io/badge/test_loc-0.3k-yellow.svg)](cloc.sh)
+[![source loc](https://img.shields.io/badge/source_loc-13.0k-green.svg)](cloc.sh)
+[![test loc](https://img.shields.io/badge/test_loc-0.4k-yellow.svg)](cloc.sh)
 [![comment](https://img.shields.io/badge/comments-2.0k-green.svg)](cloc.sh)
 [![gitter](https://badges.gitter.im/simmesimme/illusion.svg)](https://gitter.im/illusion-engine/community)
 
@@ -83,6 +83,7 @@ Link | Core Utility Examples | Screenshot
 [Command Line](examples/CommandLine) | This small example shows how to use Illusion's very basic command line parser. Use `CommandLine --help` to see the options. | ![screenshot](examples/CommandLine/screenshot.jpg)
 **Link** | **Low-level Vulkan Examples** | **Screenshot**
 [GPU Info](examples/GPUInfo) | This minimal example creates a Vulkan instance and prints a very verbose list of your Vulkan implementation's hardware and software capabilities. | ![screenshot](examples/GPUInfo/screenshot.jpg)
+[Headless](examples/Headless) | This rather simple example renders an image and save it to a file. This is done in headless-mode - no window or swapchain is created. | ![screenshot](examples/Headless/screenshot.jpg)
 [Triangle](examples/Triangle) | A simple triangle without vertex or index buffers that uses a pre-recorded command buffer and no per-frame resources. | ![screenshot](examples/Triangle/screenshot.jpg)
 [Specialization Constants](examples/SpecializationConstants) | Similar to the Triangle example, but here three triangles are drawn with one shader program. For each triangle some specialization constants are set to different values. | ![screenshot](examples/SpecializationConstants/screenshot.jpg)
 [Textured Quad](examples/TexturedQuad) | Similar to the triangle, in addition a texture is loaded and bound as fragment shader input. This example can either use GLSL or HLSL shaders. Use `TexturedQuad --help` to see the options. | ![screenshot](examples/TexturedQuad/screenshot.jpg)

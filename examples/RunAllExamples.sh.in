@@ -19,6 +19,7 @@ cd $SCRIPT_DIR
 ./SignalSlot
 ./CommandLine
 ./GPUInfo
+./Headless
 ./Triangle
 ./SpecializationConstants
 ./TexturedQuad

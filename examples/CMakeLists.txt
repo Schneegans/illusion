@@ -12,6 +12,7 @@ set(ENABLED_EXAMPLES
   "DeferredRendering"
   "GltfViewer"
   "GPUInfo"
+  "Headless"
   "ShaderSandbox"
   "SignalSlot"
   "SpecializationConstants"
