@@ -42,6 +42,9 @@ TEST_CASE("Illusion::Core::File") {
   // And the last write time should be != 0.
   CHECK(testFile.getLastWriteTime() != 0);
 
+  // However, changedOnDisc should return false as we were writing it for the last time.
+  CHECK(!testFile.changedOnDisc());
+
   // Then we remove the file again.
   testFile.remove();
 

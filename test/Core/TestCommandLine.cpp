@@ -62,6 +62,28 @@ TEST_CASE("Illusion::Core::CommandLine") {
     CHECK(oPrintHelp == true);
   }
 
+  SUBCASE("Checking missing value") {
+    std::vector<char*> args = {const_cast<char*>("foo"), const_cast<char*>("-i"), nullptr};
+    CHECK_THROWS(cmd.parse(args.size() - 1, args.data()));
+  }
+
+  SUBCASE("Checking ignoring unused argument") {
+    // Redirect cout to a ostringstream.
+    std::ostringstream oss;
+    auto               coutBuffer = std::cout.rdbuf();
+    std::cout.rdbuf(oss.rdbuf());
+
+    std::vector<char*> args = {const_cast<char*>("foo"), const_cast<char*>("-xyz"), nullptr};
+    CHECK_NOTHROW(cmd.parse(args.size() - 1, args.data()));
+
+    // Restore normal cout behavior.
+    std::cout.rdbuf(coutBuffer);
+
+    // Check that we actually got a warning.
+    CHECK(oss);
+    CHECK(oss.str() != "");
+  }
+
   SUBCASE("Checking passing argument with -i 1") {
     std::vector<char*> args = {
         const_cast<char*>("foo"), const_cast<char*>("-i"), const_cast<char*>("1"), nullptr};
@@ -101,7 +123,8 @@ TEST_CASE("Illusion::Core::CommandLine") {
 
   SUBCASE("Checking passing false argument for bools") {
     oBool                   = true;
-    std::vector<char*> args = {const_cast<char*>("foo"), const_cast<char*>("-b=false"), nullptr};
+    std::vector<char*> args = {
+        const_cast<char*>("foo"), const_cast<char*>("-b"), const_cast<char*>("false"), nullptr};
     cmd.parse(args.size() - 1, args.data());
 
     CHECK(oBool == false);

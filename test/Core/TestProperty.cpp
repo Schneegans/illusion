@@ -72,6 +72,29 @@ TEST_CASE("Illusion::Core::Property") {
     CHECK(pDMat3.get() == glm::dmat3());
     CHECK(pDMat4.get() == glm::dmat4());
   }
+
+  SUBCASE("Testing property connections") {
+    Double otherDouble(42.0);
+    pDouble.connectFrom(otherDouble);
+
+    // There should be an initial value transfer.
+    CHECK(pDouble.get() == 42.0);
+
+    // When we set otherDouble, pDouble should reflect this change.
+    otherDouble = -1.0;
+    CHECK(pDouble.get() == -1.0);
+
+    // When we disconnect again, pDouble should should not change anymore.
+    pDouble.disconnect();
+    otherDouble = 128.0;
+    CHECK(pDouble.get() == -1.0);
+
+    // We can also disconnect the other way around.
+    pDouble.connectFrom(otherDouble);
+    otherDouble.disconnectAuditors();
+    otherDouble = 42.0;
+    CHECK(pDouble.get() == 128.0);
+  }
 }
 
 } // namespace Illusion::Core
