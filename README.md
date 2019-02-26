@@ -11,7 +11,7 @@ Since everybody loves badges, here are some describing Illusion:
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![c++17](https://img.shields.io/badge/standard-C++17-orange.svg)
 [![source loc](https://img.shields.io/badge/source_loc-12.7k-green.svg)](cloc.sh)
-[![test loc](https://img.shields.io/badge/test_loc-0.2k-yellow.svg)](cloc.sh)
+[![test loc](https://img.shields.io/badge/test_loc-0.3k-yellow.svg)](cloc.sh)
 [![comment](https://img.shields.io/badge/comments-2.0k-green.svg)](cloc.sh)
 [![gitter](https://badges.gitter.im/simmesimme/illusion.svg)](https://gitter.im/illusion-engine/community)
 
