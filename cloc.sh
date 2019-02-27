@@ -41,17 +41,24 @@ function countLines() {
   eval "$3=$COMMENT_LINES"
 }
 
-# First count the source lines and comment lines in the src/ and examples/ directories.
-SOURCE_LOC=""
-SOURCE_COM=""
-countLines "${SCRIPT_DIR}/src ${SCRIPT_DIR}/examples" SOURCE_LOC SOURCE_COM
+# First count the source lines and comment lines in the src/ directory.
+SOURCE_LINES_OF_CODE=""
+SOURCE_LINES_OF_COMMENTS=""
+countLines "${SCRIPT_DIR}/src" SOURCE_LINES_OF_CODE SOURCE_LINES_OF_COMMENTS
+
+# Then in the examples/ directory.
+EXAMPLE_LINES_OF_CODE=""
+EXAMPLE_LINES_OF_COMMENTS=""
+countLines "${SCRIPT_DIR}/examples" EXAMPLE_LINES_OF_CODE EXAMPLE_LINES_OF_COMMENTS
 
 # Then in the test/ directory.
-TEST_LOC=""
-TEST_COM=""
-countLines "${SCRIPT_DIR}/test" TEST_LOC TEST_COM
+TEST_LINES_OF_CODE=""
+TEST_LINES_OF_COMMENTS=""
+countLines "${SCRIPT_DIR}/test" TEST_LINES_OF_CODE TEST_LINES_OF_COMMENTS
 
 # Print results.
-awk -v a=$SOURCE_LOC                'BEGIN {printf "Lines of source code: %5.1fk\n", a/1000}'
-awk -v a=$TEST_LOC                  'BEGIN {printf "Lines of test code:   %5.1fk\n", a/1000}'
-awk -v a=$SOURCE_COM -v b=$TEST_COM 'BEGIN {printf "Lines of comments:    %5.1fk\n", (a+b)/1000}'
+awk -v a=$SOURCE_LINES_OF_CODE   'BEGIN {printf "Lines of source code:  %5.1fk\n", a/1000}'
+awk -v a=$EXAMPLE_LINES_OF_CODE  'BEGIN {printf "Lines of example code: %5.1fk\n", a/1000}'
+awk -v a=$TEST_LINES_OF_CODE     'BEGIN {printf "Lines of test code:    %5.1fk\n", a/1000}'
+awk -v a=$SOURCE_LINES_OF_COMMENTS -v b=$TEST_LINES_OF_COMMENTS -v c=$EXAMPLE_LINES_OF_COMMENTS \
+                                 'BEGIN {printf "Lines of comments:     %5.1fk\n", (a+b+c)/1000}'
