@@ -85,21 +85,21 @@ class AnimatedProperty : public Property<T> {
         mState += time / mDuration;
 
         switch (mDirection) {
-        case AnimationDirection::eLinear:
-          Property<T>::set(updateLinear(mState, mStart, mEnd));
-          break;
-        case AnimationDirection::eIn:
-          Property<T>::set(updateEaseIn(mState, mStart, mEnd));
-          break;
-        case AnimationDirection::eOut:
-          Property<T>::set(updateEaseOut(mState, mStart, mEnd));
-          break;
-        case AnimationDirection::eInOut:
-          Property<T>::set(updateEaseInOut(mState, mStart, mEnd));
-          break;
-        case AnimationDirection::eOutIn:
-          Property<T>::set(updateEaseOutIn(mState, mStart, mEnd));
-          break;
+          case AnimationDirection::eLinear:
+            Property<T>::set(updateLinear(mState, mStart, mEnd));
+            break;
+          case AnimationDirection::eIn:
+            Property<T>::set(updateEaseIn(mState, mStart, mEnd));
+            break;
+          case AnimationDirection::eOut:
+            Property<T>::set(updateEaseOut(mState, mStart, mEnd));
+            break;
+          case AnimationDirection::eInOut:
+            Property<T>::set(updateEaseInOut(mState, mStart, mEnd));
+            break;
+          case AnimationDirection::eOutIn:
+            Property<T>::set(updateEaseOutIn(mState, mStart, mEnd));
+            break;
         }
       }
     } else if (mState != -1.0) {

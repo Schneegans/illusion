@@ -37,14 +37,14 @@ namespace {
 
 vk::Filter convertFilter(int value) {
   switch (value) {
-  case TINYGLTF_TEXTURE_FILTER_NEAREST:
-  case TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST:
-  case TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR:
-    return vk::Filter::eNearest;
-  case TINYGLTF_TEXTURE_FILTER_LINEAR:
-  case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST:
-  case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR:
-    return vk::Filter::eLinear;
+    case TINYGLTF_TEXTURE_FILTER_NEAREST:
+    case TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST:
+    case TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR:
+      return vk::Filter::eNearest;
+    case TINYGLTF_TEXTURE_FILTER_LINEAR:
+    case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST:
+    case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR:
+      return vk::Filter::eLinear;
   }
 
   throw std::runtime_error("Invalid filter mode " + std::to_string(value));
@@ -54,14 +54,14 @@ vk::Filter convertFilter(int value) {
 
 vk::SamplerMipmapMode convertSamplerMipmapMode(int value) {
   switch (value) {
-  case TINYGLTF_TEXTURE_FILTER_NEAREST:
-  case TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST:
-  case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST:
-    return vk::SamplerMipmapMode::eNearest;
-  case TINYGLTF_TEXTURE_FILTER_LINEAR:
-  case TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR:
-  case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR:
-    return vk::SamplerMipmapMode::eLinear;
+    case TINYGLTF_TEXTURE_FILTER_NEAREST:
+    case TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_NEAREST:
+    case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST:
+      return vk::SamplerMipmapMode::eNearest;
+    case TINYGLTF_TEXTURE_FILTER_LINEAR:
+    case TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR:
+    case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR:
+      return vk::SamplerMipmapMode::eLinear;
   }
 
   throw std::runtime_error("Invalid sampler mipmap mode " + std::to_string(value));
@@ -71,12 +71,12 @@ vk::SamplerMipmapMode convertSamplerMipmapMode(int value) {
 
 vk::SamplerAddressMode convertSamplerAddressMode(int value) {
   switch (value) {
-  case TINYGLTF_TEXTURE_WRAP_REPEAT:
-    return vk::SamplerAddressMode::eRepeat;
-  case TINYGLTF_TEXTURE_WRAP_CLAMP_TO_EDGE:
-    return vk::SamplerAddressMode::eClampToEdge;
-  case TINYGLTF_TEXTURE_WRAP_MIRRORED_REPEAT:
-    return vk::SamplerAddressMode::eMirroredRepeat;
+    case TINYGLTF_TEXTURE_WRAP_REPEAT:
+      return vk::SamplerAddressMode::eRepeat;
+    case TINYGLTF_TEXTURE_WRAP_CLAMP_TO_EDGE:
+      return vk::SamplerAddressMode::eClampToEdge;
+    case TINYGLTF_TEXTURE_WRAP_MIRRORED_REPEAT:
+      return vk::SamplerAddressMode::eMirroredRepeat;
   }
 
   throw std::runtime_error("Invalid sampler address mode " + std::to_string(value));
@@ -86,16 +86,16 @@ vk::SamplerAddressMode convertSamplerAddressMode(int value) {
 
 vk::PrimitiveTopology convertPrimitiveTopology(int value) {
   switch (value) {
-  case TINYGLTF_MODE_POINTS:
-    return vk::PrimitiveTopology::ePointList;
-  case TINYGLTF_MODE_LINE:
-    return vk::PrimitiveTopology::eLineStrip;
-  case TINYGLTF_MODE_TRIANGLES:
-    return vk::PrimitiveTopology::eTriangleList;
-  case TINYGLTF_MODE_TRIANGLE_STRIP:
-    return vk::PrimitiveTopology::eTriangleStrip;
-  case TINYGLTF_MODE_TRIANGLE_FAN:
-    return vk::PrimitiveTopology::eTriangleFan;
+    case TINYGLTF_MODE_POINTS:
+      return vk::PrimitiveTopology::ePointList;
+    case TINYGLTF_MODE_LINE:
+      return vk::PrimitiveTopology::eLineStrip;
+    case TINYGLTF_MODE_TRIANGLES:
+      return vk::PrimitiveTopology::eTriangleList;
+    case TINYGLTF_MODE_TRIANGLE_STRIP:
+      return vk::PrimitiveTopology::eTriangleStrip;
+    case TINYGLTF_MODE_TRIANGLE_FAN:
+      return vk::PrimitiveTopology::eTriangleFan;
   }
 
   throw std::runtime_error("Invalid primitive topology " + std::to_string(value));
@@ -440,37 +440,37 @@ Model::Model(std::string const& name, DeviceConstPtr device, std::string const& 
           auto const& v = model.bufferViews[a.bufferView];
 
           switch (a.componentType) {
-          case TINYGLTF_COMPONENT_TYPE_FLOAT: {
-            size_t s = v.byteStride == 0 ? sizeof(glm::vec2) : v.byteStride;
-            for (size_t i(0); i < vertexCount; ++i) {
-              vertexBuffer[vertexStart + i].mTexcoords = *reinterpret_cast<glm::vec2*>(
-                  &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]));
+            case TINYGLTF_COMPONENT_TYPE_FLOAT: {
+              size_t s = v.byteStride == 0 ? sizeof(glm::vec2) : v.byteStride;
+              for (size_t i(0); i < vertexCount; ++i) {
+                vertexBuffer[vertexStart + i].mTexcoords = *reinterpret_cast<glm::vec2*>(
+                    &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]));
+              }
+              break;
             }
-            break;
-          }
-          case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
-            size_t s = v.byteStride == 0 ? sizeof(glm::u8vec2) : v.byteStride;
-            for (size_t i(0); i < vertexCount; ++i) {
-              vertexBuffer[vertexStart + i].mTexcoords =
-                  glm::vec2(*reinterpret_cast<glm::u8vec2*>(
-                      &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]))) /
-                  255.f;
+            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
+              size_t s = v.byteStride == 0 ? sizeof(glm::u8vec2) : v.byteStride;
+              for (size_t i(0); i < vertexCount; ++i) {
+                vertexBuffer[vertexStart + i].mTexcoords =
+                    glm::vec2(*reinterpret_cast<glm::u8vec2*>(
+                        &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]))) /
+                    255.f;
+              }
+              break;
             }
-            break;
-          }
-          case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
-            size_t s = v.byteStride == 0 ? sizeof(glm::u16vec2) : v.byteStride;
-            for (size_t i(0); i < vertexCount; ++i) {
-              vertexBuffer[vertexStart + i].mTexcoords =
-                  glm::vec2(*reinterpret_cast<glm::u16vec2*>(
-                      &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]))) /
-                  65535.f;
+            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
+              size_t s = v.byteStride == 0 ? sizeof(glm::u16vec2) : v.byteStride;
+              for (size_t i(0); i < vertexCount; ++i) {
+                vertexBuffer[vertexStart + i].mTexcoords =
+                    glm::vec2(*reinterpret_cast<glm::u16vec2*>(
+                        &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]))) /
+                    65535.f;
+              }
+              break;
             }
-            break;
-          }
-          default:
-            throw std::runtime_error(
-                "Failed to load GLTF model: Unsupported component type for texcoords!");
+            default:
+              throw std::runtime_error(
+                  "Failed to load GLTF model: Unsupported component type for texcoords!");
           }
         }
 
@@ -486,25 +486,26 @@ Model::Model(std::string const& name, DeviceConstPtr device, std::string const& 
             auto const& v = model.bufferViews[a.bufferView];
 
             switch (a.componentType) {
-            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
-              size_t s = v.byteStride == 0 ? sizeof(glm::u8vec4) : v.byteStride;
-              for (size_t i(0); i < vertexCount; ++i) {
-                vertexBuffer[vertexStart + i].mJoint0 = glm::vec4(*reinterpret_cast<glm::u8vec4*>(
-                    &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s])));
+              case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
+                size_t s = v.byteStride == 0 ? sizeof(glm::u8vec4) : v.byteStride;
+                for (size_t i(0); i < vertexCount; ++i) {
+                  vertexBuffer[vertexStart + i].mJoint0 = glm::vec4(*reinterpret_cast<glm::u8vec4*>(
+                      &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s])));
+                }
+                break;
               }
-              break;
-            }
-            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
-              size_t s = v.byteStride == 0 ? sizeof(glm::u16vec4) : v.byteStride;
-              for (size_t i(0); i < vertexCount; ++i) {
-                vertexBuffer[vertexStart + i].mJoint0 = glm::vec4(*reinterpret_cast<glm::u16vec4*>(
-                    &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s])));
+              case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
+                size_t s = v.byteStride == 0 ? sizeof(glm::u16vec4) : v.byteStride;
+                for (size_t i(0); i < vertexCount; ++i) {
+                  vertexBuffer[vertexStart + i].mJoint0 =
+                      glm::vec4(*reinterpret_cast<glm::u16vec4*>(
+                          &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s])));
+                }
+                break;
               }
-              break;
-            }
-            default:
-              throw std::runtime_error(
-                  "Failed to load GLTF model: Unsupported component type for joints!");
+              default:
+                throw std::runtime_error(
+                    "Failed to load GLTF model: Unsupported component type for joints!");
             }
           }
 
@@ -513,37 +514,37 @@ Model::Model(std::string const& name, DeviceConstPtr device, std::string const& 
             auto const& v = model.bufferViews[a.bufferView];
 
             switch (a.componentType) {
-            case TINYGLTF_COMPONENT_TYPE_FLOAT: {
-              size_t s = v.byteStride == 0 ? sizeof(glm::vec4) : v.byteStride;
-              for (size_t i(0); i < vertexCount; ++i) {
-                vertexBuffer[vertexStart + i].mWeight0 = *reinterpret_cast<glm::vec4*>(
-                    &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]));
+              case TINYGLTF_COMPONENT_TYPE_FLOAT: {
+                size_t s = v.byteStride == 0 ? sizeof(glm::vec4) : v.byteStride;
+                for (size_t i(0); i < vertexCount; ++i) {
+                  vertexBuffer[vertexStart + i].mWeight0 = *reinterpret_cast<glm::vec4*>(
+                      &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]));
+                }
+                break;
               }
-              break;
-            }
-            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
-              size_t s = v.byteStride == 0 ? sizeof(glm::u8vec4) : v.byteStride;
-              for (size_t i(0); i < vertexCount; ++i) {
-                vertexBuffer[vertexStart + i].mWeight0 =
-                    glm::vec4(*reinterpret_cast<glm::u8vec4*>(
-                        &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]))) /
-                    255.f;
+              case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
+                size_t s = v.byteStride == 0 ? sizeof(glm::u8vec4) : v.byteStride;
+                for (size_t i(0); i < vertexCount; ++i) {
+                  vertexBuffer[vertexStart + i].mWeight0 =
+                      glm::vec4(*reinterpret_cast<glm::u8vec4*>(
+                          &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]))) /
+                      255.f;
+                }
+                break;
               }
-              break;
-            }
-            case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
-              size_t s = v.byteStride == 0 ? sizeof(glm::u16vec4) : v.byteStride;
-              for (size_t i(0); i < vertexCount; ++i) {
-                vertexBuffer[vertexStart + i].mWeight0 =
-                    glm::vec4(*reinterpret_cast<glm::u16vec4*>(
-                        &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]))) /
-                    65535.f;
+              case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
+                size_t s = v.byteStride == 0 ? sizeof(glm::u16vec4) : v.byteStride;
+                for (size_t i(0); i < vertexCount; ++i) {
+                  vertexBuffer[vertexStart + i].mWeight0 =
+                      glm::vec4(*reinterpret_cast<glm::u16vec4*>(
+                          &(model.buffers[v.buffer].data[a.byteOffset + v.byteOffset + i * s]))) /
+                      65535.f;
+                }
+                break;
               }
-              break;
-            }
-            default:
-              throw std::runtime_error(
-                  "Failed to load GLTF model: Unsupported component type for weights!");
+              default:
+                throw std::runtime_error(
+                    "Failed to load GLTF model: Unsupported component type for weights!");
             }
 
             // normalize weights - is this the correct way of handling cases where the sum of the
@@ -579,32 +580,32 @@ Model::Model(std::string const& name, DeviceConstPtr device, std::string const& 
           primitve.mIndexCount  = static_cast<uint32_t>(a.count);
 
           switch (a.componentType) {
-          case TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT: {
-            auto data = reinterpret_cast<const uint32_t*>(
-                &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
-            for (uint32_t i = 0; i < primitve.mIndexCount; ++i) {
-              indexBuffer.push_back(data[i] + vertexStart);
+            case TINYGLTF_PARAMETER_TYPE_UNSIGNED_INT: {
+              auto data = reinterpret_cast<const uint32_t*>(
+                  &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+              for (uint32_t i = 0; i < primitve.mIndexCount; ++i) {
+                indexBuffer.push_back(data[i] + vertexStart);
+              }
+              break;
             }
-            break;
-          }
-          case TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT: {
-            auto data = reinterpret_cast<const uint16_t*>(
-                &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
-            for (uint32_t i = 0; i < primitve.mIndexCount; ++i) {
-              indexBuffer.push_back(data[i] + vertexStart);
+            case TINYGLTF_PARAMETER_TYPE_UNSIGNED_SHORT: {
+              auto data = reinterpret_cast<const uint16_t*>(
+                  &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+              for (uint32_t i = 0; i < primitve.mIndexCount; ++i) {
+                indexBuffer.push_back(data[i] + vertexStart);
+              }
+              break;
             }
-            break;
-          }
-          case TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE: {
-            auto data = reinterpret_cast<const uint8_t*>(
-                &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
-            for (uint32_t i = 0; i < primitve.mIndexCount; ++i) {
-              indexBuffer.push_back(data[i] + vertexStart);
+            case TINYGLTF_PARAMETER_TYPE_UNSIGNED_BYTE: {
+              auto data = reinterpret_cast<const uint8_t*>(
+                  &model.buffers[v.buffer].data[a.byteOffset + v.byteOffset]);
+              for (uint32_t i = 0; i < primitve.mIndexCount; ++i) {
+                indexBuffer.push_back(data[i] + vertexStart);
+              }
+              break;
             }
-            break;
-          }
-          default:
-            throw std::runtime_error("Failed to load GLTF model: Unsupported index type!");
+            default:
+              throw std::runtime_error("Failed to load GLTF model: Unsupported index type!");
           }
         }
 

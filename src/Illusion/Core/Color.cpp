@@ -146,36 +146,36 @@ void Color::setHsv(float hue, float saturation, float value) {
   float f = hue - i;
 
   switch (i) {
-  case 0:
-    mVal.r = value;
-    mVal.g = value * (1.0f - saturation * (1.0f - f));
-    mVal.b = value * (1.0f - saturation);
-    break;
-  case 1:
-    mVal.r = value * (1.0f - saturation * f);
-    mVal.g = value;
-    mVal.b = value * (1.0f - saturation);
-    break;
-  case 2:
-    mVal.r = value * (1.0f - saturation);
-    mVal.g = value;
-    mVal.b = value * (1.0f - saturation * (1.0f - f));
-    break;
-  case 3:
-    mVal.r = value * (1.0f - saturation);
-    mVal.g = value * (1.0f - saturation * f);
-    mVal.b = value;
-    break;
-  case 4:
-    mVal.r = value * (1.0f - saturation * (1.0f - f));
-    mVal.g = value * (1.0f - saturation);
-    mVal.b = value;
-    break;
-  default:
-    mVal.r = value;
-    mVal.g = value * (1.0f - saturation);
-    mVal.b = value * (1.0f - saturation * f);
-    break;
+    case 0:
+      mVal.r = value;
+      mVal.g = value * (1.0f - saturation * (1.0f - f));
+      mVal.b = value * (1.0f - saturation);
+      break;
+    case 1:
+      mVal.r = value * (1.0f - saturation * f);
+      mVal.g = value;
+      mVal.b = value * (1.0f - saturation);
+      break;
+    case 2:
+      mVal.r = value * (1.0f - saturation);
+      mVal.g = value;
+      mVal.b = value * (1.0f - saturation * (1.0f - f));
+      break;
+    case 3:
+      mVal.r = value * (1.0f - saturation);
+      mVal.g = value * (1.0f - saturation * f);
+      mVal.b = value;
+      break;
+    case 4:
+      mVal.r = value * (1.0f - saturation * (1.0f - f));
+      mVal.g = value * (1.0f - saturation);
+      mVal.b = value;
+      break;
+    default:
+      mVal.r = value;
+      mVal.g = value * (1.0f - saturation);
+      mVal.b = value * (1.0f - saturation * f);
+      break;
   }
 }
 

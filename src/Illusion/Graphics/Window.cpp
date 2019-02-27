@@ -33,24 +33,24 @@ Window::Window(std::string const& name, InstanceConstPtr instance, DeviceConstPt
     }
 
     switch (cursor) {
-    case Cursor::eCross:
-      mCursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
-      break;
-    case Cursor::eHand:
-      mCursor = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
-      break;
-    case Cursor::eIBeam:
-      mCursor = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
-      break;
-    case Cursor::eVResize:
-      mCursor = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
-      break;
-    case Cursor::eHResize:
-      mCursor = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
-      break;
-    default:
-      mCursor = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
-      break;
+      case Cursor::eCross:
+        mCursor = glfwCreateStandardCursor(GLFW_CROSSHAIR_CURSOR);
+        break;
+      case Cursor::eHand:
+        mCursor = glfwCreateStandardCursor(GLFW_HAND_CURSOR);
+        break;
+      case Cursor::eIBeam:
+        mCursor = glfwCreateStandardCursor(GLFW_IBEAM_CURSOR);
+        break;
+      case Cursor::eVResize:
+        mCursor = glfwCreateStandardCursor(GLFW_VRESIZE_CURSOR);
+        break;
+      case Cursor::eHResize:
+        mCursor = glfwCreateStandardCursor(GLFW_HRESIZE_CURSOR);
+        break;
+      default:
+        mCursor = glfwCreateStandardCursor(GLFW_ARROW_CURSOR);
+        break;
     }
 
     if (mWindow != nullptr) {

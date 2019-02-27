@@ -4,6 +4,7 @@ AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
 AlignOperands: true
 AllowShortBlocksOnASingleLine: true
+IndentCaseLabels: true
 AllowShortFunctionsOnASingleLine: false
 AlwaysBreakAfterReturnType: None
 AlwaysBreakTemplateDeclarations: true

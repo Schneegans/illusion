@@ -57,21 +57,21 @@ MouseEvent::MouseEvent(int32_t button, bool press) {
 
 std::ostream& operator<<(std::ostream& os, MouseEvent const& e) {
   switch (e.mType) {
-  case MouseEvent::Type::eMove:
-    os << "move " << e.mX << " " << e.mY;
-    return os;
-  case MouseEvent::Type::eScroll:
-    os << "scroll " << e.mX << " " << e.mY;
-    return os;
-  case MouseEvent::Type::ePress:
-    os << "press " << e.mButton;
-    return os;
-  case MouseEvent::Type::eRelease:
-    os << "release " << e.mButton;
-    return os;
-  case MouseEvent::Type::eLeave:
-    os << "leave";
-    return os;
+    case MouseEvent::Type::eMove:
+      os << "move " << e.mX << " " << e.mY;
+      return os;
+    case MouseEvent::Type::eScroll:
+      os << "scroll " << e.mX << " " << e.mY;
+      return os;
+    case MouseEvent::Type::ePress:
+      os << "press " << e.mButton;
+      return os;
+    case MouseEvent::Type::eRelease:
+      os << "release " << e.mButton;
+      return os;
+    case MouseEvent::Type::eLeave:
+      os << "leave";
+      return os;
   }
   return os;
 }
