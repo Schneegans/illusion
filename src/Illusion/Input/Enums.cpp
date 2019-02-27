@@ -211,79 +211,41 @@ std::ostream& operator<<(std::ostream& os, JoystickButtonId button) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::ostream& operator<<(std::ostream& os, Xbox360ControllerButton button) {
+  // clang-format off
   switch (button) {
-    case Xbox360ControllerButton::eXboxA:
-      os << "XboxA";
-      return os;
-    case Xbox360ControllerButton::eXboxB:
-      os << "XboxB";
-      return os;
-    case Xbox360ControllerButton::eXboxX:
-      os << "XboxX";
-      return os;
-    case Xbox360ControllerButton::eXboxY:
-      os << "XboxY";
-      return os;
-    case Xbox360ControllerButton::eXboxBumperLeft:
-      os << "XboxBumperLeft";
-      return os;
-    case Xbox360ControllerButton::eXboxBumperRight:
-      os << "XboxBumperRight";
-      return os;
-    case Xbox360ControllerButton::eXboxBack:
-      os << "XboxBack";
-      return os;
-    case Xbox360ControllerButton::eXboxStart:
-      os << "XboxStart";
-      return os;
-    case Xbox360ControllerButton::eXboxXbox:
-      os << "XboxXbox";
-      return os;
-    case Xbox360ControllerButton::eXboxLeftStickButton:
-      os << "XboxLeftStickButton";
-      return os;
-    case Xbox360ControllerButton::eXboxRightStickButton:
-      os << "XboxRightStickButton";
-      return os;
-    case Xbox360ControllerButton::eXboxPadUp:
-      os << "XboxPadUp";
-      return os;
-    case Xbox360ControllerButton::eXboxPadRight:
-      os << "XboxPadRight";
-      return os;
-    case Xbox360ControllerButton::eXboxPadDown:
-      os << "XboxPadDown";
-      return os;
-    case Xbox360ControllerButton::eXboxPadLeft:
-      os << "XboxPadLeft";
-      return os;
+    case Xbox360ControllerButton::eXboxA:                os << "XboxA";                return os;
+    case Xbox360ControllerButton::eXboxB:                os << "XboxB";                return os;
+    case Xbox360ControllerButton::eXboxX:                os << "XboxX";                return os;
+    case Xbox360ControllerButton::eXboxY:                os << "XboxY";                return os;
+    case Xbox360ControllerButton::eXboxBumperLeft:       os << "XboxBumperLeft";       return os;
+    case Xbox360ControllerButton::eXboxBumperRight:      os << "XboxBumperRight";      return os;
+    case Xbox360ControllerButton::eXboxBack:             os << "XboxBack";             return os;
+    case Xbox360ControllerButton::eXboxStart:            os << "XboxStart";            return os;
+    case Xbox360ControllerButton::eXboxXbox:             os << "XboxXbox";             return os;
+    case Xbox360ControllerButton::eXboxLeftStickButton:  os << "XboxLeftStickButton";  return os;
+    case Xbox360ControllerButton::eXboxRightStickButton: os << "XboxRightStickButton"; return os;
+    case Xbox360ControllerButton::eXboxPadUp:            os << "XboxPadUp";            return os;
+    case Xbox360ControllerButton::eXboxPadRight:         os << "XboxPadRight";         return os;
+    case Xbox360ControllerButton::eXboxPadDown:          os << "XboxPadDown";          return os;
+    case Xbox360ControllerButton::eXboxPadLeft:          os << "XboxPadLeft";          return os;
   }
+  // clang-format on
   return os;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::ostream& operator<<(std::ostream& os, Xbox360ControllerAxis axis) {
+  // clang-format off
   switch (axis) {
-    case Xbox360ControllerAxis::eXboxLeftStickX:
-      os << "XboxLeftStickX";
-      return os;
-    case Xbox360ControllerAxis::eXboxLeftStickY:
-      os << "XboxLeftStickY";
-      return os;
-    case Xbox360ControllerAxis::eXboxLeftTrigger:
-      os << "XboxLeftTrigger";
-      return os;
-    case Xbox360ControllerAxis::eXboxRightStickX:
-      os << "XboxRightStickX";
-      return os;
-    case Xbox360ControllerAxis::eXboxRightStickY:
-      os << "XboxRightStickY";
-      return os;
-    case Xbox360ControllerAxis::eXboxRightTrigger:
-      os << "XboxRightTrigger";
-      return os;
+    case Xbox360ControllerAxis::eXboxLeftStickX:       os << "XboxLeftStickX";       return os;
+    case Xbox360ControllerAxis::eXboxLeftStickY:       os << "XboxLeftStickY";       return os;
+    case Xbox360ControllerAxis::eXboxLeftTrigger:      os << "XboxLeftTrigger";      return os;
+    case Xbox360ControllerAxis::eXboxRightStickX:      os << "XboxRightStickX";      return os;
+    case Xbox360ControllerAxis::eXboxRightStickY:      os << "XboxRightStickY";      return os;
+    case Xbox360ControllerAxis::eXboxRightTrigger:     os << "XboxRightTrigger";     return os;
   }
+  // clang-format on
   return os;
 }
 

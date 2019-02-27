@@ -70,14 +70,13 @@ vk::SamplerMipmapMode convertSamplerMipmapMode(int value) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 vk::SamplerAddressMode convertSamplerAddressMode(int value) {
+  // clang-format off
   switch (value) {
-    case TINYGLTF_TEXTURE_WRAP_REPEAT:
-      return vk::SamplerAddressMode::eRepeat;
-    case TINYGLTF_TEXTURE_WRAP_CLAMP_TO_EDGE:
-      return vk::SamplerAddressMode::eClampToEdge;
-    case TINYGLTF_TEXTURE_WRAP_MIRRORED_REPEAT:
-      return vk::SamplerAddressMode::eMirroredRepeat;
+    case TINYGLTF_TEXTURE_WRAP_REPEAT:          return vk::SamplerAddressMode::eRepeat;
+    case TINYGLTF_TEXTURE_WRAP_CLAMP_TO_EDGE:   return vk::SamplerAddressMode::eClampToEdge;
+    case TINYGLTF_TEXTURE_WRAP_MIRRORED_REPEAT: return vk::SamplerAddressMode::eMirroredRepeat;
   }
+  // clang-format on
 
   throw std::runtime_error("Invalid sampler address mode " + std::to_string(value));
 }
@@ -85,18 +84,15 @@ vk::SamplerAddressMode convertSamplerAddressMode(int value) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 vk::PrimitiveTopology convertPrimitiveTopology(int value) {
+  // clang-format off
   switch (value) {
-    case TINYGLTF_MODE_POINTS:
-      return vk::PrimitiveTopology::ePointList;
-    case TINYGLTF_MODE_LINE:
-      return vk::PrimitiveTopology::eLineStrip;
-    case TINYGLTF_MODE_TRIANGLES:
-      return vk::PrimitiveTopology::eTriangleList;
-    case TINYGLTF_MODE_TRIANGLE_STRIP:
-      return vk::PrimitiveTopology::eTriangleStrip;
-    case TINYGLTF_MODE_TRIANGLE_FAN:
-      return vk::PrimitiveTopology::eTriangleFan;
+    case TINYGLTF_MODE_POINTS:         return vk::PrimitiveTopology::ePointList;
+    case TINYGLTF_MODE_LINE:           return vk::PrimitiveTopology::eLineStrip;
+    case TINYGLTF_MODE_TRIANGLES:      return vk::PrimitiveTopology::eTriangleList;
+    case TINYGLTF_MODE_TRIANGLE_STRIP: return vk::PrimitiveTopology::eTriangleStrip;
+    case TINYGLTF_MODE_TRIANGLE_FAN:   return vk::PrimitiveTopology::eTriangleFan;
   }
+  // clang-format on
 
   throw std::runtime_error("Invalid primitive topology " + std::to_string(value));
 }
