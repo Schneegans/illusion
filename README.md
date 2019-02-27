@@ -6,15 +6,15 @@
 For now, Illusion is a convenience layer on top of Vulkan, similar in spirit to [V-EZ](https://github.com/GPUOpen-LibrariesAndSDKs/V-EZ). However, I plan to add more features as I progress in learning.
 Since everybody loves badges, here are some describing Illusion:
 
+[![gitter](https://badges.gitter.im/simmesimme/illusion.svg)](https://gitter.im/illusion-engine/community)
 [![Build Status](https://travis-ci.org/Simmesimme/illusion.svg?branch=develop)](https://travis-ci.org/Simmesimme/illusion/branches)
 [![Coverage Status](https://coveralls.io/repos/github/Simmesimme/illusion/badge.svg?branch=develop)](https://coveralls.io/github/Simmesimme/illusion?branch=develop)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-![c++17](https://img.shields.io/badge/standard-C++17-orange.svg)
-[![source loc](https://img.shields.io/badge/source_loc-10.6k-green.svg)](cloc.sh)
-[![example loc](https://img.shields.io/badge/example_loc-1.6k-yellowgreen.svg)](cloc.sh)
-[![test loc](https://img.shields.io/badge/test_loc-0.4k-yellow.svg)](cloc.sh)
+![c++17](https://img.shields.io/badge/C++-17-orange.svg)
 [![comments](https://img.shields.io/badge/comments-2.0k-green.svg)](cloc.sh)
-[![gitter](https://badges.gitter.im/simmesimme/illusion.svg)](https://gitter.im/illusion-engine/community)
+[![source loc](https://img.shields.io/badge/src_loc-10.6k-green.svg)](cloc.sh)
+[![example loc](https://img.shields.io/badge/example_loc-1.6k-green.svg)](cloc.sh)
+[![test loc](https://img.shields.io/badge/test_loc-0.4k-yellow.svg)](cloc.sh)
 
 Illusion uses C++17 and can be build on Linux (gcc or clang), Windows (msvc) and OS X (xcode). Nearly all dependencies are included as [git submodules](externals), please refer to the section [Building Illusion](#building-illusion) in order to get started.
 
