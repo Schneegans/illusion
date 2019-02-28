@@ -94,6 +94,12 @@ void Swapchain::present(BackedImagePtr const& image,
     subResource.mipLevel       = 0;
     subResource.layerCount     = 1;
 
+    vk::ImageLayout originalLayout = image->mCurrentLayout;
+    cmd->transitionImageLayout(image, vk::ImageLayout::eTransferSrcOptimal);
+    cmd->transitionImageLayout(mImages[mCurrentImageIndex], vk::ImageLayout::ePresentSrcKHR,
+        vk::ImageLayout::eTransferDstOptimal, {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+    vk::ImageBlit info;
+
     // If source image is multi-sampled, resolve it.
     if (image->mImageInfo.samples != vk::SampleCountFlagBits::e1) {
       vk::ImageResolve region;
@@ -110,18 +116,14 @@ void Swapchain::present(BackedImagePtr const& image,
     }
     // Else do an image blit.
     else {
-      vk::ImageLayout originalLayout = image->mCurrentLayout;
-      cmd->transitionImageLayout(image, vk::ImageLayout::eTransferSrcOptimal);
-      cmd->transitionImageLayout(mImages[mCurrentImageIndex], vk::ImageLayout::ePresentSrcKHR,
-          vk::ImageLayout::eTransferDstOptimal, {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
-      vk::ImageBlit info;
       cmd->blitImage(*image->mImage, mImages[mCurrentImageIndex],
           {image->mImageInfo.extent.width, image->mImageInfo.extent.height}, mExtent,
           vk::Filter::eNearest);
-      cmd->transitionImageLayout(image, originalLayout);
-      cmd->transitionImageLayout(mImages[mCurrentImageIndex], vk::ImageLayout::eTransferDstOptimal,
-          vk::ImageLayout::ePresentSrcKHR, {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
     }
+
+    cmd->transitionImageLayout(image, originalLayout);
+    cmd->transitionImageLayout(mImages[mCurrentImageIndex], vk::ImageLayout::eTransferDstOptimal,
+        vk::ImageLayout::ePresentSrcKHR, {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
 
     cmd->end();
 
