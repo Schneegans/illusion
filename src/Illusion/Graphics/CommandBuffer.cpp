@@ -242,14 +242,14 @@ ShaderPtr const& CommandBuffer::getShader() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::bindIndexBuffer(
-    BackedBufferPtr const& buffer, vk::DeviceSize offset, vk::IndexType indexType) const {
+    BackedBufferConstPtr const& buffer, vk::DeviceSize offset, vk::IndexType indexType) const {
   mVkCmd->bindIndexBuffer(*buffer->mBuffer, offset, indexType);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void CommandBuffer::bindVertexBuffers(uint32_t                     firstBinding,
-    std::vector<std::pair<BackedBufferPtr, vk::DeviceSize>> const& buffersAndOffsets) const {
+void CommandBuffer::bindVertexBuffers(uint32_t                          firstBinding,
+    std::vector<std::pair<BackedBufferConstPtr, vk::DeviceSize>> const& buffersAndOffsets) const {
 
   std::vector<vk::Buffer>     buffers;
   std::vector<vk::DeviceSize> offsets;
@@ -265,7 +265,7 @@ void CommandBuffer::bindVertexBuffers(uint32_t                     firstBinding,
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void CommandBuffer::bindVertexBuffers(
-    uint32_t firstBinding, std::vector<BackedBufferPtr> const& buffs) const {
+    uint32_t firstBinding, std::vector<BackedBufferConstPtr> const& buffs) const {
 
   std::vector<vk::Buffer>     buffers;
   std::vector<vk::DeviceSize> offsets;

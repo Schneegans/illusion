@@ -111,16 +111,17 @@ class CommandBuffer : public Core::StaticCreate<CommandBuffer>, public Core::Nam
   // Binds the given BackedBuffer as index buffer. This is directly recorded to the internal
   // vk::CommandBuffer.
   void bindIndexBuffer(
-      BackedBufferPtr const& buffer, vk::DeviceSize offset, vk::IndexType indexType) const;
+      BackedBufferConstPtr const& buffer, vk::DeviceSize offset, vk::IndexType indexType) const;
 
   // Binds the given BackedBuffer as vertex buffer. Compared to the method below, this method allows
   // for additional offsets. This is directly recorded to the internal vk::CommandBuffer.
-  void bindVertexBuffers(uint32_t                                    firstBinding,
-      std::vector<std::pair<BackedBufferPtr, vk::DeviceSize>> const& buffersAndOffsets) const;
+  void bindVertexBuffers(uint32_t                                         firstBinding,
+      std::vector<std::pair<BackedBufferConstPtr, vk::DeviceSize>> const& buffersAndOffsets) const;
 
   // Binds the given BackedBuffer as vertex buffer. This is directly recorded to the internal
   // vk::CommandBuffer.
-  void bindVertexBuffers(uint32_t firstBinding, std::vector<BackedBufferPtr> const& buffs) const;
+  void bindVertexBuffers(
+      uint32_t firstBinding, std::vector<BackedBufferConstPtr> const& buffs) const;
 
   // Sets the given data (size in bytes) as push constant data. You have to make sure that there is
   // a shader program currently bound. This will throw a std::runtime_error when there is no active
