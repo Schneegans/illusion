@@ -19,6 +19,7 @@ set(ENABLED_EXAMPLES
   "TexturedCube"
   "TexturedQuad"
   "Triangle"
+  "Voronoi"
 )
 
 foreach(EXAMPLE ${ENABLED_EXAMPLES})
