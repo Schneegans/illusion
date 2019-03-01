@@ -50,6 +50,10 @@ class Color {
   void v(float value);
   void a(float alpha);
 
+  // Sets all values in one go.
+  void setRGB(float red, float green, float blue, float alpha = 1.f);
+  void setHSV(float hue, float saturation, float value, float alpha = 1.f);
+
   // Returns an inverted copy of the Color.
   Color inverted() const;
 
@@ -69,8 +73,6 @@ class Color {
   float& operator[](unsigned rhs);
 
  private:
-  void setHsv(float hue, float saturation, float value);
-
   glm::vec4 mVal = glm::vec4(0, 0, 0, 1);
 };
 
