@@ -57,8 +57,8 @@ class Color {
   // Returns an inverted copy of the Color.
   Color inverted() const;
 
-  // Returns an inverted copy of the Color.
-  Color brightened() const;
+  // Returns complementary of the Color.
+  Color complementary() const;
 
   // Returns only red, green and blue as a glm::vec3.
   glm::vec3 vec3() const;
@@ -69,8 +69,7 @@ class Color {
   std::string htmlRgba() const;
   void        htmlRgba(std::string const& val);
 
-  float  operator[](unsigned rhs) const;
-  float& operator[](unsigned rhs);
+  float operator[](unsigned rhs) const;
 
  private:
   glm::vec4 mVal = glm::vec4(0, 0, 0, 1);

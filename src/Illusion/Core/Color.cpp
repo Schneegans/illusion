@@ -193,27 +193,18 @@ void Color::setHSV(float hue, float saturation, float value, float alpha) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Color Color::inverted() const {
-
   Color inverted(*this);
   inverted.h(inverted.h() + 180.0f);
-  if (v() < 0.5f) {
-    inverted.v(1.0f - inverted.v());
-  }
+  inverted.v(1.0f - inverted.v());
   return inverted;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Color Color::brightened() const {
-
-  Color brightened(*this);
-  if (brightened.v() < 0.5f) {
-    brightened.v(0.5f);
-  }
-  if (brightened.s() < 0.5f) {
-    brightened.s(0.5f);
-  }
-  return brightened;
+Color Color::complementary() const {
+  Color inverted(*this);
+  inverted.h(inverted.h() + 180.0f);
+  return inverted;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -268,12 +259,6 @@ void Color::htmlRgba(std::string const& val) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 float Color::operator[](unsigned rhs) const {
-  return mVal[rhs];
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-float& Color::operator[](unsigned rhs) {
   return mVal[rhs];
 }
 
