@@ -14,12 +14,20 @@ namespace Illusion::Core {
 
 TEST_CASE("Illusion::Core::Color") {
 
-  SUBCASE("Checking from-string constructor") {
-    Color color("rgba(255, 127, 0, 0.2)");
-    CHECK(color.r() == 1.f);
-    CHECK(color.g() == 127.f / 255.f);
-    CHECK(color.b() == 0.f);
-    CHECK(color.a() == 0.2f);
+  SUBCASE("Checking html conversions") {
+    Color color1("rgba(255, 127, 0, 0.2)");
+    CHECK(color1.r() == 1.f);
+    CHECK(color1.g() == 127.f / 255.f);
+    CHECK(color1.b() == 0.f);
+    CHECK(color1.a() == 0.2f);
+    CHECK(color1.htmlRgba() == "rgba(255, 127, 0, 0.2)");
+
+    Color color2("rgba(78, 127, 42)");
+    CHECK(color2.r() == 78.f / 255.f);
+    CHECK(color2.g() == 127.f / 255.f);
+    CHECK(color2.b() == 42.f / 255.f);
+    CHECK(color2.a() == 1.f);
+    CHECK(color2.htmlRgba() == "rgba(78, 127, 42, 1)");
   }
 
   SUBCASE("Checking from-value constructor") {
@@ -101,6 +109,39 @@ TEST_CASE("Illusion::Core::Color") {
     CHECK(black.g() == 0.f);
     CHECK(black.b() == 0.f);
     CHECK(black.a() == 1.f);
+  }
+
+  SUBCASE("Checking accessors") {
+    Color color(1.f, 0.5f, 0.3f, 0.7f);
+    CHECK(color[0] == 1.f);
+    CHECK(color[1] == 0.5f);
+    CHECK(color[2] == 0.3f);
+    CHECK(color[3] == 0.7f);
+    CHECK(color.vec4() == glm::vec4(1.f, 0.5f, 0.3f, 0.7f));
+    CHECK(color.vec3() == glm::vec3(1.f, 0.5f, 0.3f));
+  }
+
+  SUBCASE("Checking color operations") {
+    Color lime;
+    lime.setHSV(120.f, 0.5f, 0.8f);
+
+    auto inverted = lime.inverted();
+    CHECK(inverted.h() == doctest::Approx(300.f));
+    CHECK(inverted.s() == doctest::Approx(0.5f));
+    CHECK(inverted.v() == doctest::Approx(0.2f));
+    CHECK(inverted.inverted() == lime);
+
+    auto complementary = lime.complementary();
+    CHECK(complementary.h() == doctest::Approx(300.f));
+    CHECK(complementary.s() == doctest::Approx(0.5f));
+    CHECK(complementary.v() == doctest::Approx(0.8f));
+    CHECK(complementary.complementary() == lime);
+
+    Color white(1.f, 1.f, 1.f);
+    Color black(0.f, 0.f, 0.f);
+
+    CHECK(white.inverted() == black);
+    CHECK(black.inverted() == white);
   }
 }
 
