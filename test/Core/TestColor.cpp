@@ -13,13 +13,94 @@
 namespace Illusion::Core {
 
 TEST_CASE("Illusion::Core::Color") {
-  Color color("rgba(255, 127, 0, 0.2)");
 
   SUBCASE("Checking from-string constructor") {
+    Color color("rgba(255, 127, 0, 0.2)");
     CHECK(color.r() == 1.f);
     CHECK(color.g() == 127.f / 255.f);
     CHECK(color.b() == 0.f);
     CHECK(color.a() == 0.2f);
+  }
+
+  SUBCASE("Checking from-value constructor") {
+    Color color(1.f, 0.5f, 0.3f, 0.7f);
+    CHECK(color.r() == 1.f);
+    CHECK(color.g() == 0.5f);
+    CHECK(color.b() == 0.3f);
+    CHECK(color.a() == 0.7f);
+  }
+
+  SUBCASE("Checking RGB setters") {
+    Color color;
+    color.setRGB(1.f, 0.5f, 0.3f, 0.7f);
+    CHECK(color.r() == 1.f);
+    CHECK(color.g() == 0.5f);
+    CHECK(color.b() == 0.3f);
+    CHECK(color.a() == 0.7f);
+  }
+
+  SUBCASE("Checking HSV getters") {
+    Color red(1.f, 0.f, 0.f);
+    CHECK(red.h() == 0.f);
+    CHECK(red.s() == 1.f);
+    CHECK(red.v() == 1.f);
+
+    Color lime(0.5f, 1.0f, 0.5f);
+    CHECK(lime.h() == 120.f);
+    CHECK(lime.s() == 0.5f);
+    CHECK(lime.v() == 1.f);
+
+    Color purple(0.6f, 0.25f, 0.65f);
+    CHECK(purple.h() == doctest::Approx(292.5f));
+    CHECK(purple.s() == doctest::Approx(0.4f / 0.65f));
+    CHECK(purple.v() == doctest::Approx(0.65f));
+
+    Color white(1.f, 1.f, 1.f);
+    CHECK(white.h() == 0.f);
+    CHECK(white.s() == 0.f);
+    CHECK(white.v() == 1.f);
+
+    Color black(0.f, 0.f, 0.f);
+    CHECK(black.h() == 0.f);
+    CHECK(black.s() == 0.f);
+    CHECK(black.v() == 0.f);
+  }
+
+  SUBCASE("Checking HSV setters") {
+    Color red;
+    red.setHSV(0.f, 1.f, 1.f);
+    CHECK(red.r() == 1.f);
+    CHECK(red.g() == 0.f);
+    CHECK(red.b() == 0.f);
+    CHECK(red.a() == 1.f);
+
+    Color lime;
+    lime.setHSV(120.f, 0.5f, 1.f);
+    CHECK(lime.r() == 0.5f);
+    CHECK(lime.g() == 1.0f);
+    CHECK(lime.b() == 0.5f);
+    CHECK(lime.a() == 1.f);
+
+    Color purple;
+    purple.setHSV(292.5f, 0.4f / 0.65f, 0.65f);
+    CHECK(purple.r() == doctest::Approx(0.6f));
+    CHECK(purple.g() == doctest::Approx(0.25f));
+    CHECK(purple.b() == doctest::Approx(0.65f));
+    CHECK(purple.a() == 1.f);
+
+    Color white;
+    white.setHSV(0.f, 0.f, 1.f);
+    CHECK(white.r() == 1.f);
+    CHECK(white.g() == 1.f);
+    CHECK(white.b() == 1.f);
+    CHECK(white.a() == 1.f);
+
+    Color black;
+    black.setHSV(0.f, 0.f, 0.f);
+    CHECK(black.r() == 0.f);
+    CHECK(black.g() == 0.f);
+    CHECK(black.b() == 0.f);
+    CHECK(black.a() == 1.f);
   }
 }
 
