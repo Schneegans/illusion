@@ -18,16 +18,19 @@ namespace Illusion::Core {
 class Timer {
 
  public:
-  explicit Timer(bool autoStart = true);
+  // The timer will start automatically, that means when getElapsed() is called for the first time,
+  // it will report th time which passed since the construction of the timer.
+  explicit Timer();
 
-  void   start();
-  double reset();
-
-  // In seconds.
+  // Returns the time which passed since the construction of the timer or since the last call to
+  // restart(). In seconds.
   double getElapsed() const;
 
-  bool isRunning() const;
+  // Returns the time which passed since the construction of the timer or since the last call to
+  // restart(). In seconds.
+  double restart();
 
+  // Returns a timestamp as reported by std::chrono in seconds.
   static double getNow();
 
  private:

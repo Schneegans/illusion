@@ -12,18 +12,8 @@ namespace Illusion::Core {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-FPSCounter::FPSCounter(unsigned t, bool autoStart)
+FPSCounter::FPSCounter(unsigned t)
     : mDelay(t) {
-
-  if (autoStart) {
-    start();
-  }
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
-void FPSCounter::start() {
-  mTimer.start();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -31,7 +21,7 @@ void FPSCounter::start() {
 void FPSCounter::step() {
   if (++mFrameCount == mDelay) {
     pFPS = 1.f * mDelay / float(mTimer.getElapsed());
-    mTimer.reset();
+    mTimer.restart();
     mFrameCount = 0;
   }
 }

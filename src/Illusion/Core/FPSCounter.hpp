@@ -24,7 +24,7 @@ class FPSCounter {
   Float pFPS = 0.f;
 
   // Every t frames the Fps property is updated.
-  explicit FPSCounter(unsigned t = 100, bool autoStart = true);
+  explicit FPSCounter(unsigned t = 100);
 
   // Call this after creation of this counter.
   void start();
