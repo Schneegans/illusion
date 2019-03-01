@@ -9,47 +9,86 @@
 #include <Illusion/Core/File.hpp>
 
 #include <doctest.h>
+#include <sstream>
 
 namespace Illusion::Core {
 
 TEST_CASE("Illusion::Core::File") {
-  File testFile("invalid.txt");
+  File testFile("/invalid.txt");
 
-  // At first, this file should not exist.
-  CHECK(testFile.isValid() == false);
+  SUBCASE("Read invalid file") {
+    // Redirect cout to a ostringstream as we want to generate a warning with the next call.
+    std::ostringstream oss;
+    auto               coutBuffer = std::cout.rdbuf();
+    std::cout.rdbuf(oss.rdbuf());
 
-  // We should have a valid file name nevertheless.
-  CHECK(testFile.getFileName() == "invalid.txt");
+    // Then we will try reading a non-existent file.
+    auto read = testFile.getContent<std::string>();
 
-  // Change the file name.
-  testFile.setFileName("testFile.txt");
-  CHECK(testFile.getFileName() == "testFile.txt");
+    // Restore normal cout behavior.
+    std::cout.rdbuf(coutBuffer);
 
-  // We should have a last write time of 0 for invalid files.
-  CHECK(testFile.getLastWriteTime() == 0);
+    // Check that we actually got a warning.
+    CHECK(oss);
+    CHECK(oss.str() != "");
+    CHECK(read == "");
+  }
 
-  // Now we write something.
-  std::string write = "Foo Bar";
-  testFile.save(write);
+  SUBCASE("Write invalid file") {
+    // Redirect cout to a ostringstream as we want to generate a warning with the next call.
+    std::ostringstream oss;
+    auto               coutBuffer = std::cout.rdbuf();
+    std::cout.rdbuf(oss.rdbuf());
 
-  // Then the file should exist.
-  CHECK(testFile.isValid() == true);
+    // Then we will try writing to the file.
+    std::string data("42");
+    testFile.save(data);
 
-  // And we should be able to read it again.
-  auto read = testFile.getContent<std::string>();
-  CHECK(write == read);
+    // Restore normal cout behavior.
+    std::cout.rdbuf(coutBuffer);
 
-  // And the last write time should be != 0.
-  CHECK(testFile.getLastWriteTime() != 0);
+    // Check that we actually got a warning.
+    CHECK(oss);
+    CHECK(oss.str() != "");
+  }
 
-  // However, changedOnDisc should return false as we were writing it for the last time.
-  CHECK(!testFile.changedOnDisc());
+  SUBCASE("Read and write files") {
+    // At first, this file should not exist.
+    CHECK(testFile.isValid() == false);
 
-  // Then we remove the file again.
-  testFile.remove();
+    // We should have a valid file name nevertheless.
+    CHECK(testFile.getFileName() == "/invalid.txt");
 
-  // Which should make it invalid again.
-  CHECK(testFile.isValid() == false);
+    // Change the file name.
+    testFile.setFileName("testFile.txt");
+    CHECK(testFile.getFileName() == "testFile.txt");
+
+    // We should have a last write time of 0 for invalid files.
+    CHECK(testFile.getLastWriteTime() == 0);
+
+    // Now we write something.
+    std::string write = "Foo Bar";
+    testFile.save(write);
+
+    // Then the file should exist.
+    CHECK(testFile.isValid() == true);
+
+    // And we should be able to read it again.
+    auto read = testFile.getContent<std::string>();
+    CHECK(write == read);
+
+    // And the last write time should be != 0.
+    CHECK(testFile.getLastWriteTime() != 0);
+
+    // However, changedOnDisc should return false as we were writing it for the last time.
+    CHECK(!testFile.changedOnDisc());
+
+    // Then we remove the file again.
+    testFile.remove();
+
+    // Which should make it invalid again.
+    CHECK(testFile.isValid() == false);
+  }
 }
 
 } // namespace Illusion::Core

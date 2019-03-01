@@ -121,6 +121,15 @@ TEST_CASE("Illusion::Core::CommandLine") {
     CHECK(oBool == true);
   }
 
+  SUBCASE("Checking passing non-true or non-false argument for bools") {
+    std::vector<char*> args = {
+        const_cast<char*>("foo"), const_cast<char*>("-b"), const_cast<char*>("-i=42"), nullptr};
+    cmd.parse(args.size() - 1, args.data());
+
+    CHECK(oBool == true);
+    CHECK(oInteger == 42);
+  }
+
   SUBCASE("Checking passing false argument for bools") {
     oBool                   = true;
     std::vector<char*> args = {
