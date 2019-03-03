@@ -74,7 +74,7 @@ TEST_CASE("Illusion::Core::Color") {
     CHECK(black.v() == 0.f);
   }
 
-  SUBCASE("Checking HSV setters") {
+  SUBCASE("Checking combined HSV setter") {
     Color red;
     red.setHSV(0.f, 1.f, 1.f);
     CHECK(red.r() == 1.f);
@@ -105,6 +105,53 @@ TEST_CASE("Illusion::Core::Color") {
 
     Color black;
     black.setHSV(0.f, 0.f, 0.f);
+    CHECK(black.r() == 0.f);
+    CHECK(black.g() == 0.f);
+    CHECK(black.b() == 0.f);
+    CHECK(black.a() == 1.f);
+  }
+
+  SUBCASE("Checking individual HSV setters") {
+    Color red;
+    red.v(1.f);
+    red.s(1.f);
+    red.h(0.f);
+    CHECK(red.r() == 1.f);
+    CHECK(red.g() == 0.f);
+    CHECK(red.b() == 0.f);
+    CHECK(red.a() == 1.f);
+
+    Color lime;
+    lime.v(1.f);
+    lime.s(0.5f);
+    lime.h(120.f);
+    CHECK(lime.r() == 0.5f);
+    CHECK(lime.g() == 1.0f);
+    CHECK(lime.b() == 0.5f);
+    CHECK(lime.a() == 1.f);
+
+    Color purple;
+    purple.v(0.65f);
+    purple.s(0.4f / 0.65f);
+    purple.h(292.5f);
+    CHECK(purple.r() == doctest::Approx(0.6f));
+    CHECK(purple.g() == doctest::Approx(0.25f));
+    CHECK(purple.b() == doctest::Approx(0.65f));
+    CHECK(purple.a() == 1.f);
+
+    Color white;
+    white.v(1.f);
+    white.s(0.f);
+    white.h(0.f);
+    CHECK(white.r() == 1.f);
+    CHECK(white.g() == 1.f);
+    CHECK(white.b() == 1.f);
+    CHECK(white.a() == 1.f);
+
+    Color black;
+    black.v(0.f);
+    black.s(0.f);
+    black.h(0.f);
     CHECK(black.r() == 0.f);
     CHECK(black.g() == 0.f);
     CHECK(black.b() == 0.f);
@@ -142,6 +189,20 @@ TEST_CASE("Illusion::Core::Color") {
 
     CHECK(white.inverted() == black);
     CHECK(black.inverted() == white);
+  }
+
+  SUBCASE("Checking operators") {
+    Color white(1.f, 1.f, 1.f);
+    Color black(0.f, 0.f, 0.f);
+    Color red(1.f, 0.f, 0.f);
+    Color lime(0.5f, 1.0f, 0.5f);
+
+    CHECK(black != white);
+    CHECK(lime * 0 == black);
+    CHECK(0.5 * lime == Color(0.25f, 0.5f, 0.25f));
+    CHECK(black / 2 == black);
+    CHECK(red / 1 == red);
+    CHECK(lime / 0.5 == white);
   }
 }
 

@@ -27,7 +27,8 @@ Color::Color(std::string const& html) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 Color::Color(float r, float g, float b, float a)
-    : mVal(r, g, b, a) {
+    : mVal(glm::clamp(r, 0.f, 1.f), glm::clamp(g, 0.f, 1.f), glm::clamp(b, 0.f, 1.f),
+          glm::clamp(a, 0.f, 1.f)) {
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -52,7 +53,7 @@ float Color::b() const {
 
 float Color::h() const {
 
-  if (s() > 0.0f) {
+  if (s() > 0.f) {
     float maxi = std::max(std::max(mVal.r, mVal.g), mVal.b);
     float mini = std::min(std::min(mVal.r, mVal.g), mVal.b);
 
@@ -64,7 +65,7 @@ float Color::h() const {
     }
     return std::fmod(60.f * (4 + (mVal.r - mVal.g) / (maxi - mini)) + 360.f, 360.f);
   }
-  return 0.0f;
+  return 0.f;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -91,19 +92,19 @@ float Color::a() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Color::r(float red) {
-  mVal.r = glm::clamp(red, 0.0f, 1.0f);
+  mVal.r = glm::clamp(red, 0.f, 1.f);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Color::g(float green) {
-  mVal.g = glm::clamp(green, 0.0f, 1.0f);
+  mVal.g = glm::clamp(green, 0.f, 1.f);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Color::b(float blue) {
-  mVal.b = glm::clamp(blue, 0.0f, 1.0f);
+  mVal.b = glm::clamp(blue, 0.f, 1.f);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -115,19 +116,19 @@ void Color::h(float hue) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Color::s(float saturation) {
-  setHSV(h(), glm::clamp(saturation, 0.0f, 1.0f), v());
+  setHSV(h(), glm::clamp(saturation, 0.f, 1.f), v());
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Color::v(float value) {
-  setHSV(h(), s(), glm::clamp(value, 0.0f, 1.0f));
+  setHSV(h(), s(), glm::clamp(value, 0.f, 1.f));
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void Color::a(float alpha) {
-  mVal[3] = glm::clamp(alpha, 0.0f, 1.0f);
+  mVal[3] = glm::clamp(alpha, 0.f, 1.f);
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -145,47 +146,47 @@ void Color::setHSV(float hue, float saturation, float value, float alpha) {
 
   a(alpha);
 
-  if (saturation == 0.0f) {
+  if (saturation == 0.f) {
     mVal.r = value;
     mVal.g = value;
     mVal.b = value;
     return;
   }
-  hue = std::fmod(hue, 360.0f);
-  hue /= 60.0f;
+  hue = std::fmod(hue, 360.f);
+  hue /= 60.f;
   auto  i = int32_t(std::floor(hue));
   float f = hue - i;
 
   switch (i) {
     case 0:
       mVal.r = value;
-      mVal.g = value * (1.0f - saturation * (1.0f - f));
-      mVal.b = value * (1.0f - saturation);
+      mVal.g = value * (1.f - saturation * (1.f - f));
+      mVal.b = value * (1.f - saturation);
       break;
     case 1:
-      mVal.r = value * (1.0f - saturation * f);
+      mVal.r = value * (1.f - saturation * f);
       mVal.g = value;
-      mVal.b = value * (1.0f - saturation);
+      mVal.b = value * (1.f - saturation);
       break;
     case 2:
-      mVal.r = value * (1.0f - saturation);
+      mVal.r = value * (1.f - saturation);
       mVal.g = value;
-      mVal.b = value * (1.0f - saturation * (1.0f - f));
+      mVal.b = value * (1.f - saturation * (1.f - f));
       break;
     case 3:
-      mVal.r = value * (1.0f - saturation);
-      mVal.g = value * (1.0f - saturation * f);
+      mVal.r = value * (1.f - saturation);
+      mVal.g = value * (1.f - saturation * f);
       mVal.b = value;
       break;
     case 4:
-      mVal.r = value * (1.0f - saturation * (1.0f - f));
-      mVal.g = value * (1.0f - saturation);
+      mVal.r = value * (1.f - saturation * (1.f - f));
+      mVal.g = value * (1.f - saturation);
       mVal.b = value;
       break;
     default:
       mVal.r = value;
-      mVal.g = value * (1.0f - saturation);
-      mVal.b = value * (1.0f - saturation * f);
+      mVal.g = value * (1.f - saturation);
+      mVal.b = value * (1.f - saturation * f);
       break;
   }
 }
@@ -194,8 +195,8 @@ void Color::setHSV(float hue, float saturation, float value, float alpha) {
 
 Color Color::inverted() const {
   Color inverted(*this);
-  inverted.h(inverted.h() + 180.0f);
-  inverted.v(1.0f - inverted.v());
+  inverted.h(inverted.h() + 180.f);
+  inverted.v(1.f - inverted.v());
   return inverted;
 }
 
@@ -203,7 +204,7 @@ Color Color::inverted() const {
 
 Color Color::complementary() const {
   Color inverted(*this);
-  inverted.h(inverted.h() + 180.0f);
+  inverted.h(inverted.h() + 180.f);
   return inverted;
 }
 
@@ -223,8 +224,8 @@ glm::vec4 const& Color::vec4() const {
 
 std::string Color::htmlRgba() const {
   std::stringstream stream;
-  stream << "rgba(" << static_cast<int32_t>(r() * 255.0f) << ", "
-         << static_cast<int32_t>(g() * 255.0f) << ", " << static_cast<int32_t>(b() * 255.0f) << ", "
+  stream << "rgba(" << static_cast<int32_t>(r() * 255.f) << ", "
+         << static_cast<int32_t>(g() * 255.f) << ", " << static_cast<int32_t>(b() * 255.f) << ", "
          << a() << ")";
 
   return stream.str();
