@@ -91,31 +91,13 @@ bool checkValidationLayerSupport() {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-std::vector<const char*> getRequiredInstanceExtensions(bool debugMode) {
-  unsigned int glfwExtensionCount = 0;
-  const char** glfwExtensions     = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
-
-  std::vector<const char*> extensions;
-  for (unsigned int i = 0; i < glfwExtensionCount; ++i) {
-    extensions.push_back(glfwExtensions[i]);
-  }
-
-  if (debugMode) {
-    extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-  }
-
-  return extensions;
-}
-
-////////////////////////////////////////////////////////////////////////////////////////////////////
-
 } // namespace
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
-Instance::Instance(std::string const& name, bool debugMode)
+Instance::Instance(std::string const& name, Options const& options)
     : Core::NamedObject(name)
-    , mDebugMode(debugMode)
+    , mOptions(options)
     , mInstance(createInstance("Illusion", name))
     , mDebugCallback(createDebugCallback()) {
 
@@ -159,6 +141,11 @@ PhysicalDeviceConstPtr Instance::getPhysicalDevice(
 
 vk::SurfaceKHRPtr Instance::createSurface(std::string const& name, GLFWwindow* window) const {
   VkSurfaceKHR tmp;
+
+  if (mOptions.contains(OptionBits::eHeadlessMode)) {
+    throw std::runtime_error("Cannot create window surface in headless mode!");
+  }
+
   if (glfwCreateWindowSurface(*mInstance, window, nullptr, &tmp) != VK_SUCCESS) {
     throw std::runtime_error("Failed to create window surface!");
   }
@@ -184,7 +171,7 @@ vk::InstancePtr Instance::getHandle() const {
 
 vk::InstancePtr Instance::createInstance(std::string const& engine, std::string const& app) const {
 
-  if (!glfwInitialized) {
+  if (!mOptions.contains(OptionBits::eHeadlessMode) && !glfwInitialized) {
     if (glfwInit() == 0) {
       throw std::runtime_error("Failed to initialize GLFW.");
     }
@@ -196,7 +183,7 @@ vk::InstancePtr Instance::createInstance(std::string const& engine, std::string 
     glfwInitialized = true;
   }
 
-  if (mDebugMode && !checkValidationLayerSupport()) {
+  if (mOptions.contains(OptionBits::eDebugMode) && !checkValidationLayerSupport()) {
     throw std::runtime_error("Requested validation layers are not available!");
   }
 
@@ -209,7 +196,21 @@ vk::InstancePtr Instance::createInstance(std::string const& engine, std::string 
   appInfo.apiVersion         = VK_API_VERSION_1_0;
 
   // find required extensions
-  auto extensions(getRequiredInstanceExtensions(mDebugMode));
+  std::vector<const char*> extensions;
+
+  if (!mOptions.contains(OptionBits::eHeadlessMode)) {
+
+    unsigned int glfwExtensionCount = 0;
+    const char** glfwExtensions     = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
+    for (unsigned int i = 0; i < glfwExtensionCount; ++i) {
+      extensions.push_back(glfwExtensions[i]);
+    }
+  }
+
+  if (mOptions.contains(OptionBits::eDebugMode)) {
+    extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+  }
 
   // create instance
   vk::InstanceCreateInfo info;
@@ -217,7 +218,7 @@ vk::InstancePtr Instance::createInstance(std::string const& engine, std::string 
   info.enabledExtensionCount   = static_cast<int32_t>(extensions.size());
   info.ppEnabledExtensionNames = extensions.data();
 
-  if (mDebugMode) {
+  if (mOptions.contains(OptionBits::eDebugMode)) {
     info.enabledLayerCount   = static_cast<int32_t>(VALIDATION_LAYERS.size());
     info.ppEnabledLayerNames = VALIDATION_LAYERS.data();
   } else {
@@ -236,7 +237,7 @@ vk::InstancePtr Instance::createInstance(std::string const& engine, std::string 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 vk::DebugUtilsMessengerEXTPtr Instance::createDebugCallback() const {
-  if (!mDebugMode) {
+  if (!mOptions.contains(OptionBits::eDebugMode)) {
     return nullptr;
   }
 

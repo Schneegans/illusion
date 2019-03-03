@@ -25,9 +25,12 @@ int main() {
   // Enable trace output. This is useful to see Vulkan object lifetime.
   Illusion::Core::Logger::enableTrace = true;
 
-  // These two things nearly every application will need: an instance and a device.
-  auto instance = Illusion::Graphics::Instance::create("TriangleDemo");
-  auto device   = Illusion::Graphics::Device::create("Device", instance->getPhysicalDevice());
+  // These two things nearly every application will need: an instance and a device. We enable
+  // eHeadlessMode as we won't create a window and therefore do not need to initialize our windowing
+  // toolkit.
+  auto instance = Illusion::Graphics::Instance::create(
+      "TriangleDemo", Illusion::Graphics::Instance::OptionBits::eHeadlessMode);
+  auto device = Illusion::Graphics::Device::create("Device", instance->getPhysicalDevice());
 
   // Create a shader program. The shader stages a deduced from the file extensions.
   auto shader = Illusion::Graphics::Shader::createFromFiles(

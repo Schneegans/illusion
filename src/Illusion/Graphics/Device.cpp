@@ -777,10 +777,13 @@ vk::DevicePtr Device::createDevice(std::string const& name) const {
 void Device::assignName(
     uint64_t vulkanHandle, vk::ObjectType objectType, std::string const& name) const {
   vk::DebugUtilsObjectNameInfoEXT nameInfo;
-  nameInfo.objectType   = objectType;
-  nameInfo.objectHandle = vulkanHandle;
-  nameInfo.pObjectName  = name.c_str();
-  mSetObjectNameFunc(*mDevice, reinterpret_cast<VkDebugUtilsObjectNameInfoEXT*>(&nameInfo));
+
+  if (mSetObjectNameFunc != nullptr) {
+    nameInfo.objectType   = objectType;
+    nameInfo.objectHandle = vulkanHandle;
+    nameInfo.pObjectName  = name.c_str();
+    mSetObjectNameFunc(*mDevice, reinterpret_cast<VkDebugUtilsObjectNameInfoEXT*>(&nameInfo));
+  }
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
