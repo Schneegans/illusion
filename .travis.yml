@@ -52,6 +52,8 @@ script:
   - if [ "$TRAVIS_OS_NAME" == "windows" ]; then cmake -DCMAKE_INSTALL_PREFIX=install -G "Visual Studio 15 2017 Win64" -DPYTHON_EXECUTABLE=/c/Python37/python.exe ..; fi
   - cmake --build . --parallel 4 --target $INSTALL_TARGET_NAME && cd ..
   - if [ "$CXX" == "g++-7" ]; then ./lcov.sh; fi
+  - if [ "$CXX" == "g++-7" ]; then ./build/install/bin/GPUInfo.sh; fi
+  - if [ "$CXX" == "g++-7" ]; then ./build/install/bin/Headless.sh; fi
   - if [ "$CXX" == "g++-7" ]; then coveralls-lcov build/coverage.info; fi
 notifications:
   webhooks:
