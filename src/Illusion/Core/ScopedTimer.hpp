@@ -15,7 +15,7 @@
 namespace Illusion::Core {
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
-// Can be used to measure time taken by some part of code.                                        //
+// This very simple class can be used to measure time taken by some part of code.                 //
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class ScopedTimer : public NamedObject {
@@ -23,7 +23,7 @@ class ScopedTimer : public NamedObject {
   explicit ScopedTimer(std::string const& name);
 
   // The desctructor will print the time elapsed since the constructor was called. The print is done
-  // using ILLUSION_DEBUG from the Logger class.
+  // using Logger::debug() from the Core::Logger class.
   virtual ~ScopedTimer();
 
  private:
