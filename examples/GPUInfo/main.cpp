@@ -15,8 +15,10 @@
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int main() {
-
-  auto instance = Illusion::Graphics::Instance::create("GPUInfo");
+  // We enable eHeadlessMode as we won't create a window and therefore do not need to initialize our
+  // windowing toolkit.
+  auto instance = Illusion::Graphics::Instance::create(
+      "GPUInfo", Illusion::Graphics::Instance::OptionBits::eHeadlessMode);
   instance->getPhysicalDevice()->printInfo();
 
   return 0;
