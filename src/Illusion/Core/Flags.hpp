@@ -48,7 +48,7 @@ class Flags {
   }
 
   bool containsOnly(Flags<BitType> const& flags) const {
-    return contains(flags) && (mMask ^ flags.mMask) == 0;
+    return mMask == flags.mMask;
   }
 
   Flags<BitType>& operator=(Flags<BitType> const& rhs) {
