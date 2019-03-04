@@ -13,6 +13,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <type_traits>
 #include <unordered_map>
 #include <vector>
 
@@ -24,6 +25,14 @@ namespace Illusion::Core::Utils {
 template <typename T, typename... Args>
 std::unique_ptr<T> makeUnique(Args&&... args) {
   return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
+
+// -------------------------------------------------------------------------------------------------
+
+// A template to cast an enum class to its underlying type.
+template <typename T>
+constexpr typename std::underlying_type<T>::type enumCast(T val) {
+  return static_cast<typename std::underlying_type<T>::type>(val);
 }
 
 // -------------------------------------------------------------------------------------------------

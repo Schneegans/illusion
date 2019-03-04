@@ -9,7 +9,7 @@
 #ifndef ILLUSION_INPUT_ENUMS_HPP
 #define ILLUSION_INPUT_ENUMS_HPP
 
-#include "../Core/EnumCast.hpp"
+#include "../Core/Utils.hpp"
 
 #include <iostream>
 
@@ -108,30 +108,30 @@ enum class JoystickButtonId : uint16_t {
 };
 
 enum class Xbox360ControllerButton : uint16_t {
-  eXboxA                = Core::enumCast(JoystickButtonId::eJoystickButton0),
-  eXboxB                = Core::enumCast(JoystickButtonId::eJoystickButton1),
-  eXboxX                = Core::enumCast(JoystickButtonId::eJoystickButton2),
-  eXboxY                = Core::enumCast(JoystickButtonId::eJoystickButton3),
-  eXboxBumperLeft       = Core::enumCast(JoystickButtonId::eJoystickButton4),
-  eXboxBumperRight      = Core::enumCast(JoystickButtonId::eJoystickButton5),
-  eXboxBack             = Core::enumCast(JoystickButtonId::eJoystickButton6),
-  eXboxStart            = Core::enumCast(JoystickButtonId::eJoystickButton7),
-  eXboxXbox             = Core::enumCast(JoystickButtonId::eJoystickButton8),
-  eXboxLeftStickButton  = Core::enumCast(JoystickButtonId::eJoystickButton9),
-  eXboxRightStickButton = Core::enumCast(JoystickButtonId::eJoystickButton10),
-  eXboxPadUp            = Core::enumCast(JoystickButtonId::eJoystickButton11),
-  eXboxPadRight         = Core::enumCast(JoystickButtonId::eJoystickButton12),
-  eXboxPadDown          = Core::enumCast(JoystickButtonId::eJoystickButton13),
-  eXboxPadLeft          = Core::enumCast(JoystickButtonId::eJoystickButton14)
+  eXboxA                = Core::Utils::enumCast(JoystickButtonId::eJoystickButton0),
+  eXboxB                = Core::Utils::enumCast(JoystickButtonId::eJoystickButton1),
+  eXboxX                = Core::Utils::enumCast(JoystickButtonId::eJoystickButton2),
+  eXboxY                = Core::Utils::enumCast(JoystickButtonId::eJoystickButton3),
+  eXboxBumperLeft       = Core::Utils::enumCast(JoystickButtonId::eJoystickButton4),
+  eXboxBumperRight      = Core::Utils::enumCast(JoystickButtonId::eJoystickButton5),
+  eXboxBack             = Core::Utils::enumCast(JoystickButtonId::eJoystickButton6),
+  eXboxStart            = Core::Utils::enumCast(JoystickButtonId::eJoystickButton7),
+  eXboxXbox             = Core::Utils::enumCast(JoystickButtonId::eJoystickButton8),
+  eXboxLeftStickButton  = Core::Utils::enumCast(JoystickButtonId::eJoystickButton9),
+  eXboxRightStickButton = Core::Utils::enumCast(JoystickButtonId::eJoystickButton10),
+  eXboxPadUp            = Core::Utils::enumCast(JoystickButtonId::eJoystickButton11),
+  eXboxPadRight         = Core::Utils::enumCast(JoystickButtonId::eJoystickButton12),
+  eXboxPadDown          = Core::Utils::enumCast(JoystickButtonId::eJoystickButton13),
+  eXboxPadLeft          = Core::Utils::enumCast(JoystickButtonId::eJoystickButton14)
 };
 
 enum class Xbox360ControllerAxis : uint16_t {
-  eXboxLeftStickX   = Core::enumCast(JoystickAxisId::eJoystickAxis0),
-  eXboxLeftStickY   = Core::enumCast(JoystickAxisId::eJoystickAxis1),
-  eXboxLeftTrigger  = Core::enumCast(JoystickAxisId::eJoystickAxis2),
-  eXboxRightStickX  = Core::enumCast(JoystickAxisId::eJoystickAxis3),
-  eXboxRightStickY  = Core::enumCast(JoystickAxisId::eJoystickAxis4),
-  eXboxRightTrigger = Core::enumCast(JoystickAxisId::eJoystickAxis5)
+  eXboxLeftStickX   = Core::Utils::enumCast(JoystickAxisId::eJoystickAxis0),
+  eXboxLeftStickY   = Core::Utils::enumCast(JoystickAxisId::eJoystickAxis1),
+  eXboxLeftTrigger  = Core::Utils::enumCast(JoystickAxisId::eJoystickAxis2),
+  eXboxRightStickX  = Core::Utils::enumCast(JoystickAxisId::eJoystickAxis3),
+  eXboxRightStickY  = Core::Utils::enumCast(JoystickAxisId::eJoystickAxis4),
+  eXboxRightTrigger = Core::Utils::enumCast(JoystickAxisId::eJoystickAxis5)
 };
 
 enum class Button : uint16_t {

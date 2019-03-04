@@ -8,8 +8,8 @@
 
 #include "Device.hpp"
 
-#include "../Core/EnumCast.hpp"
 #include "../Core/Logger.hpp"
+#include "../Core/Utils.hpp"
 #include "BackedBuffer.hpp"
 #include "BackedImage.hpp"
 #include "CommandBuffer.hpp"
@@ -383,7 +383,7 @@ vk::CommandBufferPtr Device::allocateCommandBuffer(
     std::string const& name, QueueType type, vk::CommandBufferLevel level) const {
   vk::CommandBufferAllocateInfo info;
   info.level              = level;
-  info.commandPool        = *mCommandPools[Core::enumCast(type)];
+  info.commandPool        = *mCommandPools[Core::Utils::enumCast(type)];
   info.commandBufferCount = 1;
 
   Core::Logger::traceCreation("vk::CommandBuffer", name);
@@ -392,7 +392,7 @@ vk::CommandBufferPtr Device::allocateCommandBuffer(
   assignName(uint64_t(VkCommandBuffer(vkObject)), vk::ObjectType::eCommandBuffer, name);
 
   auto device = mDevice;
-  auto pool   = mCommandPools[Core::enumCast(type)];
+  auto pool   = mCommandPools[Core::Utils::enumCast(type)];
   return VulkanPtr::create(vkObject, [device, pool, name](vk::CommandBuffer* obj) {
     Core::Logger::traceDeletion("vk::CommandBuffer", name);
     device->freeCommandBuffers(*pool, *obj);
@@ -702,7 +702,7 @@ PhysicalDeviceConstPtr const& Device::getPhysicalDevice() const {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 vk::Queue const& Device::getQueue(QueueType type) const {
-  return mQueues[Core::enumCast(type)];
+  return mQueues[Core::Utils::enumCast(type)];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////

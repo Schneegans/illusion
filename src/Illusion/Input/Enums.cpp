@@ -8,7 +8,7 @@
 
 #include "Enums.hpp"
 
-#include "../Core/EnumCast.hpp"
+#include "../Core/Utils.hpp"
 
 #include <iostream>
 
@@ -183,28 +183,28 @@ std::ostream& operator<<(std::ostream& os, Key key) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::ostream& operator<<(std::ostream& os, Button button) {
-  os << "BUTTON_" << Core::enumCast(button);
+  os << "BUTTON_" << Core::Utils::enumCast(button);
   return os;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::ostream& operator<<(std::ostream& os, JoystickId id) {
-  os << "JOYSTICK_" << Core::enumCast(id);
+  os << "JOYSTICK_" << Core::Utils::enumCast(id);
   return os;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::ostream& operator<<(std::ostream& os, JoystickAxisId axis) {
-  os << "JOYSTICK_AXIS_" << Core::enumCast(axis);
+  os << "JOYSTICK_AXIS_" << Core::Utils::enumCast(axis);
   return os;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::ostream& operator<<(std::ostream& os, JoystickButtonId button) {
-  os << "JOYSTICK_BUTTON_" << Core::enumCast(button);
+  os << "JOYSTICK_BUTTON_" << Core::Utils::enumCast(button);
   return os;
 }
 

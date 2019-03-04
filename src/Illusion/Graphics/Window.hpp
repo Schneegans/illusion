@@ -119,12 +119,13 @@ class Window : public Core::StaticCreate<Window>, public Core::NamedObject {
   vk::SurfaceKHRPtr mSurface;
   SwapchainPtr      mSwapchain;
 
-  std::array<std::array<float, Core::enumCast(Input::JoystickAxisId::eJoystickAxisNum)>,
-      Core::enumCast(Input::JoystickId::eJoystickNum)>
+  std::array<std::array<float, Core::Utils::enumCast(Input::JoystickAxisId::eJoystickAxisNum)>,
+      Core::Utils::enumCast(Input::JoystickId::eJoystickNum)>
       mJoystickAxisCache{};
 
-  std::array<std::array<uint32_t, Core::enumCast(Input::JoystickButtonId::eJoystickButtonNum)>,
-      Core::enumCast(Input::JoystickId::eJoystickNum)>
+  std::array<
+      std::array<uint32_t, Core::Utils::enumCast(Input::JoystickButtonId::eJoystickButtonNum)>,
+      Core::Utils::enumCast(Input::JoystickId::eJoystickNum)>
       mJoystickButtonCache{};
 
   // Stores position and size for restoring the window state after toggling full screen mode.

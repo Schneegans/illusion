@@ -8,7 +8,7 @@
 
 #include "AnimatedProperty.hpp"
 
-#include "EnumCast.hpp"
+#include "Utils.hpp"
 
 #include <iostream>
 
@@ -17,7 +17,7 @@ namespace Illusion::Core {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::ostream& operator<<(std::ostream& os, AnimationDirection value) {
-  os << enumCast(value);
+  os << Utils::enumCast(value);
   return os;
 }
 
@@ -33,7 +33,7 @@ std::istream& operator>>(std::istream& is, AnimationDirection& value) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 std::ostream& operator<<(std::ostream& os, AnimationLoop value) {
-  os << enumCast(value);
+  os << Utils::enumCast(value);
   return os;
 }
 

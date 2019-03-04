@@ -171,16 +171,16 @@ KeyEvent::KeyEvent(uint32_t key, uint32_t mods) {
 
 void KeyEvent::SetMods(uint32_t mods) {
   if ((mods & static_cast<uint32_t>(GLFW_MOD_SHIFT)) != 0) {
-    mModifiers |= Core::enumCast(Modifier::eShift);
+    mModifiers |= Core::Utils::enumCast(Modifier::eShift);
   }
   if ((mods & static_cast<uint32_t>(GLFW_MOD_CONTROL)) != 0) {
-    mModifiers |= Core::enumCast(Modifier::eControl);
+    mModifiers |= Core::Utils::enumCast(Modifier::eControl);
   }
   if ((mods & static_cast<uint32_t>(GLFW_MOD_ALT)) != 0) {
-    mModifiers |= Core::enumCast(Modifier::eAlt);
+    mModifiers |= Core::Utils::enumCast(Modifier::eAlt);
   }
   if ((mods & static_cast<uint32_t>(GLFW_MOD_SUPER)) != 0) {
-    mModifiers |= Core::enumCast(Modifier::eCommand);
+    mModifiers |= Core::Utils::enumCast(Modifier::eCommand);
   }
 }
 

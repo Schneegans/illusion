@@ -18,6 +18,11 @@
 
 namespace Illusion::Core {
 
+TEST_CASE("Illusion::Core::Utils::enumCast") {
+  enum class MyEnum : uint32_t { a = 0, b, c };
+  CHECK(Utils::enumCast(MyEnum::c) == 2u);
+}
+
 TEST_CASE("Illusion::Core::Utils::contains") {
   SUBCASE("Checking vector") {
     std::vector<int> constainer = {1, 2, 3, 4, 5, 6, 7, 8, 9};

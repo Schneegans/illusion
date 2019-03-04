@@ -221,7 +221,7 @@ bool Window::keyPressed(Input::Key key) const {
     return false;
   }
 
-  return glfwGetKey(mWindow, Core::enumCast(key)) == GLFW_PRESS;
+  return glfwGetKey(mWindow, Core::Utils::enumCast(key)) == GLFW_PRESS;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -235,14 +235,14 @@ bool Window::buttonPressed(Input::Button button) const {
     return false;
   }
 
-  return glfwGetMouseButton(mWindow, Core::enumCast(button) - 1) == GLFW_PRESS;
+  return glfwGetMouseButton(mWindow, Core::Utils::enumCast(button) - 1) == GLFW_PRESS;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 float Window::joyAxis(uint32_t joyStick, uint32_t axis) {
-  if (joyStick >= Core::enumCast(Input::JoystickId::eJoystickNum) ||
-      axis >= Core::enumCast(Input::JoystickAxisId::eJoystickAxisNum)) {
+  if (joyStick >= Core::Utils::enumCast(Input::JoystickId::eJoystickNum) ||
+      axis >= Core::Utils::enumCast(Input::JoystickAxisId::eJoystickAxisNum)) {
     return 0;
   }
   if (glfwJoystickPresent(joyStick) == 0) {
@@ -276,7 +276,7 @@ void Window::updateJoysticks() {
   const float minThreshold(0.15f);
   const float maxThreshold(0.9f);
 
-  const int32_t joystickNum(Core::enumCast(Input::JoystickId::eJoystickNum));
+  const int32_t joystickNum(Core::Utils::enumCast(Input::JoystickId::eJoystickNum));
   for (int32_t joy(0); joy < joystickNum; ++joy) {
     if (glfwJoystickPresent(joy) != 0) {
       auto    joyId(static_cast<Input::JoystickId>(joy));

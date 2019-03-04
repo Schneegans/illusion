@@ -8,8 +8,8 @@
 
 #include "PhysicalDevice.hpp"
 
-#include "../Core/EnumCast.hpp"
 #include "../Core/Logger.hpp"
+#include "../Core/Utils.hpp"
 
 #include <GLFW/glfw3.h>
 
@@ -97,8 +97,8 @@ PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice 
         (glfwGetPhysicalDevicePresentationSupport(instance, *this, static_cast<uint32_t>(i)) !=
             0)) {
 
-      mQueueFamilies[Core::enumCast(QueueType::eGeneric)] = static_cast<uint32_t>(i);
-      foundQueue[Core::enumCast(QueueType::eGeneric)]     = true;
+      mQueueFamilies[Core::Utils::enumCast(QueueType::eGeneric)] = static_cast<uint32_t>(i);
+      foundQueue[Core::Utils::enumCast(QueueType::eGeneric)]     = true;
       break;
     }
   }
@@ -108,10 +108,10 @@ PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice 
     vk::QueueFlags required(vk::QueueFlagBits::eCompute);
 
     if (available[i].queueCount > 0 && (available[i].queueFlags & required) == required &&
-        i != mQueueFamilies[Core::enumCast(QueueType::eGeneric)]) {
+        i != mQueueFamilies[Core::Utils::enumCast(QueueType::eGeneric)]) {
 
-      mQueueFamilies[Core::enumCast(QueueType::eCompute)] = static_cast<uint32_t>(i);
-      foundQueue[Core::enumCast(QueueType::eCompute)]     = true;
+      mQueueFamilies[Core::Utils::enumCast(QueueType::eCompute)] = static_cast<uint32_t>(i);
+      foundQueue[Core::Utils::enumCast(QueueType::eCompute)]     = true;
       break;
     }
   }
@@ -121,11 +121,11 @@ PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice 
     vk::QueueFlags required(vk::QueueFlagBits::eTransfer);
 
     if (available[i].queueCount > 0 && (available[i].queueFlags & required) == required &&
-        i != mQueueFamilies[Core::enumCast(QueueType::eGeneric)] &&
-        i != mQueueFamilies[Core::enumCast(QueueType::eCompute)]) {
+        i != mQueueFamilies[Core::Utils::enumCast(QueueType::eGeneric)] &&
+        i != mQueueFamilies[Core::Utils::enumCast(QueueType::eCompute)]) {
 
-      mQueueFamilies[Core::enumCast(QueueType::eTransfer)] = static_cast<uint32_t>(i);
-      foundQueue[Core::enumCast(QueueType::eTransfer)]     = true;
+      mQueueFamilies[Core::Utils::enumCast(QueueType::eTransfer)] = static_cast<uint32_t>(i);
+      foundQueue[Core::Utils::enumCast(QueueType::eTransfer)]     = true;
       break;
     }
   }
@@ -136,33 +136,33 @@ PhysicalDevice::PhysicalDevice(vk::Instance const& instance, vk::PhysicalDevice 
     vk::QueueFlags required(vk::QueueFlagBits::eTransfer);
 
     if (available[i].queueCount > 0 && (available[i].queueFlags & required) == required &&
-        i != mQueueFamilies[Core::enumCast(QueueType::eGeneric)]) {
+        i != mQueueFamilies[Core::Utils::enumCast(QueueType::eGeneric)]) {
 
-      mQueueFamilies[Core::enumCast(QueueType::eTransfer)] = static_cast<uint32_t>(i);
-      foundQueue[Core::enumCast(QueueType::eTransfer)]     = true;
+      mQueueFamilies[Core::Utils::enumCast(QueueType::eTransfer)] = static_cast<uint32_t>(i);
+      foundQueue[Core::Utils::enumCast(QueueType::eTransfer)]     = true;
       break;
     }
   }
 
   // if we did not find a compute queue different from the generic one, we will use the same but
   // another index, if possible
-  if (!foundQueue[Core::enumCast(QueueType::eCompute)]) {
+  if (!foundQueue[Core::Utils::enumCast(QueueType::eCompute)]) {
 
-    mQueueFamilies[Core::enumCast(QueueType::eCompute)] =
-        mQueueFamilies[Core::enumCast(QueueType::eGeneric)];
-    mQueueIndices[Core::enumCast(QueueType::eCompute)] =
-        std::min(available[mQueueFamilies[Core::enumCast(QueueType::eCompute)]].queueCount - 1,
-            mQueueIndices[Core::enumCast(QueueType::eGeneric)] + 1);
+    mQueueFamilies[Core::Utils::enumCast(QueueType::eCompute)] =
+        mQueueFamilies[Core::Utils::enumCast(QueueType::eGeneric)];
+    mQueueIndices[Core::Utils::enumCast(QueueType::eCompute)] = std::min(
+        available[mQueueFamilies[Core::Utils::enumCast(QueueType::eCompute)]].queueCount - 1,
+        mQueueIndices[Core::Utils::enumCast(QueueType::eGeneric)] + 1);
   }
 
   // if we did not find a transfer queue different from the generic one, we will use the same but
   // another index, if possible
-  if (!foundQueue[Core::enumCast(QueueType::eTransfer)]) {
-    mQueueFamilies[Core::enumCast(QueueType::eTransfer)] =
-        mQueueFamilies[Core::enumCast(QueueType::eGeneric)];
-    mQueueIndices[Core::enumCast(QueueType::eTransfer)] =
-        std::min(available[mQueueFamilies[Core::enumCast(QueueType::eTransfer)]].queueCount - 1,
-            mQueueIndices[Core::enumCast(QueueType::eCompute)] + 1);
+  if (!foundQueue[Core::Utils::enumCast(QueueType::eTransfer)]) {
+    mQueueFamilies[Core::Utils::enumCast(QueueType::eTransfer)] =
+        mQueueFamilies[Core::Utils::enumCast(QueueType::eGeneric)];
+    mQueueIndices[Core::Utils::enumCast(QueueType::eTransfer)] = std::min(
+        available[mQueueFamilies[Core::Utils::enumCast(QueueType::eTransfer)]].queueCount - 1,
+        mQueueIndices[Core::Utils::enumCast(QueueType::eCompute)] + 1);
   }
 }
 
@@ -186,13 +186,13 @@ uint32_t PhysicalDevice::findMemoryType(
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 uint32_t PhysicalDevice::getQueueFamily(QueueType type) const {
-  return mQueueFamilies[Core::enumCast(type)];
+  return mQueueFamilies[Core::Utils::enumCast(type)];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
 
 uint32_t PhysicalDevice::getQueueIndex(QueueType type) const {
-  return mQueueFamilies[Core::enumCast(type)];
+  return mQueueFamilies[Core::Utils::enumCast(type)];
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////////
