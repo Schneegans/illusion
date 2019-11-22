@@ -6,8 +6,8 @@
 For now, Illusion is a convenience layer on top of Vulkan, similar in spirit to [V-EZ](https://github.com/GPUOpen-LibrariesAndSDKs/V-EZ). However, I plan to add more features as I progress in learning.
 Since everybody loves badges, here are some describing Illusion:
 
-[![Build Status](https://github.com/schneegabs/illusion/workflows/Build/badge.svg?branch=develop)](https://github.com/schneegans/illusion/actions)
-[![Coverage Status](https://coveralls.io/repos/github/schneegans/illusion/badge.svg?branch=develop)](https://coveralls.io/github/schneegans/illusion?branch=develop)
+[![Build Status](https://github.com/schneegans/illusion/workflows/Build/badge.svg?branch=develop)](https://github.com/schneegans/illusion/actions)
+[![Coverage Status](https://coveralls.io/repos/github/Schneegans/illusion/badge.svg?branch=develop)](https://coveralls.io/github/Schneegans/illusion?branch=feature/actions)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![c++17](https://img.shields.io/badge/C++-17-orange.svg)
 [![source loc](https://img.shields.io/badge/LoC-10.5k-green.svg)](cloc.sh)
