@@ -43,7 +43,7 @@ jobs:
     - name: Download Dependencies
       run: |
         sudo apt-get update -y
-        sudo apt-get install -y ruby xorg-dev libglu1-mesa-dev
+        sudo apt-get install -y ruby xorg-dev libglu1-mesa-dev lcov
         sudo gem install coveralls-lcov
     - name: Build Illusion
       run: |
