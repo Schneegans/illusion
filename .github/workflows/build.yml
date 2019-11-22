@@ -44,7 +44,7 @@ jobs:
       run: |
         sudo apt-get update -y
         sudo apt-get install -y ruby libx11-dev
-        gem install coveralls-lcov
+        sudo gem install coveralls-lcov
     - name: Build Illusion
       run: |
         mkdir build && cd build
