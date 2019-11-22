@@ -6,15 +6,15 @@
 For now, Illusion is a convenience layer on top of Vulkan, similar in spirit to [V-EZ](https://github.com/GPUOpen-LibrariesAndSDKs/V-EZ). However, I plan to add more features as I progress in learning.
 Since everybody loves badges, here are some describing Illusion:
 
-[![Build Status](https://travis-ci.org/Simmesimme/illusion.svg?branch=develop)](https://travis-ci.org/Simmesimme/illusion/branches)
-[![Coverage Status](https://coveralls.io/repos/github/Simmesimme/illusion/badge.svg?branch=develop)](https://coveralls.io/github/Simmesimme/illusion?branch=develop)
+[![Build Status](https://github.com/schneegabs/illusion/workflows/Build/badge.svg?branch=develop)](https://github.com/schneegans/illusion/actions)
+[![Coverage Status](https://coveralls.io/repos/github/schneegans/illusion/badge.svg?branch=develop)](https://coveralls.io/github/schneegans/illusion?branch=develop)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 ![c++17](https://img.shields.io/badge/C++-17-orange.svg)
+[![source loc](https://img.shields.io/badge/LoC-10.5k-green.svg)](cloc.sh)
+[![example loc](https://img.shields.io/badge/LoC_examples-1.6k-green.svg)](cloc.sh)
+[![test loc](https://img.shields.io/badge/LoC_tests-0.6k-yellow.svg)](cloc.sh)
 [![comments](https://img.shields.io/badge/comments-2.1k-green.svg)](cloc.sh)
-[![source loc](https://img.shields.io/badge/src_loc-10.5k-green.svg)](cloc.sh)
-[![example loc](https://img.shields.io/badge/example_loc-1.6k-green.svg)](cloc.sh)
-[![test loc](https://img.shields.io/badge/test_loc-0.6k-yellow.svg)](cloc.sh)
-[![gitter](https://badges.gitter.im/simmesimme/illusion.svg)](https://gitter.im/illusion-engine/community)
+[![gitter](https://badges.gitter.im/schneegans/illusion.svg)](https://gitter.im/illusion-engine/community)
 
 Illusion uses C++17 and can be build on Linux (gcc or clang), Windows (msvc) and OS X (xcode). Nearly all dependencies are included as [git submodules](externals), please refer to the section [Building Illusion](#building-illusion) in order to get started.
 
@@ -80,7 +80,7 @@ The list below is roughly sorted by complexity. So if you want to learn features
 
 Link | Core Utility Examples | Screenshot
 :----|:----------------------|:----------
-[Signal Slot](examples/SignalSlot) | This very small example shows some basic usage of Illusion's Signals and Properties. You can read some information on the implementation [on my blog](http://simmesimme.github.io/tutorials/2015/09/21/properties). | ![screenshot](examples/SignalSlot/screenshot.jpg)
+[Signal Slot](examples/SignalSlot) | This very small example shows some basic usage of Illusion's Signals and Properties. You can read some information on the implementation [on my blog](http://schneegans.github.io/tutorials/2015/09/21/properties). | ![screenshot](examples/SignalSlot/screenshot.jpg)
 [Command Line](examples/CommandLine) | This small example shows how to use Illusion's very basic command line parser. Use `CommandLine --help` to see the options. | ![screenshot](examples/CommandLine/screenshot.jpg)
 **Link** | **Low-level Vulkan Examples** | **Screenshot**
 [GPU Info](examples/GPUInfo) | This minimal example creates a Vulkan instance and prints a very verbose list of your Vulkan implementation's hardware and software capabilities. | ![screenshot](examples/GPUInfo/screenshot.jpg)
@@ -94,11 +94,6 @@ Link | Core Utility Examples | Screenshot
 [Deferred Rendering](examples/DeferredRendering) | A small test application for the frame graph implementation. It's still work-in-progress and will evolve as the frame graph gets more mature. You can adjust the number of light sources; have a look at `DeferredRendering --help`. | ![screenshot](examples/DeferredRendering/screenshot.jpg)
 
 ## Building Illusion
-
-Branch | Travis Build Status | Test Coverage
--------|---------------------|--------------
-master | ![linux](https://img.icons8.com/material/20/000000/linux.png) [![ubuntu clang](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=master&label=clang&env=LABEL=LinuxClang)](https://travis-ci.org/Simmesimme/illusion/branches) ![linux](https://img.icons8.com/material/20/000000/linux.png) [![ubuntu gcc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=master&label=gcc&env=LABEL=LinuxGCC)](https://travis-ci.org/Simmesimme/illusion/branches) ![windows](https://img.icons8.com/ios/20/000000/windows8-filled.png) [![msvc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=master&label=msvc&env=LABEL=WindowsMSVC)](https://travis-ci.org/Simmesimme/illusion/branches) ![osx](https://img.icons8.com/ios-glyphs/20/000000/mac-client.png) [![osx](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=master&label=clang&env=LABEL=OSX)](https://travis-ci.org/Simmesimme/illusion/branches) | ![coverage](https://img.icons8.com/material/20/000000/true-false.png) [![Coverage Status](https://coveralls.io/repos/github/Simmesimme/illusion/badge.svg?branch=master)](https://coveralls.io/github/Simmesimme/illusion?branch=master)
-develop | ![linux](https://img.icons8.com/material/20/000000/linux.png) [![ubuntu clang](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=clang&env=LABEL=LinuxClang)](https://travis-ci.org/Simmesimme/illusion/branches) ![linux](https://img.icons8.com/material/20/000000/linux.png) [![ubuntu gcc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=gcc&env=LABEL=LinuxGCC)](https://travis-ci.org/Simmesimme/illusion/branches) ![windows](https://img.icons8.com/ios/20/000000/windows8-filled.png) [![msvc](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=msvc&env=LABEL=WindowsMSVC)](https://travis-ci.org/Simmesimme/illusion/branches) ![osx](https://img.icons8.com/ios-glyphs/20/000000/mac-client.png) [![osx](https://badges.herokuapp.com/travis/Simmesimme/illusion?branch=develop&label=clang&env=LABEL=OSX)](https://travis-ci.org/Simmesimme/illusion/branches) | ![coverage](https://img.icons8.com/material/20/000000/true-false.png) [![Coverage Status](https://coveralls.io/repos/github/Simmesimme/illusion/badge.svg?branch=develop)](https://coveralls.io/github/Simmesimme/illusion?branch=develop)
 
 Illusion uses CMake for project file generation. Below are some exemplary instructions for Linux and Windows (here Visual Studio 2017) which you should adapt to your system.
 
@@ -124,7 +119,7 @@ Submodule | Description
 ### Linux
 
 ```bash
-git clone https://github.com/Simmesimme/illusion.git
+git clone https://github.com/schneegans/illusion.git
 cd illusion
 git submodule update --init
 mkdir build
@@ -142,7 +137,7 @@ install/bin/Triangle.sh
 ### Windows
 
 ```bash
-git clone https://github.com/Simmesimme/illusion.git
+git clone https://github.com/schneegans/illusion.git
 cd illusion
 git submodule update --init
 mkdir build
