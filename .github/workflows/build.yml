@@ -43,17 +43,19 @@ jobs:
     - name: Download Dependencies
       run: |
         sudo apt-get update -y
-        sudo apt-get install -y ruby xorg-dev libglu1-mesa-dev lcov
-        sudo gem install coveralls-lcov
+        sudo apt-get install -y xorg-dev libglu1-mesa-dev lcov
     - name: Build Illusion
       run: |
         mkdir build && cd build
         cmake -DCMAKE_BUILD_TYPE=Debug -DILLUSION_CODE_COVERAGE=On -DCMAKE_INSTALL_PREFIX=install ..
         cmake --build . --target install --parallel 4
     - name: Check Test Coverage
-      run: |
-        ./lcov.sh
-        coveralls-lcov build/coverage.info
+      run: ./lcov.sh
+    - name: Upload Coverage Info
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        path-to-lcov: ./build/coverage.info
 
   build_linux_clang:
     name: Linux Build (clang 6.0)
