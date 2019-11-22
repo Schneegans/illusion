@@ -1,0 +1,104 @@
+name: Build
+
+on:
+  push:
+    branches:
+    - '**'
+  pull_request:
+    branches:
+    - '**'
+
+jobs:
+  clang_format:
+    name: Check Clang-Format
+    runs-on: ubuntu-18.04
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v1
+    - name: Download Clang-Format
+      run: |
+        sudo apt-get update -y
+        sudo apt-get remove -y clang-6.0 libclang-common-6.0-dev libclang1-6.0 libllvm6.0
+        sudo apt-get install -y clang-format
+    - name: Run Clang-Format
+      run: ./clang-format.sh
+    - name: Compare Results
+      run: |
+        DIFF=$(git diff)
+        if [ ! -z "$DIFF" ]; then echo $DIFF && exit 1; fi
+
+  build_linux_gcc:
+    name: Linux Build (gcc 7.4.0)
+    runs-on: ubuntu-18.04
+    if: >
+      github.event_name == 'pull_request' ||
+      ( contains(github.ref, 'master') && !contains(github.event.head_commit.message, '[no-ci]') ) ||
+      ( contains(github.ref, 'develop') && !contains(github.event.head_commit.message, '[no-ci]') ) ||
+      contains(github.event.head_commit.message, '[run-ci]')
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v1
+    - name: Checkout Submodules
+      run: git submodule update --init
+    - name: Download Dependencies
+      run: |
+        sudo apt-get update -y
+        sudo apt-get install -y xorg-dev libglu1-mesa-dev lcov
+    - name: Build Illusion
+      run: |
+        mkdir build && cd build
+        cmake -DCMAKE_BUILD_TYPE=Debug -DILLUSION_CODE_COVERAGE=On -DCMAKE_INSTALL_PREFIX=install ..
+        cmake --build . --target install --parallel 4
+    - name: Check Test Coverage
+      run: ./lcov.sh
+    - name: Upload Coverage Info
+      uses: coverallsapp/github-action@master
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        path-to-lcov: ./build/coverage.info
+
+  build_linux_clang:
+    name: Linux Build (clang 6.0)
+    runs-on: ubuntu-18.04
+    if: >
+      github.event_name == 'pull_request' ||
+      ( contains(github.ref, 'master') && !contains(github.event.head_commit.message, '[no-ci]') ) ||
+      ( contains(github.ref, 'develop') && !contains(github.event.head_commit.message, '[no-ci]') ) ||
+      contains(github.event.head_commit.message, '[run-ci]')
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v1
+    - name: Checkout Submodules
+      run: git submodule update --init
+    - name: Download Dependencies
+      run: |
+        sudo apt-get update -q
+        sudo apt-get install -y xorg-dev libglu1-mesa-dev
+    - name: Build Illusion
+      env:
+        CC: clang
+        CXX: clang++
+      run: |
+        mkdir build && cd build
+        cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=install ..
+        cmake --build . --target install --parallel 4
+
+  build_windows:
+    name: Windows Build (msvc 19.16.27032.1)
+    runs-on: windows-2016
+    if: >
+      github.event_name == 'pull_request' ||
+      ( contains(github.ref, 'master') && !contains(github.event.head_commit.message, '[no-ci]') ) ||
+      ( contains(github.ref, 'develop') && !contains(github.event.head_commit.message, '[no-ci]') ) ||
+      contains(github.event.head_commit.message, '[run-ci]')
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v1
+    - name: Checkout Submodules
+      run: git submodule update --init
+    - name: Build Illusion
+      run: |
+        mkdir build
+        cd build
+        cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_INSTALL_PREFIX=install ..
+        cmake --build . --target install --parallel 4
